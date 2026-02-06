@@ -1,81 +1,54 @@
 
 
-# Create Specifications Table
+# Allow Public INSERT Access for Specifications Table
 
-A database table to store specification documents (like the Control Tower Dashboard blueprint) that can be referenced during development.
-
----
-
-## Database Schema
-
-### Table: specifications
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| name | text | Specification title (e.g., "Control Tower Dashboard") |
-| content | text | Full markdown content of the specification |
-| version | text | Optional version identifier (e.g., "1.0", "2.1") |
-| created_at | timestamp | When the spec was created |
-| updated_at | timestamp | When the spec was last modified |
-| created_by_id | uuid | User who created the specification |
+Update the RLS policy on the `specifications` table to allow your n8n workflow to insert data using the anon key.
 
 ---
 
-## Security Policies (RLS)
+## Current State
 
-| Role | Permissions |
-|------|-------------|
-| **Admin** | Full access (create, read, update, delete) |
-| **Ops Manager** | Read and create specifications |
-| **Support** | Read-only access |
-
----
-
-## Migration SQL
+The existing INSERT policy restricts access to authenticated users with `admin` or `ops_manager` roles:
 
 ```text
--- Create specifications table
-CREATE TABLE public.specifications (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  content text NOT NULL,
-  version text,
-  created_by_id uuid,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
--- Enable RLS
-ALTER TABLE public.specifications ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Dashboard users can view specifications"
-  ON public.specifications FOR SELECT
-  USING (has_dashboard_access(auth.uid()));
-
 CREATE POLICY "Admins and Ops Managers can create specifications"
   ON public.specifications FOR INSERT
   WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'ops_manager'));
-
-CREATE POLICY "Admins can update specifications"
-  ON public.specifications FOR UPDATE
-  USING (has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can delete specifications"
-  ON public.specifications FOR DELETE
-  USING (has_role(auth.uid(), 'admin'));
-
--- Auto-update timestamp trigger
-CREATE TRIGGER update_specifications_updated_at
-  BEFORE UPDATE ON public.specifications
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
 ```
 
 ---
 
-## After Creation
+## Proposed Change
 
-Once approved, you'll be able to upload your specification document to this table. I'll then read the latest entry to build the Kanban Lifecycle View according to your exact blueprint.
+Replace the INSERT policy with one that allows public/anon access:
+
+```text
+-- Drop the existing restrictive INSERT policy
+DROP POLICY IF EXISTS "Admins and Ops Managers can create specifications" 
+  ON public.specifications;
+
+-- Create new policy allowing public INSERT access
+CREATE POLICY "Allow public insert for specifications"
+  ON public.specifications FOR INSERT
+  WITH CHECK (true);
+```
+
+---
+
+## Security Considerations
+
+| Operation | Access Level |
+|-----------|--------------|
+| **SELECT** | Dashboard users only (unchanged) |
+| **INSERT** | Public/anon access (for n8n integration) |
+| **UPDATE** | Admins only (unchanged) |
+| **DELETE** | Admins only (unchanged) |
+
+This approach allows your external tool to insert specifications while keeping read/update/delete operations restricted to authorized users.
+
+---
+
+## After Implementation
+
+Once the policy is updated, you can re-upload your Control Tower Dashboard specification via n8n, and I'll read it to build the Kanban Lifecycle View.
 
