@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SignaturePad } from "./SignaturePad";
-import { Check, Loader2 } from "lucide-react";
+import { SignaturePad, SignaturePadRef } from "./SignaturePad";
+import { Check, Loader2, Shield, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
 interface ReviewSignModalProps {
   open: boolean;
@@ -17,6 +18,9 @@ interface ReviewSignModalProps {
   documentTitle: string;
   onSign: (signatureDataUrl: string) => void;
   isSubmitting?: boolean;
+  // Existing signature data (for signed state)
+  existingSignatureUrl?: string;
+  signedAt?: string;
 }
 
 const PILOT_AGREEMENT_TEXT = `PILOT AGREEMENT
@@ -71,28 +75,52 @@ export function ReviewSignModal({
   documentTitle,
   onSign,
   isSubmitting = false,
+  existingSignatureUrl,
+  signedAt,
 }: ReviewSignModalProps) {
-  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const signaturePadRef = useRef<SignaturePadRef>(null);
   const [hasSignature, setHasSignature] = useState(false);
 
-  const handleSignatureChange = (hasSig: boolean, dataUrl?: string) => {
+  const isSigned = !!existingSignatureUrl;
+
+  const handleSignatureChange = (hasSig: boolean) => {
     setHasSignature(hasSig);
-    setSignatureDataUrl(dataUrl || null);
   };
 
-  const handleSubmit = () => {
-    if (signatureDataUrl) {
-      onSign(signatureDataUrl);
+  const handleConfirmSign = () => {
+    const dataUrl = signaturePadRef.current?.getDataUrl();
+    if (dataUrl) {
+      onSign(dataUrl);
     }
   };
+
+  const handleClear = () => {
+    signaturePadRef.current?.clear();
+    setHasSignature(false);
+  };
+
+  const formattedSignedDate = signedAt 
+    ? format(new Date(signedAt), "MMMM d, yyyy 'at' h:mm a")
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle>{documentTitle}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {documentTitle}
+            {isSigned && (
+              <span className="inline-flex items-center gap-1 text-xs font-normal bg-success/10 text-success px-2 py-0.5 rounded-full">
+                <Shield className="w-3 h-3" />
+                Signed
+              </span>
+            )}
+          </DialogTitle>
           <DialogDescription>
-            Please review the agreement carefully before signing
+            {isSigned 
+              ? "This agreement has been digitally signed and cannot be modified"
+              : "Please review the agreement carefully before signing"
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -114,38 +142,97 @@ export function ReviewSignModal({
           {/* Signature Panel */}
           <div className="flex flex-col">
             <div className="px-4 py-2 bg-muted/50 border-b">
-              <p className="text-sm font-medium text-muted-foreground">Your Signature</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {isSigned ? "Digital Signature" : "Your Signature"}
+              </p>
             </div>
             <div className="flex-1 p-6 flex flex-col justify-between">
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  By signing below, you agree to the terms and conditions outlined in the Pilot Agreement.
-                </p>
-                <SignaturePad onSignatureChange={handleSignatureChange} />
-              </div>
+              {isSigned ? (
+                /* ========== SIGNED STATE ========== */
+                <div className="space-y-6">
+                  <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/10 text-success mb-2">
+                      <Check className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-semibold text-foreground">Agreement Signed</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This document has been digitally signed and is legally binding.
+                    </p>
+                  </div>
 
-              <div className="pt-6 space-y-3">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!hasSignature || isSubmitting}
-                  className="w-full gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Sign & Submit Agreement
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  Your signature will be securely stored and timestamped
-                </p>
-              </div>
+                  {/* Signature Image Display */}
+                  <div className="border rounded-lg p-4 bg-white">
+                    <p className="text-xs text-muted-foreground mb-2">Signature:</p>
+                    <div className="border-b-2 border-muted pb-2">
+                      <img 
+                        src={existingSignatureUrl} 
+                        alt="Digital Signature"
+                        className="h-[100px] w-auto mx-auto object-contain"
+                      />
+                    </div>
+                    {formattedSignedDate && (
+                      <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <span>Digitally Signed on {formattedSignedDate}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      This signature is securely stored and timestamped. 
+                      The document cannot be modified after signing.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* ========== SIGNING STATE ========== */
+                <>
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      By signing below, you agree to the terms and conditions outlined in the Pilot Agreement.
+                    </p>
+                    <SignaturePad 
+                      ref={signaturePadRef}
+                      onSignatureChange={handleSignatureChange} 
+                    />
+                  </div>
+
+                  <div className="pt-6 space-y-3">
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleClear}
+                        disabled={!hasSignature || isSubmitting}
+                        className="flex-1"
+                      >
+                        Clear
+                      </Button>
+                      <Button
+                        onClick={handleConfirmSign}
+                        disabled={!hasSignature || isSubmitting}
+                        className="flex-[2] gap-2"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Signing...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4" />
+                            Confirm & Sign
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Your signature will be securely stored and timestamped
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

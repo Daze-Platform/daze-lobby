@@ -5,9 +5,10 @@ import {
   AccordionTrigger 
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Check, FileSignature, Lock } from "lucide-react";
+import { Check, FileSignature, Lock, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ReviewSignModal } from "../ReviewSignModal";
+import { format } from "date-fns";
 
 interface LegalStepProps {
   isCompleted: boolean;
@@ -19,6 +20,16 @@ interface LegalStepProps {
 
 export function LegalStep({ isCompleted, isLocked, data, onSign, isSubmitting }: LegalStepProps) {
   const [showPilotModal, setShowPilotModal] = useState(false);
+
+  // Check if already signed
+  const pilotSigned = !!data?.pilot_signed;
+  const signatureUrl = data?.signature_url as string | undefined;
+  const signedAt = data?.signed_at as string | undefined;
+
+  // Format signed date for display
+  const signedDateDisplay = signedAt 
+    ? format(new Date(signedAt), "MMM d, yyyy")
+    : null;
 
   return (
     <>
@@ -51,25 +62,33 @@ export function LegalStep({ isCompleted, isLocked, data, onSign, isSubmitting }:
             {/* Pilot Agreement */}
             <div className={cn(
               "flex items-center justify-between p-4 border rounded-lg",
-              data?.pilot_signed ? "border-success/50 bg-success/5" : ""
+              pilotSigned ? "border-success/50 bg-success/5" : ""
             )}>
               <div className="flex items-center gap-3">
                 <FileSignature className={cn(
                   "w-5 h-5",
-                  data?.pilot_signed ? "text-success" : "text-muted-foreground"
+                  pilotSigned ? "text-success" : "text-muted-foreground"
                 )} />
                 <div>
                   <p className="font-medium text-sm">Pilot Agreement</p>
                   <p className="text-xs text-muted-foreground">
-                    {data?.pilot_signed ? "Signed" : "Required to proceed"}
+                    {pilotSigned && signedDateDisplay
+                      ? `Signed on ${signedDateDisplay}` 
+                      : "Required to proceed"
+                    }
                   </p>
                 </div>
               </div>
-              {data?.pilot_signed ? (
-                <span className="flex items-center gap-1 text-xs text-success font-medium">
-                  <Check className="w-3 h-3" />
-                  Signed
-                </span>
+              {pilotSigned ? (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setShowPilotModal(true)}
+                  className="gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  View Signature
+                </Button>
               ) : (
                 <Button 
                   size="sm" 
@@ -106,6 +125,8 @@ export function LegalStep({ isCompleted, isLocked, data, onSign, isSubmitting }:
           setShowPilotModal(false);
         }}
         isSubmitting={isSubmitting}
+        existingSignatureUrl={signatureUrl}
+        signedAt={signedAt}
       />
     </>
   );

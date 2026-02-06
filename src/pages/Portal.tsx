@@ -25,9 +25,11 @@ export default function Portal() {
     isLoading, 
     progress, 
     status, 
+    signLegal,
     updateTask, 
     uploadFile,
     saveVenues,
+    isSigningLegal,
     isUpdating
   } = useClientPortal();
 
@@ -38,6 +40,10 @@ export default function Portal() {
     } catch (error) {
       toast.error("Failed to sign out");
     }
+  };
+
+  const handleLegalSign = (signatureDataUrl: string) => {
+    signLegal({ signatureDataUrl });
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
@@ -129,11 +135,13 @@ export default function Portal() {
             <CardContent>
               <TaskAccordion 
                 tasks={formattedTasks}
+                onLegalSign={handleLegalSign}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
                 venues={displayVenues}
                 onVenuesChange={setLocalVenues}
                 onVenuesSave={handleVenuesSave}
+                isSigningLegal={isSigningLegal}
                 isUpdating={isUpdating}
               />
             </CardContent>

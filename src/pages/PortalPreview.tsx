@@ -17,6 +17,7 @@ import type { Venue } from "@/components/portal/VenueCard";
 export default function PortalPreview() {
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [isSigningLegal, setIsSigningLegal] = useState(false);
   const [tasks, setTasks] = useState([
     { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} as Record<string, unknown> },
     { key: "brand", name: "Brand Identity", isCompleted: false, data: {} as Record<string, unknown> },
@@ -25,6 +26,32 @@ export default function PortalPreview() {
 
   const completedCount = tasks.filter(t => t.isCompleted).length;
   const progress = Math.round((completedCount / tasks.length) * 100);
+
+  const handleLegalSign = async (signatureDataUrl: string) => {
+    setIsSigningLegal(true);
+    
+    // Simulate upload delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const signedAt = new Date().toISOString();
+    
+    setTasks(prev => prev.map(task => 
+      task.key === "legal" 
+        ? { 
+            ...task, 
+            isCompleted: true, 
+            data: { 
+              pilot_signed: true, 
+              signature_url: signatureDataUrl,
+              signed_at: signedAt,
+            } 
+          }
+        : task
+    ));
+    
+    setIsSigningLegal(false);
+    toast.success("Agreement signed successfully! Next step unlocked. (Demo mode)");
+  };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
     setTasks(prev => prev.map(task => 
@@ -122,11 +149,13 @@ export default function PortalPreview() {
             <CardContent>
               <TaskAccordion 
                 tasks={tasks}
+                onLegalSign={handleLegalSign}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
                 venues={venues}
                 onVenuesChange={setVenues}
                 onVenuesSave={handleVenuesSave}
+                isSigningLegal={isSigningLegal}
               />
             </CardContent>
           </Card>

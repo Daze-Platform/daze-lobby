@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
+import { sanitizeFilename } from "@/lib/fileValidation";
 
 interface OnboardingTask {
   id: string;
@@ -105,7 +106,74 @@ export function useClientPortal() {
     enabled: !!clientHotel?.hotel_id,
   });
 
-  // Update task
+  // Sign legal document (upload signature to contracts bucket)
+  const signLegalMutation = useMutation({
+    mutationFn: async ({ 
+      signatureDataUrl 
+    }: { 
+      signatureDataUrl: string;
+    }) => {
+      if (!user?.id || !clientHotel?.hotel_id) {
+        throw new Error("Not authenticated or no hotel assigned");
+      }
+
+      // Convert base64 data URL to Blob
+      const response = await fetch(signatureDataUrl);
+      const blob = await response.blob();
+
+      // Create file path: {user_id}/signatures/{hotel_id}/pilot_agreement.png
+      const filePath = `${user.id}/signatures/${clientHotel.hotel_id}/pilot_agreement.png`;
+
+      // Upload to contracts bucket (private, PDF-only normally, but signatures are special)
+      // We'll upload to client-uploads since contracts is PDF-only
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from("client-uploads")
+        .upload(filePath, blob, {
+          contentType: "image/png",
+          upsert: true, // Allow overwrite if re-signing
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL (or signed URL for private bucket)
+      const { data: urlData } = supabase.storage
+        .from("client-uploads")
+        .getPublicUrl(filePath);
+
+      const signatureUrl = urlData?.publicUrl;
+      const signedAt = new Date().toISOString();
+
+      // Update the legal task with signature data
+      const { error: updateError } = await supabase
+        .from("onboarding_tasks")
+        .update({
+          is_completed: true,
+          completed_at: signedAt,
+          data: {
+            pilot_signed: true,
+            signature_url: signatureUrl,
+            signed_at: signedAt,
+            signature_path: filePath,
+          },
+        } as never)
+        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("task_key", "legal");
+
+      if (updateError) throw updateError;
+
+      return { signatureUrl, signedAt };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["client-hotel"] });
+      toast.success("Agreement signed successfully! Next step unlocked.");
+    },
+    onError: (error) => {
+      toast.error("Failed to save signature: " + error.message);
+    },
+  });
+
+  // Update task (for non-legal tasks)
   const updateTaskMutation = useMutation({
     mutationFn: async ({ 
       taskKey, 
@@ -151,7 +219,8 @@ export function useClientPortal() {
     }) => {
       if (!user?.id || !clientHotel?.hotel_id) throw new Error("Not authenticated");
 
-      const filePath = `${user.id}/${clientHotel.hotel_id}/${taskKey}/${fieldName}_${Date.now()}_${file.name}`;
+      const safeName = sanitizeFilename(file.name);
+      const filePath = `${user.id}/${clientHotel.hotel_id}/${taskKey}/${fieldName}_${Date.now()}_${safeName}`;
       
       const { error: uploadError } = await supabase.storage
         .from("client-uploads")
@@ -159,13 +228,15 @@ export function useClientPortal() {
 
       if (uploadError) throw uploadError;
 
+      // Get existing task data to merge
+      const existingTask = tasks?.find(t => t.task_key === taskKey);
+      const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+
       // Update task with file reference
       const { error: updateError } = await supabase
         .from("onboarding_tasks")
         .update({ 
-          data: { [fieldName]: filePath },
-          is_completed: taskKey === "legal",
-          completed_at: taskKey === "legal" ? new Date().toISOString() : null,
+          data: { ...existingData, [fieldName]: filePath },
         } as never)
         .eq("hotel_id", clientHotel.hotel_id)
         .eq("task_key", taskKey);
@@ -261,14 +332,17 @@ export function useClientPortal() {
 
   return {
     hotel: clientHotel?.hotels,
+    hotelId: clientHotel?.hotel_id,
     tasks: tasks || [],
     venues: formatVenues(),
     isLoading: isLoadingHotel || isLoadingTasks || isLoadingVenues,
     progress: calculateProgress(),
     status: getStatus(),
+    signLegal: signLegalMutation.mutate,
     updateTask: updateTaskMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
     saveVenues: saveVenuesMutation.mutate,
+    isSigningLegal: signLegalMutation.isPending,
     isUpdating: updateTaskMutation.isPending,
     isUploading: uploadFileMutation.isPending,
     isSavingVenues: saveVenuesMutation.isPending,
