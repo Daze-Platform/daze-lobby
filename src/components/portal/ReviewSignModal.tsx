@@ -139,16 +139,16 @@ export function ReviewSignModal({
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
           {/* Document View */}
           <div className="border-r flex flex-col min-h-0">
-            <div className="px-4 py-2 bg-muted/50 border-b flex items-center justify-between shrink-0">
+            <div className="px-4 py-3 bg-muted/30 border-b flex items-center justify-between shrink-0">
               <p className="text-sm font-medium text-muted-foreground">Agreement Document</p>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={handleDownload}
-                className="h-7 gap-1.5 text-muted-foreground hover:text-foreground"
+                className="h-8 gap-2 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium shadow-sm"
               >
-                <Download className="w-3.5 h-3.5" />
-                Download
+                <Download className="w-4 h-4" />
+                Download PDF
               </Button>
             </div>
             <ScrollArea className="flex-1 min-h-0">
