@@ -1,117 +1,81 @@
 
 
-# Daze Lobby - Control Tower Dashboard
+# Create Specifications Table
 
-A high-density operational dashboard for managing hotel client lifecycles with role-based access, automated alerts, and real-time device tracking.
-
----
-
-## Phase 1: Foundation & Authentication
-
-### Dark Mode Design System
-- Configure Inter font as the primary typeface
-- Set dark theme as default with a professional operations aesthetic
-- Dense, compact spacing optimized for information display
-
-### Role-Based Authentication
-- Email/password login with Supabase Auth
-- Three roles: **Admin** (full access), **Ops Manager** (manage clients), **Support** (view-only)
-- Secure role management using a separate `user_roles` table
+A database table to store specification documents (like the Control Tower Dashboard blueprint) that can be referenced during development.
 
 ---
 
-## Phase 2: Database Architecture
+## Database Schema
 
-### Core Tables
-- **hotels** - Client records with name, phase, contract value, assigned team member
-- **hotel_contacts** - Primary and secondary contacts per hotel
-- **devices** - Hardware device inventory (type, serial, status, install date)
-- **activity_logs** - Timestamped action history per hotel
-- **blocker_alerts** - Manual flags + automatic rule triggers
+### Table: specifications
 
-### Lifecycle Phases
-1. **Onboarding** - Setup & Menu Ingestion
-2. **Pilot Live** - Testing period  
-3. **Contracted** - Full revenue generation
-
----
-
-## Phase 3: Control Tower Dashboard
-
-### Dense Table View
-A compact data table showing all hotels at a glance:
-- Hotel name, current phase, days in phase
-- Blocker status (red indicator when flagged)
-- Device count and their health status
-- Revenue/ARR metrics
-- Onboarding progress percentage
-- Assigned team member
-- Last activity date
-- Contract value & next milestone
-
-### Blocker Alert System
-- **Manual flags**: Team marks clients as blocked with reason
-- **Automatic detection**: 
-  - "Stuck in phase 7+ days"
-  - "No activity in 48 hours"
-  - "Devices offline"
-- Red badge indicators with hover details
-
-### Quick Filters & Search
-- Filter by phase, blocker status, assigned team member
-- Search by hotel name or contact
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| name | text | Specification title (e.g., "Control Tower Dashboard") |
+| content | text | Full markdown content of the specification |
+| version | text | Optional version identifier (e.g., "1.0", "2.1") |
+| created_at | timestamp | When the spec was created |
+| updated_at | timestamp | When the spec was last modified |
+| created_by_id | uuid | User who created the specification |
 
 ---
 
-## Phase 4: Kanban Lifecycle View
+## Security Policies (RLS)
 
-### Board Layout
-Three columns representing lifecycle phases:
-- **Onboarding** → **Pilot Live** → **Contracted**
-
-### Drag-and-Drop
-- Move hotel cards between phases
-- Auto-log phase transitions to activity history
-- Visual card showing hotel name, key metrics, and blocker status
+| Role | Permissions |
+|------|-------------|
+| **Admin** | Full access (create, read, update, delete) |
+| **Ops Manager** | Read and create specifications |
+| **Support** | Read-only access |
 
 ---
 
-## Phase 5: Client Detail Panel
+## Migration SQL
 
-### Slide-Out Drawer
-Clicking any hotel opens a detailed side panel with:
+```text
+-- Create specifications table
+CREATE TABLE public.specifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  content text NOT NULL,
+  version text,
+  created_by_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
-**Header Section**
-- Hotel name, logo, phase badge
-- Quick action buttons (add note, flag as blocked)
+-- Enable RLS
+ALTER TABLE public.specifications ENABLE ROW LEVEL SECURITY;
 
-**Contacts Tab**
-- Primary and secondary contacts
-- Name, role, email, phone
+-- RLS Policies
+CREATE POLICY "Dashboard users can view specifications"
+  ON public.specifications FOR SELECT
+  USING (has_dashboard_access(auth.uid()));
 
-**Devices Tab**  
-- List of installed hardware devices
-- Device type, serial number, status, last check-in
+CREATE POLICY "Admins and Ops Managers can create specifications"
+  ON public.specifications FOR INSERT
+  WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'ops_manager'));
 
-**Activity Log Tab**
-- Chronological feed of all actions
-- Auto-logged events (phase changes, device updates)
-- Manual notes from team members
+CREATE POLICY "Admins can update specifications"
+  ON public.specifications FOR UPDATE
+  USING (has_role(auth.uid(), 'admin'));
 
-**Metrics Tab**
-- Contract value, ARR
-- Onboarding checklist progress
-- Days in current phase
+CREATE POLICY "Admins can delete specifications"
+  ON public.specifications FOR DELETE
+  USING (has_role(auth.uid(), 'admin'));
+
+-- Auto-update timestamp trigger
+CREATE TRIGGER update_specifications_updated_at
+  BEFORE UPDATE ON public.specifications
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+```
 
 ---
 
-## Summary
+## After Creation
 
-This plan delivers a complete operational command center with:
-- ✅ High-density data visualization
-- ✅ Role-based access control (Admin/Ops Manager/Support)
-- ✅ Combined manual + automatic blocker alerts
-- ✅ Hardware device tracking per hotel
-- ✅ Full operational metrics view
-- ✅ Dark mode-first design
+Once approved, you'll be able to upload your specification document to this table. I'll then read the latest entry to build the Kanban Lifecycle View according to your exact blueprint.
 
