@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { LegalStep, BrandStep, VenueStep } from "./steps";
 import type { Venue } from "./VenueCard";
@@ -12,21 +11,25 @@ interface OnboardingTask {
 
 interface TaskAccordionProps {
   tasks: OnboardingTask[];
+  onLegalSign: (signatureDataUrl: string) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
   venues?: Venue[];
   onVenuesChange?: (venues: Venue[]) => void;
   onVenuesSave?: () => void;
+  isSigningLegal?: boolean;
   isUpdating?: boolean;
 }
 
 export function TaskAccordion({ 
   tasks, 
+  onLegalSign,
   onTaskUpdate, 
   onFileUpload,
   venues = [],
   onVenuesChange,
   onVenuesSave,
+  isSigningLegal,
   isUpdating
 }: TaskAccordionProps) {
   const getTaskData = (key: string) => tasks.find(t => t.key === key);
@@ -39,14 +42,6 @@ export function TaskAccordion({
     const prevTaskKey = taskOrder[taskIndex - 1];
     const prevTask = tasks.find(t => t.key === prevTaskKey);
     return prevTask ? !prevTask.isCompleted : false;
-  };
-
-  const handleLegalSign = (signatureDataUrl: string) => {
-    onTaskUpdate("legal", { 
-      pilot_signed: true, 
-      pilot_signature: signatureDataUrl,
-      signed_at: new Date().toISOString()
-    });
   };
 
   const handleBrandSave = (data: { brand_palette: string[]; logos: Record<string, File> }) => {
@@ -63,8 +58,8 @@ export function TaskAccordion({
         isCompleted={getTaskData("legal")?.isCompleted || false}
         isLocked={isTaskLocked("legal")}
         data={getTaskData("legal")?.data}
-        onSign={handleLegalSign}
-        isSubmitting={isUpdating}
+        onSign={onLegalSign}
+        isSubmitting={isSigningLegal}
       />
       
       <BrandStep
