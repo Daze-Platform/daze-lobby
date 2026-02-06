@@ -1,11 +1,12 @@
 import * as React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Cpu, GripVertical } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertTriangle, Cpu, GripVertical, Lock } from "lucide-react";
 import type { Hotel } from "@/hooks/useHotels";
 import { cn } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
@@ -25,6 +26,10 @@ const snapSpring = {
 };
 
 export function DraggableHotelCard({ hotel, index, isDragging = false, onBlockedClick }: HotelCardProps) {
+  const [isShaking, setIsShaking] = React.useState(false);
+  const [showLockedTooltip, setShowLockedTooltip] = React.useState(false);
+
+  // Disable sorting for blocked cards
   const {
     attributes,
     listeners,
@@ -34,6 +39,7 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
     isDragging: isSortableDragging,
   } = useSortable({
     id: hotel.id,
+    disabled: hotel.hasBlocker, // Disable drag for blocked cards
     transition: {
       duration: 200,
       easing: "cubic-bezier(0.25, 1, 0.5, 1)",
@@ -42,6 +48,16 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
 
   // Track if we're in a drag operation
   const isDragActive = React.useRef(false);
+
+  // Handle attempt to drag a blocked card - trigger shake
+  const handleBlockedDragAttempt = React.useCallback(() => {
+    if (hotel.hasBlocker) {
+      setIsShaking(true);
+      setShowLockedTooltip(true);
+      setTimeout(() => setIsShaking(false), 500);
+      setTimeout(() => setShowLockedTooltip(false), 2000);
+    }
+  }, [hotel.hasBlocker]);
 
   // Handle click on blocked cards
   const handleCardClick = React.useCallback((e: React.MouseEvent) => {
@@ -56,6 +72,13 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
       onBlockedClick(hotel);
     }
   }, [hotel, onBlockedClick]);
+
+  // Handle mouse down on blocked cards - trigger shake
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    if (hotel.hasBlocker) {
+      handleBlockedDragAttempt();
+    }
+  }, [hotel.hasBlocker, handleBlockedDragAttempt]);
 
   // Track drag state
   React.useEffect(() => {
@@ -85,38 +108,51 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
   const isBeingDragged = isDragging || isSortableDragging;
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      style={style}
-      data-hotel-id={hotel.id}
-      layout
-      layoutId={hotel.id}
-      initial={false}
-      animate={{
-        opacity: isBeingDragged ? 0.4 : 1,
-        scale: isBeingDragged ? 0.98 : 1,
-      }}
-      transition={snapSpring}
-    >
-      <Card
-        className={cn(
-          "group/card transition-shadow duration-150",
-          hotel.hasBlocker 
-            ? "cursor-pointer hover:shadow-soft-lg" 
-            : "cursor-grab hover:shadow-soft-lg active:cursor-grabbing",
-          hotel.hasBlocker && "border-destructive/50 border-2 bg-destructive/5",
-          isBeingDragged && "shadow-none"
-        )}
-        onClick={handleCardClick}
-        {...attributes}
-        {...listeners}
-      >
-        <CardContent className="p-2.5 sm:p-3">
-          <div className="flex items-start gap-2 sm:gap-3">
-            {/* Drag Handle */}
-            <div className="mt-1 text-muted-foreground/40 group-hover/card:text-muted-foreground/70 transition-colors flex-shrink-0">
-              <GripVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </div>
+    <TooltipProvider delayDuration={0}>
+      <Tooltip open={showLockedTooltip}>
+        <TooltipTrigger asChild>
+          <motion.div
+            ref={setNodeRef}
+            style={style}
+            data-hotel-id={hotel.id}
+            layout
+            layoutId={hotel.id}
+            initial={false}
+            animate={{
+              opacity: isBeingDragged ? 0.4 : 1,
+              scale: isBeingDragged ? 0.98 : 1,
+              x: isShaking ? [0, -4, 4, -4, 4, -2, 2, 0] : 0,
+            }}
+            transition={isShaking ? { duration: 0.5, ease: "easeInOut" } : snapSpring}
+          >
+            <Card
+              className={cn(
+                "group/card transition-shadow duration-150",
+                hotel.hasBlocker 
+                  ? "cursor-not-allowed" 
+                  : "cursor-grab hover:shadow-soft-lg active:cursor-grabbing",
+                hotel.hasBlocker && "border-destructive/50 border-2 bg-destructive/5 hover:shadow-soft-lg",
+                isBeingDragged && "shadow-none"
+              )}
+              onClick={handleCardClick}
+              onMouseDown={handleMouseDown}
+              {...(hotel.hasBlocker ? {} : { ...attributes, ...listeners })}
+            >
+              <CardContent className="p-2.5 sm:p-3">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  {/* Drag Handle - Show lock for blocked cards */}
+                  <div className={cn(
+                    "mt-1 transition-colors flex-shrink-0",
+                    hotel.hasBlocker 
+                      ? "text-destructive/60" 
+                      : "text-muted-foreground/40 group-hover/card:text-muted-foreground/70"
+                  )}>
+                    {hotel.hasBlocker ? (
+                      <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    ) : (
+                      <GripVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    )}
+                  </div>
 
             {/* Hotel Avatar */}
             <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 ring-2 ring-background shadow-soft">
@@ -174,10 +210,22 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
                 </div>
               )}
             </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TooltipTrigger>
+        <TooltipContent 
+          side="top" 
+          className="bg-destructive text-destructive-foreground border-destructive"
+        >
+          <div className="flex items-center gap-1.5">
+            <Lock className="h-3 w-3" />
+            <span>Locked: Resolve blocker before moving</span>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

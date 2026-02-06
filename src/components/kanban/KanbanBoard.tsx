@@ -276,6 +276,7 @@ export function KanbanBoard() {
         open={blockerModalOpen}
         onOpenChange={setBlockerModalOpen}
         blocker={blockerData}
+        onBlockerCleared={() => setSelectedBlockedHotel(null)}
       />
     </DndContext>
   );
