@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Accordion } from "@/components/ui/accordion";
-import { LegalStep, BrandStep, VenueStep } from "./steps";
+import { LegalStep, BrandStep, VenueStep, PosStep } from "./steps";
 import type { Venue } from "./VenueCard";
 
 interface OnboardingTask {
@@ -30,7 +30,7 @@ interface TaskAccordionProps {
   hotelLegalEntity?: LegalEntityData;
 }
 
-const TASK_ORDER = ["legal", "brand", "venue"];
+const TASK_ORDER = ["legal", "brand", "venue", "pos"];
 
 export function TaskAccordion({ 
   tasks, 
@@ -120,6 +120,14 @@ export function TaskAccordion({
     handleStepComplete("venue");
   };
 
+  const handlePosUpdate = (data: { provider: string; status: string }) => {
+    onTaskUpdate("pos", data);
+  };
+
+  const handlePosComplete = () => {
+    handleStepComplete("pos");
+  };
+
   return (
     <Accordion 
       type="single" 
@@ -162,6 +170,17 @@ export function TaskAccordion({
         onStepComplete={handleVenueComplete}
         isJustCompleted={recentlyCompleted === "venue"}
         isUnlocking={unlockingStep === "venue"}
+      />
+      
+      <PosStep
+        isCompleted={getTaskData("pos")?.isCompleted || false}
+        isLocked={isTaskLocked("pos")}
+        data={getTaskData("pos")?.data}
+        onUpdate={handlePosUpdate}
+        isSaving={isUpdating}
+        onStepComplete={handlePosComplete}
+        isJustCompleted={recentlyCompleted === "pos"}
+        isUnlocking={unlockingStep === "pos"}
       />
     </Accordion>
   );
