@@ -71,12 +71,13 @@ export function LegalStep({
             </div>
           </div>
         </AccordionTrigger>
-        <AccordionContent className="pb-4">
-          <div className="space-y-4 pt-2">
+          <div className="space-y-3 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
-              "flex items-center justify-between p-4 border rounded-lg",
-              pilotSigned ? "border-success/50 bg-success/5" : ""
+              "flex items-center justify-between p-4 rounded-xl transition-all duration-200",
+              pilotSigned 
+                ? "bg-success/5 shadow-sm" 
+                : "bg-secondary/50 shadow-sm hover:shadow-md"
             )}>
               <div className="flex items-center gap-3">
                 <FileSignature className={cn(
