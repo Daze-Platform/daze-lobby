@@ -163,9 +163,9 @@ export default function Portal() {
       )}
       {/* Glass Header - Immediate entrance */}
       <header className="glass-header entrance-header">
-        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 md:gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-8 md:h-10 w-auto" />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
             {isAdminViewing && (
               <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
                 Admin
@@ -173,9 +173,9 @@ export default function Portal() {
             )}
           </div>
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3 lg:gap-4">
             {isAdmin && <AdminHotelSwitcher />}
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground truncate max-w-[200px]">
               {user?.email}
             </span>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="min-h-[44px]">
@@ -187,13 +187,13 @@ export default function Portal() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Welcome Section - Hero entrance */}
-        <div className="mb-6 md:mb-12 entrance-hero">
-          <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight mb-2 md:mb-3">
+        <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
+          <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
             Welcome, {hotel?.name || "Partner"}
           </h1>
-          <p className="text-sm md:text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
