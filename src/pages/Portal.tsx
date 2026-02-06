@@ -9,10 +9,12 @@ import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
 import { WelcomeTour } from "@/components/portal/WelcomeTour";
+import { ActivityFeedPanel } from "@/components/portal/ActivityFeedPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LogOut, Building2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, LogOut, Building2, Clock } from "lucide-react";
 import { signOut, hasDashboardAccess } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -25,6 +27,7 @@ export default function Portal() {
   const navigate = useNavigate();
   const [localVenues, setLocalVenues] = useState<Venue[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showActivityFeed, setShowActivityFeed] = useState(false);
   const prevStatus = useRef<string | null>(null);
   
   // Welcome tour for first-time users (only for client role)
@@ -175,6 +178,26 @@ export default function Portal() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4">
             {isAdmin && <AdminHotelSwitcher />}
+            
+            {/* Activity Feed Button */}
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowActivityFeed(true)}
+                    className="h-9 w-9 rounded-full"
+                  >
+                    <Clock className="w-4 h-4" strokeWidth={1.5} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Activity Feed</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
             <span className="text-sm text-muted-foreground truncate max-w-[200px]">
               {user?.email}
             </span>
@@ -266,6 +289,18 @@ export default function Portal() {
               <AdminHotelSwitcher />
             </div>
           )}
+          
+          {/* Mobile Activity Feed Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+            onClick={() => setShowActivityFeed(true)}
+          >
+            <Clock className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Activity</span>
+          </Button>
+          
           <Button
             variant="ghost"
             size="sm"
@@ -277,6 +312,13 @@ export default function Portal() {
           </Button>
         </div>
       </nav>
+
+      {/* Activity Feed Panel */}
+      <ActivityFeedPanel
+        open={showActivityFeed}
+        onClose={() => setShowActivityFeed(false)}
+        hotelId={hotelId}
+      />
     </div>
   );
 }
