@@ -1,6 +1,4 @@
 import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
-import { Button } from "@/components/ui/button";
-import { Eraser } from "lucide-react";
 
 export interface SignaturePadRef {
   getDataUrl: () => string | null;
@@ -144,22 +142,6 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
             </div>
           )}
         </div>
-        
-        {/* Action Buttons */}
-        {!disabled && (
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={clearSignature}
-              className="flex-1 gap-2"
-              disabled={!hasSignature}
-            >
-              <Eraser className="w-4 h-4" />
-              Clear
-            </Button>
-          </div>
-        )}
       </div>
     );
   }
