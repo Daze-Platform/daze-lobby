@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { ProgressRing } from "@/components/portal/ProgressRing";
@@ -10,18 +11,24 @@ import { signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import dazeLogo from "@/assets/daze-logo.png";
+import type { Venue } from "@/components/portal/VenueCard";
 
 export default function Portal() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
+  const [localVenues, setLocalVenues] = useState<Venue[]>([]);
+  
   const { 
     hotel, 
     tasks, 
+    venues,
     isLoading, 
     progress, 
     status, 
     updateTask, 
-    uploadFile 
+    uploadFile,
+    saveVenues,
+    isUpdating
   } = useClientPortal();
 
   const handleSignOut = async () => {
@@ -41,6 +48,13 @@ export default function Portal() {
     uploadFile({ taskKey, file, fieldName });
   };
 
+  const handleVenuesSave = () => {
+    saveVenues(localVenues);
+  };
+
+  // Sync venues from server when loaded
+  const displayVenues = localVenues.length > 0 ? localVenues : venues;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -49,7 +63,7 @@ export default function Portal() {
     );
   }
 
-  // Format tasks for the accordion
+  // Format tasks for the accordion - now with venue step
   const formattedTasks = tasks.length > 0 
     ? tasks.map(t => ({
         key: t.task_key,
@@ -58,9 +72,9 @@ export default function Portal() {
         data: t.data as Record<string, unknown>,
       }))
     : [
-        { key: "legal", name: "Legal & Agreement", isCompleted: false, data: {} },
+        { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} },
         { key: "brand", name: "Brand Identity", isCompleted: false, data: {} },
-        { key: "menu", name: "Menu Configuration", isCompleted: false, data: {} },
+        { key: "venue", name: "Venue Manager", isCompleted: false, data: {} },
       ];
 
   return (
@@ -117,6 +131,10 @@ export default function Portal() {
                 tasks={formattedTasks}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
+                venues={displayVenues}
+                onVenuesChange={setLocalVenues}
+                onVenuesSave={handleVenuesSave}
+                isUpdating={isUpdating}
               />
             </CardContent>
           </Card>

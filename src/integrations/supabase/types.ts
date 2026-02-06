@@ -217,6 +217,7 @@ export type Database = {
         Row: {
           arr: number | null
           assigned_team_member_id: string | null
+          brand_palette: Json | null
           contract_value: number | null
           created_at: string
           id: string
@@ -233,6 +234,7 @@ export type Database = {
         Insert: {
           arr?: number | null
           assigned_team_member_id?: string | null
+          brand_palette?: Json | null
           contract_value?: number | null
           created_at?: string
           id?: string
@@ -249,6 +251,7 @@ export type Database = {
         Update: {
           arr?: number | null
           assigned_team_member_id?: string | null
+          brand_palette?: Json | null
           contract_value?: number | null
           created_at?: string
           id?: string
@@ -388,6 +391,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      venues: {
+        Row: {
+          created_at: string
+          hotel_id: string
+          id: string
+          menu_pdf_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hotel_id: string
+          id?: string
+          menu_pdf_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          menu_pdf_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

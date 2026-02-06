@@ -1,41 +1,53 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import dazeLogo from "@/assets/daze-logo.png";
 import { toast } from "sonner";
+import type { Venue } from "@/components/portal/VenueCard";
 
 /**
- * Preview/Demo version of the Client Portal
+ * Preview/Demo version of the Client Portal V2
  * This is for testing the UI without authentication
  */
 export default function PortalPreview() {
-  const navigate = useNavigate();
-  const [progress, setProgress] = useState(33);
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [tasks, setTasks] = useState([
-    { key: "legal", name: "Legal & Agreement", isCompleted: true, data: {} },
-    { key: "brand", name: "Brand Identity", isCompleted: false, data: {} },
-    { key: "menu", name: "Menu Configuration", isCompleted: false, data: {} },
+    { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} as Record<string, unknown> },
+    { key: "brand", name: "Brand Identity", isCompleted: false, data: {} as Record<string, unknown> },
+    { key: "venue", name: "Venue Manager", isCompleted: false, data: {} as Record<string, unknown> },
   ]);
 
+  const completedCount = tasks.filter(t => t.isCompleted).length;
+  const progress = Math.round((completedCount / tasks.length) * 100);
+
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
-    setTasks(prev => prev.map(t => 
-      t.key === taskKey 
-        ? { ...t, isCompleted: true, data } 
-        : t
+    setTasks(prev => prev.map(task => 
+      task.key === taskKey 
+        ? { ...task, isCompleted: true, data: { ...task.data, ...data } }
+        : task
     ));
-    const newProgress = Math.round(((tasks.filter(t => t.isCompleted).length + 1) / tasks.length) * 100);
-    setProgress(newProgress);
-    toast.success(`Task "${taskKey}" completed! (Demo mode)`);
+    toast.success(`Task completed! (Demo mode)`);
   };
 
   const handleFileUpload = (taskKey: string, file: File, fieldName: string) => {
-    toast.success(`File "${file.name}" uploaded for ${taskKey}. (Demo mode - not actually saved)`);
+    toast.success(`File "${file.name}" uploaded. (Demo mode)`);
+  };
+
+  const handleVenuesSave = () => {
+    if (venues.length > 0 && venues.some(v => v.name.trim())) {
+      setTasks(prev => prev.map(task =>
+        task.key === "venue"
+          ? { ...task, isCompleted: true, data: { venues: venues.map(v => v.name) } }
+          : task
+      ));
+      toast.success("Venues saved! (Demo mode)");
+    }
   };
 
   return (
@@ -45,15 +57,17 @@ export default function PortalPreview() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
-            <span className="text-xs bg-warning/20 text-warning px-2 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
               PREVIEW MODE
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Login
-            </Button>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Login
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -70,34 +84,6 @@ export default function PortalPreview() {
           </p>
         </div>
 
-        {/* Status Toggle for Testing */}
-        <div className="mb-6 p-4 border border-dashed rounded-lg bg-muted/30">
-          <p className="text-sm text-muted-foreground mb-2">Test Status Toggle:</p>
-          <div className="flex gap-2">
-            <Button 
-              variant={status === "onboarding" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setStatus("onboarding")}
-            >
-              Onboarding
-            </Button>
-            <Button 
-              variant={status === "reviewing" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setStatus("reviewing")}
-            >
-              Reviewing
-            </Button>
-            <Button 
-              variant={status === "live" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setStatus("live")}
-            >
-              Live
-            </Button>
-          </div>
-        </div>
-
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1">
@@ -107,6 +93,24 @@ export default function PortalPreview() {
             <CardContent className="flex flex-col items-center gap-4">
               <ProgressRing progress={progress} />
               <StatusBadge status={status} />
+              
+              {/* Demo Status Toggle */}
+              <div className="w-full pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2 text-center">Demo: Toggle Status</p>
+                <div className="flex gap-2">
+                  {(["onboarding", "reviewing", "live"] as const).map((s) => (
+                    <Button
+                      key={s}
+                      size="sm"
+                      variant={status === s ? "default" : "outline"}
+                      onClick={() => setStatus(s)}
+                      className="flex-1 text-xs capitalize"
+                    >
+                      {s}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -120,6 +124,9 @@ export default function PortalPreview() {
                 tasks={tasks}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
+                venues={venues}
+                onVenuesChange={setVenues}
+                onVenuesSave={handleVenuesSave}
               />
             </CardContent>
           </Card>
