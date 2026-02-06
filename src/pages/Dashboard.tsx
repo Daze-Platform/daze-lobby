@@ -47,22 +47,6 @@ export default function Dashboard() {
           <KanbanBoard />
         </div>
 
-        {/* Role Info (temporary) */}
-        {!role && (
-          <Card className="border-warning/50 bg-warning/5">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">No role assigned</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Contact an administrator to get access to the dashboard features.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </DashboardLayout>
   );
