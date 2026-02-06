@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Check, Image } from "lucide-react";
+import { Upload, Check, Image, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { validateImageFile } from "@/lib/fileValidation";
+import { toast } from "sonner";
 
 interface LogoVariant {
   type: "dark" | "light" | "icon";
@@ -25,6 +27,13 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
 
   const handleFileChange = (type: "dark" | "light" | "icon", file: File | undefined) => {
     if (!file) return;
+
+    // Validate file before processing
+    const validation = validateImageFile(file, 5);
+    if (!validation.isValid) {
+      toast.error(validation.error || "Invalid file");
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -87,7 +96,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                 )}
                 <Input
                   type="file"
-                  accept=".png,.svg,.jpg,.jpeg"
+                  accept=".png,.svg,.jpg,.jpeg,image/png,image/jpeg,image/svg+xml"
                   className="sr-only"
                   onChange={(e) => handleFileChange(logo.type, e.target.files?.[0])}
                 />
@@ -118,8 +127,9 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Accepted formats: PNG, SVG, JPG. Recommended: SVG for best quality.
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" />
+        Accepted: PNG, SVG, JPG (max 5MB). Executables blocked.
       </p>
     </div>
   );

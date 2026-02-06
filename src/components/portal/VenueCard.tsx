@@ -1,10 +1,11 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Upload, FileText, X, Check, Loader2 } from "lucide-react";
+import { Upload, FileText, X, Check, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { validateMenuFile } from "@/lib/fileValidation";
+import { toast } from "sonner";
 
 export interface Venue {
   id: string;
@@ -24,13 +25,21 @@ interface VenueCardProps {
 export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onUpdate({
-        ...venue,
-        menuFile: file,
-        menuFileName: file.name,
-      });
+    if (!file) return;
+
+    // Validate file before processing
+    const validation = validateMenuFile(file, 20);
+    if (!validation.isValid) {
+      toast.error(validation.error || "Invalid file");
+      e.target.value = ''; // Reset input
+      return;
     }
+
+    onUpdate({
+      ...venue,
+      menuFile: file,
+      menuFileName: file.name,
+    });
   };
 
   const hasMenu = venue.menuFile || venue.menuPdfUrl;
@@ -52,12 +61,13 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
           onChange={(e) => onUpdate({ ...venue, name: e.target.value })}
           placeholder="Venue name..."
           className="font-semibold text-lg border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
+          maxLength={100}
         />
       </CardHeader>
 
       <CardContent className="pt-0">
         <Label className="text-sm text-muted-foreground mb-3 block">
-          Menu PDF
+          Menu (PDF only)
         </Label>
 
         <label
@@ -92,11 +102,15 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
               <span className="text-sm text-muted-foreground">
                 Drop menu PDF or click to upload
               </span>
+              <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                PDF only, max 20MB
+              </span>
             </>
           )}
           <Input
             type="file"
-            accept=".pdf"
+            accept=".pdf,application/pdf"
             className="sr-only"
             onChange={handleFileChange}
           />
