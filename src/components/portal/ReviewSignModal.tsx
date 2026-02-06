@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SignaturePad, SignaturePadRef } from "./SignaturePad";
-import { Check, Loader2, Shield, Calendar } from "lucide-react";
+import { Check, Loader2, Shield, Calendar, Download } from "lucide-react";
 import { format } from "date-fns";
 
 interface ReviewSignModalProps {
@@ -99,6 +99,18 @@ export function ReviewSignModal({
     setHasSignature(false);
   };
 
+  const handleDownload = () => {
+    const blob = new Blob([PILOT_AGREEMENT_TEXT], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Daze_Pilot_Agreement.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const formattedSignedDate = signedAt 
     ? format(new Date(signedAt), "MMMM d, yyyy 'at' h:mm a")
     : null;
@@ -126,15 +138,26 @@ export function ReviewSignModal({
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
           {/* Document View */}
-          <div className="border-r flex flex-col">
-            <div className="px-4 py-2 bg-muted/50 border-b">
+          <div className="border-r flex flex-col min-h-0">
+            <div className="px-4 py-2 bg-muted/50 border-b flex items-center justify-between shrink-0">
               <p className="text-sm font-medium text-muted-foreground">Agreement Document</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownload}
+                className="h-7 gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download
+              </Button>
             </div>
-            <ScrollArea className="flex-1 p-4">
-              <div className="prose prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground bg-transparent p-0 m-0">
-                  {PILOT_AGREEMENT_TEXT}
-                </pre>
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="p-4 space-y-4 text-sm leading-relaxed text-foreground">
+                {PILOT_AGREEMENT_TEXT.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className="whitespace-pre-wrap">
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             </ScrollArea>
           </div>
