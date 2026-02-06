@@ -8,6 +8,7 @@ type SaveButtonState = "idle" | "loading" | "success";
 
 interface SaveButtonProps extends Omit<ButtonProps, "onClick"> {
   onClick: () => Promise<void> | void;
+  onSuccess?: () => void;
   idleText?: string;
   loadingText?: string;
   successText?: string;
@@ -19,6 +20,7 @@ const SaveButton = React.forwardRef<HTMLButtonElement, SaveButtonProps>(
     {
       className,
       onClick,
+      onSuccess,
       idleText = "Save Changes",
       loadingText = "Saving...",
       successText = "Saved!",
@@ -48,12 +50,14 @@ const SaveButton = React.forwardRef<HTMLButtonElement, SaveButtonProps>(
       try {
         await onClick();
         setState("success");
+        // Fire onSuccess callback after entering success state
+        onSuccess?.();
       } catch (error) {
         // On error, go back to idle
         setState("idle");
         throw error;
       }
-    }, [onClick, state]);
+    }, [onClick, onSuccess, state]);
 
     const isDisabled = disabled || state === "loading" || state === "success";
 

@@ -11,6 +11,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ColorPaletteManager } from "../ColorPaletteManager";
 import { MultiLogoUpload } from "../MultiLogoUpload";
+import { StepCompletionEffect } from "../StepCompletionEffect";
 
 interface BrandStepProps {
   isCompleted: boolean;
@@ -19,6 +20,9 @@ interface BrandStepProps {
   onSave: (data: { brand_palette: string[]; logos: Record<string, File> }) => void;
   onLogoUpload: (file: File, variant: string) => void;
   isSaving?: boolean;
+  onStepComplete?: () => void;
+  isJustCompleted?: boolean;
+  isUnlocking?: boolean;
 }
 
 export function BrandStep({ 
@@ -27,7 +31,10 @@ export function BrandStep({
   data, 
   onSave, 
   onLogoUpload,
-  isSaving 
+  isSaving,
+  onStepComplete,
+  isJustCompleted,
+  isUnlocking
 }: BrandStepProps) {
   const [colors, setColors] = useState<string[]>(
     (data?.brand_palette as string[]) || ["#3B82F6"]
@@ -49,26 +56,29 @@ export function BrandStep({
     });
   };
 
-  const handleSave = () => {
-    onSave({ brand_palette: colors, logos });
+  const handleSave = async () => {
+    await onSave({ brand_palette: colors, logos });
   };
 
   return (
     <AccordionItem 
       value="brand" 
       className={cn(
-        "border rounded-lg px-4 bg-card",
-        isLocked && "opacity-50 pointer-events-none"
+        "border rounded-lg px-4 bg-card relative overflow-hidden transition-all duration-300",
+        isLocked && "opacity-50 pointer-events-none",
+        isUnlocking && "animate-unlock-glow"
       )}
       disabled={isLocked}
     >
+      <StepCompletionEffect isActive={isJustCompleted || false} />
       <AccordionTrigger className="hover:no-underline py-4">
         <div className="flex items-center gap-3">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all",
             isCompleted 
               ? "bg-success text-success-foreground" 
-              : "bg-muted text-muted-foreground"
+              : "bg-muted text-muted-foreground",
+            isJustCompleted && "animate-celebrate"
           )}>
             {isCompleted ? <Check className="w-4 h-4" /> : "B"}
           </div>
@@ -134,6 +144,7 @@ export function BrandStep({
 
           <SaveButton 
             onClick={handleSave}
+            onSuccess={onStepComplete}
             className="w-full"
             idleText="Save Brand Settings"
           />
