@@ -94,16 +94,17 @@ export function LegalStep({
           <div className="space-y-4 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
-              "flex items-center justify-between p-4 rounded-xl transition-all duration-200",
+              "flex items-center justify-between p-4 rounded-xl transition-all duration-200 group",
               pilotSigned 
                 ? "bg-success/5 shadow-sm" 
-                : "bg-secondary/50 shadow-sm hover:shadow-md"
+                : "bg-secondary/50 shadow-sm hover:shadow-md hover:-translate-y-0.5"
             )}>
-              <div className="flex items-center gap-3">
-                <FileSignature className={cn(
-                  "w-5 h-5",
-                  pilotSigned ? "text-success" : "text-muted-foreground"
-                )} />
+              <div className="flex items-center gap-4">
+                <IconContainer 
+                  icon={FileSignature} 
+                  size="md"
+                  variant={pilotSigned ? "success" : "default"}
+                />
                 <div>
                   <p className="font-medium text-sm">Pilot Agreement</p>
                   <p className="text-xs text-muted-foreground">
@@ -121,7 +122,7 @@ export function LegalStep({
                   onClick={() => setShowPilotModal(true)}
                   className="gap-2"
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-4 h-4" strokeWidth={1.5} />
                   View Agreement
                 </Button>
               ) : (
@@ -130,7 +131,7 @@ export function LegalStep({
                   onClick={() => setShowPilotModal(true)}
                   className="gap-2"
                 >
-                  <FileSignature className="w-4 h-4" />
+                  <FileSignature className="w-4 h-4" strokeWidth={1.5} />
                   Review & Sign
                 </Button>
               )}
