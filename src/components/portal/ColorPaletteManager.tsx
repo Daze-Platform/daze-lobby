@@ -38,7 +38,7 @@ export function ColorPaletteManager({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Label className="flex items-center gap-2">
-          <Palette className="w-4 h-4" />
+          <Palette className="w-4 h-4" strokeWidth={1.5} />
           Brand Color Palette
         </Label>
         <span className="text-xs text-muted-foreground">
@@ -76,7 +76,7 @@ export function ColorPaletteManager({
               className="h-6 w-6"
               onClick={() => removeColor(index)}
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3" strokeWidth={1.5} />
             </Button>
           </div>
         ))}
@@ -97,7 +97,7 @@ export function ColorPaletteManager({
               onClick={addColor}
               className="gap-1"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3 h-3" strokeWidth={1.5} />
               Add
             </Button>
           </div>

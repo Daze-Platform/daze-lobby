@@ -15,6 +15,7 @@ import { SignaturePad, SignaturePadRef } from "./SignaturePad";
 import { Check, Loader2, Shield, Calendar, Download, Building2, MapPin, User, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { IconContainer } from "@/components/ui/icon-container";
 
 interface LegalEntityData {
   legal_entity_name?: string;
@@ -282,19 +283,21 @@ export function ReviewSignModal({
                 {/* Entity Information Form */}
                 {!isSigned && (
                   <div className="space-y-4 p-4 rounded-xl bg-secondary/40 border border-border/50">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-primary" />
-                      <h3 className="font-semibold text-sm">Entity Information</h3>
+                    <div className="flex items-center gap-3">
+                      <IconContainer icon={Building2} size="sm" variant="primary" />
+                      <div>
+                        <h3 className="font-semibold text-sm">Entity Information</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Complete all fields. Your information will appear in the contract below.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground -mt-2">
-                      Complete all fields. Your information will appear in the contract below.
-                    </p>
 
                     <div className="grid gap-4">
                       {/* Legal Entity Name */}
                       <div className="space-y-1.5">
                         <Label htmlFor="modal-entity-name" className="text-xs flex items-center gap-1.5">
-                          <Building2 className="w-3 h-3 text-muted-foreground" />
+                          <Building2 className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                           Legal Entity Name <span className="text-destructive">*</span>
                         </Label>
                         <Input
@@ -309,7 +312,7 @@ export function ReviewSignModal({
                       {/* Registered Address */}
                       <div className="space-y-1.5">
                         <Label htmlFor="modal-address" className="text-xs flex items-center gap-1.5">
-                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          <MapPin className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                           Registered Address <span className="text-destructive">*</span>
                         </Label>
                         <Textarea
@@ -326,7 +329,7 @@ export function ReviewSignModal({
                         {/* Authorized Signer Name */}
                         <div className="space-y-1.5">
                           <Label htmlFor="modal-signer-name" className="text-xs flex items-center gap-1.5">
-                            <User className="w-3 h-3 text-muted-foreground" />
+                            <User className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                             Authorized Signer <span className="text-destructive">*</span>
                           </Label>
                           <Input
@@ -341,7 +344,7 @@ export function ReviewSignModal({
                         {/* Signer Title */}
                         <div className="space-y-1.5">
                           <Label htmlFor="modal-signer-title" className="text-xs flex items-center gap-1.5">
-                            <Briefcase className="w-3 h-3 text-muted-foreground" />
+                            <Briefcase className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                             Title <span className="text-destructive">*</span>
                           </Label>
                           <Input
@@ -367,7 +370,7 @@ export function ReviewSignModal({
                       onClick={handleDownload}
                       className="h-7 gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
                       Download
                     </Button>
                   </div>
@@ -396,7 +399,7 @@ export function ReviewSignModal({
                 <div className="space-y-6">
                   <div className="text-center space-y-2">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/10 text-success mb-2">
-                      <Check className="w-6 h-6" />
+                      <Check className="w-6 h-6" strokeWidth={1.5} />
                     </div>
                     <h3 className="font-semibold text-foreground">Agreement Signed</h3>
                     <p className="text-sm text-muted-foreground">
@@ -425,7 +428,7 @@ export function ReviewSignModal({
                     </div>
                     {formattedSignedDate && (
                       <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
+                        <Calendar className="w-3 h-3" strokeWidth={1.5} />
                         <span>Digitally Signed on {formattedSignedDate}</span>
                       </div>
                     )}

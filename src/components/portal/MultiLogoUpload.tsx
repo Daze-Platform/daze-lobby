@@ -5,6 +5,7 @@ import { Upload, Check, Image, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
+import { IconStack } from "@/components/ui/icon-container";
 
 interface LogoVariant {
   type: "dark" | "light" | "icon";
@@ -60,7 +61,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
   return (
     <div className="space-y-4">
       <Label className="flex items-center gap-2">
-        <Image className="w-4 h-4" />
+        <Image className="w-4 h-4" strokeWidth={1.5} />
         Logo Variants
       </Label>
 
@@ -92,7 +93,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                   <Upload className={cn(
                     "w-6 h-6",
                     logo.type === "light" ? "text-muted" : "text-muted-foreground"
-                  )} />
+                  )} strokeWidth={1.5} />
                 )}
                 <Input
                   type="file"
@@ -108,7 +109,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                   <p className="font-medium text-sm">{logo.label}</p>
                   {logo.file && (
                     <span className="inline-flex items-center gap-1 text-xs text-primary">
-                      <Check className="w-3 h-3" />
+                      <Check className="w-3 h-3" strokeWidth={2} />
                       Uploaded
                     </span>
                   )}
@@ -128,7 +129,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
       </div>
 
       <p className="text-xs text-muted-foreground flex items-center gap-1">
-        <AlertCircle className="w-3 h-3" />
+        <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
         Accepted: PNG, SVG, JPG (max 5MB). Executables blocked.
       </p>
     </div>

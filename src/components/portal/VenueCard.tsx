@@ -6,6 +6,7 @@ import { Upload, FileText, X, Check, Loader2, AlertCircle, Store } from "lucide-
 import { cn } from "@/lib/utils";
 import { validateMenuFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
+import { IconContainer, IconStack } from "@/components/ui/icon-container";
 
 export interface Venue {
   id: string;
@@ -53,7 +54,7 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
         className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
         onClick={() => onRemove(venue.id)}
       >
-        <X className="w-4 h-4" />
+        <X className="w-4 h-4" strokeWidth={1.5} />
       </Button>
 
       <CardContent className="p-4 space-y-4">
@@ -66,7 +67,7 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
               !hasName && "text-destructive"
             )}
           >
-            <Store className="w-4 h-4" />
+            <Store className="w-4 h-4" strokeWidth={1.5} />
             Venue Name
             <span className="text-destructive">*</span>
           </Label>
@@ -85,7 +86,7 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
             />
             {!hasName && (
               <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
+                <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
                 Please enter a venue name
               </p>
             )}
@@ -108,14 +109,14 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
           >
             {isUploading ? (
               <>
-                <Loader2 className="w-7 h-7 text-primary animate-spin mb-2" />
+                <Loader2 className="w-7 h-7 text-primary animate-spin mb-2" strokeWidth={1.5} />
                 <span className="text-sm text-muted-foreground">Uploading...</span>
               </>
             ) : hasMenu ? (
               <>
                 <div className="flex items-center gap-2 text-primary mb-1">
-                  <FileText className="w-5 h-5" />
-                  <Check className="w-4 h-4" />
+                  <FileText className="w-5 h-5" strokeWidth={1.5} />
+                  <Check className="w-4 h-4" strokeWidth={2} />
                 </div>
                 <span className="text-sm font-medium text-foreground">
                   {venue.menuFileName || "Menu uploaded"}
@@ -126,12 +127,12 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
               </>
             ) : (
               <>
-                <Upload className="w-7 h-7 text-muted-foreground mb-2" />
-                <span className="text-sm text-muted-foreground">
+                <IconStack backgroundIcon={FileText} foregroundIcon={Upload} />
+                <span className="text-sm text-muted-foreground mt-2">
                   Drop menu PDF or click to upload
                 </span>
                 <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
+                  <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
                   PDF only, max 20MB
                 </span>
               </>
