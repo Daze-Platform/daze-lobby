@@ -115,7 +115,7 @@ export default function PortalPreview() {
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle className="text-lg">Onboarding Progress</CardTitle>
+              <CardTitle>Onboarding Progress</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <ProgressRing progress={progress} />
