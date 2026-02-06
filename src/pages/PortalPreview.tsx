@@ -92,8 +92,8 @@ export default function PortalPreview() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Glass Header */}
-      <header className="glass-header">
+      {/* Glass Header - Immediate entrance */}
+      <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
