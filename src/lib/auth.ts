@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "ops_manager" | "support";
+export type AppRole = "admin" | "ops_manager" | "support" | "client";
 
 export interface UserWithRole {
   id: string;
@@ -84,4 +84,12 @@ export function canManageClients(role: AppRole | null): boolean {
 
 export function isAdmin(role: AppRole | null): boolean {
   return role === "admin";
+}
+
+export function isClient(role: AppRole | null): boolean {
+  return role === "client";
+}
+
+export function hasDashboardAccess(role: AppRole | null): boolean {
+  return role === "admin" || role === "ops_manager" || role === "support";
 }

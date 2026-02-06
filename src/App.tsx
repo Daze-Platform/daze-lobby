@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { RoleBasedRoute } from "@/components/layout/RoleBasedRoute";
+import { AuthRedirect } from "@/components/layout/AuthRedirect";
 import Dashboard from "./pages/Dashboard";
+import Portal from "./pages/Portal";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -19,13 +22,28 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
+            <Route 
+              path="/auth" 
+              element={
+                <AuthRedirect>
+                  <Auth />
+                </AuthRedirect>
+              } 
+            />
             <Route
               path="/"
               element={
-                <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
                   <Dashboard />
-                </ProtectedRoute>
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/portal"
+              element={
+                <RoleBasedRoute allowedRoles={["client"]}>
+                  <Portal />
+                </RoleBasedRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
