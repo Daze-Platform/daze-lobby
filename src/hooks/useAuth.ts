@@ -19,33 +19,52 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener BEFORE getting session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase auth deadlock
-          setTimeout(() => fetchUser(), 0);
-        } else {
-          setUser(null);
-        }
-        
-        setLoading(false);
-      }
-    );
+    let isMounted = true;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUser();
+    const fetchUserDeferred = async () => {
+      // Defer to avoid potential auth deadlock, but still await so routing has role info.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      await fetchUser();
+    };
+
+    // Set up auth state listener BEFORE getting session
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!isMounted) return;
+
+      setSession(nextSession);
+
+      if (nextSession?.user) {
+        setLoading(true);
+        await fetchUserDeferred();
       } else {
-        setLoading(false);
+        setUser(null);
       }
+
+      if (isMounted) setLoading(false);
     });
 
+    // Get initial session (some environments don’t reliably fire INITIAL_SESSION)
+    (async () => {
+      const {
+        data: { session: initialSession },
+      } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      setSession(initialSession);
+
+      if (initialSession?.user) {
+        setLoading(true);
+        await fetchUserDeferred();
+      }
+
+      if (isMounted) setLoading(false);
+    })();
+
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [fetchUser]);
