@@ -19,6 +19,8 @@ import {
   Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLogActivity } from "@/hooks/useLogActivity";
+import { useHotel } from "@/contexts/HotelContext";
 
 type PosProvider = "toast" | "micros" | "ncr" | "lavu" | null;
 
@@ -189,6 +191,9 @@ export function PosStep({
   isJustCompleted,
   isUnlocking
 }: PosStepProps) {
+  const { hotelId } = useHotel();
+  const logActivity = useLogActivity(hotelId);
+  
   const savedProvider = data?.provider as PosProvider | undefined;
   const savedStatus = data?.status as string | undefined;
   
@@ -208,6 +213,17 @@ export function PosStep({
 
   const handleProviderSelect = (providerId: PosProvider) => {
     setSelectedProvider(providerId);
+    
+    // Log activity
+    if (providerId) {
+      logActivity.mutate({
+        action: "pos_provider_selected",
+        details: {
+          provider: providerId,
+        },
+      });
+    }
+    
     // Animate to instructions after a brief delay
     setTimeout(() => {
       setShowInstructions(true);
@@ -227,6 +243,15 @@ export function PosStep({
     const instructions = PROVIDER_INSTRUCTIONS[selectedProvider];
     await navigator.clipboard.writeText(instructions.copyText);
     setCopied(true);
+    
+    // Log activity
+    logActivity.mutate({
+      action: "pos_instructions_copied",
+      details: {
+        provider: selectedProvider,
+      },
+    });
+    
     toast.success("Copied to clipboard!", {
       description: "Instructions ready to send to your IT team",
     });
@@ -241,6 +266,14 @@ export function PosStep({
     onUpdate({ 
       provider: selectedProvider, 
       status: "pending_it" 
+    });
+    
+    // Log activity
+    logActivity.mutate({
+      action: "pos_sent_to_it",
+      details: {
+        provider: selectedProvider,
+      },
     });
     
     toast.success("Marked as Pending IT Verification", {

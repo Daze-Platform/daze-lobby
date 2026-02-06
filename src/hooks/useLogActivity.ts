@@ -1,0 +1,38 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
+import type { Json } from "@/integrations/supabase/types";
+
+interface LogActivityParams {
+  action: string;
+  details?: Record<string, unknown>;
+}
+
+export function useLogActivity(hotelId: string | null) {
+  const { user } = useAuthContext();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ action, details }: LogActivityParams) => {
+      if (!hotelId || !user?.id) return;
+
+      const { error } = await supabase.from("activity_logs").insert([{
+        hotel_id: hotelId,
+        user_id: user.id,
+        action,
+        details: (details || null) as Json,
+        is_auto_logged: false,
+      }]);
+
+      if (error) {
+        console.error("Failed to log activity:", error);
+        // Don't throw - activity logging should not block main operations
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["activity-logs", hotelId],
+      });
+    },
+  });
+}

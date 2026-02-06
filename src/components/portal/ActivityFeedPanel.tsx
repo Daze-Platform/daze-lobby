@@ -11,7 +11,10 @@ import {
   Building2,
   AlertTriangle,
   LockOpen,
-  Activity
+  Activity,
+  Settings,
+  Copy,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,13 +33,17 @@ function getActionConfig(action: string): { icon: React.ElementType; color: stri
   const configs: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
     legal_signed: { icon: FileSignature, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     task_completed: { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    brand_updated: { icon: Palette, color: "text-[hsl(199,89%,48%)]", bgColor: "bg-[hsl(199,89%,48%)]/10" },
-    logo_uploaded: { icon: Upload, color: "text-[hsl(199,89%,48%)]", bgColor: "bg-[hsl(199,89%,48%)]/10" },
+    brand_updated: { icon: Palette, color: "text-primary", bgColor: "bg-primary/10" },
+    logo_uploaded: { icon: Upload, color: "text-primary", bgColor: "bg-primary/10" },
     venue_created: { icon: Building2, color: "text-violet-500", bgColor: "bg-violet-500/10" },
     venue_updated: { icon: Building2, color: "text-violet-500", bgColor: "bg-violet-500/10" },
     menu_uploaded: { icon: Upload, color: "text-violet-500", bgColor: "bg-violet-500/10" },
     blocker_created: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
     blocker_force_cleared: { icon: LockOpen, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    // POS integration actions
+    pos_provider_selected: { icon: Settings, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
+    pos_instructions_copied: { icon: Copy, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
+    pos_sent_to_it: { icon: Send, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
   };
   
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
