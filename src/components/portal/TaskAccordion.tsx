@@ -106,12 +106,6 @@ export function TaskAccordion({
     setTimeout(() => handleStepComplete("legal"), 100);
   };
 
-  const handleSaveLegalEntity = (data: LegalEntityData) => {
-    if (onSaveLegalEntity) {
-      onSaveLegalEntity(data);
-    }
-  };
-
   const handleBrandComplete = () => {
     handleStepComplete("brand");
   };
