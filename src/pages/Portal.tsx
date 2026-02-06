@@ -187,8 +187,12 @@ export default function Portal() {
               <CardTitle className="text-xl">Onboarding</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6 pt-2">
-              <ProgressRing progress={progress} />
+              <ProgressRing progress={progress} status={status} />
               <StatusBadge status={status} />
+              <ConfettiCelebration 
+                trigger={showConfetti} 
+                onComplete={() => setShowConfetti(false)} 
+              />
             </CardContent>
           </Card>
 
