@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, Radio } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { signIn } from "@/lib/auth";
+import dazeLogo from "@/assets/daze-logo.png";
 
 interface LoginFormProps {
   onSwitchToSignUp: () => void;
@@ -38,7 +39,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
       <CardHeader className="space-y-1 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Radio className="h-8 w-8 text-primary" />
+          <img src={dazeLogo} alt="Daze" className="h-10 w-10 object-contain" />
           <span className="text-2xl font-bold tracking-tight">Daze Lobby</span>
         </div>
         <CardTitle className="text-xl">Welcome back</CardTitle>

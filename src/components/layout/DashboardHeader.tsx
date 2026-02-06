@@ -1,4 +1,4 @@
-import { Radio, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
+import dazeLogo from "@/assets/daze-logo.png";
 
 export function DashboardHeader() {
   const { user, role } = useAuthContext();
@@ -44,7 +45,7 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <Radio className="h-6 w-6 text-primary" />
+          <img src={dazeLogo} alt="Daze" className="h-8 w-8 object-contain" />
           <span className="text-lg font-semibold tracking-tight">Daze Lobby</span>
           <Badge variant="outline" className="text-2xs font-medium">
             Control Tower
