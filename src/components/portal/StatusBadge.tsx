@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 type OnboardingStatus = "onboarding" | "reviewing" | "live";
 
@@ -14,7 +15,7 @@ const statusConfig: Record<OnboardingStatus, { label: string; variant: "default"
     variant: "secondary",
   },
   reviewing: {
-    label: "In Progress",
+    label: "In Review",
     variant: "outline",
   },
   live: {
@@ -25,16 +26,20 @@ const statusConfig: Record<OnboardingStatus, { label: string; variant: "default"
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = statusConfig[status];
+  const isLive = status === "live";
   
   return (
     <Badge 
       variant={config.variant} 
       className={cn(
-        "text-sm px-3 py-1",
-        status === "live" && "bg-success text-success-foreground",
+        "text-sm px-3 py-1.5 transition-all duration-300",
+        isLive && "bg-emerald-500 text-white border-0 shadow-[0_0_12px_rgba(16,185,129,0.4)]",
         className
       )}
     >
+      {isLive && (
+        <Check className="w-3.5 h-3.5 mr-1.5" strokeWidth={2.5} />
+      )}
       {config.label}
     </Badge>
   );
