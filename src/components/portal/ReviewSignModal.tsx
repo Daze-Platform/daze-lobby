@@ -297,7 +297,7 @@ export function ReviewSignModal({
                       {/* Legal Entity Name */}
                       <div className="space-y-1.5">
                         <Label htmlFor="modal-entity-name" className="text-xs flex items-center gap-1.5">
-                          <Building2 className="w-3 h-3 text-muted-foreground" />
+                          <Building2 className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                           Legal Entity Name <span className="text-destructive">*</span>
                         </Label>
                         <Input
