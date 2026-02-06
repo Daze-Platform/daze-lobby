@@ -19,8 +19,18 @@ export default function PortalPreview() {
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
+  const [isSavingLegalEntity, setIsSavingLegalEntity] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef(status);
+  
+  // Demo legal entity state
+  const [hotelLegalEntity, setHotelLegalEntity] = useState({
+    legal_entity_name: "",
+    billing_address: "",
+    authorized_signer_name: "",
+    authorized_signer_title: "",
+  });
+
   const [tasks, setTasks] = useState([
     { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} as Record<string, unknown> },
     { key: "brand", name: "Brand Identity", isCompleted: false, data: {} as Record<string, unknown> },
