@@ -5,6 +5,7 @@ import {
   AccordionTrigger 
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { SaveButton } from "@/components/ui/save-button";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -131,13 +132,11 @@ export function BrandStep({
             </div>
           </div>
 
-          <Button 
+          <SaveButton 
             onClick={handleSave}
-            disabled={isSaving}
             className="w-full"
-          >
-            {isSaving ? "Saving..." : "Save Brand Settings"}
-          </Button>
+            idleText="Save Brand Settings"
+          />
         </div>
       </AccordionContent>
     </AccordionItem>

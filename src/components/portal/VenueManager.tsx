@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { SaveButton } from "@/components/ui/save-button";
 import { Label } from "@/components/ui/label";
 import { Plus, MapPin } from "lucide-react";
 import { VenueCard, type Venue } from "./VenueCard";
@@ -81,13 +82,12 @@ export function VenueManager({ venues, onVenuesChange, onSave, isSaving }: Venue
 
       {/* Save Button */}
       {venues.length > 0 && (
-        <Button
+        <SaveButton
           onClick={onSave}
-          disabled={!hasValidVenues || isSaving}
+          disabled={!hasValidVenues}
           className="w-full"
-        >
-          {isSaving ? "Saving..." : "Save Venue Configuration"}
-        </Button>
+          idleText="Save Venue Configuration"
+        />
       )}
     </div>
   );
