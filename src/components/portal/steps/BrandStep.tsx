@@ -64,7 +64,7 @@ export function BrandStep({
     <AccordionItem 
       value="brand" 
       className={cn(
-        "px-5 relative overflow-hidden transition-all duration-300",
+        "px-5 relative overflow-hidden transition-all duration-300 border-0",
         isLocked && "opacity-50 pointer-events-none",
         isUnlocking && "animate-unlock-glow"
       )}
