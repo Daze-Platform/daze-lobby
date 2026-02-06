@@ -30,7 +30,6 @@ export default function Portal() {
   const { 
     tasks, 
     venues,
-    hotel,
     isLoading, 
     progress, 
     status, 
