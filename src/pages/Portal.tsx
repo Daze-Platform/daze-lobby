@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useHotel } from "@/contexts/HotelContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
+import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
