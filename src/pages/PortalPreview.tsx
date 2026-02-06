@@ -143,16 +143,16 @@ export default function PortalPreview() {
 
       {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12 py-3 md:py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 flex items-center justify-between">
           {/* Mobile: Center logo */}
-          <div className="flex items-center gap-2 md:gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-8 md:h-10 w-auto" />
-            <span className="label-micro bg-warning/10 text-warning px-2 md:px-3 py-1 md:py-1.5 rounded-full text-[10px] md:text-xs">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
+            <span className="label-micro bg-warning/10 text-warning px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs">
               Preview
             </span>
           </div>
           {/* Desktop nav buttons - hidden on mobile */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3 lg:gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -182,14 +182,14 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 md:px-10 lg:px-12 py-6 md:py-12">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12">
         {/* Welcome Section - Hero entrance */}
-        <div className="mb-6 md:mb-12 entrance-hero">
+        <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
           <span className="label-micro mb-2 block">Welcome Back</span>
-          <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight mb-2 md:mb-3">
+          <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
             Grand Hyatt Demo
           </h1>
-          <p className="text-sm md:text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
