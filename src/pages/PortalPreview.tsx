@@ -134,6 +134,11 @@ export default function PortalPreview() {
 
   return (
     <div className="min-h-screen bg-muted/50 dark:bg-background">
+      {/* Welcome Tour */}
+      {showTour && (
+        <WelcomeTour onComplete={completeTour} />
+      )}
+
       {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 md:px-10 lg:px-12 py-4 flex items-center justify-between">
@@ -144,6 +149,19 @@ export default function PortalPreview() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            {/* Reset Tour Button for Demo */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2 text-muted-foreground"
+              onClick={() => {
+                resetTour();
+                toast.info("Welcome tour reset!");
+              }}
+            >
+              <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
+              Reset Tour
+            </Button>
             <Link to="/auth">
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
