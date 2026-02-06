@@ -210,9 +210,9 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="mt-10">
+          <div className="mt-8 md:mt-10">
             {/* Sunset Striping Progress Dots */}
-            <div className="flex items-center justify-center gap-2.5 mb-8">
+            <div className="flex items-center justify-center gap-2 md:gap-2.5 mb-6 md:mb-8">
               {TOUR_SLIDES.map((_, index) => (
                 <motion.button
                   key={index}
@@ -220,7 +220,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                     setDirection(index > currentSlide ? 1 : -1);
                     setCurrentSlide(index);
                   }}
-                  className="h-2 rounded-full transition-all duration-300"
+                  className="h-2 rounded-full transition-all duration-300 min-h-[20px] min-w-[20px] flex items-center justify-center"
                   style={{
                     width: index === currentSlide ? 32 : 8,
                     backgroundColor: index === currentSlide 
@@ -235,18 +235,19 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               ))}
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between">
+            {/* Navigation Buttons - Stack on mobile */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <motion.div
                 initial={false}
                 animate={{ opacity: isFirstSlide ? 0 : 1 }}
+                className={cn(isFirstSlide && "pointer-events-none")}
               >
                 <Button
                   variant="ghost"
                   size="lg"
                   onClick={handlePrev}
                   disabled={isFirstSlide}
-                  className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 gap-2"
+                  className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 gap-2 w-full sm:w-auto min-h-[48px]"
                 >
                   <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
                   Back
@@ -258,12 +259,13 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                className="w-full sm:w-auto"
               >
                 <Button
                   size="lg"
                   onClick={handleNext}
                   className={cn(
-                    "gap-3 px-8 text-base font-semibold rounded-full",
+                    "gap-3 px-6 md:px-8 text-sm md:text-base font-semibold rounded-full w-full sm:w-auto min-h-[48px]",
                     "text-white",
                     "transition-colors duration-300"
                   )}
