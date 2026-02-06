@@ -94,10 +94,10 @@ export function LegalStep({
           <div className="space-y-4 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
-              "flex items-center justify-between p-4 rounded-xl transition-all duration-200 group",
+              "flex items-center justify-between p-4 rounded-xl transition-all duration-300 group border-0",
               pilotSigned 
-                ? "bg-success/5 shadow-sm" 
-                : "bg-secondary/50 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                ? "bg-success/5 shadow-soft" 
+                : "bg-card shadow-soft hover:shadow-soft-md hover:-translate-y-0.5"
             )}>
               <div className="flex items-center gap-4">
                 <IconContainer 
