@@ -91,7 +91,10 @@ export function ProgressRing({
         "absolute inset-0 flex flex-col items-center justify-center transition-transform duration-500",
         isPulsing && "animate-progress-pulse"
       )}>
-        <span className="text-4xl font-bold tracking-tight text-foreground">{Math.round(progress)}%</span>
+        <span className={cn(
+          "font-bold tracking-tight text-foreground",
+          effectiveSize < 160 ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"
+        )}>{Math.round(progress)}%</span>
         <div className="flex items-center gap-1.5">
           {isLive && showRocket && (
             <img 
