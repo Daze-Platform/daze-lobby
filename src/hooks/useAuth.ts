@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUser, UserWithRole, AppRole } from "@/lib/auth";
+import { getCurrentUser, UserWithRole } from "@/lib/auth";
 
 export function useAuth() {
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialLoadComplete = useRef(false);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -21,13 +22,7 @@ export function useAuth() {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchUserDeferred = async () => {
-      // Defer to avoid potential auth deadlock, but still await so routing has role info.
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      await fetchUser();
-    };
-
-    // Set up auth state listener BEFORE getting session
+    // Listener for ONGOING auth changes (does NOT control loading after initial load)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
@@ -36,32 +31,45 @@ export function useAuth() {
       setSession(nextSession);
 
       if (nextSession?.user) {
-        setLoading(true);
-        await fetchUserDeferred();
+        // Fire and forget for ongoing changes - don't block loading
+        fetchUser();
       } else {
         setUser(null);
       }
 
-      if (isMounted) setLoading(false);
+      // Only set loading false if initial load already happened
+      // (this handles token refresh, sign out, etc.)
+      if (initialLoadComplete.current && isMounted) {
+        setLoading(false);
+      }
     });
 
-    // Get initial session (some environments don’t reliably fire INITIAL_SESSION)
-    (async () => {
-      const {
-        data: { session: initialSession },
-      } = await supabase.auth.getSession();
+    // INITIAL load (controls loading state)
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session: initialSession },
+        } = await supabase.auth.getSession();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      setSession(initialSession);
+        setSession(initialSession);
 
-      if (initialSession?.user) {
-        setLoading(true);
-        await fetchUserDeferred();
+        // Fetch user role BEFORE setting loading to false
+        if (initialSession?.user) {
+          await fetchUser();
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        if (isMounted) {
+          initialLoadComplete.current = true;
+          setLoading(false);
+        }
       }
+    };
 
-      if (isMounted) setLoading(false);
-    })();
+    initializeAuth();
 
     return () => {
       isMounted = false;
