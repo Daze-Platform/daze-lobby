@@ -54,7 +54,7 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
         className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
         onClick={() => onRemove(venue.id)}
       >
-        <X className="w-4 h-4" />
+        <X className="w-4 h-4" strokeWidth={1.5} />
       </Button>
 
       <CardContent className="p-4 space-y-4">
