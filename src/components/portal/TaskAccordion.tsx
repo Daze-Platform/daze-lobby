@@ -104,10 +104,16 @@ export function TaskAccordion({
     onFileUpload("brand", file, `logo_${variant}`);
   };
 
-  const handleLegalSign = (signatureDataUrl: string) => {
-    onLegalSign(signatureDataUrl);
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
+    onLegalSign(signatureDataUrl, legalEntityData);
     // Trigger step completion after a brief delay for the save to process
     setTimeout(() => handleStepComplete("legal"), 100);
+  };
+
+  const handleSaveLegalEntity = (data: LegalEntityData) => {
+    if (onSaveLegalEntity) {
+      onSaveLegalEntity(data);
+    }
   };
 
   const handleBrandComplete = () => {
