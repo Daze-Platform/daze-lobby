@@ -2,24 +2,34 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronLeft } from "lucide-react";
+import { ArrowRight, ChevronLeft, Utensils, Upload, Rocket } from "lucide-react";
 
 interface WelcomeTourProps {
   onComplete: () => void;
 }
 
+// Brand Colors
+const BRAND = {
+  midnight: "#0F172A",
+  ocean: "#0EA5E9",
+  sunset: "#F97316",
+};
+
 const TOUR_SLIDES = [
   {
-    headline: "Welcome to the Future of Service.",
+    headline: "Welcome to a brighter day.",
     subtext: "Daze transforms your venue into a seamless digital experience. No waiting, just ordering.",
+    icon: Utensils,
   },
   {
-    headline: "You Provide the Soul, We Handle the Tech.",
+    headline: "Effortless service, floating on air.",
     subtext: "Simply upload your menus and branding. We configure the hardware, train your staff, and launch your pilot.",
+    icon: Upload,
   },
   {
     headline: "Ready for Takeoff?",
     subtext: "Complete these 3 setup tasks to activate your 90-day pilot.",
+    icon: Rocket,
     isFinal: true,
   },
 ];
@@ -34,19 +44,16 @@ const springTransition = {
 // Cinematic text transition variants
 const textVariants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? 60 : -60,
+    x: direction > 0 ? 40 : -40,
     opacity: 0,
-    filter: "blur(8px)",
   }),
   center: {
     x: 0,
     opacity: 1,
-    filter: "blur(0px)",
   },
   exit: (direction: number) => ({
-    x: direction > 0 ? -60 : 60,
+    x: direction > 0 ? -40 : 40,
     opacity: 0,
-    filter: "blur(8px)",
   }),
 };
 
@@ -58,6 +65,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
   const slide = TOUR_SLIDES[currentSlide];
   const isLastSlide = currentSlide === TOUR_SLIDES.length - 1;
   const isFirstSlide = currentSlide === 0;
+  const Icon = slide.icon;
 
   const handleNext = () => {
     if (isLastSlide) {
@@ -100,49 +108,26 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Deep Space Background - Animated radial gradient */}
+      {/* Solid Deep Midnight Background - Clean premium void */}
       <motion.div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-950 to-black"
+        className="absolute inset-0"
+        style={{ backgroundColor: BRAND.midnight }}
         initial={{ opacity: 0 }}
         animate={{ opacity: isExiting ? 0 : 1 }}
         transition={{ duration: 0.5 }}
         onClick={handleComplete}
       />
 
-      {/* Ambient floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400/30 rounded-full"
-            style={{
-              left: `${20 + i * 15}%`,
-              top: `${30 + (i % 3) * 20}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.6, 0.2],
-            }}
-            transition={{
-              duration: 4 + i * 0.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.3,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* The Stage - Black Glass Card */}
+      {/* The Stage - Pure White Card (Dark Room, Bright Card) */}
       <motion.div
         className={cn(
           "relative w-[640px] max-w-[95vw] overflow-hidden",
-          // Black Glass effect
-          "bg-black/40 backdrop-blur-2xl",
-          "border border-white/10",
+          // Solid pure white - no glassmorphism
+          "bg-white",
+          // Deeply rounded corners like cloud logo
           "rounded-3xl",
-          // Ambient light glow from top
-          "shadow-[0_-20px_80px_-20px_rgba(56,189,248,0.3)]"
+          // Subtle shadow for depth
+          "shadow-2xl"
         )}
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ 
@@ -155,7 +140,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
         {/* Skip Button */}
         <motion.button
           onClick={handleComplete}
-          className="absolute top-4 right-4 z-10 text-white/40 hover:text-white text-xs font-medium transition-colors"
+          className="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-600 text-xs font-medium transition-colors"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -164,63 +149,43 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
 
         {/* Content Container */}
         <div className="relative px-12 py-16">
-          {/* The Living Core - Heartbeat Animation */}
-          <div className="relative w-48 h-48 mx-auto mb-12 flex items-center justify-center">
-            {/* Outer spinning ring - Y axis */}
+          {/* The Floating Cloud Container */}
+          <div className="relative w-40 h-40 mx-auto mb-10 flex items-center justify-center">
+            {/* Cloud container with drift animation */}
             <motion.div
-              className="absolute w-32 h-32 rounded-full border border-white/20"
-              style={{ rotateX: 60 }}
-              animate={{ rotateZ: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            />
-            
-            {/* Middle spinning ring - X axis */}
-            <motion.div
-              className="absolute w-24 h-24 rounded-full border border-cyan-400/30"
-              style={{ rotateY: 60 }}
-              animate={{ rotateZ: -360 }}
-              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-            />
-            
-            {/* Inner spinning ring */}
-            <motion.div
-              className="absolute w-16 h-16 rounded-full border border-white/15"
-              style={{ rotateX: -45, rotateY: 45 }}
-              animate={{ rotateZ: 360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            />
-
-            {/* Breathing Core - The heartbeat */}
-            <motion.div
-              className="relative z-10"
+              className="relative w-32 h-32 rounded-full bg-sky-50 flex items-center justify-center"
               animate={{
-                scale: [1, 1.3, 1],
+                y: [0, -8, 0],
               }}
               transition={{
-                duration: 2,
+                duration: 3,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
             >
-              {/* Outer glow */}
-              <motion.div
-                className="absolute inset-0 w-4 h-4 -translate-x-1/2 -translate-y-1/2 bg-cyan-400/40 rounded-full blur-md"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.4, 0.7, 0.4],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              {/* Core sphere */}
-              <div className="w-3 h-3 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
+              {/* Soft shadow for floating effect */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-200/50 rounded-full blur-md" />
+              
+              {/* Brand Icon */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Icon 
+                    className="w-14 h-14" 
+                    style={{ color: BRAND.ocean }}
+                    strokeWidth={1.5}
+                  />
+                </motion.div>
+              </AnimatePresence>
             </motion.div>
           </div>
 
-          {/* Cinematic Text with blur transitions */}
+          {/* Text Content with slide transitions */}
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentSlide}
@@ -229,24 +194,25 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
               className="flex flex-col items-center"
             >
-              {/* Editorial Typography */}
-              <h1 className="font-display text-4xl md:text-5xl font-bold text-white text-center mb-4 tracking-tight">
+              {/* Headline - Solid Black, Bold */}
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 tracking-tight">
                 {slide.headline}
               </h1>
 
-              <p className="text-lg text-slate-400 text-center max-w-md leading-relaxed">
+              {/* Subtext - Relaxed gray */}
+              <p className="text-base text-slate-500 text-center max-w-md leading-relaxed">
                 {slide.subtext}
               </p>
             </motion.div>
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="mt-12">
-            {/* Progress Dots */}
-            <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="mt-10">
+            {/* Sunset Striping Progress Dots */}
+            <div className="flex items-center justify-center gap-2.5 mb-8">
               {TOUR_SLIDES.map((_, index) => (
                 <motion.button
                   key={index}
@@ -254,12 +220,13 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                     setDirection(index > currentSlide ? 1 : -1);
                     setCurrentSlide(index);
                   }}
-                  className={cn(
-                    "h-1.5 rounded-full transition-colors",
-                    index === currentSlide 
-                      ? "w-8 bg-white" 
-                      : "w-1.5 bg-white/30 hover:bg-white/50"
-                  )}
+                  className="h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: index === currentSlide ? 32 : 8,
+                    backgroundColor: index === currentSlide 
+                      ? BRAND.sunset  // Active: Sunset Orange
+                      : `${BRAND.ocean}4D`, // Inactive: Ocean Blue at 30% opacity
+                  }}
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
                   aria-label={`Go to slide ${index + 1}`}
@@ -279,17 +246,17 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                   size="lg"
                   onClick={handlePrev}
                   disabled={isFirstSlide}
-                  className="text-white/50 hover:text-white hover:bg-white/10 gap-2"
+                  className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
                   Back
                 </Button>
               </motion.div>
 
-              {/* Haptic Pill Button */}
+              {/* Ocean Blue Button with Sunset Hover */}
               <motion.div
-                whileHover={{ y: -4 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
               >
                 <Button
@@ -297,16 +264,18 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                   onClick={handleNext}
                   className={cn(
                     "gap-3 px-8 text-base font-semibold rounded-full",
-                    // Solid white pill
-                    "bg-white text-slate-900",
-                    "hover:bg-white",
-                    // White glow on hover
-                    "shadow-lg",
-                    "hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]",
-                    "transition-shadow duration-300",
-                    // Haptic press feedback
-                    "active:scale-95"
+                    "text-white",
+                    "transition-colors duration-300"
                   )}
+                  style={{ 
+                    backgroundColor: BRAND.ocean,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = BRAND.sunset;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = BRAND.ocean;
+                  }}
                 >
                   {isLastSlide ? "Start My Journey" : "Next"}
                   <ArrowRight className="w-4 h-4" strokeWidth={2} />
