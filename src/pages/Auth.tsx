@@ -11,12 +11,14 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const { isAuthenticated, loading } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const forceAuth = new URLSearchParams(location.search).get("force") === "1";
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    if (!forceAuth && !loading && isAuthenticated) {
       navigate("/");
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [forceAuth, isAuthenticated, loading, navigate]);
 
 
   return (

@@ -14,10 +14,17 @@ interface AuthRedirectProps {
  */
 export function AuthRedirect({ children }: AuthRedirectProps) {
   const { isAuthenticated, loading, role } = useAuthContext();
+  const location = useLocation();
+  const forceAuth = new URLSearchParams(location.search).get("force") === "1";
 
   // Don't block rendering of the auth page if auth loading stalls.
   // This prevents a "blank" spinner screen when navigating back to /auth.
   if (loading) {
+    return <>{children}</>;
+  }
+
+  // When force=1, always show the auth UI (used by "Back to Login" in preview).
+  if (forceAuth) {
     return <>{children}</>;
   }
 
