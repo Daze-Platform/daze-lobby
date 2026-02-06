@@ -143,9 +143,12 @@ export function TaskAccordion({
         isLocked={isTaskLocked("legal")}
         data={getTaskData("legal")?.data}
         onSign={handleLegalSign}
+        onSaveLegalEntity={handleSaveLegalEntity}
+        isSavingLegalEntity={isSavingLegalEntity}
         isSubmitting={isSigningLegal}
         isJustCompleted={recentlyCompleted === "legal"}
         isUnlocking={unlockingStep === "legal"}
+        hotelLegalEntity={hotelLegalEntity}
       />
       
       <BrandStep
