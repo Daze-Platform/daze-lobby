@@ -140,13 +140,13 @@ export function ReviewSignModal({
           </div>
 
           {/* Signature Panel */}
-          <div className="flex flex-col">
-            <div className="px-4 py-2 bg-muted/50 border-b">
+          <div className="flex flex-col min-h-0">
+            <div className="px-4 py-2 bg-muted/50 border-b shrink-0">
               <p className="text-sm font-medium text-muted-foreground">
                 {isSigned ? "Digital Signature" : "Your Signature"}
               </p>
             </div>
-            <div className="flex-1 p-6 flex flex-col justify-between">
+            <div className="flex-1 p-6 flex flex-col min-h-0">
               {isSigned ? (
                 /* ========== SIGNED STATE ========== */
                 <div className="space-y-6">
@@ -188,7 +188,7 @@ export function ReviewSignModal({
               ) : (
                 /* ========== SIGNING STATE ========== */
                 <>
-                  <div className="flex-1 flex flex-col">
+                  <div className="flex-1 flex flex-col min-h-0 overflow-auto">
                     <p className="text-sm text-muted-foreground mb-4">
                       By signing below, you agree to the terms and conditions outlined in the Pilot Agreement.
                     </p>
@@ -198,7 +198,7 @@ export function ReviewSignModal({
                     />
                   </div>
 
-                  <div className="pt-4 space-y-3 border-t mt-4">
+                  <div className="mt-auto pt-4 space-y-3 border-t shrink-0">
                     <div className="flex gap-3">
                       <Button
                         type="button"
