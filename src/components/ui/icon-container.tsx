@@ -95,11 +95,11 @@ export function IconStack({
   return (
     <div className={cn("relative inline-flex items-center justify-center", className)}>
       <BackgroundIcon
-        className="w-12 h-12 text-slate-100 dark:text-slate-800"
+        className="w-12 h-12 text-muted/50"
         strokeWidth={1.5}
       />
       <ForegroundIcon
-        className="absolute w-6 h-6 text-slate-400 dark:text-slate-500 translate-x-1 translate-y-1"
+        className="absolute w-6 h-6 text-muted-foreground translate-x-1 translate-y-1"
         strokeWidth={1.5}
       />
     </div>
