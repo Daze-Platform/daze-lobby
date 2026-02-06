@@ -3,6 +3,8 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser, UserWithRole } from "@/lib/auth";
 
+// Auth hook with proper loading state management
+
 export function useAuth() {
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
