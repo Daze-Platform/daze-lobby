@@ -391,12 +391,12 @@ export function ReviewSignModal({
 
           {/* Right Panel: Signature */}
           <div className="flex flex-col min-h-0 overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50 border-b shrink-0">
+            <div className="px-4 py-2 sm:py-3 bg-muted/50 border-b shrink-0">
               <p className="text-sm font-medium text-muted-foreground">
                 {isSigned ? "Digital Signature" : "Your Signature"}
               </p>
             </div>
-            <div className="flex-1 p-6 flex flex-col min-h-0 overflow-auto">
+            <div className="flex-1 p-4 sm:p-6 flex flex-col min-h-0 overflow-auto">
               {isSigned ? (
                 /* ========== SIGNED STATE ========== */
                 <div className="space-y-6">
