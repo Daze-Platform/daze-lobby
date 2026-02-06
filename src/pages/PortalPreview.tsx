@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
@@ -26,6 +26,19 @@ export default function PortalPreview() {
 
   const completedCount = tasks.filter(t => t.isCompleted).length;
   const progress = Math.round((completedCount / tasks.length) * 100);
+
+  // Auto-transition to 'reviewing' when all tasks are complete
+  useEffect(() => {
+    const allComplete = tasks.every(t => t.isCompleted);
+    if (allComplete && status === "onboarding") {
+      // Small delay to let the final task animation play
+      const timer = setTimeout(() => {
+        setStatus("reviewing");
+        toast.success("🎉 All tasks complete! Status changed to Reviewing.");
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [tasks, status]);
 
   const handleLegalSign = async (signatureDataUrl: string) => {
     setIsSigningLegal(true);
