@@ -201,7 +201,7 @@ export default function PortalPreview() {
           <Card className="lg:col-span-2 entrance-content">
             <CardHeader className="pb-4">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-xl text-slate-900 dark:text-foreground">Setup Tasks</CardTitle>
             </CardHeader>
             <CardContent className="pt-2">
               <TaskAccordion 

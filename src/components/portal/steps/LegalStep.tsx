@@ -148,7 +148,7 @@ export function LegalStep({
             )}
 
             {/* Master Service Agreement (Locked) */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 opacity-60">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border-0 opacity-60">
               <div className="flex items-center gap-4">
                 <IconContainer 
                   icon={Lock} 

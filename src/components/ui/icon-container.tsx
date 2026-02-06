@@ -10,16 +10,16 @@ interface IconContainerProps {
 }
 
 const sizeClasses = {
-  sm: { container: "w-8 h-8", icon: "w-4 h-4" },
-  md: { container: "w-10 h-10", icon: "w-5 h-5" },
-  lg: { container: "w-12 h-12", icon: "w-6 h-6" },
-  xl: { container: "w-16 h-16", icon: "w-8 h-8" },
+  sm: { container: "w-8 h-8", icon: "w-4 h-4", radius: "rounded-[8px]" },
+  md: { container: "w-10 h-10", icon: "w-5 h-5", radius: "rounded-[10px]" },
+  lg: { container: "w-12 h-12", icon: "w-6 h-6", radius: "rounded-[12px]" },
+  xl: { container: "w-16 h-16", icon: "w-8 h-8", radius: "rounded-[14px]" },
 };
 
 const variantClasses = {
   default: {
-    container: "bg-slate-50 dark:bg-slate-800/50",
-    icon: "text-slate-600 dark:text-slate-300",
+    container: "bg-card shadow-sm",
+    icon: "text-muted-foreground",
   },
   primary: {
     container: "bg-primary/10",
@@ -35,12 +35,13 @@ const variantClasses = {
   },
   muted: {
     container: "bg-muted/50",
-    icon: "text-muted-foreground",
+    icon: "text-muted-foreground/70",
   },
 };
 
 /**
- * Premium Icon Container - Wraps icons in soft containers for "Feature Block" aesthetic
+ * Premium Icon Container - Series C Squircle aesthetic
+ * Wraps icons in soft-shadowed containers for "Feature Block" look
  * 
  * Usage:
  * <IconContainer icon={Building2} size="md" variant="primary" />
@@ -58,8 +59,9 @@ export function IconContainer({
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-lg transition-colors",
+        "flex items-center justify-center transition-colors",
         sizeClass.container,
+        sizeClass.radius,
         variantClass.container,
         className
       )}
