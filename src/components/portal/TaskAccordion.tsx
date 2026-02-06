@@ -59,30 +59,28 @@ export function TaskAccordion({
   const handleStepComplete = useCallback((stepKey: string) => {
     setRecentlyCompleted(stepKey);
     
-    // Timeline: 
-    // 0ms: Start celebration effect (badge animation)
-    // 500ms: Collapse current accordion
-    // 800ms: Add unlock-glow to next step and expand it
-    // 2500ms: Clear all transition states
+    // Faster timeline for snappy UX
+    // 0ms: Celebration badge animation
+    // 200ms: Collapse current step
+    // 400ms: Open next step with glow
+    // 1000ms: Clear all states
     
     setTimeout(() => {
-      setAccordionValue(undefined); // Collapse current
-    }, 500);
+      setAccordionValue(undefined);
+    }, 200);
     
     setTimeout(() => {
       const nextStep = getNextStep(stepKey);
-      // Skip lock check - we know the current step is completing, 
-      // so the next step should unlock regardless of server state
       if (nextStep) {
         setUnlockingStep(nextStep);
-        setAccordionValue(nextStep); // Open next
+        setAccordionValue(nextStep);
       }
-    }, 800);
+    }, 400);
     
     setTimeout(() => {
       setRecentlyCompleted(null);
       setUnlockingStep(null);
-    }, 2500);
+    }, 1000);
   }, []);
 
   const handleBrandSave = async (data: { brand_palette: string[]; logos: Record<string, File> }) => {
