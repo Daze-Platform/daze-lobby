@@ -283,13 +283,15 @@ export function ReviewSignModal({
                 {/* Entity Information Form */}
                 {!isSigned && (
                   <div className="space-y-4 p-4 rounded-xl bg-secondary/40 border border-border/50">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-primary" />
-                      <h3 className="font-semibold text-sm">Entity Information</h3>
+                    <div className="flex items-center gap-3">
+                      <IconContainer icon={Building2} size="sm" variant="primary" />
+                      <div>
+                        <h3 className="font-semibold text-sm">Entity Information</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Complete all fields. Your information will appear in the contract below.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground -mt-2">
-                      Complete all fields. Your information will appear in the contract below.
-                    </p>
 
                     <div className="grid gap-4">
                       {/* Legal Entity Name */}
