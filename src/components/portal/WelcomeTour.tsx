@@ -148,12 +148,12 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
         </motion.button>
 
         {/* Content Container */}
-        <div className="relative px-12 py-16">
+        <div className="relative px-6 md:px-12 py-10 md:py-16">
           {/* The Floating Cloud Container */}
-          <div className="relative w-40 h-40 mx-auto mb-10 flex items-center justify-center">
+          <div className="relative w-28 h-28 md:w-40 md:h-40 mx-auto mb-6 md:mb-10 flex items-center justify-center">
             {/* Cloud container with drift animation */}
             <motion.div
-              className="relative w-32 h-32 rounded-full bg-sky-50 flex items-center justify-center"
+              className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-sky-50 flex items-center justify-center"
               animate={{
                 y: [0, -8, 0],
               }}
@@ -164,7 +164,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               }}
             >
               {/* Soft shadow for floating effect */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-200/50 rounded-full blur-md" />
+              <div className="absolute -bottom-3 md:-bottom-4 left-1/2 -translate-x-1/2 w-16 md:w-20 h-3 md:h-4 bg-slate-200/50 rounded-full blur-md" />
               
               {/* Brand Icon */}
               <AnimatePresence mode="wait">
@@ -176,7 +176,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                   transition={{ duration: 0.3 }}
                 >
                   <Icon 
-                    className="w-14 h-14" 
+                    className="w-10 h-10 md:w-14 md:h-14" 
                     style={{ color: BRAND.ocean }}
                     strokeWidth={1.5}
                   />
