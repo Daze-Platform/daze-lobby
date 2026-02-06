@@ -1,118 +1,116 @@
 
-
-# Add Dynamic Stats to Dashboard
-
-## Overview
-The dashboard currently shows hardcoded placeholder stats ("0" values) but there's real data in the database ready to display. We'll make the stats cards dynamic by computing values from the existing `useHotels` hook data.
-
----
+# Refine Task Checklist Badges (A, B, C)
 
 ## Current State
-- **Stats Cards**: Hardcoded to show "0" for all metrics
-- **Database Data**: 10 hotels, 1 active blocker, 9/11 devices online, $156,000 total ARR
-- **Existing Hook**: `useHotels` already fetches hotels with `hasBlocker`, `deviceCount`, and `onlineDeviceCount`
+The step badges (A, B, C) are currently styled as:
+- Basic squircle containers with `bg-card text-muted-foreground`
+- Simple green checkmark when complete
+- Identical styling across all three steps
+- No visual distinction between pending, active, and locked states
 
----
-
-## Implementation Approach
-
-### Option A: Use Existing `useHotels` Hook (Recommended)
-Compute stats directly from the already-fetched hotel data in `KanbanBoard`.
-
-**Pros:**
-- No additional API calls
-- Data stays in sync with Kanban board
-- Single source of truth
-
-### Option B: Create Dedicated `useDashboardStats` Hook
-Separate query optimized for stats aggregation.
-
-**Pros:**
-- Independent loading state
-- Could use database aggregation functions
-
-**Recommendation:** Option A - reuse existing data for simplicity and performance.
-
----
-
-## Technical Details
-
-### File: `src/pages/Dashboard.tsx`
-
-**Changes:**
-1. Import and call `useHotels()` hook
-2. Compute stats from returned hotel data:
-   - **Total Hotels**: `hotels.length`
-   - **Active Blockers**: Count hotels where `hasBlocker === true`
-   - **Devices Online**: Sum of `onlineDeviceCount` across all hotels
-   - **Total ARR**: Sum of `arr` field (format with `$` and commas)
-
-3. Add loading skeleton state for stats cards
-4. Show actual values with subtle change indicators (optional)
-
-### Code Structure
-
+**Current code pattern (duplicated in each step):**
 ```tsx
-const { data: hotels, isLoading } = useHotels();
-
-const stats = useMemo(() => {
-  if (!hotels) return defaultStats;
-  
-  return [
-    { 
-      label: "Total Hotels", 
-      value: hotels.length.toString(),
-      icon: Building2 
-    },
-    { 
-      label: "Active Blockers", 
-      value: hotels.filter(h => h.hasBlocker).length.toString(),
-      icon: AlertTriangle 
-    },
-    { 
-      label: "Devices Online", 
-      value: hotels.reduce((sum, h) => sum + h.onlineDeviceCount, 0).toString(),
-      icon: Cpu 
-    },
-    { 
-      label: "Total ARR", 
-      value: formatCurrency(hotels.reduce((sum, h) => sum + (h.arr || 0), 0)),
-      icon: TrendingUp 
-    },
-  ];
-}, [hotels]);
-```
-
-### Currency Formatting
-Add a helper function to format ARR values:
-```tsx
-const formatCurrency = (amount: number) => {
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  }
-  if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(0)}K`;
-  }
-  return `$${amount}`;
-};
+<div className={cn(
+  "w-7 h-7 md:w-8 md:h-8 rounded-[8px] md:rounded-[10px] flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 shadow-sm",
+  isCompleted ? "bg-success text-success-foreground" : "bg-card text-muted-foreground"
+)}>
+  {isCompleted ? <Check /> : "A"}
+</div>
 ```
 
 ---
 
-## Expected Results
+## Proposed Refinements
 
-| Stat | Current | After Implementation |
-|------|---------|---------------------|
-| Total Hotels | 0 | 10 |
-| Active Blockers | 0 | 1 |
-| Devices Online | 0 | 9 |
-| Total ARR | $0 | $156K |
+### Visual Enhancements
+
+| State | Current | Proposed |
+|-------|---------|----------|
+| **Pending** | Gray bg, gray text | Subtle gradient border ring, refined typography |
+| **Active** | Same as pending | Ocean Blue ring glow, elevated shadow |
+| **Complete** | Green bg + checkmark | Emerald Green with soft glow, animated check |
+| **Locked** | Same as pending | Muted with lock icon, reduced opacity |
+
+### Design Details
+
+1. **Premium Typography**
+   - Use `font-display` (Plus Jakarta Sans) for the letters
+   - Slightly larger letter size for better readability
+   - Tighter tracking for the monospace look
+
+2. **Gradient Border Effect**
+   - Pending steps get a subtle inner shadow creating depth
+   - Active step gets an Ocean Blue ring that pulses gently
+
+3. **Success State Refinement**
+   - Emerald Green background with soft outer glow
+   - Checkmark icon with "pop" animation on completion
+   - Subtle shadow for depth
+
+4. **Locked State**
+   - Show lock icon instead of letter
+   - Reduced opacity (50%)
+   - Muted background
+
+5. **Squircle Refinement**
+   - Increase border-radius slightly for softer appearance
+   - Add inner shadow for "inset" premium feel
 
 ---
 
-## Additional Enhancements (Optional)
+## Technical Implementation
 
-1. **Loading Skeletons**: Pulse animation on stat cards while loading
-2. **Real-time Updates**: Stats auto-update when Kanban changes (already works via shared query cache)
-3. **Change Indicators**: Show "+2" or "-1" badges for recent changes
+### File: `src/components/ui/step-badge.tsx` (New)
+Create a dedicated, reusable `StepBadge` component that encapsulates all badge states:
 
+```tsx
+interface StepBadgeProps {
+  step: "A" | "B" | "C";
+  status: "pending" | "active" | "complete" | "locked";
+  isJustCompleted?: boolean;
+}
+```
+
+### Files to Update:
+1. **`src/components/portal/steps/LegalStep.tsx`** - Replace inline badge with `<StepBadge step="A" />`
+2. **`src/components/portal/steps/BrandStep.tsx`** - Replace inline badge with `<StepBadge step="B" />`
+3. **`src/components/portal/steps/VenueStep.tsx`** - Replace inline badge with `<StepBadge step="C" />`
+
+### CSS Additions (`src/index.css`):
+- Add `@keyframes badge-glow` for the active state pulse
+- Add `badge-inset` utility class for the premium inner shadow
+
+---
+
+## Visual Preview
+
+```text
+┌────────────────────────────────────────────────────┐
+│                                                    │
+│  ┌──────┐                                          │
+│  │  A   │  Legal & Agreements         [Pending]   │
+│  └──────┘  Review and sign required agreements    │
+│   ▲ Soft shadow, refined typography               │
+│                                                    │
+│  ┌──────┐                                          │
+│  │  ✓   │  Brand Identity            [Complete]   │
+│  └──────┘  Emerald green with glow                │
+│   ▲ Pop animation, success glow                   │
+│                                                    │
+│  ┌──────┐                                          │
+│  │  🔒  │  Venue Manager              [Locked]    │
+│  └──────┘  Muted, reduced opacity                 │
+│                                                    │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+## Implementation Steps
+
+1. Create `src/components/ui/step-badge.tsx` with all state variants
+2. Add CSS keyframes for the active glow pulse animation
+3. Update `LegalStep.tsx` to use the new component
+4. Update `BrandStep.tsx` to use the new component  
+5. Update `VenueStep.tsx` to use the new component
+6. Add proper status logic based on `isCompleted`, `isLocked`, and accordion open state
