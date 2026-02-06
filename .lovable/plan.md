@@ -1,234 +1,226 @@
 
-
-# Branded PDF Export for Pilot Agreement
+# Comprehensive Responsive Design Refactoring Plan
 
 ## Overview
-
-This plan upgrades the pilot agreement download functionality from a basic `.txt` file to a professionally designed, branded PDF document. The PDF will reflect Daze's "Series C" visual identity with proper typography, logo placement, color accents, and a signature block.
-
----
-
-## Current State
-
-- The `handleDownload` function creates a plain text blob and downloads it as `.txt`
-- No branding, no logo, no visual hierarchy
-- Signature is not included in the downloaded document
+This plan transforms the platform into a fully responsive experience across all devices (mobile, tablet, desktop, large screens) while maintaining the desktop-first design philosophy. The approach uses progressive enhancement with fluid scaling, strategic breakpoints, and adaptive layouts.
 
 ---
 
-## Implementation Approach
+## Technical Approach
 
-### 1. Install jsPDF Library
+### Breakpoint Strategy
+Using Tailwind's standard breakpoints for consistent responsive behavior:
+- **sm**: 640px (large phones, small tablets)
+- **md**: 768px (tablets)
+- **lg**: 1024px (small laptops)
+- **xl**: 1280px (desktops)
+- **2xl**: 1536px (large screens)
 
-Add `jspdf` - a client-side PDF generation library that works well with React and TypeScript.
-
-```text
-npm install jspdf
-```
-
-This library allows us to programmatically create PDFs with:
-- Custom fonts and typography
-- Embedded images (logo)
-- Precise positioning and layouts
-- Color control for brand consistency
-
----
-
-### 2. Create PDF Generator Utility
-
-Create a new utility file: `src/lib/generateAgreementPdf.ts`
-
-This module will handle all PDF generation logic with:
-
-**Header Section:**
-- Daze logo (embedded as base64 or loaded from assets)
-- "PILOT AGREEMENT" title in Plus Jakarta Sans styling
-- Document metadata (date, document ID)
-
-**Entity Information Block:**
-- Partner name and address in a highlighted box
-- Authorized signer details
-
-**Agreement Body:**
-- Properly formatted sections (numbered clauses)
-- Clean typography with appropriate line spacing
-- Brand primary color (#3B82F6) for section headers
-
-**Signature Block:**
-- Signature image (if signed) embedded in the PDF
-- Timestamp and digital signature notice
-- "Executed on [date]" formal language
-
-**Footer:**
-- Page numbers
-- Confidentiality notice
-- Daze contact information
+### Design Philosophy
+- **Desktop-optimized by default** - Base styles target desktop experience
+- **Graceful adaptation** - Progressive adjustments for smaller screens
+- **Fluid typography and spacing** - Use clamp() for smooth scaling
+- **Touch accessibility** - Minimum 44px touch targets on mobile/tablet
 
 ---
 
-### 3. PDF Design Specifications
+## 1. Global Layout & Spacing
 
-Following Daze's "Series C" aesthetic:
+### CSS Foundation (`src/index.css`)
+Add fluid spacing and typography utilities:
+- Add `clamp()`-based responsive font sizes
+- Create responsive container padding utilities
+- Add touch-target utility class (`min-h-touch` = 44px)
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  [DAZE LOGO]                              Document #: PA-xxx│
-│                                           Date: Feb 6, 2026 │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│                     PILOT AGREEMENT                         │
-│                                                             │
-│  ┌───────────────────────────────────────────────────────┐ │
-│  │ PARTNER INFORMATION                                    │ │
-│  │ Entity: Pensacola Beach Hospitality Group, LLC        │ │
-│  │ Address: 123 Beach Blvd, Pensacola, FL 32507          │ │
-│  │ Authorized Signer: John Smith, General Manager        │ │
-│  └───────────────────────────────────────────────────────┘ │
-│                                                             │
-│  1. PURPOSE                                                 │
-│  This Pilot Agreement establishes the terms...              │
-│                                                             │
-│  2. PILOT PERIOD                                            │
-│  The pilot period shall commence upon execution...          │
-│                                                             │
-│  [... remaining clauses ...]                                │
-│                                                             │
-│  ─────────────────────────────────────────────────────────  │
-│                                                             │
-│  AUTHORIZED SIGNATURE                                       │
-│                                                             │
-│  [Signature Image]                                          │
-│  ________________________________                           │
-│  John Smith, General Manager                                │
-│  Pensacola Beach Hospitality Group, LLC                     │
-│                                                             │
-│  Digitally Signed: February 6, 2026 at 3:45 PM             │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│  Page 1 of 1  │  CONFIDENTIAL  │  Daze Technologies, Inc.  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Brand Colors:**
-- Primary Blue: `#3B82F6` (section headers, accents)
-- Dark Text: `#1E293B` (body text)
-- Muted Gray: `#64748B` (secondary text, labels)
-- Light Gray: `#F1F5F9` (info box backgrounds)
+### Container Updates
+All containers use responsive padding:
+- Desktop: `px-6` to `px-12`
+- Tablet: `px-4` to `px-6`
+- Mobile: `px-4`
 
 ---
 
-### 4. Update ReviewSignModal Component
+## 2. Authentication Pages (`src/pages/Auth.tsx`, `src/components/auth/LoginForm.tsx`)
 
-Modify the `handleDownload` function to:
+### Current Issues
+- Login card uses fixed max-width that may clip on small screens
+- Art panel hidden entirely on mobile (no fallback)
 
-1. Import the PDF generator utility
-2. Gather all required data (entity info, agreement text, signature if present)
-3. Call the generator with proper parameters
-4. Download the generated PDF blob
-
-The download button behavior:
-- **Draft state**: Download unsigned agreement (no signature block)
-- **Signed state**: Download complete agreement with embedded signature image
-
----
-
-### 5. Logo Handling
-
-Two approaches for the logo:
-
-**Option A: Base64 Embed (Recommended)**
-- Convert `daze-logo.png` to base64 string
-- Embed directly in the PDF generator
-- No async loading required, works offline
-
-**Option B: Dynamic Loading**
-- Load logo from `/assets` at generation time
-- Requires async handling
-- More flexible but adds complexity
-
-We will use Option A for reliability and offline support.
+### Fixes
+- Login form: Responsive padding (`p-6 sm:p-8`)
+- Logo sizing: `h-12 sm:h-16` for better mobile fit
+- Typography: `text-xl sm:text-2xl` for headings
+- Form inputs: Full width with appropriate touch targets
+- Mobile: Add subtle gradient background instead of hidden art panel
 
 ---
 
-## Technical Details
+## 3. Dashboard Layout
 
-### File Changes
+### Header (`src/components/layout/DashboardHeader.tsx`)
+- Responsive padding: `px-4 sm:px-6`
+- Brand text: Hide "Control Tower" subtitle on mobile (`hidden sm:block`)
+- User dropdown: Show only avatar on mobile, full name on larger screens
+- Touch-friendly menu trigger: `min-h-[44px]`
 
-| File | Change |
-|------|--------|
-| `src/lib/generateAgreementPdf.ts` | New file - PDF generation utility |
-| `src/components/portal/ReviewSignModal.tsx` | Update `handleDownload` to use PDF generator |
-| `package.json` | Add `jspdf` dependency |
+### Dashboard Grid (`src/pages/Dashboard.tsx`)
+- Stats grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+- Stat cards: Responsive padding and font sizes
+- Kanban section heading: Responsive text sizing
 
-### PDF Generation Flow
+---
 
-```text
-User clicks "Download"
-        │
-        ▼
-┌───────────────────┐
-│ Gather Data       │
-│ - Entity info     │
-│ - Agreement text  │
-│ - Signature URL   │
-│ - Signed date     │
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ Generate PDF      │
-│ - Create jsPDF    │
-│ - Add header/logo │
-│ - Add body text   │
-│ - Add signature   │
-│ - Add footer      │
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ Download          │
-│ pdf.save(name)    │
-└───────────────────┘
-```
+## 4. Kanban Board (Critical Fix)
 
-### Key jsPDF Methods Used
+### Board Container (`src/components/kanban/KanbanBoard.tsx`)
+- Horizontal scroll with snap points on mobile/tablet
+- Minimum column width: `min-w-[280px]`
+- Touch-friendly scrolling: `-webkit-overflow-scrolling: touch`
 
-```typescript
-// Create PDF instance
-const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+### Columns (`src/components/kanban/KanbanColumn.tsx`)
+- Flexible width: `min-w-[280px] max-w-[320px] lg:min-w-[300px] lg:max-w-none lg:flex-1`
+- Column header: Responsive padding and text
+- Drop zone: Minimum height for usability
 
-// Add logo image
-pdf.addImage(logoBase64, 'PNG', x, y, width, height);
+### Hotel Cards (`src/components/kanban/HotelCard.tsx`)
+- Responsive padding: `p-2.5 sm:p-3`
+- Avatar sizing: `h-8 w-8 sm:h-9 sm:w-9`
+- Text truncation with proper min-width: `min-w-0`
+- Badge text: Already using `text-2xs` (good)
 
-// Typography
-pdf.setFont('helvetica', 'bold');
-pdf.setFontSize(24);
-pdf.setTextColor(30, 41, 59); // #1E293B
+---
 
-// Add text with wrapping
-pdf.text('PILOT AGREEMENT', 105, 40, { align: 'center' });
-pdf.splitTextToSize(paragraph, maxWidth);
+## 5. Client Portal Pages
 
-// Colored rectangles for info boxes
-pdf.setFillColor(241, 245, 249); // #F1F5F9
-pdf.roundedRect(x, y, width, height, radius, radius, 'F');
+### Portal Layout (`src/pages/Portal.tsx`, `src/pages/PortalPreview.tsx`)
 
-// Add signature image
-pdf.addImage(signatureDataUrl, 'PNG', x, y, width, height);
-```
+**Header**
+- Remove the fixed mobile bottom nav (user requested no mobile-first)
+- Keep single header with responsive behavior:
+  - Mobile: Compact logo, hamburger/dropdown for actions
+  - Tablet+: Full header with all controls visible
+
+**Main Grid**
+- Current: `lg:grid-cols-3` (good)
+- Adjust spacing: `gap-4 sm:gap-6 lg:gap-8`
+- Progress card takes full width on mobile, 1/3 on desktop
+
+**Welcome Section**
+- Heading: `text-2xl sm:text-3xl lg:text-4xl`
+- Subtext: `text-sm sm:text-base lg:text-lg`
+
+### Progress Ring (`src/components/portal/ProgressRing.tsx`)
+- Remove forced scaling (no `scale-[0.85]`)
+- Use responsive sizing via container width
+- Add responsive className prop support
+
+### Task Accordion (`src/components/portal/TaskAccordion.tsx`)
+
+**Accordion Headers (Steps A, B, C)**
+- Icon containers: `w-7 h-7 sm:w-8 sm:h-8` (already done)
+- Text: Allow wrapping with `min-w-0` (already done)
+- Proper touch target: `min-h-[44px]` on trigger
+
+**Accordion Content**
+- Responsive padding: `px-3 sm:px-4`
+- Button sizing: Full-width on mobile, auto on tablet+
+  - Change from `w-full sm:w-auto` pattern
+
+---
+
+## 6. Step Components
+
+### Legal Step (`src/components/portal/steps/LegalStep.tsx`)
+- Agreement card: Stack items on mobile (`flex-col sm:flex-row`)
+- Buttons: Full width on mobile with proper touch height
+
+### Brand Step (`src/components/portal/steps/BrandStep.tsx`)
+- Logo upload grid: Already responsive
+- Color palette: Responsive grid `grid-cols-3 sm:grid-cols-5`
+
+### Venue Step (`src/components/portal/steps/VenueStep.tsx`)
+- Venue cards grid: `grid-cols-1 sm:grid-cols-2` (already done)
+
+---
+
+## 7. Modals & Dialogs
+
+### Review & Sign Modal (`src/components/portal/ReviewSignModal.tsx`)
+- Current: `max-w-5xl h-[90vh]` with 2-column grid
+- Responsive changes:
+  - Mobile: Single column stack, full-screen modal
+  - Tablet+: Two-column side-by-side
+- Modal sizing: `max-w-full sm:max-w-2xl lg:max-w-5xl`
+- Height: `h-[100dvh] sm:h-[90vh]` (use dvh for mobile)
+- Grid: `grid-cols-1 lg:grid-cols-2`
+- Form inputs: Stack on mobile (`grid-cols-1 sm:grid-cols-2`)
+
+### Welcome Tour Modal (`src/components/portal/WelcomeTour.tsx`)
+- Already has responsive updates (text sizing, button stacking)
+- Ensure navigation dots have touch targets
+- Modal width: Already using `max-w-[95vw]`
+
+### Settings Dialog (`src/components/settings/SettingsDialog.tsx`)
+- Current: `sm:max-w-md` (good)
+- Add responsive padding
+
+---
+
+## 8. Component-Level Touch Targets
+
+### Buttons (Global Pattern)
+All interactive buttons get minimum touch sizing:
+- Primary/Secondary buttons: `min-h-[44px]`
+- Icon buttons: `min-w-[44px] min-h-[44px]`
+
+### Form Inputs
+- Input fields: `h-10 sm:h-9` (slightly taller on mobile)
+- Labels: Adequate spacing for touch
+
+---
+
+## 9. Admin Features
+
+### Hotel Switcher (`src/components/portal/AdminHotelSwitcher.tsx`)
+- Select width: `w-full sm:w-[250px]`
+- Dropdown positioning: Responsive alignment
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/index.css` | Add touch-target utilities, fluid typography |
+| `src/pages/Auth.tsx` | Responsive split layout |
+| `src/components/auth/LoginForm.tsx` | Responsive padding, typography |
+| `src/components/layout/DashboardHeader.tsx` | Responsive padding, hide subtitle on mobile |
+| `src/components/layout/DashboardLayout.tsx` | Minor responsive adjustments |
+| `src/pages/Dashboard.tsx` | Stats grid responsive, Kanban section |
+| `src/components/kanban/KanbanBoard.tsx` | Scroll container improvements |
+| `src/components/kanban/KanbanColumn.tsx` | Flexible column widths |
+| `src/components/kanban/HotelCard.tsx` | Responsive card sizing |
+| `src/pages/Portal.tsx` | Remove bottom nav, responsive header, grid spacing |
+| `src/pages/PortalPreview.tsx` | Remove bottom nav, responsive header, grid spacing |
+| `src/components/portal/ProgressRing.tsx` | Remove forced scaling, accept className |
+| `src/components/portal/TaskAccordion.tsx` | Touch targets, responsive spacing |
+| `src/components/portal/steps/LegalStep.tsx` | Responsive button layout |
+| `src/components/portal/steps/BrandStep.tsx` | Touch targets |
+| `src/components/portal/steps/VenueStep.tsx` | Touch targets |
+| `src/components/portal/VenueManager.tsx` | Responsive grid |
+| `src/components/portal/ReviewSignModal.tsx` | Responsive 2-column to 1-column, full-screen mobile |
+| `src/components/portal/WelcomeTour.tsx` | Touch targets on dots |
+| `src/components/portal/AdminHotelSwitcher.tsx` | Responsive width |
+| `src/components/settings/SettingsDialog.tsx` | Touch targets |
 
 ---
 
 ## Summary
 
-This implementation transforms the plain text download into a professionally branded PDF that:
-
-1. Reflects Daze's Series C visual identity
-2. Includes the company logo in the header
-3. Uses proper typography hierarchy
-4. Highlights entity information in a styled box
-5. Embeds the digital signature when present
-6. Includes proper footer with page numbers and confidentiality notice
-
-The result is a document that clients can share with stakeholders and that represents Daze's brand professionally.
-
+This refactoring ensures:
+1. **All breakpoints covered** - Smooth transitions from mobile (320px) to large screens (1536px+)
+2. **Touch accessibility** - 44px minimum targets throughout
+3. **Readable text** - Responsive typography that scales gracefully
+4. **Usable layouts** - Grids and flexbox that adapt intelligently
+5. **No mobile-first philosophy** - Desktop remains primary, with responsive adaptations
+6. **Consistent spacing** - Fluid padding and gaps across all screen sizes
