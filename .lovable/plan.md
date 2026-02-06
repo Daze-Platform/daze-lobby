@@ -1,141 +1,31 @@
 
-# Improve Agreement Readability & Add Download Option
 
-## Current State Analysis
+# Increase Logo Size in Portal Preview
 
-The Pilot Agreement modal currently:
-- Displays agreement text on the left panel using `ScrollArea`
-- Uses a `<pre>` tag with monospace-style formatting
-- Has no download functionality
-
-## Requirements
-
-1. **Improved In-Modal Reading**: Ensure the agreement is easily scrollable and readable
-2. **Download Option**: Add a button to download the agreement as a file (PDF or text)
-
----
-
-## Implementation Plan
-
-### 1. Improve Document Reading Experience
-
-**Current issues:**
-- The `<pre>` tag may not render as cleanly as styled paragraphs
-- No visual indication of scroll progress
-
-**Changes:**
-- Replace `<pre>` with properly styled `<div>` sections for better typography
-- Add a subtle scroll indicator or ensure the ScrollArea scrollbar is always visible
-- Add padding for better readability
-
-### 2. Add Download Button
-
-**Location:** In the document panel header (next to "Agreement Document" label)
-
-**Implementation approach:**
-- Add a "Download" button with a download icon
-- Generate a text file (`.txt`) or use a simple PDF library
-- For simplicity and no additional dependencies, generate a `.txt` file using Blob API
-
-**Technical details:**
+## Current State
+The logo next to "PREVIEW MODE" is currently set to `h-8` (32px height) on line 86:
 ```tsx
-const handleDownload = () => {
-  const blob = new Blob([PILOT_AGREEMENT_TEXT], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "Daze_Pilot_Agreement.txt";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
+<img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
 ```
 
-### 3. UI Changes
+## Change Required
+Increase the height by 25px: 32px + 25px = 57px
 
-**File: `src/components/portal/ReviewSignModal.tsx`**
+Since Tailwind doesn't have a built-in class for exactly 57px, we'll use an arbitrary value: `h-[57px]`
 
-| Section | Change |
-|---------|--------|
-| Imports | Add `Download` icon from lucide-react |
-| Document header | Add download button with icon |
-| Document content | Improve typography with better text styling |
-| ScrollArea | Ensure it fills available space and scrolls properly |
+## Implementation
 
-**New header layout:**
-```
-+------------------------------------------+
-| Agreement Document        [Download ↓]   |
-+------------------------------------------+
+| File | Change |
+|------|--------|
+| `src/pages/PortalPreview.tsx` | Line 86: Change `h-8` to `h-[57px]` |
+
+**Before:**
+```tsx
+<img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
 ```
 
-**Download button styling:**
-- Small outline/ghost button
-- Download icon + optional "Download" text
-- Positioned to the right of the header
+**After:**
+```tsx
+<img src={dazeLogo} alt="Daze" className="h-[57px] w-auto" />
+```
 
----
-
-## Technical Implementation
-
-### Changes to ReviewSignModal.tsx
-
-1. **Add import:**
-   ```tsx
-   import { Check, Loader2, Shield, Calendar, Download } from "lucide-react";
-   ```
-
-2. **Add download handler function:**
-   ```tsx
-   const handleDownload = () => {
-     const blob = new Blob([PILOT_AGREEMENT_TEXT], { type: "text/plain" });
-     const url = URL.createObjectURL(blob);
-     const link = document.createElement("a");
-     link.href = url;
-     link.download = "Daze_Pilot_Agreement.txt";
-     document.body.appendChild(link);
-     link.click();
-     document.body.removeChild(link);
-     URL.revokeObjectURL(url);
-   };
-   ```
-
-3. **Update document panel header (lines 129-132):**
-   ```tsx
-   <div className="px-4 py-2 bg-muted/50 border-b flex items-center justify-between">
-     <p className="text-sm font-medium text-muted-foreground">Agreement Document</p>
-     <Button
-       variant="ghost"
-       size="sm"
-       onClick={handleDownload}
-       className="h-7 gap-1.5 text-muted-foreground hover:text-foreground"
-     >
-       <Download className="w-3.5 h-3.5" />
-       Download
-     </Button>
-   </div>
-   ```
-
-4. **Improve document typography (lines 133-139):**
-   - Keep `ScrollArea` but improve the inner content styling
-   - Use proper paragraph spacing and line height
-   - Ensure text is easy to read
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/portal/ReviewSignModal.tsx` | Add Download icon import, download handler, update document header with download button |
-
----
-
-## Result
-
-After implementation:
-- Users can scroll through the full agreement in the modal (already works, but improved)
-- Users can click "Download" to save the agreement as a `.txt` file to read offline
-- The download uses native browser Blob API (no additional dependencies)
-- Clean, accessible UI with proper button placement
