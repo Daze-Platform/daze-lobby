@@ -194,17 +194,17 @@ export default function PortalPreview() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-lg md:text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 md:gap-6 pt-2 px-4 md:px-6">
+            <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 px-4 sm:px-6">
               {/* Responsive Progress Ring */}
               <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} className="scale-[0.85] md:scale-100" />
+                <ProgressRing progress={progress} status={status} size={160} />
               </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
@@ -213,7 +213,7 @@ export default function PortalPreview() {
               />
               
               {/* Demo Status Toggle - Horizontal scroll on mobile */}
-              <div className="w-full pt-4 md:pt-6 border-t border-border/20">
+              <div className="w-full pt-4 sm:pt-6 border-t border-border/20">
                 <p className="label-micro mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2 overflow-x-auto pb-1 -mx-2 px-2 scrollbar-hide">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
@@ -222,7 +222,7 @@ export default function PortalPreview() {
                       size="sm"
                       variant={status === s ? "default" : "secondary"}
                       onClick={() => setStatus(s)}
-                      className="flex-1 min-w-[80px] text-xs capitalize min-h-[44px] whitespace-nowrap"
+                      className="flex-1 min-w-[70px] sm:min-w-[80px] text-xs capitalize min-h-[44px] whitespace-nowrap"
                     >
                       {s === "reviewing" ? "in-progress" : s}
                     </Button>
@@ -234,11 +234,11 @@ export default function PortalPreview() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-lg md:text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 px-2 md:px-6">
+            <CardContent className="pt-2 px-2 sm:px-4 md:px-6">
               <TaskAccordion 
                 tasks={tasks}
                 onLegalSign={handleLegalSign}

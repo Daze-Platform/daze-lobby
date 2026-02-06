@@ -259,10 +259,10 @@ export default function Portal() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           {isAdmin && (
-            <div className="flex-1 flex justify-center">
+            <div className="flex-1 flex justify-center max-w-[200px]">
               <AdminHotelSwitcher />
             </div>
           )}
