@@ -18,29 +18,27 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 space-y-4">
+      <div className="p-6 space-y-6">
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <Card key={stat.label} className="border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground">
-                  {stat.label}
-                </CardTitle>
+            <Card key={stat.label} className="hover-lift cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-6">
+                <span className="label-micro">{stat.label}</span>
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="px-4 pb-3">
-                <div className="text-2xl font-bold">{stat.value}</div>
+              <CardContent className="px-6 pb-4">
+                <div className="font-display text-3xl font-bold">{stat.value}</div>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Kanban Lifecycle Board */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Hotel Lifecycle</h2>
-            <Badge variant="outline" className="text-2xs">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-semibold">Hotel Lifecycle</h2>
+            <Badge variant="secondary" className="text-2xs font-medium">
               Drag to change phase
             </Badge>
           </div>

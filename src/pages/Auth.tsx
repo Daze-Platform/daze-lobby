@@ -19,15 +19,16 @@ export default function Auth() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
       
       {isLogin ? (
         <LoginForm onSwitchToSignUp={() => setIsLogin(false)} />
@@ -36,12 +37,12 @@ export default function Auth() {
       )}
 
       {/* Test Button for Client Portal Preview */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-6 right-6 z-50">
         <Button 
-          variant="outline" 
+          variant="secondary" 
           size="sm"
           onClick={() => navigate("/portal-preview")}
-          className="gap-2 bg-card/80 backdrop-blur-sm border-dashed"
+          className="gap-2 shadow-soft-md"
         >
           <Eye className="w-4 h-4" />
           Preview Client Portal

@@ -47,48 +47,50 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col items-center">
-            <img src={dazeLogo} alt="Daze" className="h-6 w-6 object-contain" />
-            <span className="text-xs font-semibold tracking-tight">Daze Lobby</span>
+    <header className="glass-header">
+      <div className="flex h-16 items-center justify-between px-6">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <img src={dazeLogo} alt="Daze" className="h-8 w-8 object-contain" />
+            <div className="flex flex-col">
+              <span className="font-display text-lg font-semibold tracking-tight">Daze Lobby</span>
+              <span className="text-2xs text-muted-foreground font-medium uppercase tracking-wide">Control Tower</span>
+            </div>
           </div>
-          <Badge variant="outline" className="text-2xs font-medium">
-            Control Tower
-          </Badge>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {isTest && (
-            <Badge className="bg-amber-500 hover:bg-amber-500 text-amber-950 border-0 text-2xs font-bold">
-              TEST DATA
+            <Badge className="bg-warning/10 text-warning border-warning/20 text-2xs font-bold uppercase tracking-wide">
+              Test Data
             </Badge>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{user?.fullName || user?.email}</span>
-                <Badge variant={getRoleBadgeVariant(role)} className="text-2xs">
-                  {formatRole(role)}
-                </Badge>
+              <Button variant="ghost" size="sm" className="gap-2 hover:bg-muted/50">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-sm font-medium">{user?.fullName || user?.email}</span>
+                  <span className="text-2xs text-muted-foreground">{formatRole(role)}</span>
+                </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 shadow-soft-xl border-0">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium">{user?.fullName || "User"}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>

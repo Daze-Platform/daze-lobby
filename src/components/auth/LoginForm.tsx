@@ -36,28 +36,28 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
-      <CardHeader className="space-y-1 text-center">
-        <div className="flex flex-col items-center justify-center mb-2">
-          <img src={dazeLogo} alt="Daze" className="h-[73px] w-[73px] object-contain mb-1" />
-          <span className="text-2xl font-bold tracking-tight">Daze Lobby</span>
+    <Card className="w-full max-w-md shadow-soft-xl">
+      <CardHeader className="space-y-1 text-center pb-2">
+        <div className="flex flex-col items-center justify-center mb-4">
+          <img src={dazeLogo} alt="Daze" className="h-16 w-16 object-contain mb-3" />
+          <span className="font-display text-2xl font-bold tracking-tight">Daze Lobby</span>
         </div>
-        <CardTitle className="text-xl">Welcome back</CardTitle>
-        <CardDescription>
+        <CardTitle className="font-display text-xl font-semibold">Welcome back</CardTitle>
+        <CardDescription className="text-muted-foreground">
           Sign in to access the Control Tower
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border-0 bg-destructive/10">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
             <Input
               id="email"
               type="email"
@@ -70,7 +70,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
             <Input
               id="password"
               type="password"
@@ -87,12 +87,12 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
             Sign In
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground pt-2">
             Don't have an account?{" "}
             <button
               type="button"
               onClick={onSwitchToSignUp}
-              className="text-primary hover:underline font-medium"
+              className="text-primary hover:underline font-medium transition-colors"
             >
               Sign up
             </button>
