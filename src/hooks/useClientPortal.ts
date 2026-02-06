@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useHotel } from "@/contexts/HotelContext";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { sanitizeFilename } from "@/lib/fileValidation";
@@ -15,19 +16,6 @@ interface OnboardingTask {
   data: Record<string, unknown>;
 }
 
-interface ClientHotel {
-  id: string;
-  user_id: string;
-  hotel_id: string;
-  hotels: {
-    id: string;
-    name: string;
-    phase: string;
-    onboarding_progress: number | null;
-    brand_palette: string[] | null;
-  };
-}
-
 interface DbVenue {
   id: string;
   hotel_id: string;
@@ -39,81 +27,53 @@ interface DbVenue {
 
 export function useClientPortal() {
   const { user } = useAuthContext();
+  const { hotel, hotelId, isLoading: isHotelLoading } = useHotel();
   const queryClient = useQueryClient();
-
-  // Fetch client's hotel
-  const { data: clientHotel, isLoading: isLoadingHotel } = useQuery({
-    queryKey: ["client-hotel", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from("client_hotels")
-        .select(`
-          id,
-          user_id,
-          hotel_id,
-          hotels (
-            id,
-            name,
-            phase,
-            onboarding_progress,
-            brand_palette
-          )
-        `)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data as ClientHotel | null;
-    },
-    enabled: !!user?.id,
-  });
 
   // Fetch onboarding tasks for the hotel
   const { data: tasks, isLoading: isLoadingTasks } = useQuery({
-    queryKey: ["onboarding-tasks", clientHotel?.hotel_id],
+    queryKey: ["onboarding-tasks", hotelId],
     queryFn: async () => {
-      if (!clientHotel?.hotel_id) return [];
+      if (!hotelId) return [];
       
       const { data, error } = await supabase
         .from("onboarding_tasks")
         .select("*")
-        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("hotel_id", hotelId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
       return (data as OnboardingTask[]) || [];
     },
-    enabled: !!clientHotel?.hotel_id,
+    enabled: !!hotelId,
   });
 
   // Fetch venues for the hotel
   const { data: venuesData, isLoading: isLoadingVenues } = useQuery({
-    queryKey: ["venues", clientHotel?.hotel_id],
+    queryKey: ["venues", hotelId],
     queryFn: async () => {
-      if (!clientHotel?.hotel_id) return [];
+      if (!hotelId) return [];
       
       const { data, error } = await supabase
         .from("venues")
         .select("*")
-        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("hotel_id", hotelId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
       return (data as DbVenue[]) || [];
     },
-    enabled: !!clientHotel?.hotel_id,
+    enabled: !!hotelId,
   });
 
-  // Sign legal document (upload signature to contracts bucket)
+  // Sign legal document - ISOLATED PATH: contracts/{hotel_id}/pilot_agreement.png
   const signLegalMutation = useMutation({
     mutationFn: async ({ 
       signatureDataUrl 
     }: { 
       signatureDataUrl: string;
     }) => {
-      if (!user?.id || !clientHotel?.hotel_id) {
+      if (!user?.id || !hotelId) {
         throw new Error("Not authenticated or no hotel assigned");
       }
 
@@ -121,26 +81,24 @@ export function useClientPortal() {
       const response = await fetch(signatureDataUrl);
       const blob = await response.blob();
 
-      // Create file path: {user_id}/signatures/{hotel_id}/pilot_agreement.png
-      const filePath = `${user.id}/signatures/${clientHotel.hotel_id}/pilot_agreement.png`;
+      // MULTI-TENANT PATH: contracts/{hotel_id}/pilot_agreement.png
+      const filePath = `${hotelId}/pilot_agreement.png`;
 
-      // Upload to contracts bucket (private, PDF-only normally, but signatures are special)
-      // We'll upload to client-uploads since contracts is PDF-only
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from("client-uploads")
+      const { error: uploadError } = await supabase.storage
+        .from("contracts")
         .upload(filePath, blob, {
           contentType: "image/png",
-          upsert: true, // Allow overwrite if re-signing
+          upsert: true,
         });
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL (or signed URL for private bucket)
-      const { data: urlData } = supabase.storage
-        .from("client-uploads")
-        .getPublicUrl(filePath);
+      // Get the URL (private bucket - use signed URL)
+      const { data: urlData } = await supabase.storage
+        .from("contracts")
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year
 
-      const signatureUrl = urlData?.publicUrl;
+      const signatureUrl = urlData?.signedUrl;
       const signedAt = new Date().toISOString();
 
       // Update the legal task with signature data
@@ -156,7 +114,7 @@ export function useClientPortal() {
             signature_path: filePath,
           },
         } as never)
-        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("hotel_id", hotelId)
         .eq("task_key", "legal");
 
       if (updateError) throw updateError;
@@ -165,7 +123,6 @@ export function useClientPortal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["client-hotel"] });
       toast.success("Agreement signed successfully! Next step unlocked.");
     },
     onError: (error) => {
@@ -182,7 +139,7 @@ export function useClientPortal() {
       taskKey: string; 
       data: Record<string, unknown> 
     }) => {
-      if (!clientHotel?.hotel_id) throw new Error("No hotel found");
+      if (!hotelId) throw new Error("No hotel found");
 
       const { error } = await supabase
         .from("onboarding_tasks")
@@ -191,14 +148,13 @@ export function useClientPortal() {
           is_completed: true,
           completed_at: new Date().toISOString(),
         } as never)
-        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("hotel_id", hotelId)
         .eq("task_key", taskKey);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["client-hotel"] });
       toast.success("Task updated successfully!");
     },
     onError: (error) => {
@@ -206,7 +162,114 @@ export function useClientPortal() {
     },
   });
 
-  // Upload file
+  // Upload logo file - ISOLATED PATH: brands/{hotel_id}/logo_{variant}_{timestamp}.png
+  const uploadLogoMutation = useMutation({
+    mutationFn: async ({ 
+      file, 
+      variant 
+    }: { 
+      file: File; 
+      variant: string;
+    }) => {
+      if (!hotelId) throw new Error("No hotel found");
+
+      const safeName = sanitizeFilename(file.name);
+      const timestamp = Date.now();
+      // MULTI-TENANT PATH: brands/{hotel_id}/logo_{variant}_{timestamp}_{filename}
+      const filePath = `${hotelId}/logo_${variant}_${timestamp}_${safeName}`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from("onboarding-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("onboarding-assets")
+        .getPublicUrl(filePath);
+
+      // Update brand task with logo reference
+      const existingTask = tasks?.find(t => t.task_key === "brand");
+      const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+      const existingLogos = (existingData.logos || {}) as Record<string, string>;
+
+      const { error: updateError } = await supabase
+        .from("onboarding_tasks")
+        .update({ 
+          data: { 
+            ...existingData, 
+            logos: { 
+              ...existingLogos, 
+              [variant]: urlData?.publicUrl 
+            }
+          },
+        } as never)
+        .eq("hotel_id", hotelId)
+        .eq("task_key", "brand");
+
+      if (updateError) throw updateError;
+
+      return { path: filePath, url: urlData?.publicUrl };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      toast.success("Logo uploaded successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to upload logo: " + error.message);
+    },
+  });
+
+  // Upload venue menu - ISOLATED PATH: venues/{hotel_id}/{venue_name}/menu.pdf
+  const uploadVenueMenuMutation = useMutation({
+    mutationFn: async ({ 
+      venueId,
+      venueName,
+      file 
+    }: { 
+      venueId: string;
+      venueName: string;
+      file: File;
+    }) => {
+      if (!hotelId) throw new Error("No hotel found");
+
+      // Sanitize venue name for path
+      const safeVenueName = venueName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      // MULTI-TENANT PATH: venues/{hotel_id}/{venue_name}/menu.pdf
+      const filePath = `${hotelId}/${safeVenueName}/menu.pdf`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("onboarding-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("onboarding-assets")
+        .getPublicUrl(filePath);
+
+      // Update venue with menu URL
+      const { error: updateError } = await supabase
+        .from("venues")
+        .update({ menu_pdf_url: urlData?.publicUrl })
+        .eq("id", venueId);
+
+      if (updateError) throw updateError;
+
+      return { path: filePath, url: urlData?.publicUrl };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["venues"] });
+      toast.success("Menu uploaded successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to upload menu: " + error.message);
+    },
+  });
+
+  // Upload file (generic) - maintains hotel isolation
   const uploadFileMutation = useMutation({
     mutationFn: async ({ 
       taskKey, 
@@ -217,13 +280,14 @@ export function useClientPortal() {
       file: File; 
       fieldName: string;
     }) => {
-      if (!user?.id || !clientHotel?.hotel_id) throw new Error("Not authenticated");
+      if (!hotelId) throw new Error("No hotel found");
 
       const safeName = sanitizeFilename(file.name);
-      const filePath = `${user.id}/${clientHotel.hotel_id}/${taskKey}/${fieldName}_${Date.now()}_${safeName}`;
+      // MULTI-TENANT PATH: {hotel_id}/{task_key}/{fieldName}_{timestamp}_{filename}
+      const filePath = `${hotelId}/${taskKey}/${fieldName}_${Date.now()}_${safeName}`;
       
       const { error: uploadError } = await supabase.storage
-        .from("client-uploads")
+        .from("onboarding-assets")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
@@ -238,7 +302,7 @@ export function useClientPortal() {
         .update({ 
           data: { ...existingData, [fieldName]: filePath },
         } as never)
-        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("hotel_id", hotelId)
         .eq("task_key", taskKey);
 
       if (updateError) throw updateError;
@@ -252,23 +316,23 @@ export function useClientPortal() {
     },
   });
 
-  // Save venues
+  // Save venues - with hotel_id injection
   const saveVenuesMutation = useMutation({
     mutationFn: async (venues: Venue[]) => {
-      if (!clientHotel?.hotel_id) throw new Error("No hotel found");
+      if (!hotelId) throw new Error("No hotel found");
 
-      // Delete existing venues
+      // Delete existing venues for this hotel only
       await supabase
         .from("venues")
         .delete()
-        .eq("hotel_id", clientHotel.hotel_id);
+        .eq("hotel_id", hotelId);
 
-      // Insert new venues
+      // Insert new venues with hotel_id injected
       if (venues.length > 0) {
         const venueInserts = venues
           .filter(v => v.name.trim())
           .map(v => ({
-            hotel_id: clientHotel.hotel_id,
+            hotel_id: hotelId, // CRITICAL: Inject hotel_id
             name: v.name,
             menu_pdf_url: v.menuPdfUrl || null,
           }));
@@ -290,7 +354,7 @@ export function useClientPortal() {
           completed_at: new Date().toISOString(),
           data: { venue_count: venues.filter(v => v.name.trim()).length },
         } as never)
-        .eq("hotel_id", clientHotel.hotel_id)
+        .eq("hotel_id", hotelId)
         .eq("task_key", "venue");
 
       if (taskError) throw taskError;
@@ -314,7 +378,7 @@ export function useClientPortal() {
 
   // Get status based on phase
   const getStatus = (): "onboarding" | "reviewing" | "live" => {
-    const phase = clientHotel?.hotels?.phase;
+    const phase = hotel?.phase;
     if (phase === "contracted") return "live";
     if (phase === "pilot_live") return "reviewing";
     return "onboarding";
@@ -331,20 +395,22 @@ export function useClientPortal() {
   };
 
   return {
-    hotel: clientHotel?.hotels,
-    hotelId: clientHotel?.hotel_id,
+    hotel,
+    hotelId,
     tasks: tasks || [],
     venues: formatVenues(),
-    isLoading: isLoadingHotel || isLoadingTasks || isLoadingVenues,
+    isLoading: isHotelLoading || isLoadingTasks || isLoadingVenues,
     progress: calculateProgress(),
     status: getStatus(),
     signLegal: signLegalMutation.mutate,
     updateTask: updateTaskMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
+    uploadLogo: uploadLogoMutation.mutate,
+    uploadVenueMenu: uploadVenueMenuMutation.mutate,
     saveVenues: saveVenuesMutation.mutate,
     isSigningLegal: signLegalMutation.isPending,
     isUpdating: updateTaskMutation.isPending,
-    isUploading: uploadFileMutation.isPending,
+    isUploading: uploadFileMutation.isPending || uploadLogoMutation.isPending,
     isSavingVenues: saveVenuesMutation.isPending,
   };
 }
