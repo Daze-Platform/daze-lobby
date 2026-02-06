@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { differenceInDays } from "date-fns";
-import { AlertTriangle, Lightbulb, X } from "lucide-react";
+import { AlertTriangle, Lightbulb, LockOpen } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +9,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { BlockerAlert } from "@/hooks/useBlockerDetails";
+import { useClearBlocker } from "@/hooks/useClearBlocker";
 import type { Enums } from "@/integrations/supabase/types";
 
 export interface BlockerData {
@@ -28,6 +39,7 @@ interface BlockerResolutionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   blocker: BlockerData | null;
+  onBlockerCleared?: () => void;
 }
 
 // Parse a human-readable issue title from auto_rule or fallback to reason
@@ -71,8 +83,11 @@ export function BlockerResolutionModal({
   open,
   onOpenChange,
   blocker,
+  onBlockerCleared,
 }: BlockerResolutionModalProps) {
   const navigate = useNavigate();
+  const clearBlocker = useClearBlocker();
+  const [showForceConfirm, setShowForceConfirm] = useState(false);
 
   if (!blocker) return null;
 
@@ -89,84 +104,144 @@ export function BlockerResolutionModal({
     onOpenChange(false);
   };
 
+  const handleForceClear = async () => {
+    setShowForceConfirm(false);
+    
+    await clearBlocker.mutateAsync({
+      blockerId: blocker.id,
+      hotelId: blocker.hotelId,
+      hotelName: blocker.hotelName,
+    });
+    
+    onBlockerCleared?.();
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={cn(
-          "sm:max-w-md p-0 overflow-hidden",
-          "border-t-2 border-t-[hsl(24,94%,53%)]", // Sunset Orange top border
-          "animate-modal-enter"
-        )}
-      >
-        {/* Header */}
-        <DialogHeader className="p-5 pb-4 space-y-3">
-          <div className="flex items-start gap-3">
-            {/* Pulsing Alert Icon */}
-            <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 animate-blocker-pulse rounded-full" />
-              <div className="relative w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className={cn(
+            "sm:max-w-md p-0 overflow-hidden",
+            "border-t-2 border-t-[hsl(24,94%,53%)]", // Sunset Orange top border
+            "animate-modal-enter"
+          )}
+        >
+          {/* Header */}
+          <DialogHeader className="p-5 pb-4 space-y-3">
+            <div className="flex items-start gap-3">
+              {/* Pulsing Alert Icon */}
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 animate-blocker-pulse rounded-full" />
+                <div className="relative w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="text-lg font-semibold text-foreground">
+                  Blocker Detected: {issueTitle}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground mt-1">
+                  <span className="font-medium text-foreground">{blocker.hotelName}</span>
+                  {" "}has been stalled for{" "}
+                  <span className="font-semibold text-destructive">{daysStalled} day{daysStalled !== 1 ? "s" : ""}</span>
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Body */}
+          <div className="px-5 pb-5 space-y-4">
+            {/* The Issue */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                The Issue
+              </p>
+              <p className="text-sm text-foreground leading-relaxed">
+                {blocker.reason}
+              </p>
+            </div>
+
+            {/* Daze Note */}
+            <div className="bg-[hsl(199,89%,48%)]/5 border border-[hsl(199,89%,48%)]/20 rounded-lg p-3">
+              <div className="flex items-start gap-2.5">
+                <Lightbulb className="h-4 w-4 text-[hsl(199,89%,48%)] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[hsl(199,89%,48%)] mb-1">
+                    Daze Note
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {dazeNote}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg font-semibold text-foreground">
-                Blocker Detected: {issueTitle}
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground mt-1">
-                <span className="font-medium text-foreground">{blocker.hotelName}</span>
-                {" "}has been stalled for{" "}
-                <span className="font-semibold text-destructive">{daysStalled} day{daysStalled !== 1 ? "s" : ""}</span>
-              </DialogDescription>
+            {/* Primary Actions */}
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                onClick={handlePrimaryAction}
+                className="flex-1 bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white"
+              >
+                {actionConfig.label}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Dismiss
+              </Button>
             </div>
-          </div>
-        </DialogHeader>
 
-        {/* Body */}
-        <div className="px-5 pb-5 space-y-4">
-          {/* The Issue */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-              The Issue
-            </p>
-            <p className="text-sm text-foreground leading-relaxed">
-              {blocker.reason}
-            </p>
-          </div>
-
-          {/* Daze Note */}
-          <div className="bg-[hsl(199,89%,48%)]/5 border border-[hsl(199,89%,48%)]/20 rounded-lg p-3">
-            <div className="flex items-start gap-2.5">
-              <Lightbulb className="h-4 w-4 text-[hsl(199,89%,48%)] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[hsl(199,89%,48%)] mb-1">
-                  Daze Note
-                </p>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {dazeNote}
-                </p>
+            {/* Force Clear Separator */}
+            <div className="relative pt-2">
+              <div className="absolute inset-0 flex items-center pt-2">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-background px-2 text-2xs text-muted-foreground uppercase tracking-wider">
+                  Override
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 pt-2">
-            <Button
-              onClick={handlePrimaryAction}
-              className="flex-1 bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white"
-            >
-              {actionConfig.label}
-            </Button>
+            {/* Force Clear Button */}
             <Button
               variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowForceConfirm(true)}
+              disabled={clearBlocker.isPending}
+              className="w-full text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-2"
             >
-              Dismiss
+              <LockOpen className="h-4 w-4" />
+              Force Clear Blocker
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Force Clear Confirmation Dialog */}
+      <AlertDialog open={showForceConfirm} onOpenChange={setShowForceConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Force Clear Blocker?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Manually clearing this blocker will allow the hotel to move to the next stage. 
+              This action will be logged in the activity feed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleForceClear}
+              className="bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white"
+            >
+              Proceed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
