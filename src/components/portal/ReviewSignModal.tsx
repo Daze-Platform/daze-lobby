@@ -428,7 +428,7 @@ export function ReviewSignModal({
                     </div>
                     {formattedSignedDate && (
                       <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
+                        <Calendar className="w-3 h-3" strokeWidth={1.5} />
                         <span>Digitally Signed on {formattedSignedDate}</span>
                       </div>
                     )}
