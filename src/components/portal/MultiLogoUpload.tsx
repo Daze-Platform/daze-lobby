@@ -129,7 +129,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
       </div>
 
       <p className="text-xs text-muted-foreground flex items-center gap-1">
-        <AlertCircle className="w-3 h-3" />
+        <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
         Accepted: PNG, SVG, JPG (max 5MB). Executables blocked.
       </p>
     </div>
