@@ -93,7 +93,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                   <Upload className={cn(
                     "w-6 h-6",
                     logo.type === "light" ? "text-muted" : "text-muted-foreground"
-                  )} />
+                  )} strokeWidth={1.5} />
                 )}
                 <Input
                   type="file"
