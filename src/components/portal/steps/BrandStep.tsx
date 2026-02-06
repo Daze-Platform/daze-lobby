@@ -83,7 +83,7 @@ export function BrandStep({
             {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "B"}
           </div>
           <div className="text-left">
-            <p className="font-medium">Brand Identity</p>
+            <p className="font-semibold">Brand Identity</p>
             <p className="text-sm text-muted-foreground">Upload logos and define your color palette</p>
           </div>
         </div>

@@ -85,7 +85,7 @@ export function LegalStep({
               {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "A"}
             </div>
             <div className="text-left">
-              <p className="font-medium">Legal & Agreements</p>
+              <p className="font-semibold">Legal & Agreements</p>
               <p className="text-sm text-muted-foreground">Review and sign required agreements</p>
             </div>
           </div>
