@@ -173,10 +173,9 @@ export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
 
   return (
     <motion.div
-      initial={{ scale: 1, rotate: 0 }}
+      initial={{ scale: 1 }}
       animate={{ 
-        scale: 1.05, 
-        rotate: 2,
+        scale: 1.03,
       }}
       transition={snapSpring}
     >

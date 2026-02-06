@@ -45,37 +45,27 @@ export function KanbanColumn({
   return (
     <div className="flex flex-col min-w-[260px] sm:min-w-[280px] max-w-[320px] flex-shrink-0 lg:flex-shrink lg:flex-1 lg:max-w-none group/column scroll-snap-start">
       {/* Column Header */}
-      <motion.div
+      <div
         className={cn(
           "flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-t-xl border-b-2 transition-colors duration-200",
           accentColor
         )}
-        animate={{
-          scale: isActive ? 1.02 : 1,
-        }}
-        transition={snapSpring}
       >
         <div className="min-w-0">
           <h3 className="font-semibold text-sm tracking-tight truncate">{title}</h3>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          <motion.span
-            className="text-xs sm:text-sm font-semibold bg-background/90 backdrop-blur-sm px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-soft"
-            animate={{
-              scale: isActive ? 1.1 : 1,
-            }}
-            transition={snapSpring}
-          >
+          <span className="text-xs sm:text-sm font-semibold bg-background/90 backdrop-blur-sm px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-soft">
             {hotels.length}
-          </motion.span>
+          </span>
           {blockerCount > 0 && (
             <span className="text-2xs font-medium bg-destructive text-destructive-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg animate-gentle-pulse">
               {blockerCount} blocked
             </span>
           )}
         </div>
-      </motion.div>
+      </div>
 
       {/* Droppable Zone - Magnetic effect with border flash */}
       <motion.div
