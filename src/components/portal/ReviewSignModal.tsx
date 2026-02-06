@@ -327,7 +327,8 @@ export function ReviewSignModal({
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      {/* Signer fields - Stack on mobile */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* Authorized Signer Name */}
                         <div className="space-y-1.5">
                           <Label htmlFor="modal-signer-name" className="text-xs flex items-center gap-1.5">
