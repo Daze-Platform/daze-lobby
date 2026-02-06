@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { signUp } from "@/lib/auth";
+import { lovable } from "@/integrations/lovable";
 import dazeLogo from "@/assets/daze-logo.png";
 
 interface SignUpFormProps {
