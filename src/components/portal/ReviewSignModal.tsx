@@ -1,0 +1,155 @@
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SignaturePad } from "./SignaturePad";
+import { Check, Loader2 } from "lucide-react";
+
+interface ReviewSignModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  documentTitle: string;
+  onSign: (signatureDataUrl: string) => void;
+  isSubmitting?: boolean;
+}
+
+const PILOT_AGREEMENT_TEXT = `PILOT AGREEMENT
+
+This Pilot Agreement ("Agreement") is entered into as of the date of electronic signature below.
+
+1. PURPOSE
+This Pilot Agreement establishes the terms and conditions under which the Hotel Partner ("Partner") will participate in the Daze platform pilot program.
+
+2. PILOT PERIOD
+The pilot period shall commence upon execution of this Agreement and continue for a period of ninety (90) days, unless terminated earlier in accordance with Section 8.
+
+3. SERVICES PROVIDED
+During the pilot period, Daze shall provide:
+a) Access to the Daze ordering platform
+b) Hardware installation and setup
+c) Staff training and onboarding support
+d) 24/7 technical support
+e) Analytics and reporting dashboard
+
+4. PARTNER OBLIGATIONS
+Partner agrees to:
+a) Provide accurate brand assets and menu information
+b) Designate a primary point of contact
+c) Ensure staff participation in training sessions
+d) Maintain operational hours as specified
+e) Provide timely feedback on platform performance
+
+5. FEES AND PAYMENT
+During the pilot period, Partner shall pay a reduced pilot fee as specified in the attached Schedule A. Standard pricing shall apply following the pilot period if Partner elects to continue.
+
+6. CONFIDENTIALITY
+Both parties agree to maintain the confidentiality of proprietary information shared during the pilot program.
+
+7. DATA USAGE
+Partner grants Daze the right to collect and analyze anonymized operational data for the purpose of improving the platform and services.
+
+8. TERMINATION
+Either party may terminate this Agreement with thirty (30) days written notice. Upon termination, Daze shall remove all installed hardware within fourteen (14) business days.
+
+9. LIMITATION OF LIABILITY
+Neither party shall be liable for indirect, incidental, or consequential damages arising from this Agreement.
+
+10. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of Delaware.
+
+By signing below, both parties acknowledge and agree to the terms set forth in this Pilot Agreement.`;
+
+export function ReviewSignModal({
+  open,
+  onOpenChange,
+  documentTitle,
+  onSign,
+  isSubmitting = false,
+}: ReviewSignModalProps) {
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [hasSignature, setHasSignature] = useState(false);
+
+  const handleSignatureChange = (hasSig: boolean, dataUrl?: string) => {
+    setHasSignature(hasSig);
+    setSignatureDataUrl(dataUrl || null);
+  };
+
+  const handleSubmit = () => {
+    if (signatureDataUrl) {
+      onSign(signatureDataUrl);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle>{documentTitle}</DialogTitle>
+          <DialogDescription>
+            Please review the agreement carefully before signing
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
+          {/* Document View */}
+          <div className="border-r flex flex-col">
+            <div className="px-4 py-2 bg-muted/50 border-b">
+              <p className="text-sm font-medium text-muted-foreground">Agreement Document</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="prose prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground bg-transparent p-0 m-0">
+                  {PILOT_AGREEMENT_TEXT}
+                </pre>
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Signature Panel */}
+          <div className="flex flex-col">
+            <div className="px-4 py-2 bg-muted/50 border-b">
+              <p className="text-sm font-medium text-muted-foreground">Your Signature</p>
+            </div>
+            <div className="flex-1 p-6 flex flex-col justify-between">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  By signing below, you agree to the terms and conditions outlined in the Pilot Agreement.
+                </p>
+                <SignaturePad onSignatureChange={handleSignatureChange} />
+              </div>
+
+              <div className="pt-6 space-y-3">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!hasSignature || isSubmitting}
+                  className="w-full gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Sign & Submit Agreement
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  Your signature will be securely stored and timestamped
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
