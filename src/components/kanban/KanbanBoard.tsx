@@ -140,9 +140,9 @@ export function KanbanBoard() {
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x scrollbar-hide">
         {COLUMNS.map((col) => (
-          <div key={col.phase} className="min-w-[280px] max-w-[320px] flex-1">
+          <div key={col.phase} className="min-w-[260px] sm:min-w-[280px] max-w-[320px] flex-shrink-0 lg:flex-shrink lg:flex-1 scroll-snap-start">
             <Skeleton className="h-12 w-full rounded-t-lg" />
             <Skeleton className="h-[300px] w-full rounded-b-lg mt-0" />
           </div>
@@ -175,7 +175,7 @@ export function KanbanBoard() {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x scrollbar-hide">
         {COLUMNS.map((col) => {
           const columnHotels = hotelsByPhase[col.phase] || [];
           const isOver = overId === col.phase || columnHotels.some((h) => h.id === overId);

@@ -48,31 +48,31 @@ export function DashboardHeader() {
 
   return (
     <header className="glass-header">
-      <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-            <img src={dazeLogo} alt="Daze" className="h-8 w-8 object-contain" />
+      <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
             <div className="flex flex-col">
-              <span className="font-display text-lg font-semibold tracking-tight">Daze Lobby</span>
-              <span className="text-2xs text-muted-foreground font-medium uppercase tracking-wide">Control Tower</span>
+              <span className="font-display text-base sm:text-lg font-semibold tracking-tight">Daze Lobby</span>
+              <span className="hidden sm:block text-2xs text-muted-foreground font-medium uppercase tracking-wide">Control Tower</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isTest && (
-            <Badge className="bg-warning/10 text-warning border-warning/20 text-2xs font-bold uppercase tracking-wide">
+            <Badge className="hidden sm:flex bg-warning/10 text-warning border-warning/20 text-2xs font-bold uppercase tracking-wide">
               Test Data
             </Badge>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2 hover:bg-muted/50">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Button variant="ghost" size="sm" className="gap-2 hover:bg-muted/50 min-h-[44px] px-2 sm:px-3">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center">
                   <User className="h-4 w-4 text-primary" />
                 </div>
-                <div className="hidden sm:flex flex-col items-start">
-                  <span className="text-sm font-medium">{user?.fullName || user?.email}</span>
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-sm font-medium truncate max-w-[120px] lg:max-w-[200px]">{user?.fullName || user?.email}</span>
                   <span className="text-2xs text-muted-foreground">{formatRole(role)}</span>
                 </div>
               </Button>

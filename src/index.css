@@ -583,4 +583,55 @@
   .safe-area-pt {
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  /* === TOUCH TARGET UTILITIES === */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* === RESPONSIVE CONTAINER === */
+  .container-responsive {
+    @apply px-4 sm:px-6 lg:px-8 xl:px-12;
+  }
+
+  /* === FLUID TYPOGRAPHY === */
+  .text-fluid-sm {
+    font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  }
+
+  .text-fluid-base {
+    font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+  }
+
+  .text-fluid-lg {
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  }
+
+  .text-fluid-xl {
+    font-size: clamp(1.25rem, 1rem + 1.25vw, 2rem);
+  }
+
+  .text-fluid-2xl {
+    font-size: clamp(1.5rem, 1.25rem + 1.5vw, 2.5rem);
+  }
+
+  /* === HORIZONTAL SCROLL SNAP === */
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-snap-start {
+    scroll-snap-align: start;
+  }
+
+  .scroll-snap-center {
+    scroll-snap-align: center;
+  }
 }

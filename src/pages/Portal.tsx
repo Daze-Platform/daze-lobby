@@ -93,34 +93,36 @@ export default function Portal() {
     return (
       <div className="min-h-screen bg-muted/30">
         <header className="glass-header">
-          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
+              <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
             </div>
-            <div className="flex items-center gap-4">
-              <AdminHotelSwitcher />
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden sm:block">
+                <AdminHotelSwitcher />
+              </div>
+              <span className="hidden md:inline text-sm text-muted-foreground truncate max-w-[150px]">
                 {user?.email}
               </span>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="min-h-[44px]">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="container mx-auto px-6 py-16">
+        <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
           <Card className="max-w-lg mx-auto shadow-soft-lg">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-                <Building2 className="w-8 h-8 text-primary" />
+              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
               </div>
               <span className="label-micro">Admin Portal</span>
-              <CardTitle className="text-xl">Select a Hotel</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Select a Hotel</CardTitle>
             </CardHeader>
-            <CardContent className="text-center space-y-6">
-              <p className="text-muted-foreground">
+            <CardContent className="text-center space-y-4 sm:space-y-6 px-4 sm:px-6">
+              <p className="text-sm text-muted-foreground">
                 Select a hotel from the dropdown above to view their onboarding portal and debug their progress.
               </p>
               <AdminHotelSwitcher />
@@ -161,9 +163,9 @@ export default function Portal() {
       )}
       {/* Glass Header - Immediate entrance */}
       <header className="glass-header entrance-header">
-        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 md:gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-8 md:h-10 w-auto" />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
             {isAdminViewing && (
               <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
                 Admin
@@ -171,9 +173,9 @@ export default function Portal() {
             )}
           </div>
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3 lg:gap-4">
             {isAdmin && <AdminHotelSwitcher />}
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground truncate max-w-[200px]">
               {user?.email}
             </span>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="min-h-[44px]">
@@ -185,27 +187,27 @@ export default function Portal() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Welcome Section - Hero entrance */}
-        <div className="mb-6 md:mb-12 entrance-hero">
-          <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight mb-2 md:mb-3">
+        <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
+          <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
             Welcome, {hotel?.name || "Partner"}
           </h1>
-          <p className="text-sm md:text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
 
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-lg md:text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 md:gap-6 pt-2 px-4 md:px-6">
+            <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 px-4 sm:px-6">
               <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} className="scale-[0.85] md:scale-100" />
+                <ProgressRing progress={progress} status={status} size={160} className="sm:scale-100" />
               </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
@@ -217,11 +219,11 @@ export default function Portal() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-lg md:text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 px-2 md:px-6">
+            <CardContent className="pt-2 px-2 sm:px-4 md:px-6">
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}
@@ -257,10 +259,10 @@ export default function Portal() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           {isAdmin && (
-            <div className="flex-1 flex justify-center">
+            <div className="flex-1 flex justify-center max-w-[200px]">
               <AdminHotelSwitcher />
             </div>
           )}

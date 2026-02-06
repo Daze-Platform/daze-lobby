@@ -66,19 +66,19 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
 
   return (
     <div 
-      className="w-full bg-white rounded-[2rem] p-8 animate-fade-in-up"
+      className="w-full bg-white rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 md:p-8 animate-fade-in-up"
       style={{
         boxShadow: "0 10px 40px -10px rgba(14, 165, 233, 0.3)",
       }}
     >
       {/* Header */}
-      <div className="text-center mb-6">
-        <div className="flex flex-col items-center justify-center mb-4">
-          <img src={dazeLogo} alt="Daze" className="h-16 w-16 object-contain mb-3" />
-          <span className="font-display text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="flex flex-col items-center justify-center mb-3 sm:mb-4">
+          <img src={dazeLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 object-contain mb-2 sm:mb-3" />
+          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
         </div>
-        <h1 className="font-display text-xl font-semibold text-slate-900">Welcome back</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <h1 className="font-display text-lg sm:text-xl font-semibold text-slate-900">Welcome back</h1>
+        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
           Sign in to access the Control Tower
         </p>
       </div>
@@ -126,7 +126,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
 
         <Button 
           type="submit" 
-          className="w-full rounded-xl text-white"
+          className="w-full rounded-xl text-white min-h-[44px]"
           style={{ backgroundColor: "#0EA5E9" }}
           disabled={loading}
         >
@@ -148,7 +148,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
         <Button
           type="button"
           variant="outline"
-          className="w-full rounded-xl gap-2"
+          className="w-full rounded-xl gap-2 min-h-[44px]"
           onClick={handleGoogleSignIn}
           disabled={loading || googleLoading}
         >

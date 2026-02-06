@@ -258,9 +258,9 @@ export function ReviewSignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-5xl h-[100dvh] sm:h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             {documentTitle}
             {isSigned && (
               <span className="inline-flex items-center gap-1 text-xs font-normal bg-success/10 text-success px-2 py-0.5 rounded-full">
@@ -269,7 +269,7 @@ export function ReviewSignModal({
               </span>
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {isSigned 
               ? "This agreement has been digitally signed and cannot be modified"
               : "Complete the entity information below. Your details will appear in the contract in real-time."
@@ -279,13 +279,13 @@ export function ReviewSignModal({
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden min-h-0">
           {/* Left Panel: Form + Agreement Text */}
-          <div className="border-r flex flex-col min-h-0 overflow-hidden">
+          <div className="border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 overflow-hidden">
             <ScrollArea className="flex-1">
-              <div className="p-5 space-y-6">
+              <div className="p-4 sm:p-5 space-y-4 sm:space-y-6">
                 {/* Entity Information Form */}
                 {!isSigned && (
-                  <div className="space-y-4 p-4 rounded-xl bg-secondary/40 border border-border/50">
-                    <div className="flex items-center gap-3">
+                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 rounded-xl bg-secondary/40 border border-border/50">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <IconContainer icon={Building2} size="sm" variant="primary" />
                       <div>
                         <h3 className="font-semibold text-sm">Entity Information</h3>
@@ -295,7 +295,7 @@ export function ReviewSignModal({
                       </div>
                     </div>
 
-                    <div className="grid gap-4">
+                    <div className="grid gap-3 sm:gap-4">
                       {/* Legal Entity Name */}
                       <div className="space-y-1.5">
                         <Label htmlFor="modal-entity-name" className="text-xs flex items-center gap-1.5">
@@ -327,7 +327,8 @@ export function ReviewSignModal({
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      {/* Signer fields - Stack on mobile */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* Authorized Signer Name */}
                         <div className="space-y-1.5">
                           <Label htmlFor="modal-signer-name" className="text-xs flex items-center gap-1.5">
@@ -390,12 +391,12 @@ export function ReviewSignModal({
 
           {/* Right Panel: Signature */}
           <div className="flex flex-col min-h-0 overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50 border-b shrink-0">
+            <div className="px-4 py-2 sm:py-3 bg-muted/50 border-b shrink-0">
               <p className="text-sm font-medium text-muted-foreground">
                 {isSigned ? "Digital Signature" : "Your Signature"}
               </p>
             </div>
-            <div className="flex-1 p-6 flex flex-col min-h-0 overflow-auto">
+            <div className="flex-1 p-4 sm:p-6 flex flex-col min-h-0 overflow-auto">
               {isSigned ? (
                 /* ========== SIGNED STATE ========== */
                 <div className="space-y-6">
@@ -469,20 +470,20 @@ export function ReviewSignModal({
                   </div>
 
                   <div className="mt-auto pt-4 space-y-3 border-t shrink-0">
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleClear}
                         disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="flex-1"
+                        className="w-full sm:flex-1 min-h-[44px]"
                       >
                         Clear
                       </Button>
                       <Button
                         onClick={handleConfirmSign}
                         disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="flex-[2] gap-2"
+                        className="w-full sm:flex-[2] gap-2 min-h-[44px]"
                       >
                         {isSubmitting ? (
                           <>

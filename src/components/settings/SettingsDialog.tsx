@@ -45,7 +45,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
             <DialogDescription>
@@ -53,7 +53,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-4 sm:space-y-6 py-4">
             {/* Data Management Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   {isAdmin ? (
                     <Button
                       variant="destructive"
-                      className="w-full gap-2"
+                      className="w-full gap-2 min-h-[44px]"
                       onClick={() => setShowPurgeConfirm(true)}
                       disabled={isPurging}
                     >

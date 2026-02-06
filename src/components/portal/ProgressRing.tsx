@@ -17,7 +17,10 @@ export function ProgressRing({
   status = "onboarding",
   className 
 }: ProgressRingProps) {
-  const radius = (size - strokeWidth) / 2;
+  // Use responsive sizing - on mobile (size < 180), scale down proportionally
+  const effectiveSize = size;
+  const effectiveStrokeWidth = size < 180 ? Math.round(strokeWidth * (size / 180)) : strokeWidth;
+  const radius = (effectiveSize - effectiveStrokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
   
@@ -55,28 +58,28 @@ export function ProgressRing({
   return (
     <div className={cn("relative inline-flex items-center justify-center", className)}>
       <svg
-        width={size}
-        height={size}
+        width={effectiveSize}
+        height={effectiveSize}
         className="transform -rotate-90"
       >
         {/* Background circle - subtle, refined */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={effectiveSize / 2}
+          cy={effectiveSize / 2}
           r={radius}
           fill="none"
           stroke="hsl(var(--muted))"
-          strokeWidth={strokeWidth}
+          strokeWidth={effectiveStrokeWidth}
           strokeLinecap="round"
         />
         {/* Progress circle - smooth gradient feel */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={effectiveSize / 2}
+          cy={effectiveSize / 2}
           r={radius}
           fill="none"
           stroke={isLive ? "hsl(var(--success))" : "hsl(var(--primary))"}
-          strokeWidth={strokeWidth}
+          strokeWidth={effectiveStrokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -88,7 +91,10 @@ export function ProgressRing({
         "absolute inset-0 flex flex-col items-center justify-center transition-transform duration-500",
         isPulsing && "animate-progress-pulse"
       )}>
-        <span className="text-4xl font-bold tracking-tight text-foreground">{Math.round(progress)}%</span>
+        <span className={cn(
+          "font-bold tracking-tight text-foreground",
+          effectiveSize < 160 ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"
+        )}>{Math.round(progress)}%</span>
         <div className="flex items-center gap-1.5">
           {isLive && showRocket && (
             <img 

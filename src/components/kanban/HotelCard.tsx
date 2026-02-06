@@ -74,22 +74,22 @@ export function DraggableHotelCard({ hotel, index, isDragging = false }: HotelCa
       <Card
         className={cn(
           "group/card transition-shadow duration-200",
-          "cursor-grab hover:shadow-soft-lg",
+          "cursor-grab hover:shadow-soft-lg active:cursor-grabbing",
           hotel.hasBlocker && "border-destructive/50 border-2 bg-destructive/5",
           isBeingDragged && "opacity-50"
         )}
         {...attributes}
         {...listeners}
       >
-        <CardContent className="p-3">
-          <div className="flex items-start gap-3">
+        <CardContent className="p-2.5 sm:p-3">
+          <div className="flex items-start gap-2 sm:gap-3">
             {/* Drag Handle */}
-            <div className="mt-1 text-muted-foreground/40 group-hover/card:text-muted-foreground/70 transition-colors">
-              <GripVertical className="h-4 w-4" />
+            <div className="mt-1 text-muted-foreground/40 group-hover/card:text-muted-foreground/70 transition-colors flex-shrink-0">
+              <GripVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </div>
 
             {/* Hotel Avatar */}
-            <Avatar className="h-9 w-9 shrink-0 ring-2 ring-background shadow-soft">
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 ring-2 ring-background shadow-soft">
               <AvatarImage src={hotel.logo_url || undefined} />
               <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
                 {hotel.name.substring(0, 2).toUpperCase()}

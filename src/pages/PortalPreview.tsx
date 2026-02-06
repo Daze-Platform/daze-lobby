@@ -143,16 +143,16 @@ export default function PortalPreview() {
 
       {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12 py-3 md:py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 flex items-center justify-between">
           {/* Mobile: Center logo */}
-          <div className="flex items-center gap-2 md:gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-8 md:h-10 w-auto" />
-            <span className="label-micro bg-warning/10 text-warning px-2 md:px-3 py-1 md:py-1.5 rounded-full text-[10px] md:text-xs">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
+            <span className="label-micro bg-warning/10 text-warning px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs">
               Preview
             </span>
           </div>
           {/* Desktop nav buttons - hidden on mobile */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3 lg:gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -182,29 +182,29 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 md:px-10 lg:px-12 py-6 md:py-12">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12">
         {/* Welcome Section - Hero entrance */}
-        <div className="mb-6 md:mb-12 entrance-hero">
+        <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
           <span className="label-micro mb-2 block">Welcome Back</span>
-          <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight mb-2 md:mb-3">
+          <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
             Grand Hyatt Demo
           </h1>
-          <p className="text-sm md:text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
 
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-lg md:text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 md:gap-6 pt-2 px-4 md:px-6">
+            <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 px-4 sm:px-6">
               {/* Responsive Progress Ring */}
               <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} className="scale-[0.85] md:scale-100" />
+                <ProgressRing progress={progress} status={status} size={160} />
               </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
@@ -213,7 +213,7 @@ export default function PortalPreview() {
               />
               
               {/* Demo Status Toggle - Horizontal scroll on mobile */}
-              <div className="w-full pt-4 md:pt-6 border-t border-border/20">
+              <div className="w-full pt-4 sm:pt-6 border-t border-border/20">
                 <p className="label-micro mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2 overflow-x-auto pb-1 -mx-2 px-2 scrollbar-hide">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
@@ -222,7 +222,7 @@ export default function PortalPreview() {
                       size="sm"
                       variant={status === s ? "default" : "secondary"}
                       onClick={() => setStatus(s)}
-                      className="flex-1 min-w-[80px] text-xs capitalize min-h-[44px] whitespace-nowrap"
+                      className="flex-1 min-w-[70px] sm:min-w-[80px] text-xs capitalize min-h-[44px] whitespace-nowrap"
                     >
                       {s === "reviewing" ? "in-progress" : s}
                     </Button>
@@ -234,11 +234,11 @@ export default function PortalPreview() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-lg md:text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 px-2 md:px-6">
+            <CardContent className="pt-2 px-2 sm:px-4 md:px-6">
               <TaskAccordion 
                 tasks={tasks}
                 onLegalSign={handleLegalSign}

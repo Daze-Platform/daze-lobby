@@ -22,9 +22,9 @@ export default function Auth() {
 
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - The Form (Clean White) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-6 md:p-12">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 lg:p-12 min-h-screen lg:min-h-0">
         <div className="w-full max-w-md">
           {isLogin ? (
             <LoginForm onSwitchToSignUp={() => setIsLogin(false)} />
@@ -34,21 +34,30 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Right Side - The Sketchy Art Panel */}
-      <div className="hidden lg:block lg:w-1/2">
+      {/* Right Side - The Sketchy Art Panel (hidden on mobile/tablet, gradient fallback) */}
+      <div className="hidden lg:block lg:w-1/2 relative">
         <SketchyArtPanel />
       </div>
 
+      {/* Mobile/Tablet gradient background overlay (visible when art panel is hidden) */}
+      <div 
+        className="fixed inset-0 -z-10 lg:hidden"
+        style={{
+          background: "linear-gradient(135deg, hsl(210 20% 98%) 0%, hsl(214 32% 96%) 100%)"
+        }}
+      />
+
       {/* Test Button for Client Portal Preview */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50">
         <Button 
           variant="secondary" 
           size="sm"
           onClick={() => navigate("/portal-preview")}
-          className="gap-2 shadow-lg"
+          className="gap-2 shadow-lg min-h-[44px]"
         >
           <Eye className="w-4 h-4" />
-          Preview Client Portal
+          <span className="hidden sm:inline">Preview Client Portal</span>
+          <span className="sm:hidden">Preview</span>
         </Button>
       </div>
     </div>

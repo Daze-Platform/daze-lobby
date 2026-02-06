@@ -85,7 +85,7 @@ export function VenueManager({
         type="button"
         variant="outline"
         onClick={addVenue}
-        className="w-full gap-2"
+        className="w-full gap-2 min-h-[44px]"
       >
         <Plus className="w-4 h-4" />
         Add Venue
@@ -97,7 +97,7 @@ export function VenueManager({
           onClick={handleSave}
           onSuccess={onStepComplete}
           disabled={!hasValidVenues}
-          className="w-full"
+          className="w-full min-h-[44px]"
           idleText="Save Venue Configuration"
         />
       )}
