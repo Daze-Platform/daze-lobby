@@ -83,7 +83,7 @@ export default function PortalPreview() {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
+            <img src={dazeLogo} alt="Daze" className="h-[57px] w-auto" />
             <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
               PREVIEW MODE
             </span>
