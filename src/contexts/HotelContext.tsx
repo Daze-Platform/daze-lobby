@@ -11,6 +11,11 @@ interface Hotel {
   onboarding_progress: number | null;
   brand_palette: string[] | null;
   logo_url: string | null;
+  // Legal entity fields
+  legal_entity_name: string | null;
+  billing_address: string | null;
+  authorized_signer_name: string | null;
+  authorized_signer_title: string | null;
 }
 
 interface HotelContextType {
@@ -54,7 +59,11 @@ export function HotelProvider({ children }: { children: ReactNode }) {
             phase,
             onboarding_progress,
             brand_palette,
-            logo_url
+            logo_url,
+            legal_entity_name,
+            billing_address,
+            authorized_signer_name,
+            authorized_signer_title
           )
         `)
         .eq("user_id", user.id)
@@ -75,7 +84,7 @@ export function HotelProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hotels")
-        .select("id, name, phase, onboarding_progress, brand_palette, logo_url")
+        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .order("name", { ascending: true });
 
       if (error) throw error;
@@ -95,7 +104,7 @@ export function HotelProvider({ children }: { children: ReactNode }) {
       
       const { data, error } = await supabase
         .from("hotels")
-        .select("id, name, phase, onboarding_progress, brand_palette, logo_url")
+        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .eq("id", selectedHotelId)
         .single();
 

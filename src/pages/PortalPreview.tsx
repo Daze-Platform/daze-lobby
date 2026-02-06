@@ -19,8 +19,18 @@ export default function PortalPreview() {
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
+  const [isSavingLegalEntity, setIsSavingLegalEntity] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef(status);
+  
+  // Demo legal entity state
+  const [hotelLegalEntity, setHotelLegalEntity] = useState({
+    legal_entity_name: "",
+    billing_address: "",
+    authorized_signer_name: "",
+    authorized_signer_title: "",
+  });
+
   const [tasks, setTasks] = useState([
     { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} as Record<string, unknown> },
     { key: "brand", name: "Brand Identity", isCompleted: false, data: {} as Record<string, unknown> },
@@ -52,8 +62,21 @@ export default function PortalPreview() {
     }
   }, [tasks, status]);
 
-  const handleLegalSign = async (signatureDataUrl: string) => {
+  const handleLegalSign = async (signatureDataUrl: string, legalEntityData: {
+    legal_entity_name?: string;
+    billing_address?: string;
+    authorized_signer_name?: string;
+    authorized_signer_title?: string;
+  }) => {
     setIsSigningLegal(true);
+    
+    // Update demo legal entity state
+    setHotelLegalEntity({
+      legal_entity_name: legalEntityData.legal_entity_name || "",
+      billing_address: legalEntityData.billing_address || "",
+      authorized_signer_name: legalEntityData.authorized_signer_name || "",
+      authorized_signer_title: legalEntityData.authorized_signer_title || "",
+    });
     
     // Simulate upload delay
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -69,6 +92,9 @@ export default function PortalPreview() {
               pilot_signed: true, 
               signature_url: signatureDataUrl,
               signed_at: signedAt,
+              signer_name: legalEntityData.authorized_signer_name,
+              signer_title: legalEntityData.authorized_signer_title,
+              legal_entity: legalEntityData.legal_entity_name,
             } 
           }
         : task
@@ -76,6 +102,24 @@ export default function PortalPreview() {
     
     setIsSigningLegal(false);
     toast.success("Agreement signed successfully! Next step unlocked. (Demo mode)");
+  };
+
+  const handleSaveLegalEntity = async (data: {
+    legal_entity_name?: string;
+    billing_address?: string;
+    authorized_signer_name?: string;
+    authorized_signer_title?: string;
+  }) => {
+    setIsSavingLegalEntity(true);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setHotelLegalEntity({
+      legal_entity_name: data.legal_entity_name || "",
+      billing_address: data.billing_address || "",
+      authorized_signer_name: data.authorized_signer_name || "",
+      authorized_signer_title: data.authorized_signer_title || "",
+    });
+    setIsSavingLegalEntity(false);
+    toast.success("Legal entity information saved (Demo mode)");
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
@@ -181,12 +225,15 @@ export default function PortalPreview() {
               <TaskAccordion 
                 tasks={tasks}
                 onLegalSign={handleLegalSign}
+                onSaveLegalEntity={handleSaveLegalEntity}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
                 venues={venues}
                 onVenuesChange={setVenues}
                 onVenuesSave={handleVenuesSave}
                 isSigningLegal={isSigningLegal}
+                isSavingLegalEntity={isSavingLegalEntity}
+                hotelLegalEntity={hotelLegalEntity}
               />
             </CardContent>
           </Card>

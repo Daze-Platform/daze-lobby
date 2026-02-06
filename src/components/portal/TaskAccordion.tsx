@@ -10,16 +10,26 @@ interface OnboardingTask {
   data?: Record<string, unknown>;
 }
 
+interface LegalEntityData {
+  legal_entity_name?: string;
+  billing_address?: string;
+  authorized_signer_name?: string;
+  authorized_signer_title?: string;
+}
+
 interface TaskAccordionProps {
   tasks: OnboardingTask[];
-  onLegalSign: (signatureDataUrl: string) => void;
+  onLegalSign: (signatureDataUrl: string, legalEntityData: LegalEntityData) => void;
+  onSaveLegalEntity?: (data: LegalEntityData) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
   venues?: Venue[];
   onVenuesChange?: (venues: Venue[]) => void;
   onVenuesSave?: () => void;
   isSigningLegal?: boolean;
+  isSavingLegalEntity?: boolean;
   isUpdating?: boolean;
+  hotelLegalEntity?: LegalEntityData;
 }
 
 const TASK_ORDER = ["legal", "brand", "venue"];
@@ -27,13 +37,16 @@ const TASK_ORDER = ["legal", "brand", "venue"];
 export function TaskAccordion({ 
   tasks, 
   onLegalSign,
+  onSaveLegalEntity,
   onTaskUpdate, 
   onFileUpload,
   venues = [],
   onVenuesChange,
   onVenuesSave,
   isSigningLegal,
-  isUpdating
+  isSavingLegalEntity,
+  isUpdating,
+  hotelLegalEntity
 }: TaskAccordionProps) {
   const [accordionValue, setAccordionValue] = useState<string | undefined>();
   const [recentlyCompleted, setRecentlyCompleted] = useState<string | null>(null);
@@ -91,10 +104,16 @@ export function TaskAccordion({
     onFileUpload("brand", file, `logo_${variant}`);
   };
 
-  const handleLegalSign = (signatureDataUrl: string) => {
-    onLegalSign(signatureDataUrl);
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
+    onLegalSign(signatureDataUrl, legalEntityData);
     // Trigger step completion after a brief delay for the save to process
     setTimeout(() => handleStepComplete("legal"), 100);
+  };
+
+  const handleSaveLegalEntity = (data: LegalEntityData) => {
+    if (onSaveLegalEntity) {
+      onSaveLegalEntity(data);
+    }
   };
 
   const handleBrandComplete = () => {
@@ -124,9 +143,12 @@ export function TaskAccordion({
         isLocked={isTaskLocked("legal")}
         data={getTaskData("legal")?.data}
         onSign={handleLegalSign}
+        onSaveLegalEntity={handleSaveLegalEntity}
+        isSavingLegalEntity={isSavingLegalEntity}
         isSubmitting={isSigningLegal}
         isJustCompleted={recentlyCompleted === "legal"}
         isUnlocking={unlockingStep === "legal"}
+        hotelLegalEntity={hotelLegalEntity}
       />
       
       <BrandStep

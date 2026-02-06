@@ -34,10 +34,12 @@ export default function Portal() {
     progress, 
     status, 
     signLegal,
+    saveLegalEntity,
     updateTask, 
     uploadFile,
     saveVenues,
     isSigningLegal,
+    isSavingLegalEntity,
     isUpdating
   } = useClientPortal();
 
@@ -59,8 +61,22 @@ export default function Portal() {
     }
   };
 
-  const handleLegalSign = (signatureDataUrl: string) => {
-    signLegal({ signatureDataUrl });
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: {
+    legal_entity_name?: string;
+    billing_address?: string;
+    authorized_signer_name?: string;
+    authorized_signer_title?: string;
+  }) => {
+    signLegal({ signatureDataUrl, legalEntityData });
+  };
+
+  const handleSaveLegalEntity = (data: {
+    legal_entity_name?: string;
+    billing_address?: string;
+    authorized_signer_name?: string;
+    authorized_signer_title?: string;
+  }) => {
+    saveLegalEntity(data);
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
@@ -208,13 +224,21 @@ export default function Portal() {
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}
+                onSaveLegalEntity={handleSaveLegalEntity}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
                 venues={displayVenues}
                 onVenuesChange={setLocalVenues}
                 onVenuesSave={handleVenuesSave}
                 isSigningLegal={isSigningLegal}
+                isSavingLegalEntity={isSavingLegalEntity}
                 isUpdating={isUpdating}
+                hotelLegalEntity={{
+                  legal_entity_name: hotel?.legal_entity_name || undefined,
+                  billing_address: hotel?.billing_address || undefined,
+                  authorized_signer_name: hotel?.authorized_signer_name || undefined,
+                  authorized_signer_title: hotel?.authorized_signer_title || undefined,
+                }}
               />
             </CardContent>
           </Card>

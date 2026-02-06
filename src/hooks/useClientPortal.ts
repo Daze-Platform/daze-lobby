@@ -66,15 +66,68 @@ export function useClientPortal() {
     enabled: !!hotelId,
   });
 
+  // Save legal entity info to hotels table (draft save)
+  const saveLegalEntityMutation = useMutation({
+    mutationFn: async (data: {
+      legal_entity_name?: string;
+      billing_address?: string;
+      authorized_signer_name?: string;
+      authorized_signer_title?: string;
+    }) => {
+      if (!hotelId) throw new Error("No hotel found");
+
+      const { error } = await supabase
+        .from("hotels")
+        .update({
+          legal_entity_name: data.legal_entity_name || null,
+          billing_address: data.billing_address || null,
+          authorized_signer_name: data.authorized_signer_name || null,
+          authorized_signer_title: data.authorized_signer_title || null,
+        })
+        .eq("id", hotelId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hotel"] });
+      toast.success("Legal entity information saved");
+    },
+    onError: (error) => {
+      toast.error("Failed to save: " + error.message);
+    },
+  });
+
   // Sign legal document - ISOLATED PATH: contracts/{hotel_id}/pilot_agreement.png
   const signLegalMutation = useMutation({
     mutationFn: async ({ 
-      signatureDataUrl 
+      signatureDataUrl,
+      legalEntityData,
     }: { 
       signatureDataUrl: string;
+      legalEntityData?: {
+        legal_entity_name?: string;
+        billing_address?: string;
+        authorized_signer_name?: string;
+        authorized_signer_title?: string;
+      };
     }) => {
       if (!user?.id || !hotelId) {
         throw new Error("Not authenticated or no hotel assigned");
+      }
+
+      // First save legal entity data to hotels table
+      if (legalEntityData) {
+        const { error: hotelError } = await supabase
+          .from("hotels")
+          .update({
+            legal_entity_name: legalEntityData.legal_entity_name || null,
+            billing_address: legalEntityData.billing_address || null,
+            authorized_signer_name: legalEntityData.authorized_signer_name || null,
+            authorized_signer_title: legalEntityData.authorized_signer_title || null,
+          })
+          .eq("id", hotelId);
+
+        if (hotelError) throw hotelError;
       }
 
       // Convert base64 data URL to Blob
@@ -112,6 +165,9 @@ export function useClientPortal() {
             signature_url: signatureUrl,
             signed_at: signedAt,
             signature_path: filePath,
+            signer_name: legalEntityData?.authorized_signer_name,
+            signer_title: legalEntityData?.authorized_signer_title,
+            legal_entity: legalEntityData?.legal_entity_name,
           },
         } as never)
         .eq("hotel_id", hotelId)
@@ -123,6 +179,7 @@ export function useClientPortal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel"] });
       toast.success("Agreement signed successfully! Next step unlocked.");
     },
     onError: (error) => {
@@ -403,12 +460,14 @@ export function useClientPortal() {
     progress: calculateProgress(),
     status: getStatus(),
     signLegal: signLegalMutation.mutate,
+    saveLegalEntity: saveLegalEntityMutation.mutate,
     updateTask: updateTaskMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
     uploadLogo: uploadLogoMutation.mutate,
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
     saveVenues: saveVenuesMutation.mutate,
     isSigningLegal: signLegalMutation.isPending,
+    isSavingLegalEntity: saveLegalEntityMutation.isPending,
     isUpdating: updateTaskMutation.isPending,
     isUploading: uploadFileMutation.isPending || uploadLogoMutation.isPending,
     isSavingVenues: saveVenuesMutation.isPending,
