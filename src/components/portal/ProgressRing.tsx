@@ -38,7 +38,7 @@ export function ProgressRing({
         height={size}
         className="transform -rotate-90"
       >
-        {/* Background circle */}
+        {/* Background circle - subtle, refined */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -46,8 +46,9 @@ export function ProgressRing({
           fill="none"
           stroke="hsl(var(--muted))"
           strokeWidth={strokeWidth}
+          strokeLinecap="round"
         />
-        {/* Progress circle */}
+        {/* Progress circle - smooth gradient feel */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -58,16 +59,16 @@ export function ProgressRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
+          className="transition-all duration-700 ease-out drop-shadow-sm"
         />
       </svg>
-      {/* Center text */}
+      {/* Center text - refined typography */}
       <div className={cn(
         "absolute inset-0 flex flex-col items-center justify-center transition-transform duration-500",
         isPulsing && "animate-progress-pulse"
       )}>
-        <span className="text-4xl font-bold text-foreground">{Math.round(progress)}%</span>
-        <span className="text-sm text-muted-foreground">Ready for Takeoff</span>
+        <span className="text-4xl font-bold tracking-tight text-foreground">{Math.round(progress)}%</span>
+        <span className="text-sm text-muted-foreground tracking-wide">Ready for Takeoff</span>
       </div>
     </div>
   );
