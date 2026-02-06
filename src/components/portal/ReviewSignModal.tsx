@@ -329,7 +329,7 @@ export function ReviewSignModal({
                         {/* Authorized Signer Name */}
                         <div className="space-y-1.5">
                           <Label htmlFor="modal-signer-name" className="text-xs flex items-center gap-1.5">
-                            <User className="w-3 h-3 text-muted-foreground" />
+                            <User className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                             Authorized Signer <span className="text-destructive">*</span>
                           </Label>
                           <Input
