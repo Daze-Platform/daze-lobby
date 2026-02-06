@@ -1,135 +1,118 @@
 
-# Add TEST DATA Badge and Purge & Reseed Functionality
+# Fix: Missing "Confirm & Sign" Button in Pilot Agreement Modal
 
-## Overview
-This plan adds two features to help distinguish test environments and manage demo data:
-1. A "TEST DATA" badge visible in non-production environments
-2. A Settings dialog with a "Purge & Reseed" button for wiping and regenerating demo data
+## Problem Analysis
 
----
+The "Clear" and "Confirm & Sign" buttons exist in the code (`ReviewSignModal.tsx` lines 202-229), but they are not visible in the UI. Based on the screenshot, the modal content is being cut off before the buttons section.
 
-## 1. Environment Detection
+**Root Cause:**
+The signature panel layout uses `flex flex-col justify-between` which should work, but the content inside is overflowing the container. The issue is that:
+1. The modal has a fixed height of `h-[85vh]`
+2. The content wrapper uses `flex-1` but doesn't properly constrain its children
+3. The signing state wrapper doesn't have `flex-1` to take remaining space, so `justify-between` doesn't work as intended
 
-Create a utility to detect if the app is running in production or test mode.
+## Solution
 
-**File:** `src/lib/environment.ts` (new)
+Restructure the signing state layout to ensure the buttons are always visible at the bottom of the panel.
 
-Uses the preview URL pattern to detect environment:
-- Production: Published URL (e.g., `*.lovable.app` without `-preview--`)
-- Test: Preview URL or localhost
+### Technical Changes
 
----
+**File: `src/components/portal/ReviewSignModal.tsx`**
 
-## 2. TEST DATA Badge in Header
+1. **Fix the signing state layout structure:**
+   - Wrap the signing state content in a flex container with proper height distribution
+   - Make the signature content area take up available space with `flex-1`
+   - Ensure the buttons section stays at the bottom with proper spacing
 
-Add a prominent badge in the top-right area of the dashboard header when not in production.
+2. **Specific changes to lines 188-235:**
 
-**File:** `src/components/layout/DashboardHeader.tsx`
+```tsx
+{/* ========== SIGNING STATE ========== */}
+<>
+  <div className="flex-1 flex flex-col">
+    <p className="text-sm text-muted-foreground mb-4">
+      By signing below, you agree to the terms and conditions outlined in the Pilot Agreement.
+    </p>
+    <SignaturePad 
+      ref={signaturePadRef}
+      onSignatureChange={handleSignatureChange} 
+    />
+  </div>
 
-Changes:
-- Import the environment utility
-- Add a conditionally-rendered badge with amber/yellow styling before the user dropdown
-- Badge text: "TEST DATA"
+  <div className="pt-4 space-y-3 border-t mt-4">
+    <div className="flex gap-3">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleClear}
+        disabled={!hasSignature || isSubmitting}
+        className="flex-1"
+      >
+        Clear
+      </Button>
+      <Button
+        onClick={handleConfirmSign}
+        disabled={!hasSignature || isSubmitting}
+        className="flex-[2] gap-2"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Signing...
+          </>
+        ) : (
+          <>
+            <Check className="w-4 h-4" />
+            Confirm & Sign
+          </>
+        )}
+      </Button>
+    </div>
+    <p className="text-xs text-center text-muted-foreground">
+      Your signature will be securely stored and timestamped
+    </p>
+  </div>
+</>
+```
 
----
+### Why This Fixes the Issue
 
-## 3. Settings Dialog Component
+1. **`flex-1` on content wrapper**: Ensures the signature pad area expands but doesn't push buttons off-screen
+2. **Removed `space-y-4` wrapper**: Simplified the nesting to prevent layout conflicts
+3. **Added `border-t mt-4`**: Adds visual separation for the action area
+4. **Changed `pt-6` to `pt-4`**: Slightly reduces padding to ensure buttons fit
 
-Create a new Settings dialog that opens when clicking "Settings" in the user dropdown.
+### Layout Structure After Fix
 
-**File:** `src/components/settings/SettingsDialog.tsx` (new)
-
-Features:
-- Modal dialog with tabs or sections
-- "Data Management" section containing the Purge & Reseed button
-- Admin-only access for destructive operations
-
----
-
-## 4. Purge & Reseed Hook
-
-Create a custom hook to handle the purge and reseed operations.
-
-**File:** `src/hooks/usePurgeAndReseed.ts` (new)
-
-Operations (in order due to foreign key constraints):
-1. Delete from `activity_logs`
-2. Delete from `blocker_alerts`
-3. Delete from `devices`
-4. Delete from `hotel_contacts`
-5. Delete from `hotels`
-6. Insert 10 new hotels with realistic data
-7. Insert associated contacts, devices, and blocker alerts
-
-The seed data will include:
-- **3 Onboarding hotels**: The Pearl Hotel, Seaside Resort, Mountain View Lodge (one stalled 18+ days)
-- **4 Pilot Live hotels**: Urban Boutique, The Riverside, Lakefront Inn, City Center Hotel (one with blocker alert)
-- **3 Contracted hotels**: Royal Plaza, Grand Metropolitan, The Landmark (healthy MRR figures)
-
----
-
-## 5. Wire Up Settings Menu Item
-
-Update the header to open the Settings dialog when clicking the Settings menu item.
-
-**File:** `src/components/layout/DashboardHeader.tsx`
-
-Changes:
-- Add state for dialog open/close
-- Import and render SettingsDialog component
-- Connect menu item click to open the dialog
-
----
-
-## 6. Confirmation Dialog for Purge
-
-Add a confirmation step before purging to prevent accidental data loss.
-
-Uses the existing AlertDialog component for the confirmation.
-
----
-
-## Files to Create
-1. `src/lib/environment.ts` - Environment detection utility
-2. `src/components/settings/SettingsDialog.tsx` - Settings modal with Purge & Reseed
-3. `src/hooks/usePurgeAndReseed.ts` - Data management hook
+```text
++----------------------------------+
+| Your Signature (header)          |
++----------------------------------+
+|                                  |
+| Instructions text                | <- flex-1 (grows)
+| +----------------------------+   |
+| |    Signature Canvas        |   |
+| |       [Sign here]          |   |
+| +----------------------------+   |
+|                                  |
++----------------------------------+
+| [  Clear  ] [ Confirm & Sign  ]  | <- Stays at bottom
+| Securely stored message          |
++----------------------------------+
+```
 
 ## Files to Modify
-1. `src/components/layout/DashboardHeader.tsx` - Add TEST DATA badge and wire up Settings dialog
 
----
+| File | Change |
+|------|--------|
+| `src/components/portal/ReviewSignModal.tsx` | Restructure signing state flex layout (lines ~188-235) |
 
-## Technical Details
+## Verification Steps
 
-### Environment Detection Logic
-```text
-const isProduction = () => {
-  const hostname = window.location.hostname;
-  return hostname.endsWith('.lovable.app') && 
-         !hostname.includes('-preview--');
-};
-```
-
-### Seed Data Structure
-```text
-Hotels Distribution:
-+------------------+-------------+------------------+
-| Onboarding (3)   | Pilot (4)   | Contracted (3)   |
-+------------------+-------------+------------------+
-| The Pearl        | Urban       | Royal Plaza      |
-| Seaside Resort   | Riverside*  | Grand Metro      |
-| Mountain View**  | Lakefront   | The Landmark     |
-|                  | City Center |                  |
-+------------------+-------------+------------------+
-* Has blocker alert (low orders)
-** Stalled (created 18 days ago)
-```
-
-### Purge Order (respects foreign keys)
-```text
-1. activity_logs (depends on hotels)
-2. blocker_alerts (depends on hotels)
-3. devices (depends on hotels)
-4. hotel_contacts (depends on hotels)
-5. hotels (parent table)
-```
+After implementation:
+1. Open the Pilot Agreement modal from the Legal step
+2. Verify both "Clear" and "Confirm & Sign" buttons are visible
+3. Confirm buttons are disabled initially (before drawing)
+4. Draw on canvas and verify buttons become enabled
+5. Click "Clear" to verify it clears the signature
+6. Draw again and click "Confirm & Sign" to verify signing flow works
