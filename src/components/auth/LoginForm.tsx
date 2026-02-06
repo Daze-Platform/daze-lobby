@@ -17,8 +17,11 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shouldShake, setShouldShake] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
 
