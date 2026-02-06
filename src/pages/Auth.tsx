@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -32,6 +34,19 @@ export default function Auth() {
       ) : (
         <SignUpForm onSwitchToLogin={() => setIsLogin(true)} />
       )}
+
+      {/* Test Button for Client Portal Preview */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => navigate("/portal-preview")}
+          className="gap-2 bg-card/80 backdrop-blur-sm border-dashed"
+        >
+          <Eye className="w-4 h-4" />
+          Preview Client Portal
+        </Button>
+      </div>
     </div>
   );
 }
