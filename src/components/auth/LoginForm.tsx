@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
 import { signIn } from "@/lib/auth";
@@ -47,75 +46,87 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-soft-xl animate-fade-in-up">
-      <CardHeader className="space-y-1 text-center pb-2">
+    <div 
+      className="w-full bg-white rounded-[2rem] p-8 animate-fade-in-up"
+      style={{
+        boxShadow: "0 10px 40px -10px rgba(14, 165, 233, 0.3)",
+      }}
+    >
+      {/* Header */}
+      <div className="text-center mb-6">
         <div className="flex flex-col items-center justify-center mb-4">
           <img src={dazeLogo} alt="Daze" className="h-16 w-16 object-contain mb-3" />
-          <span className="font-display text-2xl font-bold tracking-tight">Daze Lobby</span>
+          <span className="font-display text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
         </div>
-        <CardTitle className="font-display text-xl font-semibold">Welcome back</CardTitle>
-        <CardDescription className="text-muted-foreground">
+        <h1 className="font-display text-xl font-semibold text-slate-900">Welcome back</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           Sign in to access the Control Tower
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <form 
-          ref={formRef}
-          onSubmit={handleSubmit} 
-          className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
+        </p>
+      </div>
+
+      {/* Form */}
+      <form 
+        ref={formRef}
+        onSubmit={handleSubmit} 
+        className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
+      >
+        {error && (
+          <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+            className={`rounded-xl ${error ? 'ring-destructive/50' : ''}`}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+            className={`rounded-xl ${error ? 'ring-destructive/50' : ''}`}
+          />
+        </div>
+
+        <Button 
+          type="submit" 
+          className="w-full rounded-xl text-white"
+          style={{ backgroundColor: "#0EA5E9" }}
+          disabled={loading}
         >
-          {error && (
-            <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-              className={error ? 'ring-destructive/50' : ''}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              className={error ? 'ring-destructive/50' : ''}
-            />
-          </div>
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Sign In
+        </Button>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign In
-          </Button>
-
-          <p className="text-center text-sm text-muted-foreground pt-2">
-            Don't have an account?{" "}
-            <button
-              type="button"
-              onClick={onSwitchToSignUp}
-              className="text-primary hover:underline font-medium transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 inline-block"
-            >
-              Sign up
-            </button>
-          </p>
-        </form>
-      </CardContent>
-    </Card>
+        <p className="text-center text-sm text-muted-foreground pt-2">
+          Don't have an account?{" "}
+          <button
+            type="button"
+            onClick={onSwitchToSignUp}
+            className="font-medium transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 inline-block"
+            style={{ color: "#F97316" }}
+          >
+            Sign up
+          </button>
+        </p>
+      </form>
+    </div>
   );
 }
