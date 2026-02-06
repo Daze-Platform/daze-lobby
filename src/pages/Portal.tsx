@@ -93,34 +93,36 @@ export default function Portal() {
     return (
       <div className="min-h-screen bg-muted/30">
         <header className="glass-header">
-          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
+              <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
             </div>
-            <div className="flex items-center gap-4">
-              <AdminHotelSwitcher />
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden sm:block">
+                <AdminHotelSwitcher />
+              </div>
+              <span className="hidden md:inline text-sm text-muted-foreground truncate max-w-[150px]">
                 {user?.email}
               </span>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="min-h-[44px]">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="container mx-auto px-6 py-16">
+        <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
           <Card className="max-w-lg mx-auto shadow-soft-lg">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-                <Building2 className="w-8 h-8 text-primary" />
+              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
               </div>
               <span className="label-micro">Admin Portal</span>
-              <CardTitle className="text-xl">Select a Hotel</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Select a Hotel</CardTitle>
             </CardHeader>
-            <CardContent className="text-center space-y-6">
-              <p className="text-muted-foreground">
+            <CardContent className="text-center space-y-4 sm:space-y-6 px-4 sm:px-6">
+              <p className="text-sm text-muted-foreground">
                 Select a hotel from the dropdown above to view their onboarding portal and debug their progress.
               </p>
               <AdminHotelSwitcher />
