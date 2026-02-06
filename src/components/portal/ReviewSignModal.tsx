@@ -21,6 +21,10 @@ interface ReviewSignModalProps {
   // Existing signature data (for signed state)
   existingSignatureUrl?: string;
   signedAt?: string;
+  // Signer information to display on agreement
+  signerName?: string;
+  signerTitle?: string;
+  legalEntityName?: string;
 }
 
 const PILOT_AGREEMENT_TEXT = `PILOT AGREEMENT
