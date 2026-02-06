@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { LogOut, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,10 +14,14 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import dazeLogo from "@/assets/daze-logo.png";
+import { isTestEnvironment } from "@/lib/environment";
+import { SettingsDialog } from "@/components/settings/SettingsDialog";
 
 export function DashboardHeader() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { user, role } = useAuthContext();
   const navigate = useNavigate();
+  const isTest = isTestEnvironment();
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,6 +60,11 @@ export function DashboardHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          {isTest && (
+            <Badge className="bg-amber-500 hover:bg-amber-500 text-amber-950 border-0 text-2xs font-bold">
+              TEST DATA
+            </Badge>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
@@ -73,7 +83,7 @@ export function DashboardHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
@@ -86,6 +96,8 @@ export function DashboardHeader() {
           </DropdownMenu>
         </div>
       </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 }
