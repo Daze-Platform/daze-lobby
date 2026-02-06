@@ -11,6 +11,11 @@ interface Hotel {
   onboarding_progress: number | null;
   brand_palette: string[] | null;
   logo_url: string | null;
+  // Legal entity fields
+  legal_entity_name: string | null;
+  billing_address: string | null;
+  authorized_signer_name: string | null;
+  authorized_signer_title: string | null;
 }
 
 interface HotelContextType {
