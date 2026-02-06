@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,18 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shouldShake, setShouldShake] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+
+  // Trigger shake animation on error
+  useEffect(() => {
+    if (error) {
+      setShouldShake(true);
+      const timer = setTimeout(() => setShouldShake(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +47,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-soft-xl">
+    <Card className="w-full max-w-md shadow-soft-xl animate-fade-in-up">
       <CardHeader className="space-y-1 text-center pb-2">
         <div className="flex flex-col items-center justify-center mb-4">
           <img src={dazeLogo} alt="Daze" className="h-16 w-16 object-contain mb-3" />
@@ -48,9 +59,13 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          ref={formRef}
+          onSubmit={handleSubmit} 
+          className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
+        >
           {error && (
-            <Alert variant="destructive" className="border-0 bg-destructive/10">
+            <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -66,6 +81,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              className={error ? 'ring-destructive/50' : ''}
             />
           </div>
           
@@ -79,6 +95,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              className={error ? 'ring-destructive/50' : ''}
             />
           </div>
 
@@ -92,7 +109,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
             <button
               type="button"
               onClick={onSwitchToSignUp}
-              className="text-primary hover:underline font-medium transition-colors"
+              className="text-primary hover:underline font-medium transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 inline-block"
             >
               Sign up
             </button>
