@@ -27,6 +27,9 @@ export default function Portal() {
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef<string | null>(null);
   
+  // Welcome tour for first-time users (only for client role)
+  const { showTour, completeTour } = useWelcomeTour(user?.id);
+  
   const isAdmin = hasDashboardAccess(role);
   
   const { 
