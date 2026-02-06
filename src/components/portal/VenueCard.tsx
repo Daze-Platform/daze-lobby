@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Upload, FileText, X, Check, Loader2, AlertCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Upload, FileText, X, Check, Loader2, AlertCircle, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateMenuFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
@@ -43,78 +43,107 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
   };
 
   const hasMenu = venue.menuFile || venue.menuPdfUrl;
+  const hasName = venue.name.trim().length > 0;
 
   return (
     <Card className="relative group">
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
         onClick={() => onRemove(venue.id)}
       >
         <X className="w-4 h-4" />
       </Button>
 
-      <CardHeader className="pb-3">
-        <Input
-          value={venue.name}
-          onChange={(e) => onUpdate({ ...venue, name: e.target.value })}
-          placeholder="Venue name..."
-          className="font-semibold text-lg border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
-          maxLength={100}
-        />
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <Label className="text-sm text-muted-foreground mb-3 block">
-          Menu (PDF only)
-        </Label>
-
-        <label
-          className={cn(
-            "flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all",
-            hasMenu 
-              ? "border-primary bg-primary/5" 
-              : "border-muted-foreground/30 hover:border-primary hover:bg-muted/50"
-          )}
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
-              <span className="text-sm text-muted-foreground">Uploading...</span>
-            </>
-          ) : hasMenu ? (
-            <>
-              <div className="flex items-center gap-2 text-primary mb-1">
-                <FileText className="w-6 h-6" />
-                <Check className="w-4 h-4" />
-              </div>
-              <span className="text-sm font-medium text-foreground">
-                {venue.menuFileName || "Menu uploaded"}
-              </span>
-              <span className="text-xs text-muted-foreground mt-1">
-                Click to replace
-              </span>
-            </>
-          ) : (
-            <>
-              <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-              <span className="text-sm text-muted-foreground">
-                Drop menu PDF or click to upload
-              </span>
-              <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+      <CardContent className="p-4 space-y-4">
+        {/* Venue Name - Now prominent with label */}
+        <div className="space-y-2">
+          <Label 
+            htmlFor={`venue-name-${venue.id}`}
+            className={cn(
+              "flex items-center gap-2 text-sm font-medium",
+              !hasName && "text-destructive"
+            )}
+          >
+            <Store className="w-4 h-4" />
+            Venue Name
+            <span className="text-destructive">*</span>
+          </Label>
+          <div className="relative">
+            <Input
+              id={`venue-name-${venue.id}`}
+              value={venue.name}
+              onChange={(e) => onUpdate({ ...venue, name: e.target.value })}
+              placeholder="e.g., Pool Deck, Lobby Bar, Room Service"
+              className={cn(
+                "font-medium transition-all",
+                !hasName && "border-destructive/50 bg-destructive/5 focus-visible:ring-destructive"
+              )}
+              maxLength={100}
+              autoFocus={!hasName}
+            />
+            {!hasName && (
+              <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
-                PDF only, max 20MB
-              </span>
-            </>
-          )}
-          <Input
-            type="file"
-            accept=".pdf,application/pdf"
-            className="sr-only"
-            onChange={handleFileChange}
-          />
-        </label>
+                Please enter a venue name
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Menu Upload */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground">
+            Menu (PDF only)
+          </Label>
+
+          <label
+            className={cn(
+              "flex flex-col items-center justify-center p-5 border-2 border-dashed rounded-lg cursor-pointer transition-all",
+              hasMenu 
+                ? "border-primary bg-primary/5" 
+                : "border-muted-foreground/30 hover:border-primary hover:bg-muted/50"
+            )}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="w-7 h-7 text-primary animate-spin mb-2" />
+                <span className="text-sm text-muted-foreground">Uploading...</span>
+              </>
+            ) : hasMenu ? (
+              <>
+                <div className="flex items-center gap-2 text-primary mb-1">
+                  <FileText className="w-5 h-5" />
+                  <Check className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-medium text-foreground">
+                  {venue.menuFileName || "Menu uploaded"}
+                </span>
+                <span className="text-xs text-muted-foreground mt-1">
+                  Click to replace
+                </span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-7 h-7 text-muted-foreground mb-2" />
+                <span className="text-sm text-muted-foreground">
+                  Drop menu PDF or click to upload
+                </span>
+                <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  PDF only, max 20MB
+                </span>
+              </>
+            )}
+            <Input
+              type="file"
+              accept=".pdf,application/pdf"
+              className="sr-only"
+              onChange={handleFileChange}
+            />
+          </label>
+        </div>
       </CardContent>
     </Card>
   );
