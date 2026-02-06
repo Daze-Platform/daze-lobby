@@ -432,6 +432,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_hotel: {
+        Args: { _hotel_id: string; _user_id: string }
+        Returns: boolean
+      }
+      get_user_hotel_id: { Args: { _user_id: string }; Returns: string }
       has_dashboard_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -440,6 +445,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_client: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
