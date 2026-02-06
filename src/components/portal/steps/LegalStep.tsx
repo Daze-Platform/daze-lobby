@@ -57,13 +57,13 @@ export function LegalStep({
         <AccordionTrigger className="hover:no-underline py-4">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all",
+              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
               isCompleted 
                 ? "bg-success text-success-foreground" 
                 : "bg-muted text-muted-foreground",
-              isJustCompleted && "animate-celebrate"
+              isJustCompleted && "animate-pop"
             )}>
-              {isCompleted ? <Check className="w-4 h-4" /> : "A"}
+              {isCompleted ? <Check className="w-4 h-4 animate-pop" /> : "A"}
             </div>
             <div className="text-left">
               <p className="font-medium">Legal & Agreements</p>
