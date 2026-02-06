@@ -145,7 +145,7 @@ export function StatusIcon({ status, size = "md", className }: StatusIconProps) 
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400",
+          "flex items-center justify-center rounded-full bg-muted text-muted-foreground",
           sizeClass,
           className
         )}
@@ -171,7 +171,7 @@ export function StatusIcon({ status, size = "md", className }: StatusIconProps) 
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-700 bg-transparent",
+        "flex items-center justify-center rounded-full border-2 border-muted bg-transparent",
         sizeClass,
         className
       )}
