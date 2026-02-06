@@ -58,18 +58,18 @@ export function ProgressRing({
   return (
     <div className={cn("relative inline-flex items-center justify-center", className)}>
       <svg
-        width={size}
-        height={size}
+        width={effectiveSize}
+        height={effectiveSize}
         className="transform -rotate-90"
       >
         {/* Background circle - subtle, refined */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={effectiveSize / 2}
+          cy={effectiveSize / 2}
           r={radius}
           fill="none"
           stroke="hsl(var(--muted))"
-          strokeWidth={strokeWidth}
+          strokeWidth={effectiveStrokeWidth}
           strokeLinecap="round"
         />
         {/* Progress circle - smooth gradient feel */}
