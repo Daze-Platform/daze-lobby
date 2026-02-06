@@ -224,13 +224,21 @@ export default function Portal() {
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}
+                onSaveLegalEntity={handleSaveLegalEntity}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
                 venues={displayVenues}
                 onVenuesChange={setLocalVenues}
                 onVenuesSave={handleVenuesSave}
                 isSigningLegal={isSigningLegal}
+                isSavingLegalEntity={isSavingLegalEntity}
                 isUpdating={isUpdating}
+                hotelLegalEntity={{
+                  legal_entity_name: hotel?.legal_entity_name || undefined,
+                  billing_address: hotel?.billing_address || undefined,
+                  authorized_signer_name: hotel?.authorized_signer_name || undefined,
+                  authorized_signer_title: hotel?.authorized_signer_title || undefined,
+                }}
               />
             </CardContent>
           </Card>
