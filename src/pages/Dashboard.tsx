@@ -1,20 +1,58 @@
+import { useMemo } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, AlertTriangle, Cpu, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Building2, AlertTriangle, Cpu, TrendingUp, LucideIcon } from "lucide-react";
 import { KanbanBoard } from "@/components/kanban";
+import { useHotels } from "@/hooks/useHotels";
+
+// Format currency with K/M suffixes
+const formatCurrency = (amount: number): string => {
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  }
+  if (amount >= 1000) {
+    return `$${Math.round(amount / 1000)}K`;
+  }
+  return `$${amount.toLocaleString()}`;
+};
+
+interface StatCard {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+}
 
 export default function Dashboard() {
   const { role } = useAuthContext();
+  const { data: hotels, isLoading } = useHotels();
 
-  // Placeholder stats - will be replaced with real data
-  const stats = [
-    { label: "Total Hotels", value: "0", icon: Building2, change: null },
-    { label: "Active Blockers", value: "0", icon: AlertTriangle, change: null },
-    { label: "Devices Online", value: "0", icon: Cpu, change: null },
-    { label: "Total ARR", value: "$0", icon: TrendingUp, change: null },
-  ];
+  // Compute stats from hotel data
+  const stats = useMemo<StatCard[]>(() => {
+    if (!hotels) {
+      return [
+        { label: "Total Hotels", value: "0", icon: Building2 },
+        { label: "Active Blockers", value: "0", icon: AlertTriangle },
+        { label: "Devices Online", value: "0", icon: Cpu },
+        { label: "Total ARR", value: "$0", icon: TrendingUp },
+      ];
+    }
+
+    const totalHotels = hotels.length;
+    const activeBlockers = hotels.filter(h => h.hasBlocker).length;
+    const devicesOnline = hotels.reduce((sum, h) => sum + h.onlineDeviceCount, 0);
+    const totalDevices = hotels.reduce((sum, h) => sum + h.deviceCount, 0);
+    const totalARR = hotels.reduce((sum, h) => sum + (h.arr || 0), 0);
+
+    return [
+      { label: "Total Hotels", value: totalHotels.toString(), icon: Building2 },
+      { label: "Active Blockers", value: activeBlockers.toString(), icon: AlertTriangle },
+      { label: "Devices Online", value: `${devicesOnline}/${totalDevices}`, icon: Cpu },
+      { label: "Total ARR", value: formatCurrency(totalARR), icon: TrendingUp },
+    ];
+  }, [hotels]);
 
   return (
     <DashboardLayout>
@@ -24,7 +62,7 @@ export default function Dashboard() {
           {stats.map((stat, index) => (
             <Card 
               key={stat.label} 
-              className="hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer animate-fade-in-up"
+              className="hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer animate-fade-in-up transition-all duration-300"
               style={{ animationDelay: `${index * 80}ms` }}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 pt-3 sm:pt-4 px-4 sm:px-6">
@@ -32,7 +70,13 @@ export default function Dashboard() {
                 <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-3 sm:pb-4">
-                <div className="font-display text-xl sm:text-2xl lg:text-3xl font-bold">{stat.value}</div>
+                {isLoading ? (
+                  <Skeleton className="h-7 sm:h-9 w-16 sm:w-20" />
+                ) : (
+                  <div className="font-display text-xl sm:text-2xl lg:text-3xl font-bold tabular-nums">
+                    {stat.value}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
