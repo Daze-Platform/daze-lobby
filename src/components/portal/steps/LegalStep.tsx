@@ -71,6 +71,7 @@ export function LegalStep({
             </div>
           </div>
         </AccordionTrigger>
+        <AccordionContent className="pb-4">
           <div className="space-y-3 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(

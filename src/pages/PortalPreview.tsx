@@ -84,7 +84,7 @@ export default function PortalPreview() {
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={dazeLogo} alt="Daze" className="h-[57px] w-auto" />
-            <span className="text-xs bg-amber-500/10 text-amber-600 px-3 py-1 rounded-full font-medium">
+            <span className="text-xs bg-warning/10 text-warning px-3 py-1 rounded-full font-medium">
               PREVIEW MODE
             </span>
           </div>
