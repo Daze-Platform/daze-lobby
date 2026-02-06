@@ -47,7 +47,7 @@ export function LegalStep({
       <AccordionItem 
         value="legal" 
         className={cn(
-          "border rounded-lg px-4 bg-card relative overflow-hidden transition-all duration-300",
+          "px-5 relative overflow-hidden transition-all duration-300",
           isLocked && "opacity-50 pointer-events-none",
           isUnlocking && "animate-unlock-glow"
         )}
@@ -72,11 +72,13 @@ export function LegalStep({
           </div>
         </AccordionTrigger>
         <AccordionContent className="pb-4">
-          <div className="space-y-4 pt-2">
+          <div className="space-y-3 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
-              "flex items-center justify-between p-4 border rounded-lg",
-              pilotSigned ? "border-success/50 bg-success/5" : ""
+              "flex items-center justify-between p-4 rounded-xl transition-all duration-200",
+              pilotSigned 
+                ? "bg-success/5 shadow-sm" 
+                : "bg-secondary/50 shadow-sm hover:shadow-md"
             )}>
               <div className="flex items-center gap-3">
                 <FileSignature className={cn(
@@ -116,7 +118,7 @@ export function LegalStep({
             </div>
 
             {/* Master Service Agreement (Locked) */}
-            <div className="flex items-center justify-between p-4 border rounded-lg opacity-50">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 opacity-50">
               <div className="flex items-center gap-3">
                 <Lock className="w-5 h-5 text-muted-foreground" />
                 <div>

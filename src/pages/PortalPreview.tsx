@@ -79,12 +79,12 @@ export default function PortalPreview() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      {/* Header - refined, borderless */}
+      <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={dazeLogo} alt="Daze" className="h-[57px] w-auto" />
-            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-warning/10 text-warning px-3 py-1 rounded-full font-medium">
               PREVIEW MODE
             </span>
           </div>
@@ -100,10 +100,10 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+      <main className="container mx-auto px-6 py-10">
+        {/* Welcome Section - refined typography */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
             Welcome, Grand Hyatt Demo
           </h1>
           <p className="text-muted-foreground">
@@ -115,15 +115,15 @@ export default function PortalPreview() {
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle className="text-lg">Onboarding Progress</CardTitle>
+              <CardTitle>Onboarding Progress</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <ProgressRing progress={progress} />
               <StatusBadge status={status} />
               
               {/* Demo Status Toggle */}
-              <div className="w-full pt-4 border-t">
-                <p className="text-xs text-muted-foreground mb-2 text-center">Demo: Toggle Status</p>
+              <div className="w-full pt-4 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
                     <Button
@@ -144,7 +144,7 @@ export default function PortalPreview() {
           {/* Task List */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg">Setup Checklist</CardTitle>
+              <CardTitle>Setup Checklist</CardTitle>
             </CardHeader>
             <CardContent>
               <TaskAccordion 
