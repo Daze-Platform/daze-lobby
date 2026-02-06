@@ -96,6 +96,35 @@ export type Database = {
           },
         ]
       }
+      client_hotels: {
+        Row: {
+          created_at: string
+          hotel_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hotel_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_hotels_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       devices: {
         Row: {
           created_at: string
@@ -235,6 +264,53 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_tasks: {
+        Row: {
+          completed_at: string | null
+          completed_by_id: string | null
+          created_at: string
+          data: Json | null
+          hotel_id: string
+          id: string
+          is_completed: boolean
+          task_key: string
+          task_name: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by_id?: string | null
+          created_at?: string
+          data?: Json | null
+          hotel_id: string
+          id?: string
+          is_completed?: boolean
+          task_key: string
+          task_name: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by_id?: string | null
+          created_at?: string
+          data?: Json | null
+          hotel_id?: string
+          id?: string
+          is_completed?: boolean
+          task_key?: string
+          task_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_tasks_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -326,6 +402,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_client: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "ops_manager" | "support" | "client"
