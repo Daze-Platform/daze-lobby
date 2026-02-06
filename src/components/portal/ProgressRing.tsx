@@ -26,6 +26,7 @@ export function ProgressRing({
   
   const [isPulsing, setIsPulsing] = useState(false);
   const [showRocket, setShowRocket] = useState(false);
+  const [rocketLaunched, setRocketLaunched] = useState(false);
   const [isHeartbeating, setIsHeartbeating] = useState(false);
   const prevProgress = useRef(progress);
   const prevStatus = useRef(status);
@@ -47,12 +48,18 @@ export function ProgressRing({
       setIsHeartbeating(true);
       setTimeout(() => setIsHeartbeating(false), 500);
       // Delay rocket appearance for dramatic effect
-      const timer = setTimeout(() => setShowRocket(true), 500);
+      const timer = setTimeout(() => {
+        setShowRocket(true);
+        // After launch animation completes, switch to jitter
+        setTimeout(() => setRocketLaunched(true), 600);
+      }, 500);
       return () => clearTimeout(timer);
     } else if (status === "live") {
       setShowRocket(true);
+      setRocketLaunched(true);
     } else {
       setShowRocket(false);
+      setRocketLaunched(false);
     }
     prevStatus.current = status;
   }, [status]);
@@ -127,7 +134,8 @@ export function ProgressRing({
           {isLive && showRocket && (
             <Rocket 
               className={cn(
-                "w-5 h-5 text-amber-400 animate-rocket-launch",
+                "w-5 h-5 text-amber-400",
+                rocketLaunched ? "animate-rocket-jitter" : "animate-rocket-launch",
                 "drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]"
               )}
               strokeWidth={1.5}
