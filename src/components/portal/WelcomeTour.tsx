@@ -197,13 +197,13 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               transition={{ duration: 0.35, ease: "easeOut" }}
               className="flex flex-col items-center"
             >
-              {/* Headline - Solid Black, Bold */}
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 tracking-tight">
+              {/* Headline - Solid Black, Bold - Smaller on mobile */}
+              <h1 className="font-display text-xl md:text-3xl lg:text-4xl font-bold text-slate-900 text-center mb-3 md:mb-4 tracking-tight">
                 {slide.headline}
               </h1>
 
               {/* Subtext - Relaxed gray */}
-              <p className="text-base text-slate-500 text-center max-w-md leading-relaxed">
+              <p className="text-sm md:text-base text-slate-500 text-center max-w-md leading-relaxed">
                 {slide.subtext}
               </p>
             </motion.div>
