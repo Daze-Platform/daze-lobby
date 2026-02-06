@@ -48,13 +48,13 @@ export function DashboardHeader() {
 
   return (
     <header className="glass-header">
-      <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-            <img src={dazeLogo} alt="Daze" className="h-8 w-8 object-contain" />
+      <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
             <div className="flex flex-col">
-              <span className="font-display text-lg font-semibold tracking-tight">Daze Lobby</span>
-              <span className="text-2xs text-muted-foreground font-medium uppercase tracking-wide">Control Tower</span>
+              <span className="font-display text-base sm:text-lg font-semibold tracking-tight">Daze Lobby</span>
+              <span className="hidden sm:block text-2xs text-muted-foreground font-medium uppercase tracking-wide">Control Tower</span>
             </div>
           </div>
         </div>
