@@ -139,8 +139,8 @@ export function LegalStep({
 
             {/* Entity summary if saved */}
             {entityName && !pilotSigned && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg">
-                <Building2 className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-xl border-0">
+                <Building2 className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
                 <p className="text-xs text-muted-foreground">
                   Draft saved for <span className="font-medium text-foreground">{entityName}</span>
                 </p>

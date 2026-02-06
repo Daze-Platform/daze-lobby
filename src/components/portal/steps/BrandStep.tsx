@@ -74,13 +74,13 @@ export function BrandStep({
       <AccordionTrigger className="hover:no-underline py-4">
         <div className="flex items-center gap-3">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+            "w-8 h-8 rounded-[10px] flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm",
             isCompleted 
               ? "bg-success text-success-foreground" 
-              : "bg-muted text-muted-foreground",
+              : "bg-card text-muted-foreground",
             isJustCompleted && "animate-pop"
           )}>
-            {isCompleted ? <Check className="w-4 h-4 animate-pop" /> : "B"}
+            {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "B"}
           </div>
           <div className="text-left">
             <p className="font-medium">Brand Identity</p>
