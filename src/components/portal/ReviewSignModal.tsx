@@ -16,6 +16,7 @@ import { Check, Loader2, Shield, Calendar, Download, Building2, MapPin, User, Br
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { IconContainer } from "@/components/ui/icon-container";
+import { generateAgreementPdf } from "@/lib/generateAgreementPdf";
 
 interface LegalEntityData {
   legal_entity_name?: string;
