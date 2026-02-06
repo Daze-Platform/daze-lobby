@@ -239,16 +239,17 @@ export function ReviewSignModal({
     setHasSignature(false);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([agreementText], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Daze_Pilot_Agreement_${legalEntityName.replace(/[^a-zA-Z0-9]/g, '_') || 'Draft'}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    await generateAgreementPdf({
+      entity: isSigned && initialLegalEntity ? initialLegalEntity : {
+        legal_entity_name: legalEntityName.trim() || undefined,
+        billing_address: billingAddress.trim() || undefined,
+        authorized_signer_name: authorizedSignerName.trim() || undefined,
+        authorized_signer_title: authorizedSignerTitle.trim() || undefined,
+      },
+      signatureDataUrl: existingSignatureUrl,
+      signedAt: signedAt,
+    });
   };
 
   const formattedSignedDate = signedAt 
