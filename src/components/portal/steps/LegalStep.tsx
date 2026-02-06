@@ -148,15 +148,19 @@ export function LegalStep({
             )}
 
             {/* Master Service Agreement (Locked) */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 opacity-50">
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 opacity-60">
+              <div className="flex items-center gap-4">
+                <IconContainer 
+                  icon={Lock} 
+                  size="md"
+                  variant="muted"
+                />
                 <div>
-                  <p className="font-medium text-sm">Master Service Agreement</p>
-                  <p className="text-xs text-muted-foreground">Available after pilot completion</p>
+                  <p className="font-medium text-sm text-muted-foreground">Master Service Agreement</p>
+                  <p className="text-xs text-muted-foreground/70">Available after pilot completion</p>
                 </div>
               </div>
-              <Lock className="w-4 h-4 text-muted-foreground" />
+              <Lock className="w-4 h-4 text-muted-foreground/50" strokeWidth={1.5} />
             </div>
           </div>
         </AccordionContent>
