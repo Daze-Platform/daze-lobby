@@ -1,24 +1,14 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SketchyArtPanel } from "@/components/auth/SketchyArtPanel";
-import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const { isAuthenticated, loading } = useAuthContext();
   const navigate = useNavigate();
-  const location = useLocation();
-  const forceAuth = new URLSearchParams(location.search).get("force") === "1";
-
-  useEffect(() => {
-    if (!forceAuth && !loading && isAuthenticated) {
-      navigate("/");
-    }
-  }, [forceAuth, isAuthenticated, loading, navigate]);
 
 
   return (
