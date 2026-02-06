@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useHotel } from "@/contexts/HotelContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
+import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,8 @@ export default function Portal() {
   const { hotel, hotelId, isAdminViewing, selectedHotelId } = useHotel();
   const navigate = useNavigate();
   const [localVenues, setLocalVenues] = useState<Venue[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevStatus = useRef<string | null>(null);
   
   const isAdmin = hasDashboardAccess(role);
   
@@ -37,6 +40,15 @@ export default function Portal() {
     isSigningLegal,
     isUpdating
   } = useClientPortal();
+
+  // Trigger confetti when status changes to live
+  useEffect(() => {
+    if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
+      setShowConfetti(true);
+      toast.success("🚀 Congratulations! Your hotel is now LIVE!");
+    }
+    prevStatus.current = status;
+  }, [status]);
 
   const handleSignOut = async () => {
     try {
@@ -177,8 +189,12 @@ export default function Portal() {
               <CardTitle className="text-xl">Onboarding</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6 pt-2">
-              <ProgressRing progress={progress} />
+              <ProgressRing progress={progress} status={status} />
               <StatusBadge status={status} />
+              <ConfettiCelebration 
+                trigger={showConfetti} 
+                onComplete={() => setShowConfetti(false)} 
+              />
             </CardContent>
           </Card>
 

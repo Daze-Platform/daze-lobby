@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
+import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -18,6 +19,8 @@ export default function PortalPreview() {
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevStatus = useRef(status);
   const [tasks, setTasks] = useState([
     { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} as Record<string, unknown> },
     { key: "brand", name: "Brand Identity", isCompleted: false, data: {} as Record<string, unknown> },
@@ -26,6 +29,15 @@ export default function PortalPreview() {
 
   const completedCount = tasks.filter(t => t.isCompleted).length;
   const progress = Math.round((completedCount / tasks.length) * 100);
+
+  // Trigger confetti when status changes to 'live'
+  useEffect(() => {
+    if (status === "live" && prevStatus.current !== "live") {
+      setShowConfetti(true);
+      toast.success("🚀 Congratulations! Your hotel is now LIVE!");
+    }
+    prevStatus.current = status;
+  }, [status]);
 
   // Auto-transition to 'reviewing' when all tasks are complete
   useEffect(() => {
@@ -132,8 +144,12 @@ export default function PortalPreview() {
               <CardTitle className="text-xl">Onboarding</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6 pt-2">
-              <ProgressRing progress={progress} />
+              <ProgressRing progress={progress} status={status} />
               <StatusBadge status={status} />
+              <ConfettiCelebration 
+                trigger={showConfetti} 
+                onComplete={() => setShowConfetti(false)} 
+              />
               
               {/* Demo Status Toggle */}
               <div className="w-full pt-6 border-t border-border/30">

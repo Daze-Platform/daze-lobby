@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { Rocket } from "lucide-react";
 
 interface ProgressRingProps {
   progress: number; // 0-100
   size?: number;
   strokeWidth?: number;
+  status?: "onboarding" | "reviewing" | "live";
   className?: string;
 }
 
@@ -12,6 +14,7 @@ export function ProgressRing({
   progress, 
   size = 180, 
   strokeWidth = 12,
+  status = "onboarding",
   className 
 }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
@@ -19,7 +22,9 @@ export function ProgressRing({
   const offset = circumference - (progress / 100) * circumference;
   
   const [isPulsing, setIsPulsing] = useState(false);
+  const [showRocket, setShowRocket] = useState(false);
   const prevProgress = useRef(progress);
+  const prevStatus = useRef(status);
 
   // Trigger pulse animation when progress increases
   useEffect(() => {
@@ -30,6 +35,22 @@ export function ProgressRing({
     }
     prevProgress.current = progress;
   }, [progress]);
+
+  // Trigger rocket animation when status changes to live
+  useEffect(() => {
+    if (status === "live" && prevStatus.current !== "live") {
+      // Delay rocket appearance for dramatic effect
+      const timer = setTimeout(() => setShowRocket(true), 500);
+      return () => clearTimeout(timer);
+    } else if (status === "live") {
+      setShowRocket(true);
+    } else {
+      setShowRocket(false);
+    }
+    prevStatus.current = status;
+  }, [status]);
+
+  const isLive = status === "live";
 
   return (
     <div className={cn("relative inline-flex items-center justify-center", className)}>
@@ -54,7 +75,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="hsl(var(--primary))"
+          stroke={isLive ? "hsl(var(--success))" : "hsl(var(--primary))"}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -68,7 +89,17 @@ export function ProgressRing({
         isPulsing && "animate-progress-pulse"
       )}>
         <span className="text-4xl font-bold tracking-tight text-foreground">{Math.round(progress)}%</span>
-        <span className="text-sm text-muted-foreground tracking-wide">Ready for Takeoff</span>
+        <div className="flex items-center gap-1.5">
+          {isLive && showRocket && (
+            <Rocket className="w-4 h-4 text-success animate-rocket-launch" />
+          )}
+          <span className={cn(
+            "text-sm tracking-wide transition-colors duration-300",
+            isLive ? "text-success font-medium" : "text-muted-foreground"
+          )}>
+            {isLive ? "Launched" : "Ready for Takeoff"}
+          </span>
+        </div>
       </div>
     </div>
   );
