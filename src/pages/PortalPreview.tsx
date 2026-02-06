@@ -131,7 +131,7 @@ export default function PortalPreview() {
     <div className="min-h-screen bg-muted/50 dark:bg-background">
       {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-6 md:px-10 lg:px-12 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
             <span className="label-micro bg-warning/10 text-warning px-3 py-1.5 rounded-full">
