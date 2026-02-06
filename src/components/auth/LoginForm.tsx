@@ -22,8 +22,6 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
   const [shouldShake, setShouldShake] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
-  const formRef = useRef<HTMLFormElement>(null);
-  const navigate = useNavigate();
 
   // Trigger shake animation on error
   useEffect(() => {
