@@ -66,7 +66,7 @@ export function LegalStep({
       <AccordionItem 
         value="legal" 
         className={cn(
-          "px-5 relative overflow-hidden transition-all duration-300",
+          "px-5 relative overflow-hidden transition-all duration-300 border-0",
           isLocked && "opacity-50 pointer-events-none",
           isUnlocking && "animate-unlock-glow"
         )}
@@ -76,13 +76,13 @@ export function LegalStep({
         <AccordionTrigger className="hover:no-underline py-4">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+              "w-8 h-8 rounded-[10px] flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm",
               isCompleted 
                 ? "bg-success text-success-foreground" 
-                : "bg-muted text-muted-foreground",
+                : "bg-card text-muted-foreground",
               isJustCompleted && "animate-pop"
             )}>
-              {isCompleted ? <Check className="w-4 h-4 animate-pop" /> : "A"}
+              {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "A"}
             </div>
             <div className="text-left">
               <p className="font-medium">Legal & Agreements</p>
@@ -94,10 +94,10 @@ export function LegalStep({
           <div className="space-y-4 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
-              "flex items-center justify-between p-4 rounded-xl transition-all duration-200 group",
+              "flex items-center justify-between p-4 rounded-xl transition-all duration-300 group border-0",
               pilotSigned 
-                ? "bg-success/5 shadow-sm" 
-                : "bg-secondary/50 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                ? "bg-success/5 shadow-soft" 
+                : "bg-card shadow-soft hover:shadow-soft-md hover:-translate-y-0.5"
             )}>
               <div className="flex items-center gap-4">
                 <IconContainer 
@@ -139,8 +139,8 @@ export function LegalStep({
 
             {/* Entity summary if saved */}
             {entityName && !pilotSigned && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg">
-                <Building2 className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-xl border-0">
+                <Building2 className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
                 <p className="text-xs text-muted-foreground">
                   Draft saved for <span className="font-medium text-foreground">{entityName}</span>
                 </p>
@@ -148,7 +148,7 @@ export function LegalStep({
             )}
 
             {/* Master Service Agreement (Locked) */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 opacity-60">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border-0 opacity-60">
               <div className="flex items-center gap-4">
                 <IconContainer 
                   icon={Lock} 

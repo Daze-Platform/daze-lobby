@@ -128,20 +128,20 @@ export default function PortalPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Glass Header - Immediate entrance */}
+    <div className="min-h-screen bg-muted/50 dark:bg-background">
+      {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
-            <span className="text-xs bg-warning/10 text-warning px-3 py-1.5 rounded-full font-bold uppercase tracking-wide">
+            <span className="label-micro bg-warning/10 text-warning px-3 py-1.5 rounded-full">
               Preview Mode
             </span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/auth">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                 Back to Login
               </Button>
             </Link>
@@ -153,8 +153,9 @@ export default function PortalPreview() {
       <main className="container mx-auto px-6 py-12">
         {/* Welcome Section - Hero entrance */}
         <div className="mb-12 entrance-hero">
+          <span className="label-micro mb-2 block">Welcome Back</span>
           <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
-            Welcome, Grand Hyatt Demo
+            Grand Hyatt Demo
           </h1>
           <p className="text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
@@ -177,7 +178,7 @@ export default function PortalPreview() {
               />
               
               {/* Demo Status Toggle */}
-              <div className="w-full pt-6 border-t border-border/30">
+              <div className="w-full pt-6 border-t border-border/20">
                 <p className="label-micro mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
@@ -188,7 +189,7 @@ export default function PortalPreview() {
                       onClick={() => setStatus(s)}
                       className="flex-1 text-xs capitalize"
                     >
-                      {s}
+                      {s === "reviewing" ? "in-progress" : s}
                     </Button>
                   ))}
                 </div>
