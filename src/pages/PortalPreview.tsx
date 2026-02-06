@@ -154,7 +154,7 @@ export default function PortalPreview() {
         {/* Welcome Section - Hero entrance */}
         <div className="mb-12 entrance-hero">
           <span className="label-micro mb-2 block">Welcome Back</span>
-          <h1 className="font-display text-4xl font-bold tracking-tight mb-3 text-slate-900 dark:text-foreground">
+          <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
             Grand Hyatt Demo
           </h1>
           <p className="text-lg text-muted-foreground">
