@@ -79,12 +79,12 @@ export default function PortalPreview() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      {/* Header - refined, borderless */}
+      <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={dazeLogo} alt="Daze" className="h-[57px] w-auto" />
-            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-amber-500/10 text-amber-600 px-3 py-1 rounded-full font-medium">
               PREVIEW MODE
             </span>
           </div>
@@ -100,7 +100,7 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-10">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
