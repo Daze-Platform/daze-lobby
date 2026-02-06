@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
@@ -13,6 +14,7 @@ interface HotelCardProps {
   hotel: Hotel;
   index: number;
   isDragging?: boolean;
+  onBlockedClick?: (hotel: Hotel) => void;
 }
 
 // High-stiffness spring for snappy drop animation
@@ -22,7 +24,7 @@ const snapSpring = {
   damping: 30,
 };
 
-export function DraggableHotelCard({ hotel, index, isDragging = false }: HotelCardProps) {
+export function DraggableHotelCard({ hotel, index, isDragging = false, onBlockedClick }: HotelCardProps) {
   const {
     attributes,
     listeners,
@@ -37,6 +39,30 @@ export function DraggableHotelCard({ hotel, index, isDragging = false }: HotelCa
       easing: "cubic-bezier(0.25, 1, 0.5, 1)",
     },
   });
+
+  // Track if we're in a drag operation
+  const isDragActive = React.useRef(false);
+
+  // Handle click on blocked cards
+  const handleCardClick = React.useCallback((e: React.MouseEvent) => {
+    // Don't trigger click if we just finished dragging
+    if (isDragActive.current) {
+      isDragActive.current = false;
+      return;
+    }
+    // Only trigger for blocked cards
+    if (hotel.hasBlocker && onBlockedClick) {
+      e.stopPropagation();
+      onBlockedClick(hotel);
+    }
+  }, [hotel, onBlockedClick]);
+
+  // Track drag state
+  React.useEffect(() => {
+    if (isSortableDragging) {
+      isDragActive.current = true;
+    }
+  }, [isSortableDragging]);
 
   const daysInPhase = differenceInDays(
     new Date(),
@@ -75,10 +101,13 @@ export function DraggableHotelCard({ hotel, index, isDragging = false }: HotelCa
       <Card
         className={cn(
           "group/card transition-shadow duration-150",
-          "cursor-grab hover:shadow-soft-lg active:cursor-grabbing",
+          hotel.hasBlocker 
+            ? "cursor-pointer hover:shadow-soft-lg" 
+            : "cursor-grab hover:shadow-soft-lg active:cursor-grabbing",
           hotel.hasBlocker && "border-destructive/50 border-2 bg-destructive/5",
           isBeingDragged && "shadow-none"
         )}
+        onClick={handleCardClick}
         {...attributes}
         {...listeners}
       >

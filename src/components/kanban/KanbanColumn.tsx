@@ -15,6 +15,7 @@ interface KanbanColumnProps {
   activeId?: string | null;
   showGhost?: boolean;
   ghostDimensions?: { width: number; height: number } | null;
+  onBlockedClick?: (hotel: Hotel) => void;
 }
 
 // High-stiffness spring for snappy animations
@@ -34,6 +35,7 @@ export function KanbanColumn({
   activeId,
   showGhost = false,
   ghostDimensions,
+  onBlockedClick,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver: isDroppableOver } = useDroppable({
     id: phase,
@@ -153,6 +155,7 @@ export function KanbanColumn({
                   hotel={hotel} 
                   index={index}
                   isDragging={activeId === hotel.id}
+                  onBlockedClick={onBlockedClick}
                 />
               ))}
             </motion.div>
