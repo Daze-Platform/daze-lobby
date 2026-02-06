@@ -225,12 +225,15 @@ export default function PortalPreview() {
               <TaskAccordion 
                 tasks={tasks}
                 onLegalSign={handleLegalSign}
+                onSaveLegalEntity={handleSaveLegalEntity}
                 onTaskUpdate={handleTaskUpdate}
                 onFileUpload={handleFileUpload}
                 venues={venues}
                 onVenuesChange={setVenues}
                 onVenuesSave={handleVenuesSave}
                 isSigningLegal={isSigningLegal}
+                isSavingLegalEntity={isSavingLegalEntity}
+                hotelLegalEntity={hotelLegalEntity}
               />
             </CardContent>
           </Card>
