@@ -188,8 +188,8 @@ export function ReviewSignModal({
               ) : (
                 /* ========== SIGNING STATE ========== */
                 <>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex-1 flex flex-col">
+                    <p className="text-sm text-muted-foreground mb-4">
                       By signing below, you agree to the terms and conditions outlined in the Pilot Agreement.
                     </p>
                     <SignaturePad 
@@ -198,7 +198,7 @@ export function ReviewSignModal({
                     />
                   </div>
 
-                  <div className="pt-6 space-y-3">
+                  <div className="pt-4 space-y-3 border-t mt-4">
                     <div className="flex gap-3">
                       <Button
                         type="button"
