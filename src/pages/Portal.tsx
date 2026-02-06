@@ -62,8 +62,22 @@ export default function Portal() {
     }
   };
 
-  const handleLegalSign = (signatureDataUrl: string) => {
-    signLegal({ signatureDataUrl });
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: {
+    legal_entity_name?: string;
+    billing_address?: string;
+    authorized_signer_name?: string;
+    authorized_signer_title?: string;
+  }) => {
+    signLegal({ signatureDataUrl, legalEntityData });
+  };
+
+  const handleSaveLegalEntity = (data: {
+    legal_entity_name?: string;
+    billing_address?: string;
+    authorized_signer_name?: string;
+    authorized_signer_title?: string;
+  }) => {
+    saveLegalEntity(data);
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
