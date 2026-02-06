@@ -153,8 +153,9 @@ export default function PortalPreview() {
       <main className="container mx-auto px-6 py-12">
         {/* Welcome Section - Hero entrance */}
         <div className="mb-12 entrance-hero">
-          <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
-            Welcome, Grand Hyatt Demo
+          <span className="label-micro mb-2 block">Welcome Back</span>
+          <h1 className="font-display text-4xl font-bold tracking-tight mb-3 text-slate-900 dark:text-foreground">
+            Grand Hyatt Demo
           </h1>
           <p className="text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
@@ -177,7 +178,7 @@ export default function PortalPreview() {
               />
               
               {/* Demo Status Toggle */}
-              <div className="w-full pt-6 border-t border-border/30">
+              <div className="w-full pt-6 border-t border-border/20">
                 <p className="label-micro mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
@@ -188,7 +189,7 @@ export default function PortalPreview() {
                       onClick={() => setStatus(s)}
                       className="flex-1 text-xs capitalize"
                     >
-                      {s}
+                      {s === "reviewing" ? "in-progress" : s}
                     </Button>
                   ))}
                 </div>
