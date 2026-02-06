@@ -81,6 +81,9 @@ export function ReviewSignModal({
   isSubmitting = false,
   existingSignatureUrl,
   signedAt,
+  signerName,
+  signerTitle,
+  legalEntityName,
 }: ReviewSignModalProps) {
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [hasSignature, setHasSignature] = useState(false);
