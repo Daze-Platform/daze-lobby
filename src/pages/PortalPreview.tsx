@@ -103,24 +103,6 @@ export default function PortalPreview() {
     toast.success("Agreement signed successfully! Next step unlocked. (Demo mode)");
   };
 
-  const handleSaveLegalEntity = async (data: {
-    legal_entity_name?: string;
-    billing_address?: string;
-    authorized_signer_name?: string;
-    authorized_signer_title?: string;
-  }) => {
-    setIsSavingLegalEntity(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setHotelLegalEntity({
-      legal_entity_name: data.legal_entity_name || "",
-      billing_address: data.billing_address || "",
-      authorized_signer_name: data.authorized_signer_name || "",
-      authorized_signer_title: data.authorized_signer_title || "",
-    });
-    setIsSavingLegalEntity(false);
-    toast.success("Legal entity information saved (Demo mode)");
-  };
-
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
     setTasks(prev => prev.map(task => 
       task.key === taskKey 
