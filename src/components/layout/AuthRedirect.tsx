@@ -16,12 +16,10 @@ interface AuthRedirectProps {
 export function AuthRedirect({ children }: AuthRedirectProps) {
   const { isAuthenticated, loading, role } = useAuthContext();
 
+  // Don't block rendering of the auth page if auth loading stalls.
+  // This prevents a "blank" spinner screen when navigating back to /auth.
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <>{children}</>;
   }
 
   if (isAuthenticated) {
