@@ -97,7 +97,7 @@ export function ColorPaletteManager({
               onClick={addColor}
               className="gap-1"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3 h-3" strokeWidth={1.5} />
               Add
             </Button>
           </div>
