@@ -15,10 +15,10 @@ interface HotelCardProps {
   isDragging?: boolean;
 }
 
-// Spring physics config
-const springTransition = {
+// High-stiffness spring for snappy drop animation
+const snapSpring = {
   type: "spring" as const,
-  stiffness: 500,
+  stiffness: 600,
   damping: 30,
 };
 
@@ -33,7 +33,7 @@ export function DraggableHotelCard({ hotel, index, isDragging = false }: HotelCa
   } = useSortable({
     id: hotel.id,
     transition: {
-      duration: 300,
+      duration: 200,
       easing: "cubic-bezier(0.25, 1, 0.5, 1)",
     },
   });
@@ -62,21 +62,22 @@ export function DraggableHotelCard({ hotel, index, isDragging = false }: HotelCa
     <motion.div
       ref={setNodeRef}
       style={style}
+      data-hotel-id={hotel.id}
       layout
       layoutId={hotel.id}
       initial={false}
       animate={{
-        opacity: isBeingDragged ? 0.5 : 1,
-        scale: 1,
+        opacity: isBeingDragged ? 0.4 : 1,
+        scale: isBeingDragged ? 0.98 : 1,
       }}
-      transition={springTransition}
+      transition={snapSpring}
     >
       <Card
         className={cn(
-          "group/card transition-shadow duration-200",
+          "group/card transition-shadow duration-150",
           "cursor-grab hover:shadow-soft-lg active:cursor-grabbing",
           hotel.hasBlocker && "border-destructive/50 border-2 bg-destructive/5",
-          isBeingDragged && "opacity-50"
+          isBeingDragged && "shadow-none"
         )}
         {...attributes}
         {...listeners}
@@ -175,27 +176,28 @@ export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
       initial={{ scale: 1, rotate: 0 }}
       animate={{ 
         scale: 1.05, 
-        rotate: 3,
+        rotate: 2,
       }}
-      transition={springTransition}
+      transition={snapSpring}
     >
       <Card
         className={cn(
           "cursor-grabbing shadow-2xl",
-          "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
-          "shadow-[0_25px_50px_-12px_hsl(var(--primary)/0.25)]",
+          // Ocean Blue ring for active state
+          "ring-2 ring-[hsl(199,89%,48%)]/40 ring-offset-2 ring-offset-background",
+          "shadow-[0_25px_50px_-12px_hsl(199,89%,48%,0.3)]",
           hotel.hasBlocker && "border-destructive/50 border-2 bg-destructive/5"
         )}
       >
         <CardContent className="p-3">
           <div className="flex items-start gap-3">
             {/* Drag Handle - Active state */}
-            <div className="mt-1 text-primary">
+            <div className="mt-1 text-[hsl(199,89%,48%)]">
               <GripVertical className="h-4 w-4" />
             </div>
 
             {/* Hotel Avatar */}
-            <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/30 shadow-soft">
+            <Avatar className="h-9 w-9 shrink-0 ring-2 ring-[hsl(199,89%,48%)]/30 shadow-soft">
               <AvatarImage src={hotel.logo_url || undefined} />
               <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
                 {hotel.name.substring(0, 2).toUpperCase()}
