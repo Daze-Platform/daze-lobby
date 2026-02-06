@@ -45,20 +45,20 @@ export function VenueStep({
       disabled={isLocked}
     >
       <StepCompletionEffect isActive={isJustCompleted || false} />
-      <AccordionTrigger className="hover:no-underline py-4">
-        <div className="flex items-center gap-3">
+      <AccordionTrigger className="hover:no-underline py-3 md:py-4">
+        <div className="flex items-center gap-2 md:gap-3">
           <div className={cn(
-            "w-8 h-8 rounded-[10px] flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm",
+            "w-7 h-7 md:w-8 md:h-8 rounded-[8px] md:rounded-[10px] flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm flex-shrink-0",
             isCompleted 
               ? "bg-success text-success-foreground" 
               : "bg-card text-muted-foreground",
             isJustCompleted && "animate-pop"
           )}>
-            {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "C"}
+            {isCompleted ? <Check className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pop" strokeWidth={2.5} /> : "C"}
           </div>
-          <div className="text-left">
-            <p className="font-semibold">Venue Manager</p>
-            <p className="text-sm text-muted-foreground">Add venues and upload menus for each location</p>
+          <div className="text-left min-w-0">
+            <p className="font-semibold text-sm md:text-base truncate">Venue Manager</p>
+            <p className="text-xs md:text-sm text-muted-foreground truncate">Add venues and upload menus for each location</p>
           </div>
         </div>
       </AccordionTrigger>

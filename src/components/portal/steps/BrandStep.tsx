@@ -145,7 +145,7 @@ export function BrandStep({
           <SaveButton 
             onClick={handleSave}
             onSuccess={onStepComplete}
-            className="w-full"
+            className="w-full min-h-[44px]"
             idleText="Save Brand Settings"
           />
         </div>
