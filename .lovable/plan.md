@@ -1,220 +1,230 @@
 
-# Blocker Resolution Modal Implementation
 
-## Overview
-Create a high-fidelity modal that surfaces blocker diagnostics when users click on a blocked Kanban card. The modal provides instant visibility into why a hotel is stuck and offers a direct action to resolve the blocker.
+# Activity Feed Refinement for Client Portal
 
----
+## Problem Analysis
 
-## Current State Analysis
+The Activity Feed was implemented with the UI components in place, but there are **three critical gaps** preventing it from working for hotel teams (client users):
 
-### Data Structure
-The `blocker_alerts` table contains:
-- `reason`: Full explanation (e.g., "Low order volume detected - 15 orders in last 7 days")
-- `blocker_type`: `manual` | `automatic`
-- `auto_rule`: The rule that triggered it (e.g., "low_order_volume")
-- `created_at`: When the blocker was created (for calculating days stalled)
+### Issue 1: RLS Policies Block Client Access
+The `activity_logs` table has policies that only allow **dashboard users** (admins, ops_managers, support) to view and create logs:
 
-### Current Hook
-`useHotels` fetches hotels with a `hasBlocker` boolean but doesn't include the actual blocker details. We need to extend this or create a separate query.
+```sql
+-- Current SELECT policy
+has_dashboard_access(auth.uid())  -- Clients cannot see logs!
 
----
-
-## Technical Implementation
-
-### 1. New Component: `BlockerResolutionModal.tsx`
-**Location:** `src/components/modals/BlockerResolutionModal.tsx`
-
-**Props Interface:**
-```tsx
-interface BlockerData {
-  id: string;
-  reason: string;
-  blockerType: "manual" | "automatic";
-  autoRule: string | null;
-  createdAt: string;
-  hotelName: string;
-  hotelPhase: string;
-}
-
-interface BlockerResolutionModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  blocker: BlockerData | null;
-}
+-- Current INSERT policy  
+has_dashboard_access(auth.uid()) AND (user_id = auth.uid())  -- Clients cannot create logs!
 ```
 
-**Visual Design:**
-- **Backdrop:** `backdrop-blur-md` + `bg-slate-900/60`
-- **Modal:** White background, `rounded-xl`, Sunset Orange top border
-- **Animation:** Scale-in with spring bounce (reuse existing `modal-enter` keyframe)
+### Issue 2: No Activity Logging in Client Portal
+The `useClientPortal` hook performs all the key actions (signing agreements, uploading logos, saving venues, completing tasks) but **never inserts records** into the `activity_logs` table.
 
-**Header Section:**
-- Title: "Blocker Detected: [parsed issue name]"
-- Pulsing red `AlertTriangle` icon
-- Duration badge: "Stalled for X days"
+### Issue 3: Profiles RLS Blocks User Name Lookup
+The profiles table also restricts SELECT to `has_dashboard_access(auth.uid())`, so even if activity logs were accessible, the join to fetch user names would fail for clients.
 
-**Body Section:**
-- Issue explanation (the `reason` field)
-- "Daze Note" explaining impact
-- Primary action button (Ocean Blue) - context-aware text
+---
 
-**Footer:**
-- Ocean Blue "View Details" or "Resolve" button
-- Ghost "Dismiss" button
+## Implementation Plan
 
-### 2. New Hook: `useBlockerDetails`
-**Location:** `src/hooks/useBlockerDetails.ts`
+### 1. Database Migration: Fix RLS Policies
 
-Fetches full blocker details for a specific hotel:
+**Activity Logs - New Policies:**
+```sql
+-- Allow clients to view activity logs for their assigned hotel
+CREATE POLICY "Clients can view their hotel activity logs"
+ON activity_logs FOR SELECT
+TO authenticated
+USING (
+  hotel_id IN (
+    SELECT hotel_id FROM client_hotels
+    WHERE user_id = auth.uid()
+  )
+  OR has_dashboard_access(auth.uid())
+);
+
+-- Allow clients to create activity logs for their hotel
+CREATE POLICY "Clients can create activity logs for their hotel"
+ON activity_logs FOR INSERT
+TO authenticated
+WITH CHECK (
+  (hotel_id IN (
+    SELECT hotel_id FROM client_hotels
+    WHERE user_id = auth.uid()
+  ) AND user_id = auth.uid())
+  OR (has_dashboard_access(auth.uid()) AND user_id = auth.uid())
+);
+```
+
+**Profiles - New Policy:**
+```sql
+-- Allow clients to view profiles (for activity feed user names)
+CREATE POLICY "Clients can view profiles for activity feed"
+ON profiles FOR SELECT
+TO authenticated
+USING (
+  -- Users in the same hotel as the current user
+  user_id IN (
+    SELECT ch.user_id FROM client_hotels ch
+    WHERE ch.hotel_id IN (
+      SELECT hotel_id FROM client_hotels
+      WHERE user_id = auth.uid()
+    )
+  )
+  OR user_id = auth.uid()
+  OR has_dashboard_access(auth.uid())
+);
+```
+
+### 2. New Utility Hook: `useLogActivity`
+
+Create a reusable hook that handles activity logging with proper error handling:
+
+**File:** `src/hooks/useLogActivity.ts`
+
 ```tsx
-export function useBlockerDetails(hotelId: string | null) {
-  return useQuery({
-    queryKey: ["blocker-details", hotelId],
-    enabled: !!hotelId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("blocker_alerts")
-        .select("*")
-        .eq("hotel_id", hotelId)
-        .is("resolved_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+export function useLogActivity(hotelId: string | null) {
+  const { user } = useAuthContext();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      action, 
+      details 
+    }: { 
+      action: string; 
+      details?: Record<string, unknown>;
+    }) => {
+      if (!hotelId || !user?.id) return;
       
-      if (error) throw error;
-      return data;
+      await supabase.from("activity_logs").insert({
+        hotel_id: hotelId,
+        user_id: user.id,
+        action,
+        details,
+        is_auto_logged: false,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ["activity-logs", hotelId] 
+      });
     },
   });
 }
 ```
 
-### 3. Update `HotelCard.tsx`
-Add click handler that:
-1. Detects clicks on blocked cards
-2. Triggers modal open with the hotel's blocker data
+### 3. Integrate Activity Logging into `useClientPortal`
 
-**Changes:**
-- Add `onClick` prop to the Card component
-- Prevent propagation during drag
-- Pass blocker modal state up to `KanbanBoard`
+Add activity logging calls to each major mutation:
 
-### 4. Update `KanbanBoard.tsx`
-- Add state for selected blocked hotel
-- Add state for modal visibility
-- Render `BlockerResolutionModal` with fetched blocker data
-- Handle the resolution action (navigation or mutation)
+| Action | Log Entry |
+|--------|-----------|
+| `signLegalMutation.onSuccess` | `{ action: "legal_signed", details: { signer_name } }` |
+| `updateTaskMutation.onSuccess` | `{ action: "task_completed", details: { task_name: taskKey } }` |
+| `uploadLogoMutation.onSuccess` | `{ action: "logo_uploaded", details: { variant } }` |
+| `saveVenuesMutation.onSuccess` | `{ action: "venue_updated", details: { venue_count } }` |
+| `uploadVenueMenuMutation.onSuccess` | `{ action: "menu_uploaded", details: { venue_name } }` |
 
-### 5. CSS Additions (`src/index.css`)
-Add blocker-specific animations:
-```css
-@keyframes blocker-pulse {
-  0%, 100% { 
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-  }
-  50% { 
-    transform: scale(1.1);
-    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-  }
-}
+**Example Integration:**
 
-.animate-blocker-pulse {
-  animation: blocker-pulse 2s ease-in-out infinite;
-}
+```tsx
+const signLegalMutation = useMutation({
+  // ... existing mutation code
+  onSuccess: (data, variables) => {
+    queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+    
+    // Log activity
+    logActivity.mutate({
+      action: "legal_signed",
+      details: { 
+        signer_name: variables.legalEntityData?.authorized_signer_name 
+      },
+    });
+    
+    toast.success("Agreement signed successfully!");
+  },
+});
+```
+
+### 4. Enhance Action Mapping in `ActivityFeedPanel`
+
+Add POS integration actions to the icon/color mapping:
+
+```tsx
+const configs = {
+  // ... existing configs
+  pos_provider_selected: { 
+    icon: Settings, 
+    color: "text-accent-orange", 
+    bgColor: "bg-accent-orange/10" 
+  },
+  pos_instructions_copied: { 
+    icon: Copy, 
+    color: "text-accent-orange", 
+    bgColor: "bg-accent-orange/10" 
+  },
+  pos_sent_to_it: { 
+    icon: Send, 
+    color: "text-emerald-500", 
+    bgColor: "bg-emerald-500/10" 
+  },
+};
 ```
 
 ---
-
-## UI Components Breakdown
-
-### Modal Header
-```text
-┌─────────────────────────────────────────────────────┐
-│ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ 2px Sunset Orange ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ │
-├─────────────────────────────────────────────────────┤
-│  [!]  Blocker Detected: Low Order Volume            │
-│  ^^^                                                │
-│  Pulsing red icon                                   │
-│                                                     │
-│  This hotel has been stalled for 14 days            │
-└─────────────────────────────────────────────────────┘
-```
-
-### Modal Body
-```text
-┌─────────────────────────────────────────────────────┐
-│                                                     │
-│  THE ISSUE                                          │
-│  ─────────                                          │
-│  Low order volume detected - 15 orders in last     │
-│  7 days (threshold: 50)                            │
-│                                                     │
-│  ┌────────────────────────────────────────────┐    │
-│  │  💡 DAZE NOTE                               │    │
-│  │  Resolving this allows the hotel to        │    │
-│  │  maintain healthy operational metrics.     │    │
-│  └────────────────────────────────────────────┘    │
-│                                                     │
-│  [████ View Activity Log ████]   [Dismiss]         │
-│       Ocean Blue CTA              Ghost            │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-```
-
----
-
-## Action Button Logic
-
-The primary action button text and behavior is context-aware based on `autoRule`:
-
-| Auto Rule | Button Text | Action |
-|-----------|-------------|--------|
-| `low_order_volume` | "View Activity Log" | Open hotel detail panel |
-| `missing_legal` | "Open Pilot Agreement" | Navigate to portal legal step |
-| `device_offline` | "View Device Status" | Open devices section |
-| `stale_onboarding` | "Resume Onboarding" | Navigate to portal |
-| (fallback) | "View Details" | Open hotel detail panel |
-
----
-
-## Files to Create
-1. `src/components/modals/BlockerResolutionModal.tsx`
-2. `src/hooks/useBlockerDetails.ts`
 
 ## Files to Modify
-1. `src/components/kanban/HotelCard.tsx` - Add click handler
-2. `src/components/kanban/KanbanBoard.tsx` - Add modal state and rendering
-3. `src/components/kanban/index.ts` - Export new component
-4. `src/index.css` - Add blocker pulse animation
+
+| File | Changes |
+|------|---------|
+| Database | Add RLS policies for client access to `activity_logs` and `profiles` |
+| `src/hooks/useLogActivity.ts` | **New file** - Reusable activity logging hook |
+| `src/hooks/useClientPortal.ts` | Add activity logging to all mutation success handlers |
+| `src/components/portal/ActivityFeedPanel.tsx` | Add new action type mappings for POS and brand actions |
+| `src/components/portal/steps/PosStep.tsx` | Add activity logging for provider selection and IT instructions |
 
 ---
 
-## Animation Specifications
+## Activity Log Action Types
 
-**Entrance Animation:**
-- Duration: 300ms
-- Easing: `var(--spring-bounce)`
-- Initial state: `scale(0.95) translateY(10px) opacity(0)`
-- Final state: `scale(1) translateY(0) opacity(1)`
+Full mapping of actions that will be logged:
 
-**Alert Icon Pulse:**
-- Duration: 2s infinite
-- Scale: 1 to 1.1
-- Box-shadow: Expanding red ring that fades
-
-**Backdrop:**
-- `bg-slate-900/60`
-- `backdrop-blur-md`
-- Fade in 200ms
+| Action Key | Description | Trigger Point |
+|------------|-------------|---------------|
+| `legal_signed` | Pilot Agreement signed | Legal step completion |
+| `task_completed` | Generic task completion | Any task marked complete |
+| `brand_updated` | Brand palette saved | Color picker save |
+| `logo_uploaded` | Logo variant uploaded | Logo upload success |
+| `venue_created` | New venue added | Venue save (first time) |
+| `venue_updated` | Venue details changed | Venue save (updates) |
+| `menu_uploaded` | Menu PDF uploaded | Menu upload success |
+| `pos_provider_selected` | POS provider chosen | Provider card selection |
+| `pos_sent_to_it` | Instructions sent to IT | Mark as Sent button |
 
 ---
 
-## Implementation Order
+## Expected Outcome
 
-1. Create `useBlockerDetails` hook for data fetching
-2. Create `BlockerResolutionModal` component with all UI elements
-3. Add CSS animations for blocker pulse
-4. Update `HotelCard` with click handler and pass callback prop
-5. Update `KanbanBoard` with modal state and conditional rendering
-6. Wire up the action buttons with navigation logic
+After implementation, hotel team members will see:
+
+```text
+┌────────────────────────────────────────┐
+│  [Clock Icon] Activity Feed            │
+│  ──────────────────────────────────────│
+│                                        │
+│  [Avatar] Jane Smith                   │
+│  signed the Pilot Agreement            │
+│  2 hours ago                           │
+│  ────────────────────────────────────  │
+│  [Avatar] Mike Chen                    │
+│  uploaded a logo                       │
+│  5 hours ago                           │
+│  ────────────────────────────────────  │
+│  [Avatar] Jane Smith                   │
+│  created venue "The Rooftop Bar"       │
+│  Yesterday                             │
+│                                        │
+└────────────────────────────────────────┘
+```
+
