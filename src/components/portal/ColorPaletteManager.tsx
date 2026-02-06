@@ -38,7 +38,7 @@ export function ColorPaletteManager({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Label className="flex items-center gap-2">
-          <Palette className="w-4 h-4" />
+          <Palette className="w-4 h-4" strokeWidth={1.5} />
           Brand Color Palette
         </Label>
         <span className="text-xs text-muted-foreground">
