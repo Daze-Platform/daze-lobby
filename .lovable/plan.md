@@ -1,208 +1,289 @@
 
-# Fantastic Step Completion Transitions
+
+# Automated Onboarding Completion & Celebration
 
 ## Overview
 
-After the `SaveButton` shows its success state (green with checkmark), we'll create a delightful transition that:
-1. Celebrates the completion with visual feedback
-2. Smoothly collapses the current accordion step
-3. Elegantly unlocks and highlights the next step
-4. Updates the progress ring with a satisfying animation
+This implementation will automate the status transition from 'Onboarding' to 'Reviewing' when all tasks are complete, notify admins, and show a celebration modal to clients.
 
-## Animation Flow
+## Current State Analysis
 
-```text
-+---------------------------+
-|   User clicks Save        |
-+---------------------------+
-            |
-            v
-+---------------------------+
-| SaveButton: Loading       |
-| (spinner + "Saving...")   |
-+---------------------------+
-            |
-            v
-+---------------------------+
-| SaveButton: Success       |
-| (green + checkmark, 2s)   |
-+---------------------------+
-            |
-            v (after 1.5s delay)
-+---------------------------+
-| Celebration Effect        |
-| (confetti/pulse on badge) |
-+---------------------------+
-            |
-            v
-+---------------------------+
-| Current Step Collapses    |
-| (accordion closes)        |
-+---------------------------+
-            |
-            v
-+---------------------------+
-| Next Step Unlocks         |
-| (glow animation + auto-   |
-|  expand next accordion)   |
-+---------------------------+
-```
+| Component | Current State |
+|-----------|--------------|
+| `hotels.phase` | Enum: `onboarding`, `pilot_live`, `contracted` |
+| `onboarding_tasks.is_completed` | Boolean per task |
+| Tasks | `legal`, `brand`, `venue` |
+| Notifications | No table exists |
+| Real-time | Not implemented for phase changes |
+
+**Issue**: The current phase enum doesn't have a "reviewing" state. The status mapping treats `pilot_live` as "reviewing", but we need an explicit reviewing phase between onboarding and pilot_live.
+
+---
 
 ## Implementation Plan
 
-### 1. Add New Keyframe Animations (tailwind.config.ts)
+### Part 1: Database Changes
 
-New animations to add:
-- `celebrate`: A subtle pulse/scale effect for the completed step badge
-- `unlock-glow`: A gentle glow animation for newly unlocked steps
-- `confetti-burst`: Optional particle effect for major milestones
+#### 1.1 Add "reviewing" to lifecycle_phase enum
+
+```sql
+ALTER TYPE lifecycle_phase ADD VALUE 'reviewing' AFTER 'onboarding';
+```
+
+New enum order: `onboarding` → `reviewing` → `pilot_live` → `contracted`
+
+#### 1.2 Create notifications table
+
+```sql
+CREATE TABLE public.notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  hotel_id uuid REFERENCES hotels(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  message text NOT NULL,
+  type text NOT NULL DEFAULT 'info', -- 'info', 'success', 'warning'
+  is_read boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- Admins can see all notifications
+CREATE POLICY "Dashboard users can view notifications"
+  ON notifications FOR SELECT
+  USING (has_dashboard_access(auth.uid()) OR user_id = auth.uid());
+
+-- System can insert notifications (via trigger)
+CREATE POLICY "System can insert notifications"
+  ON notifications FOR INSERT
+  WITH CHECK (true);
+```
+
+#### 1.3 Create completion watchdog function and trigger
+
+```sql
+CREATE OR REPLACE FUNCTION check_onboarding_completion()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_hotel_id uuid;
+  v_hotel_name text;
+  v_total_tasks int;
+  v_completed_tasks int;
+  v_current_phase lifecycle_phase;
+  v_admin_user_ids uuid[];
+BEGIN
+  v_hotel_id := NEW.hotel_id;
+  
+  -- Get current phase and hotel name
+  SELECT phase, name INTO v_current_phase, v_hotel_name
+  FROM hotels WHERE id = v_hotel_id;
+  
+  -- Only process if still in onboarding phase
+  IF v_current_phase != 'onboarding' THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Count total and completed tasks
+  SELECT 
+    COUNT(*),
+    COUNT(*) FILTER (WHERE is_completed = true)
+  INTO v_total_tasks, v_completed_tasks
+  FROM onboarding_tasks
+  WHERE hotel_id = v_hotel_id;
+  
+  -- If all tasks are complete, transition to reviewing
+  IF v_total_tasks > 0 AND v_completed_tasks = v_total_tasks THEN
+    -- Update hotel phase
+    UPDATE hotels
+    SET 
+      phase = 'reviewing',
+      phase_started_at = now(),
+      onboarding_progress = 100
+    WHERE id = v_hotel_id;
+    
+    -- Get all admin/ops_manager user IDs
+    SELECT array_agg(user_id) INTO v_admin_user_ids
+    FROM user_roles
+    WHERE role IN ('admin', 'ops_manager');
+    
+    -- Create notifications for all admins
+    IF v_admin_user_ids IS NOT NULL THEN
+      INSERT INTO notifications (user_id, hotel_id, title, message, type)
+      SELECT 
+        unnest(v_admin_user_ids),
+        v_hotel_id,
+        'Onboarding Complete',
+        'Hotel "' || v_hotel_name || '" has completed onboarding and is ready for review.',
+        'success';
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger on task completion
+CREATE TRIGGER trigger_check_onboarding_completion
+AFTER UPDATE OF is_completed ON onboarding_tasks
+FOR EACH ROW
+WHEN (NEW.is_completed = true AND OLD.is_completed = false)
+EXECUTE FUNCTION check_onboarding_completion();
+```
+
+#### 1.4 Enable realtime for hotels table
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE hotels;
+```
+
+---
+
+### Part 2: Frontend Implementation
+
+#### 2.1 Update TypeScript types
+
+Update `StatusBadge` and `useClientPortal` to handle the new "reviewing" status properly.
+
+#### 2.2 Create CelebrationModal component
+
+**File**: `src/components/portal/CelebrationModal.tsx`
 
 ```text
-keyframes: {
-  celebrate: scale up slightly, then back with a bounce
-  "unlock-glow": pulsing border/shadow glow effect
-  "slide-up-fade": content slides up and fades as step closes
-}
+Features:
+- Large green checkmark with animation
+- Confetti effect (CSS-based or canvas)
+- Headline: "All Set! Your profile is under review."
+- Body message about team notification
+- "Go to Dashboard" button (shows read-only state)
 ```
 
-### 2. Create StepCompletionOverlay Component
+#### 2.3 Add real-time subscription for phase changes
 
-A new component that renders a brief celebration overlay when a step completes:
-- Subtle confetti particles or sparkle effects
-- Quick fade in/out (500ms total)
-- Positioned absolutely over the completed step
+**File**: `src/hooks/useClientPortal.ts`
 
-### 3. Enhance TaskAccordion with Transition Logic
-
-**State Management:**
-- Track `recentlyCompleted: string | null` - the key of the step that just completed
-- Track `pendingUnlock: string | null` - the step about to be unlocked
-- Use `useEffect` to orchestrate the transition timing
-
-**Transition Timeline:**
-1. `SaveButton` success state shows (0-2000ms)
-2. At 1500ms: Start celebration effect
-3. At 2000ms: Collapse current accordion
-4. At 2200ms: Add "unlock-glow" class to next step
-5. At 2400ms: Auto-expand next accordion step
-6. At 3000ms: Clear all transition states
-
-### 4. Update Individual Step Components
-
-**Modifications to LegalStep, BrandStep, VenueStep:**
-- Accept new props: `isJustCompleted`, `isUnlocking`
-- Apply celebration animation class when `isJustCompleted` is true
-- Apply unlock-glow animation when `isUnlocking` is true
-- The step number badge gets a special "pop" animation on completion
-
-### 5. Enhanced SaveButton with onSuccess Callback
-
-Modify `SaveButton` to accept an optional `onSuccess` callback that fires after the save completes (but before the success state ends):
-- This allows parent components to trigger the step transition
-- Pass timing information so orchestration can be precise
-
-### 6. Update ProgressRing Animation
-
-When progress increases:
-- Animate the ring with a slight overshoot (elastic easing)
-- Add a brief "pulse" to the percentage number
-- Optional: Particle burst at the progress endpoint
-
-## Files to Create/Modify
-
-| File | Changes |
-|------|---------|
-| `tailwind.config.ts` | Add celebrate, unlock-glow, slide-up-fade keyframes and animations |
-| `src/components/ui/save-button.tsx` | Add `onSuccess` callback prop |
-| `src/components/portal/TaskAccordion.tsx` | Add transition orchestration logic, track completion states, manage accordion value |
-| `src/components/portal/steps/LegalStep.tsx` | Accept `isJustCompleted`, `isUnlocking` props, apply animation classes |
-| `src/components/portal/steps/BrandStep.tsx` | Accept `isJustCompleted`, `isUnlocking` props, apply animation classes |
-| `src/components/portal/steps/VenueStep.tsx` | Accept `isJustCompleted`, `isUnlocking` props, apply animation classes |
-| `src/components/portal/StepCompletionEffect.tsx` | New component for celebration overlay |
-| `src/index.css` | Add any additional utility classes for animations |
-
-## Technical Details
-
-### New Keyframes (tailwind.config.ts)
-
-```ts
-keyframes: {
-  // Existing...
-  "celebrate": {
-    "0%": { transform: "scale(1)" },
-    "50%": { transform: "scale(1.2)" },
-    "75%": { transform: "scale(0.95)" },
-    "100%": { transform: "scale(1)" }
-  },
-  "unlock-glow": {
-    "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
-    "50%": { boxShadow: "0 0 20px 4px hsl(var(--primary) / 0.4)" }
-  },
-  "success-ring": {
-    "0%": { strokeDashoffset: "var(--initial-offset)" },
-    "100%": { strokeDashoffset: "var(--final-offset)" }
-  }
-}
+```text
+Changes:
+- Subscribe to hotels table changes
+- Detect when phase changes from 'onboarding' to 'reviewing'
+- Trigger celebration modal via callback
 ```
 
-### SaveButton Enhancement
+#### 2.4 Update Portal page
 
-```tsx
-interface SaveButtonProps extends Omit<ButtonProps, "onClick"> {
-  onClick: () => Promise<void> | void;
-  onSuccess?: () => void; // New: fires when save succeeds
-  // ... existing props
-}
+**File**: `src/pages/Portal.tsx`
+
+```text
+Changes:
+- Add CelebrationModal state
+- Show read-only "Pending Review" state when phase is 'reviewing'
+- Subscribe to real-time phase changes
+- Show celebration when all tasks complete
 ```
 
-### TaskAccordion State
+#### 2.5 Update StatusBadge
 
-```tsx
-const [accordionValue, setAccordionValue] = useState<string | undefined>();
-const [recentlyCompleted, setRecentlyCompleted] = useState<string | null>(null);
-const [unlockingStep, setUnlockingStep] = useState<string | null>(null);
+**File**: `src/components/portal/StatusBadge.tsx`
 
-const handleStepComplete = (stepKey: string) => {
-  setRecentlyCompleted(stepKey);
+```text
+Changes:
+- Add proper styling for "reviewing" status (amber/yellow theme)
+- Map 'reviewing' phase correctly
+```
+
+---
+
+### Part 3: File Changes Summary
+
+| File | Action | Description |
+|------|--------|-------------|
+| Database Migration | Create | Add lifecycle_phase enum value, notifications table, trigger function |
+| `src/integrations/supabase/types.ts` | Auto-update | Will reflect new enum and table |
+| `src/components/portal/CelebrationModal.tsx` | Create | Success modal with confetti |
+| `src/components/portal/StatusBadge.tsx` | Modify | Add reviewing status styling |
+| `src/hooks/useClientPortal.ts` | Modify | Add real-time subscription, return phase info |
+| `src/pages/Portal.tsx` | Modify | Add celebration modal, read-only reviewing state |
+| `src/components/portal/index.ts` | Modify | Export CelebrationModal |
+
+---
+
+### Part 4: Celebration Modal Design
+
+```text
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│           ✨  CONFETTI ANIMATION  ✨                │
+│                                                     │
+│                    ┌─────────┐                      │
+│                    │    ✓    │   (Animated green    │
+│                    │         │    checkmark)        │
+│                    └─────────┘                      │
+│                                                     │
+│            "All Set! Your profile                   │
+│              is under review."                      │
+│                                                     │
+│      Thanks for completing your setup.              │
+│      Our team has been notified and                 │
+│      will verify your details shortly.              │
+│      You will be notified once your                 │
+│      pilot is live.                                 │
+│                                                     │
+│          ┌──────────────────────┐                   │
+│          │   Go to Dashboard    │                   │
+│          └──────────────────────┘                   │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+### Part 5: Technical Details
+
+#### Real-time Subscription Pattern
+
+```typescript
+// In useClientPortal or Portal.tsx
+useEffect(() => {
+  if (!hotelId) return;
   
-  // Orchestrate transition
-  setTimeout(() => {
-    setAccordionValue(undefined); // Collapse current
-  }, 500);
-  
-  setTimeout(() => {
-    const nextStep = getNextStep(stepKey);
-    if (nextStep) {
-      setUnlockingStep(nextStep);
-      setAccordionValue(nextStep); // Open next
-    }
-  }, 800);
-  
-  setTimeout(() => {
-    setRecentlyCompleted(null);
-    setUnlockingStep(null);
-  }, 2500);
-};
+  const channel = supabase
+    .channel(`hotel-phase-${hotelId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'hotels',
+        filter: `id=eq.${hotelId}`,
+      },
+      (payload) => {
+        if (payload.new.phase === 'reviewing' && payload.old.phase === 'onboarding') {
+          setShowCelebration(true);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [hotelId]);
 ```
 
-### Step Badge Animation
+#### Confetti Animation (CSS-based)
 
-```tsx
-<div className={cn(
-  "w-8 h-8 rounded-full flex items-center justify-center",
-  isCompleted && "bg-success text-success-foreground",
-  isJustCompleted && "animate-celebrate"
-)}>
-```
+Using CSS keyframes for confetti particles that animate when the modal opens, no external library needed.
 
-## Result
+---
 
-After implementation, completing each step will:
-1. Show the green "Saved!" button state for 2 seconds
-2. Trigger a celebration animation on the step badge (scales up with a bounce)
-3. Apply a glow effect to the newly unlocked step
-4. Auto-collapse the completed step
-5. Auto-expand the next available step
-6. Animate the progress ring smoothly to the new percentage
+### Part 6: Post-Celebration State
 
-This creates a satisfying, game-like progression feel that rewards users for completing each onboarding task.
+When in "reviewing" phase:
+- Show "Pending Review" status badge (amber styling)
+- Tasks accordion becomes read-only (all checked, disabled)
+- Progress ring shows 100%
+- Message: "Your onboarding is complete! We're reviewing your setup."
+
