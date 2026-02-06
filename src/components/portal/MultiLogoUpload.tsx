@@ -5,6 +5,7 @@ import { Upload, Check, Image, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
+import { IconStack } from "@/components/ui/icon-container";
 
 interface LogoVariant {
   type: "dark" | "light" | "icon";
