@@ -417,6 +417,22 @@
     animation: check-pop 0.25s var(--spring-bounce);
   }
 
+  /* === STEP BADGE GLOW ANIMATION === */
+  @keyframes badge-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3),
+                  0 4px 12px -2px hsl(var(--primary) / 0.25);
+    }
+    50% {
+      box-shadow: 0 0 0 3px hsl(var(--primary) / 0.4),
+                  0 4px 16px -2px hsl(var(--primary) / 0.35);
+    }
+  }
+
+  .animate-badge-glow {
+    animation: badge-glow 2s ease-in-out infinite;
+  }
+
   /* === EXISTING ANIMATIONS (upgraded with spring physics) === */
 
   @keyframes celebrate {
