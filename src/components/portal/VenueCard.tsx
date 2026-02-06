@@ -67,7 +67,7 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
               !hasName && "text-destructive"
             )}
           >
-            <Store className="w-4 h-4" />
+            <Store className="w-4 h-4" strokeWidth={1.5} />
             Venue Name
             <span className="text-destructive">*</span>
           </Label>
