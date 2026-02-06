@@ -9,6 +9,7 @@ import { RoleBasedRoute } from "@/components/layout/RoleBasedRoute";
 import { AuthRedirect } from "@/components/layout/AuthRedirect";
 import Dashboard from "./pages/Dashboard";
 import Portal from "./pages/Portal";
+import PortalPreview from "./pages/PortalPreview";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,8 @@ const App = () => (
                 </RoleBasedRoute>
               }
             />
+            {/* Preview route - no auth required */}
+            <Route path="/portal-preview" element={<PortalPreview />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
