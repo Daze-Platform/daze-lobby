@@ -17,7 +17,10 @@ export function ProgressRing({
   status = "onboarding",
   className 
 }: ProgressRingProps) {
-  const radius = (size - strokeWidth) / 2;
+  // Use responsive sizing - on mobile (size < 180), scale down proportionally
+  const effectiveSize = size;
+  const effectiveStrokeWidth = size < 180 ? Math.round(strokeWidth * (size / 180)) : strokeWidth;
+  const radius = (effectiveSize - effectiveStrokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
   
