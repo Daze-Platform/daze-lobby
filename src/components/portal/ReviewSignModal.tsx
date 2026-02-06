@@ -370,7 +370,7 @@ export function ReviewSignModal({
                       onClick={handleDownload}
                       className="h-7 gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
                       Download
                     </Button>
                   </div>
