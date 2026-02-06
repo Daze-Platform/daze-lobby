@@ -9,6 +9,7 @@ import { Check, FileSignature, Lock, Eye, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ReviewSignModal } from "../ReviewSignModal";
 import { StepCompletionEffect } from "../StepCompletionEffect";
+import { IconContainer } from "@/components/ui/icon-container";
 import { format } from "date-fns";
 
 interface LegalEntityData {
