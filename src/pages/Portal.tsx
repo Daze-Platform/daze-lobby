@@ -41,7 +41,14 @@ export default function Portal() {
     isUpdating
   } = useClientPortal();
 
-  const handleSignOut = async () => {
+  // Trigger confetti when status changes to live
+  useEffect(() => {
+    if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
+      setShowConfetti(true);
+      toast.success("🚀 Congratulations! Your hotel is now LIVE!");
+    }
+    prevStatus.current = status;
+  }, [status]);
     try {
       await signOut();
       navigate("/auth");
