@@ -399,7 +399,7 @@ export function ReviewSignModal({
                 <div className="space-y-6">
                   <div className="text-center space-y-2">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/10 text-success mb-2">
-                      <Check className="w-6 h-6" />
+                      <Check className="w-6 h-6" strokeWidth={1.5} />
                     </div>
                     <h3 className="font-semibold text-foreground">Agreement Signed</h3>
                     <p className="text-sm text-muted-foreground">
