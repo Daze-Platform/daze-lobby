@@ -10,13 +10,13 @@ const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item 
-    ref={ref} 
+  <AccordionPrimitive.Item
+    ref={ref}
     className={cn(
-      "border-0 rounded-xl bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md data-[state=open]:shadow-md data-[state=open]:-translate-y-0.5",
+      "bg-card rounded-2xl shadow-soft mb-3 transition-all duration-200 hover:shadow-soft-md",
       className
-    )} 
-    {...props} 
+    )}
+    {...props}
   />
 ));
 AccordionItem.displayName = "AccordionItem";
@@ -29,7 +29,7 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-4 font-medium transition-all [&[data-state=open]>svg]:rotate-180",
+        "flex flex-1 items-center justify-between py-5 px-6 text-sm font-medium transition-all [&[data-state=open]>svg]:rotate-180 hover:bg-muted/30 rounded-2xl",
         className,
       )}
       {...props}
@@ -50,7 +50,7 @@ const AccordionContent = React.forwardRef<
     className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
     {...props}
   >
-    <div className={cn("pb-4 pt-0", className)}>{children}</div>
+    <div className={cn("px-6 pb-5 pt-0", className)}>{children}</div>
   </AccordionPrimitive.Content>
 ));
 
