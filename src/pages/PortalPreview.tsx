@@ -114,8 +114,8 @@ export default function PortalPreview() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
-        {/* Welcome Section - editorial typography */}
-        <div className="mb-12">
+        {/* Welcome Section - Hero entrance */}
+        <div className="mb-12 entrance-hero">
           <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
             Welcome, Grand Hyatt Demo
           </h1>
@@ -126,7 +126,7 @@ export default function PortalPreview() {
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
-          <Card className="lg:col-span-1">
+          <Card className="lg:col-span-1 entrance-hero">
             <CardHeader className="pb-4">
               <span className="label-micro">Progress</span>
               <CardTitle className="text-xl">Onboarding</CardTitle>
@@ -155,8 +155,8 @@ export default function PortalPreview() {
             </CardContent>
           </Card>
 
-          {/* Task List */}
-          <Card className="lg:col-span-2">
+          {/* Task List - Content entrance */}
+          <Card className="lg:col-span-2 entrance-content">
             <CardHeader className="pb-4">
               <span className="label-micro">Checklist</span>
               <CardTitle className="text-xl">Setup Tasks</CardTitle>

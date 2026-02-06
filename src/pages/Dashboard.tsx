@@ -19,10 +19,14 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        {/* Stats Overview */}
+        {/* Stats Overview - Staggered entrance */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat) => (
-            <Card key={stat.label} className="hover-lift cursor-pointer">
+          {stats.map((stat, index) => (
+            <Card 
+              key={stat.label} 
+              className="hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer animate-fade-in-up"
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-6">
                 <span className="label-micro">{stat.label}</span>
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -34,8 +38,8 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Kanban Lifecycle Board */}
-        <div className="space-y-4">
+        {/* Kanban Lifecycle Board - Entrance delayed */}
+        <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold">Hotel Lifecycle</h2>
             <Badge variant="secondary" className="text-2xs font-medium">
