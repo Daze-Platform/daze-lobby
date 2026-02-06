@@ -10,6 +10,8 @@ import { ColorPaletteManager } from "../ColorPaletteManager";
 import { MultiLogoUpload } from "../MultiLogoUpload";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
+import { useLogActivity } from "@/hooks/useLogActivity";
+import { useHotel } from "@/contexts/HotelContext";
 
 interface BrandStepProps {
   isCompleted: boolean;
@@ -36,6 +38,8 @@ export function BrandStep({
   isJustCompleted,
   isUnlocking
 }: BrandStepProps) {
+  const { hotelId } = useHotel();
+  const logActivity = useLogActivity(hotelId);
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted 
@@ -67,6 +71,14 @@ export function BrandStep({
 
   const handleSave = async () => {
     await onSave({ brand_palette: colors, logos });
+    
+    // Log activity
+    logActivity.mutate({
+      action: "brand_updated",
+      details: {
+        color_count: colors.length,
+      },
+    });
   };
 
   return (

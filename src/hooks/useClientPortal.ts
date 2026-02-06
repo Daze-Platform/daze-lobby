@@ -5,6 +5,7 @@ import { useHotel } from "@/contexts/HotelContext";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { sanitizeFilename } from "@/lib/fileValidation";
+import { useLogActivity } from "@/hooks/useLogActivity";
 
 interface OnboardingTask {
   id: string;
@@ -29,6 +30,7 @@ export function useClientPortal() {
   const { user } = useAuthContext();
   const { hotel, hotelId, isLoading: isHotelLoading } = useHotel();
   const queryClient = useQueryClient();
+  const logActivity = useLogActivity(hotelId);
 
   // Fetch onboarding tasks for the hotel
   const { data: tasks, isLoading: isLoadingTasks } = useQuery({
@@ -177,9 +179,18 @@ export function useClientPortal() {
 
       return { signatureUrl, signedAt };
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["hotel"] });
+      
+      // Log activity
+      logActivity.mutate({
+        action: "legal_signed",
+        details: {
+          signer_name: variables.legalEntityData?.authorized_signer_name,
+        },
+      });
+      
       toast.success("Agreement signed successfully! Next step unlocked.");
     },
     onError: (error) => {
@@ -210,8 +221,17 @@ export function useClientPortal() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      
+      // Log activity
+      logActivity.mutate({
+        action: "task_completed",
+        details: {
+          task_key: variables.taskKey,
+        },
+      });
+      
       toast.success("Task updated successfully!");
     },
     onError: (error) => {
@@ -269,8 +289,17 @@ export function useClientPortal() {
 
       return { path: filePath, url: urlData?.publicUrl };
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      
+      // Log activity
+      logActivity.mutate({
+        action: "logo_uploaded",
+        details: {
+          variant: variables.variant,
+        },
+      });
+      
       toast.success("Logo uploaded successfully!");
     },
     onError: (error) => {
@@ -317,8 +346,17 @@ export function useClientPortal() {
 
       return { path: filePath, url: urlData?.publicUrl };
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["venues"] });
+      
+      // Log activity
+      logActivity.mutate({
+        action: "menu_uploaded",
+        details: {
+          venue_name: variables.venueName,
+        },
+      });
+      
       toast.success("Menu uploaded successfully!");
     },
     onError: (error) => {
@@ -416,9 +454,19 @@ export function useClientPortal() {
 
       if (taskError) throw taskError;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["venues"] });
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      
+      // Log activity
+      const venueCount = variables.filter(v => v.name.trim()).length;
+      logActivity.mutate({
+        action: venueCount > 0 ? "venue_updated" : "venue_created",
+        details: {
+          venue_count: venueCount,
+        },
+      });
+      
       toast.success("Venues saved successfully!");
     },
     onError: (error) => {
