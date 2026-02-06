@@ -566,4 +566,21 @@
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
+
+  /* === SCROLLBAR HIDE UTILITY === */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* === SAFE AREA PADDING FOR MOBILE === */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
