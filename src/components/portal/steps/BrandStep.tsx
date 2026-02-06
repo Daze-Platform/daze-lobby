@@ -4,9 +4,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
 import { SaveButton } from "@/components/ui/save-button";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ColorPaletteManager } from "../ColorPaletteManager";
 import { MultiLogoUpload } from "../MultiLogoUpload";
@@ -106,48 +104,6 @@ export function BrandStep({
             onChange={setColors} 
             maxColors={5}
           />
-
-          {/* Live Preview */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Preview: Mock Daze Order Screen</Label>
-            <div 
-              className="rounded-xl p-4 bg-secondary/30 shadow-inner"
-              style={{ borderLeft: `4px solid ${colors[0] || "#3B82F6"}` }}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: colors[0] || "#3B82F6" }}
-                >
-                  D
-                </div>
-                <span className="font-semibold">Your Hotel Name</span>
-              </div>
-              <div className="space-y-2">
-                <div className="h-3 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </div>
-              <Button 
-                className="mt-4 w-full text-white"
-                style={{ 
-                  backgroundColor: colors[0] || "#3B82F6",
-                }}
-              >
-                Place Order
-              </Button>
-              {colors.length > 1 && (
-                <div className="flex gap-2 mt-3">
-                  {colors.slice(1).map((color, i) => (
-                    <div
-                      key={i}
-                      className="h-2 flex-1 rounded"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
 
           <SaveButton 
             onClick={handleSave}
