@@ -41,18 +41,18 @@ export function StepCompletionEffect({ isActive, className }: StepCompletionEffe
 
   useEffect(() => {
     if (isActive) {
-      // Generate random sparkle positions
-      const newSparkles: SparkleProps[] = Array.from({ length: 8 }, (_, i) => ({
-        delay: i * 75,
-        x: 10 + Math.random() * 80,
-        y: 10 + Math.random() * 80,
+      // Generate 12 sparkles with faster stagger for burst effect
+      const newSparkles: SparkleProps[] = Array.from({ length: 12 }, (_, i) => ({
+        delay: i * 30,
+        x: 15 + Math.random() * 70,
+        y: 15 + Math.random() * 70,
       }));
       setSparkles(newSparkles);
 
-      // Clean up after animation
+      // Clean up after 500ms
       const timer = setTimeout(() => {
         setSparkles([]);
-      }, 800);
+      }, 500);
 
       return () => clearTimeout(timer);
     }
