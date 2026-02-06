@@ -15,6 +15,7 @@ import { SignaturePad, SignaturePadRef } from "./SignaturePad";
 import { Check, Loader2, Shield, Calendar, Download, Building2, MapPin, User, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { IconContainer } from "@/components/ui/icon-container";
 
 interface LegalEntityData {
   legal_entity_name?: string;
