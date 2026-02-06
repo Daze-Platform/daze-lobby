@@ -14,7 +14,7 @@ const statusConfig: Record<OnboardingStatus, { label: string; variant: "default"
     variant: "secondary",
   },
   reviewing: {
-    label: "Reviewing",
+    label: "In Progress",
     variant: "outline",
   },
   live: {
