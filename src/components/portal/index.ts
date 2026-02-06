@@ -7,4 +7,5 @@ export { ColorPaletteManager } from "./ColorPaletteManager";
 export { MultiLogoUpload } from "./MultiLogoUpload";
 export { VenueCard } from "./VenueCard";
 export { VenueManager } from "./VenueManager";
+export { AdminHotelSwitcher } from "./AdminHotelSwitcher";
 export type { Venue } from "./VenueCard";
