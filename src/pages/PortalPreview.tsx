@@ -144,8 +144,12 @@ export default function PortalPreview() {
               <CardTitle className="text-xl">Onboarding</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6 pt-2">
-              <ProgressRing progress={progress} />
+              <ProgressRing progress={progress} status={status} />
               <StatusBadge status={status} />
+              <ConfettiCelebration 
+                trigger={showConfetti} 
+                onComplete={() => setShowConfetti(false)} 
+              />
               
               {/* Demo Status Toggle */}
               <div className="w-full pt-6 border-t border-border/30">

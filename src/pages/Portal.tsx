@@ -22,6 +22,8 @@ export default function Portal() {
   const { hotel, hotelId, isAdminViewing, selectedHotelId } = useHotel();
   const navigate = useNavigate();
   const [localVenues, setLocalVenues] = useState<Venue[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevStatus = useRef<string | null>(null);
   
   const isAdmin = hasDashboardAccess(role);
   
