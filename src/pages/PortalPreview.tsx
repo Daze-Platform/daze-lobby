@@ -4,9 +4,11 @@ import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
+import { WelcomeTour } from "@/components/portal/WelcomeTour";
+import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import dazeLogo from "@/assets/daze-logo.png";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
@@ -21,6 +23,9 @@ export default function PortalPreview() {
   const [isSigningLegal, setIsSigningLegal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef(status);
+  
+  // Welcome tour - using "preview" as the user ID for demo
+  const { showTour, completeTour, resetTour } = useWelcomeTour("preview-user");
   
   // Demo legal entity state
   const [hotelLegalEntity, setHotelLegalEntity] = useState({
@@ -129,6 +134,11 @@ export default function PortalPreview() {
 
   return (
     <div className="min-h-screen bg-muted/50 dark:bg-background">
+      {/* Welcome Tour */}
+      {showTour && (
+        <WelcomeTour onComplete={completeTour} />
+      )}
+
       {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 md:px-10 lg:px-12 py-4 flex items-center justify-between">
@@ -139,6 +149,19 @@ export default function PortalPreview() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            {/* Reset Tour Button for Demo */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2 text-muted-foreground"
+              onClick={() => {
+                resetTour();
+                toast.info("Welcome tour reset!");
+              }}
+            >
+              <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
+              Reset Tour
+            </Button>
             <Link to="/auth">
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />

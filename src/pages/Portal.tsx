@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { useHotel } from "@/contexts/HotelContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
+import { WelcomeTour } from "@/components/portal/WelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +26,9 @@ export default function Portal() {
   const [localVenues, setLocalVenues] = useState<Venue[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef<string | null>(null);
+  
+  // Welcome tour for first-time users (only for client role)
+  const { showTour, completeTour } = useWelcomeTour(user?.id);
   
   const isAdmin = hasDashboardAccess(role);
   
@@ -150,6 +155,10 @@ export default function Portal() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      {/* Welcome Tour for first-time users (clients only) */}
+      {showTour && !isAdmin && (
+        <WelcomeTour onComplete={completeTour} />
+      )}
       {/* Glass Header - Immediate entrance */}
       <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
