@@ -110,12 +110,45 @@ export function useUpdateHotelPhase() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["hotels-with-details"] });
-      toast.success("Hotel phase updated");
+    // OPTIMISTIC UPDATE: Instantly update UI before API call completes
+    onMutate: async ({ hotelId, newPhase }) => {
+      // Cancel any outgoing refetches to prevent overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ["hotels-with-details"] });
+
+      // Snapshot the previous value for rollback
+      const previousHotels = queryClient.getQueryData<Hotel[]>(["hotels-with-details"]);
+
+      // Optimistically update the cache
+      queryClient.setQueryData<Hotel[]>(["hotels-with-details"], (old) => {
+        if (!old) return old;
+        return old.map((hotel) =>
+          hotel.id === hotelId
+            ? {
+                ...hotel,
+                phase: newPhase,
+                phase_started_at: new Date().toISOString(),
+              }
+            : hotel
+        );
+      });
+
+      // Return context for potential rollback
+      return { previousHotels };
     },
-    onError: (error) => {
+    // ROLLBACK: If mutation fails, restore previous state
+    onError: (error, _variables, context) => {
+      if (context?.previousHotels) {
+        queryClient.setQueryData(["hotels-with-details"], context.previousHotels);
+      }
       toast.error("Failed to update phase: " + error.message);
+    },
+    // SETTLE: Sync with server after mutation (success or failure)
+    onSettled: () => {
+      // Refetch to ensure cache is in sync with server
+      queryClient.invalidateQueries({ queryKey: ["hotels-with-details"] });
+    },
+    onSuccess: () => {
+      // Silent success - no toast since the UI already updated instantly
     },
   });
 }

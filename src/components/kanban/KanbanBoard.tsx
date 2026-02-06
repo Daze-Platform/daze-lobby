@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -75,6 +75,10 @@ export function KanbanBoard() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeHotel, setActiveHotel] = useState<Hotel | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [overPhase, setOverPhase] = useState<Enums<"lifecycle_phase"> | null>(null);
+  
+  // Track card dimensions for ghost placeholder
+  const cardDimensionsRef = useRef<{ width: number; height: number } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -92,12 +96,34 @@ export function KanbanBoard() {
     setActiveId(active.id as string);
     const hotel = hotels?.find((h) => h.id === active.id);
     setActiveHotel(hotel || null);
+    
+    // Capture card dimensions for ghost placeholder
+    const activeElement = document.querySelector(`[data-hotel-id="${active.id}"]`);
+    if (activeElement) {
+      const rect = activeElement.getBoundingClientRect();
+      cardDimensionsRef.current = { width: rect.width, height: rect.height };
+    }
   }, [hotels]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over } = event;
     setOverId(over?.id as string | null);
-  }, []);
+    
+    // Determine which phase/column we're hovering over
+    if (!over) {
+      setOverPhase(null);
+      return;
+    }
+    
+    // Check if over a column directly
+    if (COLUMNS.some((col) => col.phase === over.id)) {
+      setOverPhase(over.id as Enums<"lifecycle_phase">);
+    } else {
+      // Over a card - find its column
+      const targetHotel = hotels?.find((h) => h.id === over.id);
+      setOverPhase(targetHotel?.phase || null);
+    }
+  }, [hotels]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -105,6 +131,8 @@ export function KanbanBoard() {
     setActiveId(null);
     setActiveHotel(null);
     setOverId(null);
+    setOverPhase(null);
+    cardDimensionsRef.current = null;
 
     if (!over) return;
 
@@ -132,6 +160,7 @@ export function KanbanBoard() {
       setTimeout(triggerMiniConfetti, 200);
     }
 
+    // Mutation now uses optimistic updates - UI updates instantly!
     updatePhase.mutate({
       hotelId: active.id as string,
       newPhase: targetPhase,
@@ -179,6 +208,8 @@ export function KanbanBoard() {
         {COLUMNS.map((col) => {
           const columnHotels = hotelsByPhase[col.phase] || [];
           const isOver = overId === col.phase || columnHotels.some((h) => h.id === overId);
+          // Show ghost when hovering over a DIFFERENT column than the card's origin
+          const showGhost = overPhase === col.phase && activeHotel && activeHotel.phase !== col.phase;
           
           return (
             <SortableContext
@@ -194,16 +225,18 @@ export function KanbanBoard() {
                 accentColor={col.accentColor}
                 isOver={isOver}
                 activeId={activeId}
+                showGhost={showGhost}
+                ghostDimensions={cardDimensionsRef.current}
               />
             </SortableContext>
           );
         })}
       </div>
 
-      {/* Drag Overlay - The floating card */}
+      {/* Drag Overlay - The floating card with high-stiffness spring */}
       <DragOverlay dropAnimation={{
-        duration: 300,
-        easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+        duration: 250,
+        easing: "cubic-bezier(0.18, 0.67, 0.6, 1.12)",
       }}>
         {activeHotel ? (
           <HotelCardOverlay hotel={activeHotel} />
