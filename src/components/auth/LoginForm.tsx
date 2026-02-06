@@ -126,7 +126,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
 
         <Button 
           type="submit" 
-          className="w-full rounded-xl text-white"
+          className="w-full rounded-xl text-white min-h-[44px]"
           style={{ backgroundColor: "#0EA5E9" }}
           disabled={loading}
         >
