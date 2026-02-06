@@ -109,7 +109,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                   <p className="font-medium text-sm">{logo.label}</p>
                   {logo.file && (
                     <span className="inline-flex items-center gap-1 text-xs text-primary">
-                      <Check className="w-3 h-3" />
+                      <Check className="w-3 h-3" strokeWidth={2} />
                       Uploaded
                     </span>
                   )}
