@@ -76,7 +76,7 @@ export function ColorPaletteManager({
               className="h-6 w-6"
               onClick={() => removeColor(index)}
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3" strokeWidth={1.5} />
             </Button>
           </div>
         ))}
