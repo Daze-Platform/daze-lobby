@@ -77,7 +77,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   {isAdmin ? (
                     <Button
                       variant="destructive"
-                      className="w-full gap-2"
+                      className="w-full gap-2 min-h-[44px]"
                       onClick={() => setShowPurgeConfirm(true)}
                       disabled={isPurging}
                     >

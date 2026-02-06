@@ -97,7 +97,7 @@ export function VenueManager({
           onClick={handleSave}
           onSuccess={onStepComplete}
           disabled={!hasValidVenues}
-          className="w-full"
+          className="w-full min-h-[44px]"
           idleText="Save Venue Configuration"
         />
       )}

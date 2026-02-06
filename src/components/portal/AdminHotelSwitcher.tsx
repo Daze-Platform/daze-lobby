@@ -29,9 +29,9 @@ export function AdminHotelSwitcher() {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 sm:gap-3">
       {isAdminViewing && (
-        <Badge variant="secondary" className="gap-1.5 bg-amber-100 text-amber-800 border-amber-200">
+        <Badge variant="secondary" className="hidden sm:flex gap-1.5 bg-amber-100 text-amber-800 border-amber-200">
           <Eye className="w-3 h-3" />
           Admin View
         </Badge>
@@ -41,10 +41,10 @@ export function AdminHotelSwitcher() {
         value={selectedHotelId || ""}
         onValueChange={(value) => setSelectedHotelId(value || null)}
       >
-        <SelectTrigger className="w-[250px] h-9">
+        <SelectTrigger className="w-full sm:w-[200px] lg:w-[250px] h-9 min-h-[44px]">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
-            <SelectValue placeholder="Select a hotel to view..." />
+            <SelectValue placeholder="Select hotel..." />
           </div>
         </SelectTrigger>
         <SelectContent>

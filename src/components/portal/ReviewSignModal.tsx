@@ -470,20 +470,20 @@ export function ReviewSignModal({
                   </div>
 
                   <div className="mt-auto pt-4 space-y-3 border-t shrink-0">
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleClear}
                         disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="flex-1"
+                        className="w-full sm:flex-1 min-h-[44px]"
                       >
                         Clear
                       </Button>
                       <Button
                         onClick={handleConfirmSign}
                         disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="flex-[2] gap-2"
+                        className="w-full sm:flex-[2] gap-2 min-h-[44px]"
                       >
                         {isSubmitting ? (
                           <>
