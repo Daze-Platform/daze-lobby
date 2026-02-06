@@ -40,6 +40,9 @@
     --daze-ocean: 199 89% 48%;
     --daze-sunset: 25 95% 53%;
     --daze-emerald: 160 84% 39%;
+    
+    /* Accent orange (Sunset Orange for CTAs) */
+    --accent-orange: 24 94% 53%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;

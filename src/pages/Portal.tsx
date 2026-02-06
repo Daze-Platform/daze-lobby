@@ -144,7 +144,7 @@ export default function Portal() {
     );
   }
 
-  // Format tasks for the accordion - now with venue step
+  // Format tasks for the accordion - now with venue and POS steps
   const formattedTasks = tasks.length > 0 
     ? tasks.map(t => ({
         key: t.task_key,
@@ -156,6 +156,7 @@ export default function Portal() {
         { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} },
         { key: "brand", name: "Brand Identity", isCompleted: false, data: {} },
         { key: "venue", name: "Venue Manager", isCompleted: false, data: {} },
+        { key: "pos", name: "POS Integration", isCompleted: false, data: {} },
       ];
 
   return (
