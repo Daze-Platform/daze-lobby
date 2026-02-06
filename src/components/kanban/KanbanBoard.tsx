@@ -1,8 +1,28 @@
-import { DragDropContext, DropResult } from "@hello-pangea/dnd";
+import { useState, useCallback } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { KanbanColumn } from "./KanbanColumn";
+import { DraggableHotelCard, HotelCardOverlay } from "./HotelCard";
 import { useHotels, useUpdateHotelPhase } from "@/hooks/useHotels";
 import type { Enums } from "@/integrations/supabase/types";
+import type { Hotel } from "@/hooks/useHotels";
 import { Skeleton } from "@/components/ui/skeleton";
+import confetti from "canvas-confetti";
 
 const COLUMNS: {
   phase: Enums<"lifecycle_phase">;
@@ -30,24 +50,93 @@ const COLUMNS: {
   },
 ];
 
+// Mini confetti burst for success
+function triggerMiniConfetti() {
+  const defaults = {
+    spread: 60,
+    ticks: 50,
+    gravity: 1.2,
+    decay: 0.94,
+    startVelocity: 20,
+    colors: ["#10B981", "#34D399", "#6EE7B7", "#A7F3D0"],
+  };
+
+  confetti({
+    ...defaults,
+    particleCount: 30,
+    origin: { x: 0.5, y: 0.5 },
+    scalar: 0.8,
+  });
+}
+
 export function KanbanBoard() {
   const { data: hotels, isLoading, error } = useHotels();
   const updatePhase = useUpdateHotelPhase();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeHotel, setActiveHotel] = useState<Hotel | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-    const sourcePhase = result.source.droppableId as Enums<"lifecycle_phase">;
-    const destPhase = result.destination
-      .droppableId as Enums<"lifecycle_phase">;
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+    const hotel = hotels?.find((h) => h.id === active.id);
+    setActiveHotel(hotel || null);
+  }, [hotels]);
 
-    if (sourcePhase === destPhase) return;
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { over } = event;
+    setOverId(over?.id as string | null);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    setActiveId(null);
+    setActiveHotel(null);
+    setOverId(null);
+
+    if (!over) return;
+
+    const activeHotelData = hotels?.find((h) => h.id === active.id);
+    if (!activeHotelData) return;
+
+    // Determine target phase from the over id
+    let targetPhase: Enums<"lifecycle_phase"> | null = null;
+    
+    // Check if dropped on a column
+    if (COLUMNS.some((col) => col.phase === over.id)) {
+      targetPhase = over.id as Enums<"lifecycle_phase">;
+    } else {
+      // Dropped on another card - find which column that card is in
+      const targetHotel = hotels?.find((h) => h.id === over.id);
+      if (targetHotel) {
+        targetPhase = targetHotel.phase;
+      }
+    }
+
+    if (!targetPhase || targetPhase === activeHotelData.phase) return;
+
+    // Trigger confetti for contracted phase
+    if (targetPhase === "contracted") {
+      setTimeout(triggerMiniConfetti, 200);
+    }
 
     updatePhase.mutate({
-      hotelId: result.draggableId,
-      newPhase: destPhase,
+      hotelId: active.id as string,
+      newPhase: targetPhase,
     });
-  };
+  }, [hotels, updatePhase]);
 
   if (isLoading) {
     return (
@@ -75,23 +164,51 @@ export function KanbanBoard() {
       acc[col.phase] = (hotels || []).filter((h) => h.phase === col.phase);
       return acc;
     },
-    {} as Record<Enums<"lifecycle_phase">, typeof hotels>
+    {} as Record<Enums<"lifecycle_phase">, Hotel[]>
   );
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.phase}
-            phase={col.phase}
-            title={col.title}
-            subtitle={col.subtitle}
-            hotels={hotelsByPhase[col.phase] || []}
-            accentColor={col.accentColor}
-          />
-        ))}
+        {COLUMNS.map((col) => {
+          const columnHotels = hotelsByPhase[col.phase] || [];
+          const isOver = overId === col.phase || columnHotels.some((h) => h.id === overId);
+          
+          return (
+            <SortableContext
+              key={col.phase}
+              items={columnHotels.map((h) => h.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <KanbanColumn
+                phase={col.phase}
+                title={col.title}
+                subtitle={col.subtitle}
+                hotels={columnHotels}
+                accentColor={col.accentColor}
+                isOver={isOver}
+                activeId={activeId}
+              />
+            </SortableContext>
+          );
+        })}
       </div>
-    </DragDropContext>
+
+      {/* Drag Overlay - The floating card */}
+      <DragOverlay dropAnimation={{
+        duration: 300,
+        easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+      }}>
+        {activeHotel ? (
+          <HotelCardOverlay hotel={activeHotel} />
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
