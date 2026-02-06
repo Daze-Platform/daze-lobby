@@ -102,10 +102,10 @@ export function BrandStep({
 
           {/* Live Preview */}
           <div className="space-y-2">
-            <Label>Preview: Mock Daze Order Screen</Label>
+            <Label className="text-sm font-medium">Preview: Mock Daze Order Screen</Label>
             <div 
-              className="border rounded-lg p-4 bg-background"
-              style={{ borderColor: colors[0] || "#3B82F6" }}
+              className="rounded-xl p-4 bg-secondary/30 shadow-inner"
+              style={{ borderLeft: `4px solid ${colors[0] || "#3B82F6"}` }}
             >
               <div className="flex items-center gap-3 mb-4">
                 <div 

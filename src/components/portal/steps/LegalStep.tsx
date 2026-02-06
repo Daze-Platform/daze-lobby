@@ -117,7 +117,7 @@ export function LegalStep({
             </div>
 
             {/* Master Service Agreement (Locked) */}
-            <div className="flex items-center justify-between p-4 border rounded-lg opacity-50">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 opacity-50">
               <div className="flex items-center gap-3">
                 <Lock className="w-5 h-5 text-muted-foreground" />
                 <div>
