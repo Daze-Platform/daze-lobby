@@ -128,7 +128,7 @@ export default function PortalPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/80 dark:bg-background">
+    <div className="min-h-screen bg-muted/50 dark:bg-background">
       {/* Glass Header - Frosted canopy */}
       <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
