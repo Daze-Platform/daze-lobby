@@ -452,7 +452,7 @@ export type Database = {
       app_role: "admin" | "ops_manager" | "support" | "client"
       blocker_type: "manual" | "automatic"
       device_status: "online" | "offline" | "maintenance"
-      lifecycle_phase: "onboarding" | "pilot_live" | "contracted"
+      lifecycle_phase: "onboarding" | "reviewing" | "pilot_live" | "contracted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -583,7 +583,7 @@ export const Constants = {
       app_role: ["admin", "ops_manager", "support", "client"],
       blocker_type: ["manual", "automatic"],
       device_status: ["online", "offline", "maintenance"],
-      lifecycle_phase: ["onboarding", "pilot_live", "contracted"],
+      lifecycle_phase: ["onboarding", "reviewing", "pilot_live", "contracted"],
     },
   },
 } as const
