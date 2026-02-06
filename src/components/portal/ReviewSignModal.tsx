@@ -344,7 +344,7 @@ export function ReviewSignModal({
                         {/* Signer Title */}
                         <div className="space-y-1.5">
                           <Label htmlFor="modal-signer-title" className="text-xs flex items-center gap-1.5">
-                            <Briefcase className="w-3 h-3 text-muted-foreground" />
+                            <Briefcase className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                             Title <span className="text-destructive">*</span>
                           </Label>
                           <Input
