@@ -148,7 +148,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
         <Button
           type="button"
           variant="outline"
-          className="w-full rounded-xl gap-2"
+          className="w-full rounded-xl gap-2 min-h-[44px]"
           onClick={handleGoogleSignIn}
           disabled={loading || googleLoading}
         >
