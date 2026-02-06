@@ -7,14 +7,21 @@ import { VenueCard, type Venue } from "./VenueCard";
 interface VenueManagerProps {
   venues: Venue[];
   onVenuesChange: (venues: Venue[]) => void;
-  onSave: () => void;
+  onSave: () => Promise<void> | void;
   isSaving?: boolean;
+  onStepComplete?: () => void;
 }
 
 // Simple ID generator since we can't use uuid without adding dependency
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
-export function VenueManager({ venues, onVenuesChange, onSave, isSaving }: VenueManagerProps) {
+export function VenueManager({ 
+  venues, 
+  onVenuesChange, 
+  onSave, 
+  isSaving,
+  onStepComplete
+}: VenueManagerProps) {
   const addVenue = () => {
     const newVenue: Venue = {
       id: generateId(),
@@ -34,6 +41,10 @@ export function VenueManager({ venues, onVenuesChange, onSave, isSaving }: Venue
   };
 
   const hasValidVenues = venues.length > 0 && venues.some(v => v.name.trim());
+
+  const handleSave = async () => {
+    await onSave();
+  };
 
   return (
     <div className="space-y-4">
@@ -83,7 +94,8 @@ export function VenueManager({ venues, onVenuesChange, onSave, isSaving }: Venue
       {/* Save Button */}
       {venues.length > 0 && (
         <SaveButton
-          onClick={onSave}
+          onClick={handleSave}
+          onSuccess={onStepComplete}
           disabled={!hasValidVenues}
           className="w-full"
           idleText="Save Venue Configuration"

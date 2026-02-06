@@ -8,4 +8,5 @@ export { MultiLogoUpload } from "./MultiLogoUpload";
 export { VenueCard } from "./VenueCard";
 export { VenueManager } from "./VenueManager";
 export { AdminHotelSwitcher } from "./AdminHotelSwitcher";
+export { StepCompletionEffect } from "./StepCompletionEffect";
 export type { Venue } from "./VenueCard";

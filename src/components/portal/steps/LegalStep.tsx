@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Check, FileSignature, Lock, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ReviewSignModal } from "../ReviewSignModal";
+import { StepCompletionEffect } from "../StepCompletionEffect";
 import { format } from "date-fns";
 
 interface LegalStepProps {
@@ -16,9 +17,19 @@ interface LegalStepProps {
   data?: Record<string, unknown>;
   onSign: (signatureDataUrl: string) => void;
   isSubmitting?: boolean;
+  isJustCompleted?: boolean;
+  isUnlocking?: boolean;
 }
 
-export function LegalStep({ isCompleted, isLocked, data, onSign, isSubmitting }: LegalStepProps) {
+export function LegalStep({ 
+  isCompleted, 
+  isLocked, 
+  data, 
+  onSign, 
+  isSubmitting,
+  isJustCompleted,
+  isUnlocking
+}: LegalStepProps) {
   const [showPilotModal, setShowPilotModal] = useState(false);
 
   // Check if already signed
@@ -36,18 +47,21 @@ export function LegalStep({ isCompleted, isLocked, data, onSign, isSubmitting }:
       <AccordionItem 
         value="legal" 
         className={cn(
-          "border rounded-lg px-4 bg-card",
-          isLocked && "opacity-50 pointer-events-none"
+          "border rounded-lg px-4 bg-card relative overflow-hidden transition-all duration-300",
+          isLocked && "opacity-50 pointer-events-none",
+          isUnlocking && "animate-unlock-glow"
         )}
         disabled={isLocked}
       >
+        <StepCompletionEffect isActive={isJustCompleted || false} />
         <AccordionTrigger className="hover:no-underline py-4">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all",
               isCompleted 
                 ? "bg-success text-success-foreground" 
-                : "bg-muted text-muted-foreground"
+                : "bg-muted text-muted-foreground",
+              isJustCompleted && "animate-celebrate"
             )}>
               {isCompleted ? <Check className="w-4 h-4" /> : "A"}
             </div>

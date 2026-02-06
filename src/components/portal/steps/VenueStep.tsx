@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { 
   AccordionContent, 
   AccordionItem, 
@@ -7,6 +6,7 @@ import {
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VenueManager } from "../VenueManager";
+import { StepCompletionEffect } from "../StepCompletionEffect";
 import type { Venue } from "../VenueCard";
 
 interface VenueStepProps {
@@ -15,8 +15,11 @@ interface VenueStepProps {
   data?: Record<string, unknown>;
   venues: Venue[];
   onVenuesChange: (venues: Venue[]) => void;
-  onSave: () => void;
+  onSave: () => Promise<void> | void;
   isSaving?: boolean;
+  onStepComplete?: () => void;
+  isJustCompleted?: boolean;
+  isUnlocking?: boolean;
 }
 
 export function VenueStep({ 
@@ -26,24 +29,30 @@ export function VenueStep({
   venues,
   onVenuesChange,
   onSave,
-  isSaving 
+  isSaving,
+  onStepComplete,
+  isJustCompleted,
+  isUnlocking
 }: VenueStepProps) {
   return (
     <AccordionItem 
       value="venue" 
       className={cn(
-        "border rounded-lg px-4 bg-card",
-        isLocked && "opacity-50 pointer-events-none"
+        "border rounded-lg px-4 bg-card relative overflow-hidden transition-all duration-300",
+        isLocked && "opacity-50 pointer-events-none",
+        isUnlocking && "animate-unlock-glow"
       )}
       disabled={isLocked}
     >
+      <StepCompletionEffect isActive={isJustCompleted || false} />
       <AccordionTrigger className="hover:no-underline py-4">
         <div className="flex items-center gap-3">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all",
             isCompleted 
               ? "bg-success text-success-foreground" 
-              : "bg-muted text-muted-foreground"
+              : "bg-muted text-muted-foreground",
+            isJustCompleted && "animate-celebrate"
           )}>
             {isCompleted ? <Check className="w-4 h-4" /> : "C"}
           </div>
@@ -60,6 +69,7 @@ export function VenueStep({
             onVenuesChange={onVenuesChange}
             onSave={onSave}
             isSaving={isSaving}
+            onStepComplete={onStepComplete}
           />
         </div>
       </AccordionContent>
