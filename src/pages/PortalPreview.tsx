@@ -19,6 +19,7 @@ import { signOut } from "@/lib/auth";
  * This is for testing the UI without authentication
  */
 export default function PortalPreview() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
