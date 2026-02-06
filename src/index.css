@@ -4,8 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Daze Lobby - Premium, Linear-Inspired Design System
-   World-class hospitality aesthetic with depth over borders */
+/* Daze Lobby - Series C SaaS Aesthetic
+   Inspired by Linear, Ramp, Stripe - Borderless, Glass, Editorial */
 
 @layer base {
   :root {
@@ -45,8 +45,9 @@
 
     --radius: 0.75rem;
 
-    /* Shadow colors - soft, not harsh */
+    /* Shadow colors - soft slate, not harsh black */
     --shadow-color: 215 25% 27%;
+    --shadow-colored: 215 50% 80%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 215 16% 27%;
@@ -94,6 +95,7 @@
     --ring: 217 91% 65%;
 
     --shadow-color: 222 47% 3%;
+    --shadow-colored: 222 50% 10%;
 
     --sidebar-background: 222 47% 7%;
     --sidebar-foreground: 215 20% 75%;
@@ -123,16 +125,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Editorial headings with Plus Jakarta Sans */
+  /* Editorial headings with Plus Jakarta Sans - Tight tracking */
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    @apply tracking-tight font-semibold;
+    @apply font-bold tracking-tight text-foreground;
     letter-spacing: -0.02em;
   }
 
-  /* Micro-labels: uppercase, bold, tracked-wide */
+  /* Micro-labels: Series C style - uppercase, tiny, bold, tracked-widest */
   .label-micro {
-    @apply text-xs font-bold uppercase tracking-wide text-muted-foreground;
+    font-size: 10px;
+    line-height: 1rem;
+    @apply font-bold uppercase text-muted-foreground;
+    letter-spacing: 0.1em;
   }
 }
 
