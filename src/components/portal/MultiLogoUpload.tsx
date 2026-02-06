@@ -61,7 +61,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
   return (
     <div className="space-y-4">
       <Label className="flex items-center gap-2">
-        <Image className="w-4 h-4" />
+        <Image className="w-4 h-4" strokeWidth={1.5} />
         Logo Variants
       </Label>
 
