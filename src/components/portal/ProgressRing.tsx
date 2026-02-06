@@ -74,12 +74,12 @@ export function ProgressRing({
         />
         {/* Progress circle - smooth gradient feel */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={effectiveSize / 2}
+          cy={effectiveSize / 2}
           r={radius}
           fill="none"
           stroke={isLive ? "hsl(var(--success))" : "hsl(var(--primary))"}
-          strokeWidth={strokeWidth}
+          strokeWidth={effectiveStrokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
