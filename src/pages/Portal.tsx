@@ -132,13 +132,13 @@ export default function Portal() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      {/* Header - refined, borderless */}
+      <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
             {isAdminViewing && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
+              <Badge variant="secondary" className="bg-warning/10 text-warning border-0">
                 Admin Viewing
               </Badge>
             )}
@@ -157,10 +157,10 @@ export default function Portal() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+      <main className="container mx-auto px-6 py-10">
+        {/* Welcome Section - refined typography */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
             Welcome, {hotel?.name || "Partner"}
           </h1>
           <p className="text-muted-foreground">
@@ -172,7 +172,7 @@ export default function Portal() {
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle className="text-lg">Onboarding Progress</CardTitle>
+              <CardTitle>Onboarding Progress</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <ProgressRing progress={progress} />
