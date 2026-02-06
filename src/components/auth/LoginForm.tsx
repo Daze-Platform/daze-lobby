@@ -49,6 +49,23 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) {
+        setError(error.message || "Failed to sign in with Google");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in with Google");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <div 
       className="w-full bg-white rounded-[2rem] p-8 animate-fade-in-up"
