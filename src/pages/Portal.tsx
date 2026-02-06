@@ -198,16 +198,16 @@ export default function Portal() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-lg md:text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 md:gap-6 pt-2 px-4 md:px-6">
+            <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 px-4 sm:px-6">
               <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} className="scale-[0.85] md:scale-100" />
+                <ProgressRing progress={progress} status={status} size={160} className="sm:scale-100" />
               </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
@@ -219,11 +219,11 @@ export default function Portal() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-lg md:text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 px-2 md:px-6">
+            <CardContent className="pt-2 px-2 sm:px-4 md:px-6">
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}
