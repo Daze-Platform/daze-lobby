@@ -33,8 +33,13 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 76% 36%;
+    --success: 160 84% 39%;
     --success-foreground: 210 40% 98%;
+    
+    /* Daze brand colors */
+    --daze-ocean: 199 89% 48%;
+    --daze-sunset: 25 95% 53%;
+    --daze-emerald: 160 84% 39%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
@@ -519,7 +524,7 @@
     }
   }
 
-  /* === ROCKET LAUNCH ANIMATION === */
+  /* === ROCKET LAUNCH ANIMATION (Premium Go-Live) === */
   @keyframes rocket-launch {
     0% {
       opacity: 0;
@@ -535,8 +540,36 @@
     }
   }
 
+  @keyframes rocket-jitter {
+    0%, 100% { transform: rotate(-45deg) translateY(0); }
+    25% { transform: rotate(-45deg) translateY(-2px); }
+    50% { transform: rotate(-45deg) translateY(0); }
+    75% { transform: rotate(-45deg) translateY(-1px); }
+  }
+
   .animate-rocket-launch {
     animation: rocket-launch 0.6s var(--spring-bounce) forwards;
+  }
+
+  .animate-rocket-jitter {
+    animation: rocket-jitter 0.8s ease-in-out infinite;
+  }
+
+  /* === HEARTBEAT PULSE FOR SUCCESS STATE === */
+  @keyframes heartbeat-pulse {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.05); }
+    30% { transform: scale(1); }
+    100% { transform: scale(1); }
+  }
+
+  .animate-heartbeat {
+    animation: heartbeat-pulse 0.5s var(--spring-bounce);
+  }
+
+  /* === SUCCESS GLOW === */
+  .glow-success {
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
   }
 
   /* === SLOW SPIN FOR GLOWING ORB === */

@@ -16,13 +16,16 @@ export function ConfettiCelebration({ trigger, onComplete }: ConfettiCelebration
       const duration = 3000;
       const end = Date.now() + duration;
 
+      // Daze brand colors: Ocean Blue, Sunset Orange, Emerald Green
+      const brandColors = ['#0EA5E9', '#38BDF8', '#F97316', '#FB923C', '#10B981', '#34D399'];
+
       // Left burst at 0ms
       confetti({
         particleCount: 80,
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.8 },
-        colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#22c55e', '#fbbf24'],
+        colors: brandColors,
       });
 
       // Right burst at 150ms
@@ -32,7 +35,7 @@ export function ConfettiCelebration({ trigger, onComplete }: ConfettiCelebration
           angle: 120,
           spread: 55,
           origin: { x: 1, y: 0.8 },
-          colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#22c55e', '#fbbf24'],
+          colors: brandColors,
         });
       }, 150);
 
@@ -43,7 +46,7 @@ export function ConfettiCelebration({ trigger, onComplete }: ConfettiCelebration
           spread: 100,
           origin: { x: 0.5, y: 0 },
           gravity: 1.2,
-          colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#22c55e', '#fbbf24'],
+          colors: brandColors,
         });
       }, 300);
 
@@ -60,7 +63,7 @@ export function ConfettiCelebration({ trigger, onComplete }: ConfettiCelebration
           angle: 60,
           spread: 40,
           origin: { x: 0, y: 0.7 },
-          colors: ['#3b82f6', '#60a5fa', '#22c55e'],
+          colors: ['#0EA5E9', '#F97316', '#10B981'],
         });
 
         confetti({
@@ -68,7 +71,7 @@ export function ConfettiCelebration({ trigger, onComplete }: ConfettiCelebration
           angle: 120,
           spread: 40,
           origin: { x: 1, y: 0.7 },
-          colors: ['#3b82f6', '#60a5fa', '#22c55e'],
+          colors: ['#0EA5E9', '#F97316', '#10B981'],
         });
       }, 400);
 

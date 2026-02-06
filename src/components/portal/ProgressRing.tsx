@@ -26,6 +26,7 @@ export function ProgressRing({
   
   const [isPulsing, setIsPulsing] = useState(false);
   const [showRocket, setShowRocket] = useState(false);
+  const [isHeartbeating, setIsHeartbeating] = useState(false);
   const prevProgress = useRef(progress);
   const prevStatus = useRef(status);
 
@@ -39,9 +40,12 @@ export function ProgressRing({
     prevProgress.current = progress;
   }, [progress]);
 
-  // Trigger rocket animation when status changes to live
+  // Trigger rocket animation and heartbeat when status changes to live
   useEffect(() => {
     if (status === "live" && prevStatus.current !== "live") {
+      // Trigger heartbeat pulse
+      setIsHeartbeating(true);
+      setTimeout(() => setIsHeartbeating(false), 500);
       // Delay rocket appearance for dramatic effect
       const timer = setTimeout(() => setShowRocket(true), 500);
       return () => clearTimeout(timer);
@@ -54,14 +58,32 @@ export function ProgressRing({
   }, [status]);
 
   const isLive = status === "live";
+  const isReviewing = status === "reviewing";
+
+  // Generate gradient ID unique to this component instance
+  const gradientId = `progress-gradient-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)}>
+    <div className={cn(
+      "relative inline-flex items-center justify-center transition-all duration-500",
+      isLive && "glow-success",
+      isHeartbeating && "animate-heartbeat",
+      className
+    )}>
       <svg
         width={effectiveSize}
         height={effectiveSize}
         className="transform -rotate-90"
       >
+        {/* Gradient definition for in-progress state */}
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* Ocean Blue to Sunset Orange */}
+            <stop offset="0%" stopColor="#0EA5E9" />
+            <stop offset="100%" stopColor="#F97316" />
+          </linearGradient>
+        </defs>
+
         {/* Background circle - subtle, refined */}
         <circle
           cx={effectiveSize / 2}
@@ -72,41 +94,51 @@ export function ProgressRing({
           strokeWidth={effectiveStrokeWidth}
           strokeLinecap="round"
         />
-        {/* Progress circle - smooth gradient feel */}
+
+        {/* Progress circle - gradient for in-progress, solid green for live */}
         <circle
           cx={effectiveSize / 2}
           cy={effectiveSize / 2}
           r={radius}
           fill="none"
-          stroke={isLive ? "hsl(var(--success))" : "hsl(var(--primary))"}
+          stroke={isLive ? "#10B981" : `url(#${gradientId})`}
           strokeWidth={effectiveStrokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-700 ease-out drop-shadow-sm"
+          className="transition-all duration-500 ease-out"
+          style={{
+            filter: isLive ? "drop-shadow(0 0 8px rgba(16, 185, 129, 0.5))" : undefined
+          }}
         />
       </svg>
+
       {/* Center text - refined typography */}
       <div className={cn(
         "absolute inset-0 flex flex-col items-center justify-center transition-transform duration-500",
         isPulsing && "animate-progress-pulse"
       )}>
         <span className={cn(
-          "font-bold tracking-tight text-foreground",
-          effectiveSize < 160 ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"
+          "font-bold tracking-tight tabular-nums transition-colors duration-500",
+          effectiveSize < 160 ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl",
+          isLive ? "text-emerald-500" : "text-foreground"
         )}>{Math.round(progress)}%</span>
         <div className="flex items-center gap-1.5">
           {isLive && showRocket && (
             <Rocket 
-              className="w-5 h-5 text-success animate-rocket-launch" 
+              className={cn(
+                "w-5 h-5 text-amber-400 animate-rocket-launch",
+                "drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]"
+              )}
               strokeWidth={1.5}
+              fill="currentColor"
             />
           )}
           <span className={cn(
-            "text-sm tracking-wide transition-colors duration-300",
-            isLive ? "text-success font-medium" : "text-muted-foreground"
+            "text-sm tracking-wide transition-colors duration-500",
+            isLive ? "text-emerald-500 font-semibold" : "text-muted-foreground"
           )}>
-            {isLive ? "Launched" : "Ready for Takeoff"}
+            {isLive ? "Launched" : isReviewing ? "In Review" : "Ready for Takeoff"}
           </span>
         </div>
       </div>
