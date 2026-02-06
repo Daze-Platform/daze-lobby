@@ -1,54 +1,43 @@
 
 
-# Allow Public INSERT Access for Specifications Table
+# Disable Row Level Security on Specifications Table
 
-Update the RLS policy on the `specifications` table to allow your n8n workflow to insert data using the anon key.
+Execute the requested SQL to allow n8n full access to the specifications table.
 
 ---
 
-## Current State
+## SQL to Execute
 
-The existing INSERT policy restricts access to authenticated users with `admin` or `ops_manager` roles:
-
-```text
-CREATE POLICY "Admins and Ops Managers can create specifications"
-  ON public.specifications FOR INSERT
-  WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'ops_manager'));
+```sql
+ALTER TABLE specifications DISABLE ROW LEVEL SECURITY;
 ```
 
 ---
 
-## Proposed Change
+## Security Impact
 
-Replace the INSERT policy with one that allows public/anon access:
+| Before | After |
+|--------|-------|
+| INSERT: Public | All operations: Public |
+| SELECT: Dashboard users only | All operations: Public |
+| UPDATE: Admins only | All operations: Public |
+| DELETE: Admins only | All operations: Public |
 
-```text
--- Drop the existing restrictive INSERT policy
-DROP POLICY IF EXISTS "Admins and Ops Managers can create specifications" 
-  ON public.specifications;
-
--- Create new policy allowing public INSERT access
-CREATE POLICY "Allow public insert for specifications"
-  ON public.specifications FOR INSERT
-  WITH CHECK (true);
-```
+**Warning**: Disabling RLS completely removes all access control. Anyone with the anon key can read, insert, update, or delete any specification.
 
 ---
 
-## Security Considerations
+## Alternative (Recommended)
 
-| Operation | Access Level |
-|-----------|--------------|
-| **SELECT** | Dashboard users only (unchanged) |
-| **INSERT** | Public/anon access (for n8n integration) |
-| **UPDATE** | Admins only (unchanged) |
-| **DELETE** | Admins only (unchanged) |
+If you only need INSERT to work, the current policy should already allow that. The issue might be:
+1. The migration hasn't deployed yet
+2. There's a different error occurring
 
-This approach allows your external tool to insert specifications while keeping read/update/delete operations restricted to authorized users.
+If you still want to proceed with disabling RLS entirely, approve this plan and I'll execute the migration immediately.
 
 ---
 
 ## After Implementation
 
-Once the policy is updated, you can re-upload your Control Tower Dashboard specification via n8n, and I'll read it to build the Kanban Lifecycle View.
+Once executed, retry your n8n upload and I'll read the specification to build the Kanban Lifecycle View.
 
