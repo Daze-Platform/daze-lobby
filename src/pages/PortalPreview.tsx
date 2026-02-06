@@ -150,7 +150,7 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12">
+      <main className="container mx-auto px-6 md:px-10 lg:px-12 py-12">
         {/* Welcome Section - Hero entrance */}
         <div className="mb-12 entrance-hero">
           <span className="label-micro mb-2 block">Welcome Back</span>
