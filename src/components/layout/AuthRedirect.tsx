@@ -1,6 +1,5 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
 import { isClient, hasDashboardAccess } from "@/lib/auth";
 
 interface AuthRedirectProps {
