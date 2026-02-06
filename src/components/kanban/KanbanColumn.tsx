@@ -32,11 +32,11 @@ export function KanbanColumn({
   const isActive = isOver || isDroppableOver;
 
   return (
-    <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1 group/column">
+    <div className="flex flex-col min-w-[260px] sm:min-w-[280px] max-w-[320px] flex-shrink-0 lg:flex-shrink lg:flex-1 lg:max-w-none group/column scroll-snap-start">
       {/* Column Header */}
       <motion.div
         className={cn(
-          "flex items-center justify-between px-4 py-3 rounded-t-xl border-b-2 transition-colors duration-200",
+          "flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-t-xl border-b-2 transition-colors duration-200",
           accentColor
         )}
         animate={{
@@ -44,9 +44,9 @@ export function KanbanColumn({
         }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
-        <div>
-          <h3 className="font-semibold text-sm tracking-tight">{title}</h3>
-          <p className="text-2xs text-muted-foreground mt-0.5">{subtitle}</p>
+        <div className="min-w-0">
+          <h3 className="font-semibold text-sm tracking-tight truncate">{title}</h3>
+          <p className="text-2xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           <motion.span
