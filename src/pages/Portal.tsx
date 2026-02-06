@@ -183,7 +183,7 @@ export default function Portal() {
           {/* Task List */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg">Setup Checklist</CardTitle>
+              <CardTitle>Setup Checklist</CardTitle>
             </CardHeader>
             <CardContent>
               <TaskAccordion 
