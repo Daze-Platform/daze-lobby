@@ -57,7 +57,7 @@ export function VenueStep({
             {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "C"}
           </div>
           <div className="text-left">
-            <p className="font-medium">Venue Manager</p>
+            <p className="font-semibold">Venue Manager</p>
             <p className="text-sm text-muted-foreground">Add venues and upload menus for each location</p>
           </div>
         </div>
