@@ -49,6 +49,8 @@ export default function Portal() {
     }
     prevStatus.current = status;
   }, [status]);
+
+  const handleSignOut = async () => {
     try {
       await signOut();
       navigate("/auth");
