@@ -175,7 +175,7 @@ export function KanbanBoard() {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x scrollbar-hide">
         {COLUMNS.map((col) => {
           const columnHotels = hotelsByPhase[col.phase] || [];
           const isOver = overId === col.phase || columnHotels.some((h) => h.id === overId);

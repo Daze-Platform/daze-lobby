@@ -48,9 +48,9 @@ export function KanbanColumn({
           <h3 className="font-semibold text-sm tracking-tight truncate">{title}</h3>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <motion.span
-            className="text-sm font-semibold bg-background/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-soft"
+            className="text-xs sm:text-sm font-semibold bg-background/90 backdrop-blur-sm px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-soft"
             animate={{
               scale: isActive ? 1.1 : 1,
             }}
@@ -59,7 +59,7 @@ export function KanbanColumn({
             {hotels.length}
           </motion.span>
           {blockerCount > 0 && (
-            <span className="text-2xs font-medium bg-destructive text-destructive-foreground px-2 py-1 rounded-lg animate-gentle-pulse">
+            <span className="text-2xs font-medium bg-destructive text-destructive-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg animate-gentle-pulse">
               {blockerCount} blocked
             </span>
           )}
