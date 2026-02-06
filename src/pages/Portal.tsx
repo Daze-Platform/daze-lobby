@@ -70,8 +70,8 @@ export default function Portal() {
   if (isAdmin && !selectedHotelId) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b bg-card">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
             </div>
@@ -88,7 +88,7 @@ export default function Portal() {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-16">
+        <main className="container mx-auto px-6 py-16">
           <Card className="max-w-lg mx-auto">
             <CardHeader className="text-center">
               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
