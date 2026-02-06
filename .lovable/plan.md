@@ -1,238 +1,119 @@
 
+# Launch Celebration Feature
 
-# Quick & Appealing Step Transitions
+This plan implements a celebratory confetti animation when the status transitions to "Live" and updates the Progress Ring text from "Ready for Takeoff" to "Launched" with a rocket illustration.
 
-## Current State Analysis
+## Overview
 
-| Component | Current Speed | Issue |
-|-----------|--------------|-------|
-| Accordion collapse/expand | 200ms | Fast enough |
-| Step completion delay | 500ms → 800ms → 2500ms | Too slow, feels sluggish |
-| Celebrate animation | 600ms | Good |
-| Unlock glow | 1500ms | Too long |
-| Sparkle effect | 600ms (8 particles) | Could be snappier |
-
-**Main Problem**: The current timeline (500ms collapse → 800ms open → 2500ms clear) creates a 2.5-second wait that feels sluggish.
-
----
-
-## Proposed Improvements
-
-### 1. Faster Timeline (Cut Total Time by 60%)
+When a client completes their onboarding journey and the status changes to "Live", they will experience:
+1. A dramatic confetti explosion that fills the screen
+2. The Progress Ring center text changes from "Ready for Takeoff" to "Launched"  
+3. A rocket icon animates into view next to the "Launched" text
 
 ```text
-Current Timeline:
-├─ 0ms     Save success state begins
-├─ 500ms   Collapse current step
-├─ 800ms   Open next step + glow
-└─ 2500ms  Clear all states
++---------------------------+
+|    BEFORE (Onboarding)    |
+|                           |
+|         100%              |
+|    Ready for Takeoff      |
+|                           |
++---------------------------+
 
-New Timeline:
-├─ 0ms     Save success + celebration badge
-├─ 200ms   Collapse current step
-├─ 400ms   Open next step + quick glow
-└─ 1000ms  Clear all states
++---------------------------+
+|     AFTER (Live)          |
+|   * * CONFETTI * *        |
+|         100%              |
+|    Launched               |
++---------------------------+
 ```
 
-### 2. Smoother Accordion Animations
+## Implementation Steps
 
-Update the accordion keyframes to use spring-like easing with opacity:
+### Step 1: Install Confetti Library
 
-```ts
-keyframes: {
-  "accordion-down": {
-    from: { height: "0", opacity: "0" },
-    to: { height: "var(--radix-accordion-content-height)", opacity: "1" }
-  },
-  "accordion-up": {
-    from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
-    to: { height: "0", opacity: "0" }
-  }
-}
-```
+Add the `canvas-confetti` package which provides lightweight, performant confetti animations with TypeScript support.
 
-Duration: 200ms → 300ms with `ease-out` for smoother feel
+### Step 2: Create Confetti Component
 
-### 3. Snappier Celebration Badge
+Build a reusable `ConfettiCelebration` component that:
+- Accepts a `trigger` prop to fire the animation
+- Uses a full-screen canvas positioned absolutely
+- Fires a multi-burst confetti sequence (left side, right side, then center shower)
+- Auto-cleans up after animation completes
 
-Shorten and add more "pop":
+**Location:** `src/components/portal/ConfettiCelebration.tsx`
 
-```ts
-"celebrate": {
-  "0%": { transform: "scale(1)", opacity: "1" },
-  "40%": { transform: "scale(1.3)", opacity: "1" },
-  "100%": { transform: "scale(1)", opacity: "1" }
-}
-```
-Duration: 600ms → 400ms
+### Step 3: Update Progress Ring
 
-### 4. Quicker Unlock Glow
+Modify `ProgressRing` to display context-aware messaging:
 
-Two quick pulses instead of one slow one:
+| Status | Text | Icon |
+|--------|------|------|
+| Onboarding/Reviewing | "Ready for Takeoff" | None |
+| Live | "Launched" | Rocket icon with bounce animation |
 
-```ts
-"unlock-glow": {
-  "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
-  "25%, 75%": { boxShadow: "0 0 15px 3px hsl(var(--primary) / 0.5)" },
-  "50%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" }
-}
-```
-Duration: 1500ms → 600ms
+**Changes to:** `src/components/portal/ProgressRing.tsx`
+- Add `status` prop to component interface
+- Conditionally render text and icon based on status
+- Add rocket icon animation using existing spring physics
 
-### 5. Enhanced Sparkle Effect
+### Step 4: Wire Up Celebration Trigger
 
-More sparkles with staggered timing for a burst effect:
+**Portal Preview Page (`src/pages/PortalPreview.tsx`):**
+- Track previous status to detect transitions
+- When status changes from any state to "live", trigger confetti
+- Pass status prop to ProgressRing
 
-```ts
-"sparkle": {
-  "0%": { opacity: "0", transform: "scale(0) rotate(0deg)" },
-  "50%": { opacity: "1", transform: "scale(1.2) rotate(45deg)" },
-  "100%": { opacity: "0", transform: "scale(0) rotate(90deg)" }
-}
-```
-Duration: 600ms → 350ms with 12 particles
+**Portal Page (`src/pages/Portal.tsx`):**
+- Apply same logic for authenticated portal
+- Pass status prop to ProgressRing
 
-### 6. Add "Slide In" Animation for Next Step
+### Step 5: Add Rocket Animation Keyframes
 
-New animation for when the next step expands:
+Add a new `rocket-launch` animation to the CSS that gives the rocket icon a satisfying entrance with the existing spring physics system.
 
-```ts
-"slide-in-from-below": {
-  "0%": { opacity: "0", transform: "translateY(8px)" },
-  "100%": { opacity: "1", transform: "translateY(0)" }
-}
-```
-
-### 7. Add Success Flash on Badge
-
-Brief green flash when badge completes:
-
-```ts
-"success-flash": {
-  "0%": { backgroundColor: "hsl(var(--muted))" },
-  "50%": { backgroundColor: "hsl(var(--success))" },
-  "100%": { backgroundColor: "hsl(var(--success))" }
-}
-```
-
----
-
-## File Changes Summary
-
-| File | Changes |
-|------|---------|
-| `tailwind.config.ts` | Update keyframes: faster accordion, snappier celebrate, quick glow, enhanced sparkle, new slide-in |
-| `src/components/portal/TaskAccordion.tsx` | Reduce timeline: 200ms → 400ms → 1000ms |
-| `src/components/portal/StepCompletionEffect.tsx` | More sparkles (12), faster stagger, add rotation |
-| `src/components/ui/accordion.tsx` | Add opacity to transitions, longer duration |
-| `src/index.css` | Add utility class for step transition states |
+**Location:** `src/index.css`
 
 ---
 
 ## Technical Details
 
-### Updated Tailwind Keyframes
+### Confetti Animation Sequence
 
-```ts
-keyframes: {
-  "accordion-down": {
-    from: { height: "0", opacity: "0" },
-    to: { height: "var(--radix-accordion-content-height)", opacity: "1" }
-  },
-  "accordion-up": {
-    from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
-    to: { height: "0", opacity: "0" }
-  },
-  "celebrate": {
-    "0%": { transform: "scale(1)" },
-    "40%": { transform: "scale(1.3)" },
-    "100%": { transform: "scale(1)" }
-  },
-  "unlock-glow": {
-    "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
-    "25%, 75%": { boxShadow: "0 0 15px 3px hsl(var(--primary) / 0.5)" }
-  },
-  "sparkle": {
-    "0%": { opacity: "0", transform: "scale(0) rotate(0deg)" },
-    "50%": { opacity: "1", transform: "scale(1.2) rotate(45deg)" },
-    "100%": { opacity: "0", transform: "scale(0) rotate(90deg)" }
-  },
-  "slide-up-appear": {
-    "0%": { opacity: "0", transform: "translateY(4px)" },
-    "100%": { opacity: "1", transform: "translateY(0)" }
-  },
-  "progress-pulse": {
-    "0%, 100%": { transform: "scale(1)" },
-    "50%": { transform: "scale(1.08)" }
-  }
-},
-animation: {
-  "accordion-down": "accordion-down 0.3s ease-out",
-  "accordion-up": "accordion-up 0.25s ease-in",
-  "celebrate": "celebrate 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-  "unlock-glow": "unlock-glow 0.6s ease-in-out",
-  "sparkle": "sparkle 0.35s ease-out forwards",
-  "slide-up-appear": "slide-up-appear 0.3s ease-out",
-  "progress-pulse": "progress-pulse 0.4s ease-out"
+```text
+Timeline (ms):
+0ms    - Left burst (origin: bottom-left, angle: 60°)
+150ms  - Right burst (origin: bottom-right, angle: 120°)
+300ms  - Center shower (origin: top-center, gravity: 1.2)
+```
+
+### Component Props
+
+```typescript
+// ProgressRing updated interface
+interface ProgressRingProps {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  status?: "onboarding" | "reviewing" | "live";
+  className?: string;
+}
+
+// ConfettiCelebration interface
+interface ConfettiCelebrationProps {
+  trigger: boolean;
+  onComplete?: () => void;
 }
 ```
 
-### Updated TaskAccordion Timeline
+### Files to Create
+- `src/components/portal/ConfettiCelebration.tsx`
 
-```tsx
-const handleStepComplete = useCallback((stepKey: string) => {
-  setRecentlyCompleted(stepKey);
-  
-  // Faster timeline for snappy UX
-  // 0ms: Celebration badge animation
-  // 200ms: Collapse current step
-  // 400ms: Open next step with glow
-  // 1000ms: Clear all states
-  
-  setTimeout(() => {
-    setAccordionValue(undefined);
-  }, 200);
-  
-  setTimeout(() => {
-    const nextStep = getNextStep(stepKey);
-    if (nextStep) {
-      setUnlockingStep(nextStep);
-      setAccordionValue(nextStep);
-    }
-  }, 400);
-  
-  setTimeout(() => {
-    setRecentlyCompleted(null);
-    setUnlockingStep(null);
-  }, 1000);
-}, []);
-```
+### Files to Modify
+- `src/components/portal/ProgressRing.tsx` - Add status awareness and rocket icon
+- `src/pages/PortalPreview.tsx` - Trigger confetti on live transition
+- `src/pages/Portal.tsx` - Pass status to ProgressRing
+- `src/index.css` - Add rocket animation keyframes
 
-### Enhanced StepCompletionEffect
-
-```tsx
-// Generate 12 sparkles with faster stagger
-const newSparkles = Array.from({ length: 12 }, (_, i) => ({
-  delay: i * 30, // 30ms stagger instead of 75ms
-  x: 15 + Math.random() * 70,
-  y: 15 + Math.random() * 70,
-}));
-
-// Clean up after 500ms instead of 800ms
-const timer = setTimeout(() => setSparkles([]), 500);
-```
-
----
-
-## Visual Result
-
-After implementation:
-
-1. **Instant feedback**: Badge pops immediately on save success (0ms)
-2. **Quick collapse**: Current step slides up smoothly (200ms)
-3. **Fast expansion**: Next step appears with glow (400ms)
-4. **Sparkle burst**: 12 quick sparkles create excitement
-5. **Total time**: ~1 second (down from 2.5 seconds)
-
-The transitions will feel snappy and responsive while maintaining visual delight.
-
+### Dependencies to Add
+- `canvas-confetti` - Lightweight confetti animation library with TypeScript types
