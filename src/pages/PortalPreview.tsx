@@ -19,7 +19,6 @@ export default function PortalPreview() {
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
-  const [isSavingLegalEntity, setIsSavingLegalEntity] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef(status);
   
