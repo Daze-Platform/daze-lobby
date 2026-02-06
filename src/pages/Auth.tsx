@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SketchyArtPanel } from "@/components/auth/SketchyArtPanel";
@@ -11,20 +11,15 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const { isAuthenticated, loading } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const forceAuth = new URLSearchParams(location.search).get("force") === "1";
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    if (!forceAuth && !loading && isAuthenticated) {
       navigate("/");
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [forceAuth, isAuthenticated, loading, navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex">

@@ -169,10 +169,9 @@ export default function PortalPreview() {
               size="sm" 
               className="gap-2"
               onClick={() => {
-                // Try to sign out but navigate regardless (preview may not have session)
-                signOut().catch(() => {}).finally(() => {
-                  navigate("/auth");
-                });
+                // Navigate immediately; don't await sign-out (it can hang in preview mode)
+                navigate("/auth?force=1");
+                void signOut().catch(() => {});
               }}
             >
               <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />

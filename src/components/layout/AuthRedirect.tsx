@@ -1,6 +1,5 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
 import { isClient, hasDashboardAccess } from "@/lib/auth";
 
 interface AuthRedirectProps {
@@ -15,13 +14,18 @@ interface AuthRedirectProps {
  */
 export function AuthRedirect({ children }: AuthRedirectProps) {
   const { isAuthenticated, loading, role } = useAuthContext();
+  const location = useLocation();
+  const forceAuth = new URLSearchParams(location.search).get("force") === "1";
 
+  // Don't block rendering of the auth page if auth loading stalls.
+  // This prevents a "blank" spinner screen when navigating back to /auth.
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <>{children}</>;
+  }
+
+  // When force=1, always show the auth UI (used by "Back to Login" in preview).
+  if (forceAuth) {
+    return <>{children}</>;
   }
 
   if (isAuthenticated) {
