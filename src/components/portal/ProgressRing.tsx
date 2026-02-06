@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import rocketImage from "@/assets/rocket-launched.png";
+import { Rocket } from "lucide-react";
 
 interface ProgressRingProps {
   progress: number; // 0-100
@@ -97,10 +97,9 @@ export function ProgressRing({
         )}>{Math.round(progress)}%</span>
         <div className="flex items-center gap-1.5">
           {isLive && showRocket && (
-            <img 
-              src={rocketImage} 
-              alt="Launched" 
-              className="w-6 h-6 animate-rocket-launch object-contain" 
+            <Rocket 
+              className="w-5 h-5 text-success animate-rocket-launch" 
+              strokeWidth={1.5}
             />
           )}
           <span className={cn(
