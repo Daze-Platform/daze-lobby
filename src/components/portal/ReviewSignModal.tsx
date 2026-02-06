@@ -258,9 +258,9 @@ export function ReviewSignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-5xl h-[100dvh] sm:h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             {documentTitle}
             {isSigned && (
               <span className="inline-flex items-center gap-1 text-xs font-normal bg-success/10 text-success px-2 py-0.5 rounded-full">
@@ -269,7 +269,7 @@ export function ReviewSignModal({
               </span>
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {isSigned 
               ? "This agreement has been digitally signed and cannot be modified"
               : "Complete the entity information below. Your details will appear in the contract in real-time."
