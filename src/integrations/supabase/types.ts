@@ -217,10 +217,14 @@ export type Database = {
         Row: {
           arr: number | null
           assigned_team_member_id: string | null
+          authorized_signer_name: string | null
+          authorized_signer_title: string | null
+          billing_address: string | null
           brand_palette: Json | null
           contract_value: number | null
           created_at: string
           id: string
+          legal_entity_name: string | null
           logo_url: string | null
           name: string
           next_milestone: string | null
@@ -234,10 +238,14 @@ export type Database = {
         Insert: {
           arr?: number | null
           assigned_team_member_id?: string | null
+          authorized_signer_name?: string | null
+          authorized_signer_title?: string | null
+          billing_address?: string | null
           brand_palette?: Json | null
           contract_value?: number | null
           created_at?: string
           id?: string
+          legal_entity_name?: string | null
           logo_url?: string | null
           name: string
           next_milestone?: string | null
@@ -251,10 +259,14 @@ export type Database = {
         Update: {
           arr?: number | null
           assigned_team_member_id?: string | null
+          authorized_signer_name?: string | null
+          authorized_signer_title?: string | null
+          billing_address?: string | null
           brand_palette?: Json | null
           contract_value?: number | null
           created_at?: string
           id?: string
+          legal_entity_name?: string | null
           logo_url?: string | null
           name?: string
           next_milestone?: string | null
