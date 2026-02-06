@@ -6,6 +6,7 @@ import { Upload, FileText, X, Check, Loader2, AlertCircle, Store } from "lucide-
 import { cn } from "@/lib/utils";
 import { validateMenuFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
+import { IconContainer, IconStack } from "@/components/ui/icon-container";
 
 export interface Venue {
   id: string;
