@@ -122,8 +122,8 @@ export default function PortalPreview() {
               <StatusBadge status={status} />
               
               {/* Demo Status Toggle */}
-              <div className="w-full pt-4 border-t">
-                <p className="text-xs text-muted-foreground mb-2 text-center">Demo: Toggle Status</p>
+              <div className="w-full pt-4 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
                     <Button
