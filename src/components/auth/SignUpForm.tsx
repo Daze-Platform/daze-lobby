@@ -59,8 +59,8 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
   return (
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
       <CardHeader className="space-y-1 text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <img src={dazeLogo} alt="Daze" className="h-10 w-10 object-contain" />
+        <div className="flex flex-col items-center justify-center mb-2">
+          <img src={dazeLogo} alt="Daze" className="h-12 w-12 object-contain mb-1" />
           <span className="text-2xl font-bold tracking-tight">Daze Lobby</span>
         </div>
         <CardTitle className="text-xl">Create an account</CardTitle>
