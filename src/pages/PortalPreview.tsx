@@ -101,9 +101,9 @@ export default function PortalPreview() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-10">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+        {/* Welcome Section - refined typography */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
             Welcome, Grand Hyatt Demo
           </h1>
           <p className="text-muted-foreground">
