@@ -59,7 +59,11 @@ export function HotelProvider({ children }: { children: ReactNode }) {
             phase,
             onboarding_progress,
             brand_palette,
-            logo_url
+            logo_url,
+            legal_entity_name,
+            billing_address,
+            authorized_signer_name,
+            authorized_signer_title
           )
         `)
         .eq("user_id", user.id)
