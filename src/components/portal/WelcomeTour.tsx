@@ -103,7 +103,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -121,11 +121,11 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
       {/* The Stage - Pure White Card (Dark Room, Bright Card) */}
       <motion.div
         className={cn(
-          "relative w-[640px] max-w-[95vw] overflow-hidden",
+          "relative w-full max-w-[95vw] md:max-w-[640px] max-h-[85vh] md:max-h-none overflow-y-auto",
           // Solid pure white - no glassmorphism
           "bg-white",
           // Deeply rounded corners like cloud logo
-          "rounded-3xl",
+          "rounded-2xl md:rounded-3xl",
           // Subtle shadow for depth
           "shadow-2xl"
         )}
@@ -140,11 +140,11 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
         {/* Skip Button */}
         <motion.button
           onClick={handleComplete}
-          className="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-600 text-xs font-medium transition-colors"
+          className="absolute top-3 md:top-4 right-3 md:right-4 z-10 text-slate-400 hover:text-slate-600 text-xs font-medium transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Skip Tour
+          Skip
         </motion.button>
 
         {/* Content Container */}
