@@ -24,6 +24,9 @@ export default function PortalPreview() {
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef(status);
   
+  // Welcome tour - using "preview" as the user ID for demo
+  const { showTour, completeTour, resetTour } = useWelcomeTour("preview-user");
+  
   // Demo legal entity state
   const [hotelLegalEntity, setHotelLegalEntity] = useState({
     legal_entity_name: "",
