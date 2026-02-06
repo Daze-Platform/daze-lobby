@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
@@ -12,6 +12,7 @@ import { ArrowLeft, RotateCcw } from "lucide-react";
 import dazeLogo from "@/assets/daze-logo.png";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
+import { signOut } from "@/lib/auth";
 
 /**
  * Preview/Demo version of the Client Portal V2
