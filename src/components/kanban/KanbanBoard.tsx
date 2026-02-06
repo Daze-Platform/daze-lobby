@@ -19,6 +19,8 @@ import {
 import { KanbanColumn } from "./KanbanColumn";
 import { DraggableHotelCard, HotelCardOverlay } from "./HotelCard";
 import { useHotels, useUpdateHotelPhase } from "@/hooks/useHotels";
+import { useBlockerDetails } from "@/hooks/useBlockerDetails";
+import { BlockerResolutionModal, type BlockerData } from "@/components/modals/BlockerResolutionModal";
 import type { Enums } from "@/integrations/supabase/types";
 import type { Hotel } from "@/hooks/useHotels";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,8 +79,33 @@ export function KanbanBoard() {
   const [overId, setOverId] = useState<string | null>(null);
   const [overPhase, setOverPhase] = useState<Enums<"lifecycle_phase"> | null>(null);
   
+  // Blocker modal state
+  const [blockerModalOpen, setBlockerModalOpen] = useState(false);
+  const [selectedBlockedHotel, setSelectedBlockedHotel] = useState<Hotel | null>(null);
+  
+  // Fetch blocker details when a hotel is selected
+  const { data: blockerDetails } = useBlockerDetails(selectedBlockedHotel?.id || null);
+  
   // Track card dimensions for ghost placeholder
   const cardDimensionsRef = useRef<{ width: number; height: number } | null>(null);
+  
+  // Handle click on blocked card
+  const handleBlockedClick = useCallback((hotel: Hotel) => {
+    setSelectedBlockedHotel(hotel);
+    setBlockerModalOpen(true);
+  }, []);
+  
+  // Build blocker data for modal
+  const blockerData: BlockerData | null = blockerDetails && selectedBlockedHotel ? {
+    id: blockerDetails.id,
+    reason: blockerDetails.reason,
+    blockerType: blockerDetails.blocker_type,
+    autoRule: blockerDetails.auto_rule,
+    createdAt: blockerDetails.created_at,
+    hotelId: selectedBlockedHotel.id,
+    hotelName: selectedBlockedHotel.name,
+    hotelPhase: selectedBlockedHotel.phase,
+  } : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -227,6 +254,7 @@ export function KanbanBoard() {
                 activeId={activeId}
                 showGhost={showGhost}
                 ghostDimensions={cardDimensionsRef.current}
+                onBlockedClick={handleBlockedClick}
               />
             </SortableContext>
           );
@@ -242,6 +270,13 @@ export function KanbanBoard() {
           <HotelCardOverlay hotel={activeHotel} />
         ) : null}
       </DragOverlay>
+
+      {/* Blocker Resolution Modal */}
+      <BlockerResolutionModal
+        open={blockerModalOpen}
+        onOpenChange={setBlockerModalOpen}
+        blocker={blockerData}
+      />
     </DndContext>
   );
 }
