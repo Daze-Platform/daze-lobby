@@ -34,12 +34,10 @@ export default function Portal() {
     progress, 
     status, 
     signLegal,
-    saveLegalEntity,
     updateTask, 
     uploadFile,
     saveVenues,
     isSigningLegal,
-    isSavingLegalEntity,
     isUpdating
   } = useClientPortal();
 
@@ -68,15 +66,6 @@ export default function Portal() {
     authorized_signer_title?: string;
   }) => {
     signLegal({ signatureDataUrl, legalEntityData });
-  };
-
-  const handleSaveLegalEntity = (data: {
-    legal_entity_name?: string;
-    billing_address?: string;
-    authorized_signer_name?: string;
-    authorized_signer_title?: string;
-  }) => {
-    saveLegalEntity(data);
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
