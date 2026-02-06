@@ -164,12 +164,18 @@ export default function PortalPreview() {
               <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
               Reset Tour
             </Button>
-            <Link to="/auth">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                Back to Login
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2"
+              onClick={async () => {
+                await signOut();
+                navigate("/auth");
+              }}
+            >
+              <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+              Back to Login
+            </Button>
           </div>
         </div>
       </header>
