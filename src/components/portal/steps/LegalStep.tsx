@@ -73,41 +73,42 @@ export function LegalStep({
         disabled={isLocked}
       >
         <StepCompletionEffect isActive={isJustCompleted || false} />
-        <AccordionTrigger className="hover:no-underline py-4">
-          <div className="flex items-center gap-3">
+        <AccordionTrigger className="hover:no-underline py-3 md:py-4">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-[10px] flex items-center justify-center text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm",
+              "w-7 h-7 md:w-8 md:h-8 rounded-[8px] md:rounded-[10px] flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm flex-shrink-0",
               isCompleted 
                 ? "bg-success text-success-foreground" 
                 : "bg-card text-muted-foreground",
               isJustCompleted && "animate-pop"
             )}>
-              {isCompleted ? <Check className="w-4 h-4 animate-pop" strokeWidth={2.5} /> : "A"}
+              {isCompleted ? <Check className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pop" strokeWidth={2.5} /> : "A"}
             </div>
-            <div className="text-left">
-              <p className="font-semibold">Legal & Agreements</p>
-              <p className="text-sm text-muted-foreground">Review and sign required agreements</p>
+            <div className="text-left min-w-0">
+              <p className="font-semibold text-sm md:text-base truncate">Legal & Agreements</p>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Review and sign required agreements</p>
             </div>
           </div>
         </AccordionTrigger>
         <AccordionContent className="pb-4">
-          <div className="space-y-4 pt-2">
+          <div className="space-y-3 md:space-y-4 pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
-              "flex items-center justify-between p-4 rounded-xl transition-all duration-300 group border-0",
+              "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 md:p-4 rounded-xl transition-all duration-300 group border-0",
               pilotSigned 
                 ? "bg-success/5 shadow-soft" 
                 : "bg-card shadow-soft hover:shadow-soft-md hover:-translate-y-0.5"
             )}>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <IconContainer 
                   icon={FileSignature} 
                   size="md"
                   variant={pilotSigned ? "success" : "default"}
+                  className="flex-shrink-0"
                 />
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-sm">Pilot Agreement</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground truncate">
                     {pilotSigned && signedDateDisplay
                       ? `Signed on ${signedDateDisplay}` 
                       : "Review, enter entity details, and sign"
@@ -120,7 +121,7 @@ export function LegalStep({
                   size="sm" 
                   variant="outline"
                   onClick={() => setShowPilotModal(true)}
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto min-h-[44px]"
                 >
                   <Eye className="w-4 h-4" strokeWidth={1.5} />
                   View Agreement
@@ -129,7 +130,7 @@ export function LegalStep({
                 <Button 
                   size="sm" 
                   onClick={() => setShowPilotModal(true)}
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto min-h-[44px]"
                 >
                   <FileSignature className="w-4 h-4" strokeWidth={1.5} />
                   Review & Sign

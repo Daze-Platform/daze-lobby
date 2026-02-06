@@ -103,7 +103,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -121,11 +121,11 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
       {/* The Stage - Pure White Card (Dark Room, Bright Card) */}
       <motion.div
         className={cn(
-          "relative w-[640px] max-w-[95vw] overflow-hidden",
+          "relative w-full max-w-[95vw] md:max-w-[640px] max-h-[85vh] md:max-h-none overflow-y-auto",
           // Solid pure white - no glassmorphism
           "bg-white",
           // Deeply rounded corners like cloud logo
-          "rounded-3xl",
+          "rounded-2xl md:rounded-3xl",
           // Subtle shadow for depth
           "shadow-2xl"
         )}
@@ -140,20 +140,20 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
         {/* Skip Button */}
         <motion.button
           onClick={handleComplete}
-          className="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-600 text-xs font-medium transition-colors"
+          className="absolute top-3 md:top-4 right-3 md:right-4 z-10 text-slate-400 hover:text-slate-600 text-xs font-medium transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Skip Tour
+          Skip
         </motion.button>
 
         {/* Content Container */}
-        <div className="relative px-12 py-16">
+        <div className="relative px-6 md:px-12 py-10 md:py-16">
           {/* The Floating Cloud Container */}
-          <div className="relative w-40 h-40 mx-auto mb-10 flex items-center justify-center">
+          <div className="relative w-28 h-28 md:w-40 md:h-40 mx-auto mb-6 md:mb-10 flex items-center justify-center">
             {/* Cloud container with drift animation */}
             <motion.div
-              className="relative w-32 h-32 rounded-full bg-sky-50 flex items-center justify-center"
+              className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-sky-50 flex items-center justify-center"
               animate={{
                 y: [0, -8, 0],
               }}
@@ -164,7 +164,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               }}
             >
               {/* Soft shadow for floating effect */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-200/50 rounded-full blur-md" />
+              <div className="absolute -bottom-3 md:-bottom-4 left-1/2 -translate-x-1/2 w-16 md:w-20 h-3 md:h-4 bg-slate-200/50 rounded-full blur-md" />
               
               {/* Brand Icon */}
               <AnimatePresence mode="wait">
@@ -176,7 +176,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                   transition={{ duration: 0.3 }}
                 >
                   <Icon 
-                    className="w-14 h-14" 
+                    className="w-10 h-10 md:w-14 md:h-14" 
                     style={{ color: BRAND.ocean }}
                     strokeWidth={1.5}
                   />
@@ -197,22 +197,22 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               transition={{ duration: 0.35, ease: "easeOut" }}
               className="flex flex-col items-center"
             >
-              {/* Headline - Solid Black, Bold */}
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 tracking-tight">
+              {/* Headline - Solid Black, Bold - Smaller on mobile */}
+              <h1 className="font-display text-xl md:text-3xl lg:text-4xl font-bold text-slate-900 text-center mb-3 md:mb-4 tracking-tight">
                 {slide.headline}
               </h1>
 
               {/* Subtext - Relaxed gray */}
-              <p className="text-base text-slate-500 text-center max-w-md leading-relaxed">
+              <p className="text-sm md:text-base text-slate-500 text-center max-w-md leading-relaxed">
                 {slide.subtext}
               </p>
             </motion.div>
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="mt-10">
+          <div className="mt-8 md:mt-10">
             {/* Sunset Striping Progress Dots */}
-            <div className="flex items-center justify-center gap-2.5 mb-8">
+            <div className="flex items-center justify-center gap-2 md:gap-2.5 mb-6 md:mb-8">
               {TOUR_SLIDES.map((_, index) => (
                 <motion.button
                   key={index}
@@ -220,7 +220,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                     setDirection(index > currentSlide ? 1 : -1);
                     setCurrentSlide(index);
                   }}
-                  className="h-2 rounded-full transition-all duration-300"
+                  className="h-2 rounded-full transition-all duration-300 min-h-[20px] min-w-[20px] flex items-center justify-center"
                   style={{
                     width: index === currentSlide ? 32 : 8,
                     backgroundColor: index === currentSlide 
@@ -235,18 +235,19 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               ))}
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between">
+            {/* Navigation Buttons - Stack on mobile */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <motion.div
                 initial={false}
                 animate={{ opacity: isFirstSlide ? 0 : 1 }}
+                className={cn(isFirstSlide && "pointer-events-none")}
               >
                 <Button
                   variant="ghost"
                   size="lg"
                   onClick={handlePrev}
                   disabled={isFirstSlide}
-                  className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 gap-2"
+                  className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 gap-2 w-full sm:w-auto min-h-[48px]"
                 >
                   <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
                   Back
@@ -258,12 +259,13 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                className="w-full sm:w-auto"
               >
                 <Button
                   size="lg"
                   onClick={handleNext}
                   className={cn(
-                    "gap-3 px-8 text-base font-semibold rounded-full",
+                    "gap-3 px-6 md:px-8 text-sm md:text-base font-semibold rounded-full w-full sm:w-auto min-h-[48px]",
                     "text-white",
                     "transition-colors duration-300"
                   )}

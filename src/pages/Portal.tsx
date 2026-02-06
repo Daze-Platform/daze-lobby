@@ -154,28 +154,29 @@ export default function Portal() {
       ];
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 pb-20 md:pb-0">
       {/* Welcome Tour for first-time users (clients only) */}
       {showTour && !isAdmin && (
         <WelcomeTour onComplete={completeTour} />
       )}
       {/* Glass Header - Immediate entrance */}
       <header className="glass-header entrance-header">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
+        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-8 md:h-10 w-auto" />
             {isAdminViewing && (
               <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
-                Admin Viewing
+                Admin
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-4">
             {isAdmin && <AdminHotelSwitcher />}
             <span className="text-sm text-muted-foreground">
               {user?.email}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="min-h-[44px]">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </Button>
@@ -184,26 +185,28 @@ export default function Portal() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12">
+      <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Welcome Section - Hero entrance */}
-        <div className="mb-12 entrance-hero">
-          <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
+        <div className="mb-6 md:mb-12 entrance-hero">
+          <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight mb-2 md:mb-3">
             Welcome, {hotel?.name || "Partner"}
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-sm md:text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-4">
+            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-6 pt-2">
-              <ProgressRing progress={progress} status={status} />
+            <CardContent className="flex flex-col items-center gap-4 md:gap-6 pt-2 px-4 md:px-6">
+              <div className="w-full flex justify-center">
+                <ProgressRing progress={progress} status={status} className="scale-[0.85] md:scale-100" />
+              </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
                 trigger={showConfetti} 
@@ -214,11 +217,11 @@ export default function Portal() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-4">
+            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="pt-2 px-2 md:px-6">
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}
@@ -252,6 +255,26 @@ export default function Portal() {
           </Card>
         )}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+        <div className="flex items-center justify-around py-2 px-4">
+          {isAdmin && (
+            <div className="flex-1 flex justify-center">
+              <AdminHotelSwitcher />
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+            onClick={handleSignOut}
+          >
+            <LogOut className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Sign Out</span>
+          </Button>
+        </div>
+      </nav>
     </div>
   );
 }
