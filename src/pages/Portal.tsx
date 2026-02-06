@@ -69,11 +69,11 @@ export default function Portal() {
   // Admin without selected hotel - show hotel picker
   if (isAdmin && !selectedHotelId) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+      <div className="min-h-screen bg-muted/30">
+        <header className="glass-header">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
+            <div className="flex items-center gap-4">
+              <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
             </div>
             <div className="flex items-center gap-4">
               <AdminHotelSwitcher />
@@ -89,14 +89,15 @@ export default function Portal() {
         </header>
 
         <main className="container mx-auto px-6 py-16">
-          <Card className="max-w-lg mx-auto">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Building2 className="w-6 h-6 text-primary" />
+          <Card className="max-w-lg mx-auto shadow-soft-lg">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                <Building2 className="w-8 h-8 text-primary" />
               </div>
-              <CardTitle>Admin Portal View</CardTitle>
+              <span className="label-micro">Admin Portal</span>
+              <CardTitle className="text-xl">Select a Hotel</CardTitle>
             </CardHeader>
-            <CardContent className="text-center space-y-4">
+            <CardContent className="text-center space-y-6">
               <p className="text-muted-foreground">
                 Select a hotel from the dropdown above to view their onboarding portal and debug their progress.
               </p>
@@ -110,7 +111,7 @@ export default function Portal() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -131,14 +132,14 @@ export default function Portal() {
       ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header - refined, borderless */}
-      <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+    <div className="min-h-screen bg-muted/30">
+      {/* Glass Header */}
+      <header className="glass-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
+          <div className="flex items-center gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
             {isAdminViewing && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning border-0">
+              <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
                 Admin Viewing
               </Badge>
             )}
@@ -157,13 +158,13 @@ export default function Portal() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-10">
-        {/* Welcome Section - refined typography */}
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
+      <main className="container mx-auto px-6 py-12">
+        {/* Welcome Section - editorial typography */}
+        <div className="mb-12">
+          <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
             Welcome, {hotel?.name || "Partner"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
@@ -171,10 +172,11 @@ export default function Portal() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Onboarding Progress</CardTitle>
+            <CardHeader className="pb-4">
+              <span className="label-micro">Progress</span>
+              <CardTitle className="text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
+            <CardContent className="flex flex-col items-center gap-6 pt-2">
               <ProgressRing progress={progress} />
               <StatusBadge status={status} />
             </CardContent>
@@ -182,10 +184,11 @@ export default function Portal() {
 
           {/* Task List */}
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Setup Checklist</CardTitle>
+            <CardHeader className="pb-4">
+              <span className="label-micro">Checklist</span>
+              <CardTitle className="text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}

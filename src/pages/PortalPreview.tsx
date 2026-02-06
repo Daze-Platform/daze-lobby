@@ -91,14 +91,14 @@ export default function PortalPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header - refined, borderless */}
-      <header className="bg-card/80 backdrop-blur-sm shadow-sm">
+    <div className="min-h-screen bg-muted/30">
+      {/* Glass Header */}
+      <header className="glass-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={dazeLogo} alt="Daze" className="h-[57px] w-auto" />
-            <span className="text-xs bg-warning/10 text-warning px-3 py-1 rounded-full font-medium">
-              PREVIEW MODE
+          <div className="flex items-center gap-4">
+            <img src={dazeLogo} alt="Daze" className="h-10 w-auto" />
+            <span className="text-xs bg-warning/10 text-warning px-3 py-1.5 rounded-full font-bold uppercase tracking-wide">
+              Preview Mode
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -113,13 +113,13 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-10">
-        {/* Welcome Section - refined typography */}
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
+      <main className="container mx-auto px-6 py-12">
+        {/* Welcome Section - editorial typography */}
+        <div className="mb-12">
+          <h1 className="font-display text-4xl font-bold tracking-tight mb-3">
             Welcome, Grand Hyatt Demo
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
@@ -127,22 +127,23 @@ export default function PortalPreview() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Onboarding Progress</CardTitle>
+            <CardHeader className="pb-4">
+              <span className="label-micro">Progress</span>
+              <CardTitle className="text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
+            <CardContent className="flex flex-col items-center gap-6 pt-2">
               <ProgressRing progress={progress} />
               <StatusBadge status={status} />
               
               {/* Demo Status Toggle */}
-              <div className="w-full pt-4 border-t border-border/50">
-                <p className="text-xs text-muted-foreground mb-3 text-center">Demo: Toggle Status</p>
+              <div className="w-full pt-6 border-t border-border/30">
+                <p className="label-micro mb-3 text-center">Demo: Toggle Status</p>
                 <div className="flex gap-2">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
                     <Button
                       key={s}
                       size="sm"
-                      variant={status === s ? "default" : "outline"}
+                      variant={status === s ? "default" : "secondary"}
                       onClick={() => setStatus(s)}
                       className="flex-1 text-xs capitalize"
                     >
@@ -156,10 +157,11 @@ export default function PortalPreview() {
 
           {/* Task List */}
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Setup Checklist</CardTitle>
+            <CardHeader className="pb-4">
+              <span className="label-micro">Checklist</span>
+              <CardTitle className="text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <TaskAccordion 
                 tasks={tasks}
                 onLegalSign={handleLegalSign}
