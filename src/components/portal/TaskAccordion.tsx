@@ -71,7 +71,9 @@ export function TaskAccordion({
     
     setTimeout(() => {
       const nextStep = getNextStep(stepKey);
-      if (nextStep && !isTaskLocked(nextStep)) {
+      // Skip lock check - we know the current step is completing, 
+      // so the next step should unlock regardless of server state
+      if (nextStep) {
         setUnlockingStep(nextStep);
         setAccordionValue(nextStep); // Open next
       }
@@ -81,7 +83,7 @@ export function TaskAccordion({
       setRecentlyCompleted(null);
       setUnlockingStep(null);
     }, 2500);
-  }, [tasks]);
+  }, []);
 
   const handleBrandSave = async (data: { brand_palette: string[]; logos: Record<string, File> }) => {
     onTaskUpdate("brand", { brand_palette: data.brand_palette });
