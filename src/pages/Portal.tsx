@@ -155,6 +155,10 @@ export default function Portal() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      {/* Welcome Tour for first-time users (clients only) */}
+      {showTour && !isAdmin && (
+        <WelcomeTour onComplete={completeTour} />
+      )}
       {/* Glass Header - Immediate entrance */}
       <header className="glass-header entrance-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
