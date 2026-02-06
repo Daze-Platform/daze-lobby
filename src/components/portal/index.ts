@@ -10,4 +10,5 @@ export { VenueManager } from "./VenueManager";
 export { AdminHotelSwitcher } from "./AdminHotelSwitcher";
 export { StepCompletionEffect } from "./StepCompletionEffect";
 export { WelcomeTour } from "./WelcomeTour";
+export { ActivityFeedPanel } from "./ActivityFeedPanel";
 export type { Venue } from "./VenueCard";
