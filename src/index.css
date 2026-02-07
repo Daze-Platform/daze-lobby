@@ -600,9 +600,44 @@
     animation: heartbeat-pulse 0.5s var(--spring-bounce);
   }
 
+  /* === HEARTBEAT PULSE FOR 100% COMPLETE === */
+  @keyframes heartbeat-complete {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.08); }
+    40% { transform: scale(1); }
+    60% { transform: scale(1.04); }
+    80% { transform: scale(1); }
+    100% { transform: scale(1); }
+  }
+
+  .animate-heartbeat-complete {
+    animation: heartbeat-complete 0.6s var(--spring-bounce);
+  }
+
+  /* === TIP PULSE ANIMATION (Active Energy) === */
+  @keyframes tip-pulse {
+    0%, 100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.3);
+    }
+  }
+
+  .animate-tip-pulse {
+    animation: tip-pulse 1.5s ease-in-out infinite;
+  }
+
   /* === SUCCESS GLOW === */
   .glow-success {
     filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+  }
+
+  /* === COMPLETE GLOW (Green) === */
+  .glow-complete {
+    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.35));
   }
 
   /* === SLOW SPIN FOR GLOWING ORB === */
