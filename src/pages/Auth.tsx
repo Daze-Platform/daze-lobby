@@ -1,25 +1,56 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { SketchyArtPanel } from "@/components/auth/SketchyArtPanel";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+type AuthView = "login" | "signup" | "forgot-password" | "reset-password";
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [view, setView] = useState<AuthView>("login");
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  // Check if user arrived via password reset link
+  useEffect(() => {
+    const isReset = searchParams.get("reset") === "1";
+    
+    if (isReset) {
+      // Listen for the PASSWORD_RECOVERY event
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === "PASSWORD_RECOVERY") {
+          setView("reset-password");
+        }
+      });
+
+      return () => subscription.unsubscribe();
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - The Form (Clean White) */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 lg:p-12 min-h-screen lg:min-h-0">
         <div className="w-full max-w-md">
-          {isLogin ? (
-            <LoginForm onSwitchToSignUp={() => setIsLogin(false)} />
-          ) : (
-            <SignUpForm onSwitchToLogin={() => setIsLogin(true)} />
+          {view === "login" && (
+            <LoginForm 
+              onSwitchToSignUp={() => setView("signup")} 
+              onForgotPassword={() => setView("forgot-password")}
+            />
+          )}
+          {view === "signup" && (
+            <SignUpForm onSwitchToLogin={() => setView("login")} />
+          )}
+          {view === "forgot-password" && (
+            <ForgotPasswordForm onBackToLogin={() => setView("login")} />
+          )}
+          {view === "reset-password" && (
+            <ResetPasswordForm />
           )}
         </div>
       </div>
