@@ -11,9 +11,10 @@ import dazeLogo from "@/assets/daze-logo.png";
 
 interface LoginFormProps {
   onSwitchToSignUp: () => void;
+  onForgotPassword: () => void;
 }
 
-export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
+export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -112,7 +113,17 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="text-xs font-medium transition-all duration-200 hover:underline"
+              style={{ color: "#0EA5E9" }}
+            >
+              Forgot password?
+            </button>
+          </div>
           <div className="relative">
             <Input
               id="password"
