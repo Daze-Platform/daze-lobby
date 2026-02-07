@@ -119,12 +119,15 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
   const showDaysWarning = hotel.phase === "onboarding" && daysInPhase > 14;
   const formattedARR = hotel.phase === "contracted" ? formatARR(hotel.arr) : null;
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   const isBeingDragged = isDragging || isSortableDragging;
+
+  // Skip dnd-kit transform when dragging - DragOverlay handles visual positioning
+  const style: React.CSSProperties = isBeingDragged 
+    ? { opacity: 0, pointerEvents: "none" }  // Hidden - overlay is the visual representation
+    : {
+        transform: CSS.Transform.toString(transform),
+        transition,
+      };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -134,12 +137,9 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
             ref={setNodeRef}
             style={style}
             data-hotel-id={hotel.id}
-            layout
-            layoutId={hotel.id}
+            layout="position"
             initial={false}
             animate={{
-              opacity: isBeingDragged ? 0.4 : 1,
-              scale: isBeingDragged ? 0.98 : 1,
               x: isShaking ? [0, -4, 4, -4, 4, -2, 2, 0] : 0,
             }}
             transition={isShaking ? { duration: 0.5, ease: "easeInOut" } : snapSpring}
@@ -270,17 +270,10 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
   );
 }
 
-// Overlay card shown while dragging - "Tactile Lift" effect with enhanced physics
+// Overlay card shown while dragging - Static "Tactile Lift" effect
 interface HotelCardOverlayProps {
   hotel: Hotel;
 }
-
-// Enhanced spring with user-requested stiffness
-const liftSpring = {
-  type: "spring" as const,
-  stiffness: 500,
-  damping: 30,
-};
 
 export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
   const daysInPhase = differenceInDays(
@@ -297,15 +290,14 @@ export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
   const showDaysWarning = hotel.phase === "onboarding" && daysInPhase > 14;
   const formattedARR = hotel.phase === "contracted" ? formatARR(hotel.arr) : null;
 
+  // Static CSS-based lift effect - prevents double animation conflicts with dnd-kit
   return (
-    <motion.div
-      initial={{ scale: 1, rotate: 0 }}
-      animate={{ 
-        scale: 1.05, 
-        rotate: 1.5,
+    <div
+      className="transform scale-105 rotate-1"
+      style={{ 
+        transform: 'scale(1.05) rotate(1.5deg)',
         boxShadow: "0 25px 60px -12px hsl(199 89% 48% / 0.35), 0 12px 25px -8px hsl(0 0% 0% / 0.15)"
       }}
-      transition={liftSpring}
     >
       <Card
         className={cn(
@@ -395,7 +387,7 @@ export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }
 
