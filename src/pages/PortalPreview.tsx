@@ -5,15 +5,15 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { WelcomeTour } from "@/components/portal/WelcomeTour";
+import { DemoActivityFeedPanel, type DemoActivity } from "@/components/portal";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, Clock } from "lucide-react";
 import dazeLogo from "@/assets/daze-logo.png";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
-
 /**
  * Preview/Demo version of the Client Portal V2
  * This is for testing the UI without authentication
@@ -25,6 +25,31 @@ export default function PortalPreview() {
   const [isSigningLegal, setIsSigningLegal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatus = useRef(status);
+  
+  // Activity Feed state
+  const [isActivityFeedOpen, setIsActivityFeedOpen] = useState(false);
+  const [demoActivities, setDemoActivities] = useState<DemoActivity[]>([
+    {
+      id: crypto.randomUUID(),
+      action: "welcome",
+      userName: "Demo User",
+      timestamp: new Date(),
+    },
+  ]);
+
+  // Helper to log demo activities
+  const logDemoActivity = (action: string, details?: Record<string, unknown>) => {
+    setDemoActivities(prev => [
+      {
+        id: crypto.randomUUID(),
+        action,
+        userName: "Demo User",
+        timestamp: new Date(),
+        details,
+      },
+      ...prev,
+    ]);
+  };
   
   // Welcome tour - using "preview" as the user ID for demo
   const { showTour, completeTour, resetTour } = useWelcomeTour("preview-user");
@@ -106,20 +131,32 @@ export default function PortalPreview() {
         : task
     ));
     
+    // Log demo activity
+    logDemoActivity("legal_signed", { 
+      signer_name: legalEntityData.authorized_signer_name,
+      signer_title: legalEntityData.authorized_signer_title,
+    });
+    
     setIsSigningLegal(false);
     toast.success("Agreement signed successfully! Next step unlocked. (Demo mode)");
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
-    setTasks(prev => prev.map(task => 
-      task.key === taskKey 
-        ? { ...task, isCompleted: true, data: { ...task.data, ...data } }
-        : task
+    const task = tasks.find(t => t.key === taskKey);
+    setTasks(prev => prev.map(t => 
+      t.key === taskKey 
+        ? { ...t, isCompleted: true, data: { ...t.data, ...data } }
+        : t
     ));
+    
+    // Log demo activity
+    logDemoActivity("task_completed", { task_name: task?.name || taskKey });
     toast.success(`Task completed! (Demo mode)`);
   };
 
   const handleFileUpload = (taskKey: string, file: File, fieldName: string) => {
+    // Log demo activity
+    logDemoActivity("logo_uploaded", { file_name: file.name, field: fieldName });
     toast.success(`File "${file.name}" uploaded. (Demo mode)`);
   };
 
@@ -130,6 +167,9 @@ export default function PortalPreview() {
           ? { ...task, isCompleted: true, data: { venues: venues.map(v => v.name) } }
           : task
       ));
+      
+      // Log demo activity
+      logDemoActivity("venue_updated", { venue_count: venues.filter(v => v.name.trim()).length });
       toast.success("Venues saved! (Demo mode)");
     }
   };
@@ -164,6 +204,19 @@ export default function PortalPreview() {
             >
               <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
               Reset Tour
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full relative"
+              onClick={() => setIsActivityFeedOpen(true)}
+            >
+              <Clock className="w-4 h-4" strokeWidth={1.5} />
+              {demoActivities.length > 1 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                  {demoActivities.length > 9 ? "9+" : demoActivities.length}
+                </span>
+              )}
             </Button>
             <Button 
               variant="ghost" 
@@ -273,6 +326,20 @@ export default function PortalPreview() {
           <Button
             variant="ghost"
             size="sm"
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px] relative"
+            onClick={() => setIsActivityFeedOpen(true)}
+          >
+            <Clock className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Activity</span>
+            {demoActivities.length > 1 && (
+              <span className="absolute top-1 right-2 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                {demoActivities.length > 9 ? "9+" : demoActivities.length}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
             onClick={() => {
               navigate("/auth?force=1");
@@ -284,6 +351,13 @@ export default function PortalPreview() {
           </Button>
         </div>
       </nav>
+
+      {/* Demo Activity Feed Panel */}
+      <DemoActivityFeedPanel
+        open={isActivityFeedOpen}
+        onClose={() => setIsActivityFeedOpen(false)}
+        activities={demoActivities}
+      />
     </div>
   );
 }
