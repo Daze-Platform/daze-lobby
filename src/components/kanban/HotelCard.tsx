@@ -14,6 +14,7 @@ interface HotelCardProps {
   hotel: Hotel;
   index: number;
   isDragging?: boolean;
+  isJustDropped?: boolean;
   onBlockedClick?: (hotel: Hotel) => void;
   onCardClick?: (hotel: Hotel) => void;
 }
@@ -42,7 +43,15 @@ function formatARR(arr: number | null): string | null {
   return `$${arr}`;
 }
 
-export function DraggableHotelCard({ hotel, index, isDragging = false, onBlockedClick, onCardClick }: HotelCardProps) {
+// Memoized for performance - prevents unnecessary re-renders during drag
+export const DraggableHotelCard = React.memo(function DraggableHotelCard({ 
+  hotel, 
+  index, 
+  isDragging = false, 
+  isJustDropped = false,
+  onBlockedClick, 
+  onCardClick 
+}: HotelCardProps) {
   const [isShaking, setIsShaking] = React.useState(false);
   const [showLockedTooltip, setShowLockedTooltip] = React.useState(false);
 
@@ -122,8 +131,16 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
   const isBeingDragged = isDragging || isSortableDragging;
 
   // Skip dnd-kit transform when dragging - DragOverlay handles visual positioning
+  // When dragging: collapse height smoothly so siblings can fill the gap
   const style: React.CSSProperties = isBeingDragged 
-    ? { opacity: 0, pointerEvents: "none" }  // Hidden - overlay is the visual representation
+    ? { 
+        opacity: 0, 
+        height: 0,
+        marginBottom: 0,
+        overflow: 'hidden',
+        pointerEvents: "none",
+        transition: 'height 200ms ease-out, margin 200ms ease-out, opacity 150ms ease-out'
+      }
     : {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -141,8 +158,15 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
             initial={false}
             animate={{
               x: isShaking ? [0, -4, 4, -4, 4, -2, 2, 0] : 0,
+              scale: isJustDropped ? [1, 1.03, 1] : 1, // "Thud" animation on drop
             }}
-            transition={isShaking ? { duration: 0.5, ease: "easeInOut" } : snapSpring}
+            transition={
+              isShaking 
+                ? { duration: 0.5, ease: "easeInOut" } 
+                : isJustDropped
+                  ? { duration: 0.25, ease: [0.22, 1, 0.36, 1] }
+                  : snapSpring
+            }
           >
             <Card
               className={cn(

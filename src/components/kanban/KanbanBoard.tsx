@@ -81,6 +81,12 @@ export function KanbanBoard() {
   const [overId, setOverId] = useState<string | null>(null);
   const [overPhase, setOverPhase] = useState<Enums<"lifecycle_phase"> | null>(null);
   
+  // Track the last dropped card for "thud" animation
+  const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
+  
+  // Screen reader announcements for accessibility
+  const [announcement, setAnnouncement] = useState("");
+  
   // Blocker modal state
   const [blockerModalOpen, setBlockerModalOpen] = useState(false);
   const [selectedBlockedHotel, setSelectedBlockedHotel] = useState<Hotel | null>(null);
@@ -92,8 +98,9 @@ export function KanbanBoard() {
   // Fetch blocker details when a hotel is selected
   const { data: blockerDetails } = useBlockerDetails(selectedBlockedHotel?.id || null);
   
-  // Track card dimensions for ghost placeholder
+  // Track card dimensions for ghost placeholder with caching
   const cardDimensionsRef = useRef<{ width: number; height: number } | null>(null);
+  const dimensionsCacheRef = useRef<Map<string, { width: number; height: number }>>(new Map());
   
   // Handle click on blocked card
   const handleBlockedClick = useCallback((hotel: Hotel) => {
@@ -136,11 +143,26 @@ export function KanbanBoard() {
     const hotel = hotels?.find((h) => h.id === active.id);
     setActiveHotel(hotel || null);
     
-    // Capture card dimensions for ghost placeholder
-    const activeElement = document.querySelector(`[data-hotel-id="${active.id}"]`);
-    if (activeElement) {
-      const rect = activeElement.getBoundingClientRect();
-      cardDimensionsRef.current = { width: rect.width, height: rect.height };
+    // Set grabbing cursor on body for consistent feedback
+    document.body.style.cursor = 'grabbing';
+    
+    // Screen reader announcement
+    if (hotel) {
+      setAnnouncement(`Picked up ${hotel.name}. Drop into a column to change phase.`);
+    }
+    
+    // Capture card dimensions for ghost placeholder with caching
+    const cachedDimensions = dimensionsCacheRef.current.get(active.id as string);
+    if (cachedDimensions) {
+      cardDimensionsRef.current = cachedDimensions;
+    } else {
+      const activeElement = document.querySelector(`[data-hotel-id="${active.id}"]`);
+      if (activeElement) {
+        const rect = activeElement.getBoundingClientRect();
+        const dims = { width: rect.width, height: rect.height };
+        dimensionsCacheRef.current.set(active.id as string, dims);
+        cardDimensionsRef.current = dims;
+      }
     }
   }, [hotels]);
 
@@ -167,13 +189,19 @@ export function KanbanBoard() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     
+    // Reset cursor
+    document.body.style.cursor = '';
+    
     setActiveId(null);
     setActiveHotel(null);
     setOverId(null);
     setOverPhase(null);
     cardDimensionsRef.current = null;
 
-    if (!over) return;
+    if (!over) {
+      setAnnouncement("Drop cancelled.");
+      return;
+    }
 
     const activeHotelData = hotels?.find((h) => h.id === active.id);
     if (!activeHotelData) return;
@@ -192,7 +220,18 @@ export function KanbanBoard() {
       }
     }
 
-    if (!targetPhase || targetPhase === activeHotelData.phase) return;
+    if (!targetPhase || targetPhase === activeHotelData.phase) {
+      setAnnouncement(`${activeHotelData.name} returned to original position.`);
+      return;
+    }
+
+    // Trigger "thud" animation on the dropped card
+    setLastDroppedId(active.id as string);
+    setTimeout(() => setLastDroppedId(null), 300);
+    
+    // Screen reader announcement
+    const targetColumn = COLUMNS.find(c => c.phase === targetPhase);
+    setAnnouncement(`${activeHotelData.name} moved to ${targetColumn?.title || targetPhase}.`);
 
     // Trigger confetti for contracted phase
     if (targetPhase === "contracted") {
@@ -268,6 +307,7 @@ export function KanbanBoard() {
                 activeId={activeId}
                 showGhost={showGhost}
                 ghostDimensions={cardDimensionsRef.current}
+                lastDroppedId={lastDroppedId}
                 onBlockedClick={handleBlockedClick}
                 onCardClick={handleCardClick}
               />
@@ -283,6 +323,11 @@ export function KanbanBoard() {
           <HotelCardOverlay hotel={activeHotel} />
         ) : null}
       </DragOverlay>
+      
+      {/* Screen reader live region for accessibility */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
 
       {/* Blocker Resolution Modal */}
       <BlockerResolutionModal
