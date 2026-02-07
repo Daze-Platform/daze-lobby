@@ -181,11 +181,11 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
                   {hotel.hasBlocker ? "Blocked" : "Healthy"}
                 </Badge>
 
-                {hotel.phase === "pilot_live" && hotel.deviceCount > 0 && (
+                {hotel.phase === "pilot_live" && hotel.dazeDeviceCount > 0 && (
                   <div className="flex items-center gap-1 text-2xs text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
                     <Cpu className="h-3 w-3" />
                     <span className="font-medium">
-                      {hotel.onlineDeviceCount}/{hotel.deviceCount}
+                      {hotel.dazeDeviceCount}
                     </span>
                   </div>
                 )}
@@ -299,11 +299,11 @@ export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
                   {hotel.hasBlocker ? "Blocked" : "Healthy"}
                 </Badge>
 
-                {hotel.phase === "pilot_live" && hotel.deviceCount > 0 && (
+                {hotel.phase === "pilot_live" && hotel.dazeDeviceCount > 0 && (
                   <div className="flex items-center gap-1 text-2xs text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
                     <Cpu className="h-3 w-3" />
                     <span className="font-medium">
-                      {hotel.onlineDeviceCount}/{hotel.deviceCount}
+                      {hotel.dazeDeviceCount}
                     </span>
                   </div>
                 )}

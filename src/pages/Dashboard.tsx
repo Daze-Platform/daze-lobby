@@ -42,14 +42,13 @@ export default function Dashboard() {
 
     const totalHotels = hotels.length;
     const activeBlockers = hotels.filter(h => h.hasBlocker).length;
-    const devicesOnline = hotels.reduce((sum, h) => sum + h.onlineDeviceCount, 0);
-    const totalDevices = hotels.reduce((sum, h) => sum + h.deviceCount, 0);
+    const totalDazeDevices = hotels.reduce((sum, h) => sum + h.dazeDeviceCount, 0);
     const totalARR = hotels.reduce((sum, h) => sum + (h.arr || 0), 0);
 
     return [
       { label: "Total Hotels", value: totalHotels.toString(), icon: Building2 },
       { label: "Active Blockers", value: activeBlockers.toString(), icon: AlertTriangle },
-      { label: "Devices Online", value: `${devicesOnline}/${totalDevices}`, icon: Cpu },
+      { label: "Devices", value: totalDazeDevices.toString(), icon: Cpu },
       { label: "Total ARR", value: formatCurrency(totalARR), icon: TrendingUp },
     ];
   }, [hotels]);

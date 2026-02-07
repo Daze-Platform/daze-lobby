@@ -132,6 +132,7 @@ export type Database = {
           hotel_id: string
           id: string
           install_date: string | null
+          is_daze_owned: boolean
           last_check_in: string | null
           serial_number: string
           status: Database["public"]["Enums"]["device_status"]
@@ -143,6 +144,7 @@ export type Database = {
           hotel_id: string
           id?: string
           install_date?: string | null
+          is_daze_owned?: boolean
           last_check_in?: string | null
           serial_number: string
           status?: Database["public"]["Enums"]["device_status"]
@@ -154,6 +156,7 @@ export type Database = {
           hotel_id?: string
           id?: string
           install_date?: string | null
+          is_daze_owned?: boolean
           last_check_in?: string | null
           serial_number?: string
           status?: Database["public"]["Enums"]["device_status"]
