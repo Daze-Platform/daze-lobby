@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Rocket } from "lucide-react";
 
@@ -41,12 +41,21 @@ export function ProgressRing({
     prevProgress.current = progress;
   }, [progress]);
 
+  // Trigger heartbeat when reaching 100%
+  useEffect(() => {
+    if (progress === 100 && prevProgress.current < 100) {
+      setIsHeartbeating(true);
+      const timer = setTimeout(() => setIsHeartbeating(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [progress]);
+
   // Trigger rocket animation and heartbeat when status changes to live
   useEffect(() => {
     if (status === "live" && prevStatus.current !== "live") {
       // Trigger heartbeat pulse
       setIsHeartbeating(true);
-      setTimeout(() => setIsHeartbeating(false), 500);
+      setTimeout(() => setIsHeartbeating(false), 600);
       // Delay rocket appearance for dramatic effect
       const timer = setTimeout(() => {
         setShowRocket(true);
@@ -66,15 +75,23 @@ export function ProgressRing({
 
   const isLive = status === "live";
   const isReviewing = status === "reviewing";
+  const isComplete = progress === 100;
 
   // Generate gradient ID unique to this component instance
-  const gradientId = `progress-gradient-${Math.random().toString(36).substr(2, 9)}`;
+  const gradientId = useMemo(() => `progress-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
+  const glowFilterId = useMemo(() => `glow-filter-${Math.random().toString(36).substr(2, 9)}`, []);
+
+  // Calculate the position of the progress tip for the glow effect
+  const progressAngle = (progress / 100) * 360 - 90; // -90 to start from top
+  const tipX = effectiveSize / 2 + radius * Math.cos((progressAngle * Math.PI) / 180);
+  const tipY = effectiveSize / 2 + radius * Math.sin((progressAngle * Math.PI) / 180);
 
   return (
     <div className={cn(
       "relative inline-flex items-center justify-center transition-all duration-500",
       isLive && "glow-success",
-      isHeartbeating && "animate-heartbeat",
+      isComplete && !isLive && "glow-complete",
+      isHeartbeating && "animate-heartbeat-complete",
       className
     )}>
       <svg
@@ -82,13 +99,22 @@ export function ProgressRing({
         height={effectiveSize}
         className="transform -rotate-90"
       >
-        {/* Gradient definition for in-progress state */}
+        {/* Gradient & filter definitions */}
         <defs>
+          {/* Ocean Blue to Sunset Orange gradient for in-progress */}
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            {/* Ocean Blue to Sunset Orange */}
             <stop offset="0%" stopColor="#0EA5E9" />
             <stop offset="100%" stopColor="#F97316" />
           </linearGradient>
+          
+          {/* Glow filter for the tip pulse */}
+          <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
         {/* Background circle - subtle, refined */}
@@ -102,22 +128,34 @@ export function ProgressRing({
           strokeLinecap="round"
         />
 
-        {/* Progress circle - gradient for in-progress, solid green for live */}
+        {/* Progress circle - gradient for in-progress, solid green for live/complete */}
         <circle
           cx={effectiveSize / 2}
           cy={effectiveSize / 2}
           r={radius}
           fill="none"
-          stroke={isLive ? "#10B981" : `url(#${gradientId})`}
+          stroke={isLive || isComplete ? "#10B981" : `url(#${gradientId})`}
           strokeWidth={effectiveStrokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
           className="transition-all duration-500 ease-out"
           style={{
-            filter: isLive ? "drop-shadow(0 0 8px rgba(16, 185, 129, 0.5))" : undefined
+            filter: (isLive || isComplete) ? "drop-shadow(0 0 8px rgba(16, 185, 129, 0.5))" : undefined
           }}
         />
+
+        {/* Glowing pulse at the tip of the progress bar - only when actively progressing (not 100%) */}
+        {progress > 0 && progress < 100 && !isLive && (
+          <circle
+            cx={tipX}
+            cy={tipY}
+            r={effectiveStrokeWidth / 2 + 2}
+            fill="#F97316"
+            className="animate-tip-pulse"
+            filter={`url(#${glowFilterId})`}
+          />
+        )}
       </svg>
 
       {/* Center text - refined typography */}
@@ -128,7 +166,7 @@ export function ProgressRing({
         <span className={cn(
           "font-bold tracking-tight tabular-nums transition-colors duration-500",
           effectiveSize < 160 ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl",
-          isLive ? "text-emerald-500" : "text-foreground"
+          (isLive || isComplete) ? "text-emerald-500" : "text-foreground"
         )}>{Math.round(progress)}%</span>
         <div className="flex items-center gap-1.5">
           {isLive && showRocket && (
@@ -144,9 +182,9 @@ export function ProgressRing({
           )}
           <span className={cn(
             "text-sm tracking-wide transition-colors duration-500",
-            isLive ? "text-emerald-500 font-semibold" : "text-muted-foreground"
+            (isLive || isComplete) ? "text-emerald-500 font-semibold" : "text-muted-foreground"
           )}>
-            {isLive ? "Launched" : isReviewing ? "In Review" : "Ready for Takeoff"}
+            {isLive ? "Launched" : isComplete ? "Complete" : isReviewing ? "In Review" : "Ready for Takeoff"}
           </span>
         </div>
       </div>
