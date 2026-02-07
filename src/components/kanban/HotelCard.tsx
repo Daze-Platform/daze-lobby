@@ -16,6 +16,7 @@ interface HotelCardProps {
   index: number;
   isDragging?: boolean;
   onBlockedClick?: (hotel: Hotel) => void;
+  onCardClick?: (hotel: Hotel) => void;
 }
 
 // High-stiffness spring for snappy drop animation
@@ -25,7 +26,7 @@ const snapSpring = {
   damping: 30,
 };
 
-export function DraggableHotelCard({ hotel, index, isDragging = false, onBlockedClick }: HotelCardProps) {
+export function DraggableHotelCard({ hotel, index, isDragging = false, onBlockedClick, onCardClick }: HotelCardProps) {
   const [isShaking, setIsShaking] = React.useState(false);
   const [showLockedTooltip, setShowLockedTooltip] = React.useState(false);
 
@@ -59,19 +60,23 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
     }
   }, [hotel.hasBlocker]);
 
-  // Handle click on blocked cards
+  // Handle click on cards
   const handleCardClick = React.useCallback((e: React.MouseEvent) => {
     // Don't trigger click if we just finished dragging
     if (isDragActive.current) {
       isDragActive.current = false;
       return;
     }
-    // Only trigger for blocked cards
+    // Blocked cards open blocker modal
     if (hotel.hasBlocker && onBlockedClick) {
       e.stopPropagation();
       onBlockedClick(hotel);
+    } else if (onCardClick) {
+      // Non-blocked cards open detail panel
+      e.stopPropagation();
+      onCardClick(hotel);
     }
-  }, [hotel, onBlockedClick]);
+  }, [hotel, onBlockedClick, onCardClick]);
 
   // Handle mouse down on blocked cards - trigger shake
   const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
