@@ -4,15 +4,15 @@ import { toast } from "sonner";
 
 interface ClearBlockerParams {
   blockerId: string;
-  hotelId: string;
-  hotelName: string;
+  clientId: string;
+  clientName: string;
 }
 
 export function useClearBlocker() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ blockerId, hotelId, hotelName }: ClearBlockerParams) => {
+    mutationFn: async ({ blockerId, clientId, clientName }: ClearBlockerParams) => {
       // Get current user for audit trail
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
@@ -41,7 +41,7 @@ export function useClearBlocker() {
       const { error: activityError } = await supabase
         .from("activity_logs")
         .insert({
-          hotel_id: hotelId,
+          client_id: clientId,
           user_id: user.id,
           action: "blocker_force_cleared",
           details: {
@@ -54,15 +54,15 @@ export function useClearBlocker() {
 
       if (activityError) throw activityError;
 
-      return { blockerId, hotelId, hotelName, userName };
+      return { blockerId, clientId, clientName, userName };
     },
-    onSuccess: ({ hotelName, userName }) => {
+    onSuccess: ({ clientName, userName }) => {
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["hotels"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
       queryClient.invalidateQueries({ queryKey: ["blocker-details"] });
       queryClient.invalidateQueries({ queryKey: ["activity-logs"] });
 
-      toast.success(`Blocker cleared for ${hotelName}`, {
+      toast.success(`Blocker cleared for ${clientName}`, {
         description: `Manually resolved by ${userName}`,
       });
     },

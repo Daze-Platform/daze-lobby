@@ -1,4 +1,4 @@
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 import { 
   Select,
   SelectContent,
@@ -11,19 +11,19 @@ import { Building2, Eye } from "lucide-react";
 
 export function AdminHotelSwitcher() {
   const { 
-    allHotels, 
-    isLoadingAllHotels, 
-    selectedHotelId, 
-    setSelectedHotelId,
-    hotel,
+    allClients, 
+    isLoadingAllClients, 
+    selectedClientId, 
+    setSelectedClientId,
+    client,
     isAdminViewing
-  } = useHotel();
+  } = useClient();
 
-  if (isLoadingAllHotels) {
+  if (isLoadingAllClients) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Building2 className="w-4 h-4" />
-        Loading hotels...
+        Loading clients...
       </div>
     );
   }
@@ -38,32 +38,32 @@ export function AdminHotelSwitcher() {
       )}
       
       <Select
-        value={selectedHotelId || ""}
-        onValueChange={(value) => setSelectedHotelId(value || null)}
+        value={selectedClientId || ""}
+        onValueChange={(value) => setSelectedClientId(value || null)}
       >
         <SelectTrigger className="w-full sm:w-[200px] lg:w-[250px] h-9 min-h-[44px]">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
-            <SelectValue placeholder="Select hotel..." />
+            <SelectValue placeholder="Select client..." />
           </div>
         </SelectTrigger>
         <SelectContent>
-          {allHotels.map((h) => (
-            <SelectItem key={h.id} value={h.id}>
+          {allClients.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
               <div className="flex items-center justify-between w-full gap-3">
-                <span className="truncate">{h.name}</span>
+                <span className="truncate">{c.name}</span>
                 <Badge 
                   variant="outline" 
                   className="shrink-0 text-xs capitalize"
                 >
-                  {h.phase.replace("_", " ")}
+                  {c.phase.replace("_", " ")}
                 </Badge>
               </div>
             </SelectItem>
           ))}
-          {allHotels.length === 0 && (
+          {allClients.length === 0 && (
             <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-              No hotels found
+              No clients found
             </div>
           )}
         </SelectContent>

@@ -11,7 +11,7 @@ import { MultiLogoUpload } from "../MultiLogoUpload";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { useLogActivity } from "@/hooks/useLogActivity";
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 
 interface BrandStepProps {
   isCompleted: boolean;
@@ -38,8 +38,8 @@ export function BrandStep({
   isJustCompleted,
   isUnlocking
 }: BrandStepProps) {
-  const { hotelId } = useHotel();
-  const logActivity = useLogActivity(hotelId);
+  const { clientId } = useClient();
+  const logActivity = useLogActivity(clientId);
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted 

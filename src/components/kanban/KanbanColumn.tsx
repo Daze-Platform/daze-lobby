@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { motion, AnimatePresence } from "framer-motion";
 import { DraggableHotelCard } from "./HotelCard";
-import type { Hotel } from "@/hooks/useHotels";
+import type { Client } from "@/hooks/useClients";
 import type { Enums } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Rocket, Play, CheckCircle2, Plus, type LucideIcon } from "lucide-react";
@@ -10,15 +10,15 @@ interface KanbanColumnProps {
   phase: Enums<"lifecycle_phase">;
   title: string;
   subtitle: string;
-  hotels: Hotel[];
+  hotels: Client[];
   accentColor: string;
   isOver?: boolean;
   activeId?: string | null;
   showGhost?: boolean;
   ghostDimensions?: { width: number; height: number } | null;
   lastDroppedId?: string | null;
-  onBlockedClick?: (hotel: Hotel) => void;
-  onCardClick?: (hotel: Hotel) => void;
+  onBlockedClick?: (hotel: Client) => void;
+  onCardClick?: (hotel: Client) => void;
 }
 
 // Phase icon mapping

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 
 type PosProvider = "toast" | "micros" | "ncr" | "lavu" | null;
 
@@ -191,8 +191,8 @@ export function PosStep({
   isJustCompleted,
   isUnlocking
 }: PosStepProps) {
-  const { hotelId } = useHotel();
-  const logActivity = useLogActivity(hotelId);
+  const { clientId } = useClient();
+  const logActivity = useLogActivity(clientId);
   
   const savedProvider = data?.provider as PosProvider | undefined;
   const savedStatus = data?.status as string | undefined;

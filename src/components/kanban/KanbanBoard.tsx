@@ -19,12 +19,11 @@ import {
 import { LayoutGroup } from "framer-motion";
 import { KanbanColumn } from "./KanbanColumn";
 import { DraggableHotelCard, HotelCardOverlay } from "./HotelCard";
-import { useHotels, useUpdateHotelPhase } from "@/hooks/useHotels";
+import { useClients, useUpdateClientPhase, type Client } from "@/hooks/useClients";
 import { useBlockerDetails } from "@/hooks/useBlockerDetails";
 import { BlockerResolutionModal, type BlockerData } from "@/components/modals/BlockerResolutionModal";
 import { HotelDetailPanel } from "@/components/dashboard";
 import type { Enums } from "@/integrations/supabase/types";
-import type { Hotel } from "@/hooks/useHotels";
 import { Skeleton } from "@/components/ui/skeleton";
 import confetti from "canvas-confetti";
 
@@ -74,10 +73,10 @@ function triggerMiniConfetti() {
 }
 
 export function KanbanBoard() {
-  const { data: hotels, isLoading, error } = useHotels();
-  const updatePhase = useUpdateHotelPhase();
+  const { data: clients, isLoading, error } = useClients();
+  const updatePhase = useUpdateClientPhase();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeHotel, setActiveHotel] = useState<Hotel | null>(null);
+  const [activeClient, setActiveClient] = useState<Client | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [overPhase, setOverPhase] = useState<Enums<"lifecycle_phase"> | null>(null);
   
@@ -89,41 +88,41 @@ export function KanbanBoard() {
   
   // Blocker modal state
   const [blockerModalOpen, setBlockerModalOpen] = useState(false);
-  const [selectedBlockedHotel, setSelectedBlockedHotel] = useState<Hotel | null>(null);
+  const [selectedBlockedClient, setSelectedBlockedClient] = useState<Client | null>(null);
   
-  // Hotel detail panel state
+  // Client detail panel state
   const [detailPanelOpen, setDetailPanelOpen] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   
-  // Fetch blocker details when a hotel is selected
-  const { data: blockerDetails } = useBlockerDetails(selectedBlockedHotel?.id || null);
+  // Fetch blocker details when a client is selected
+  const { data: blockerDetails } = useBlockerDetails(selectedBlockedClient?.id || null);
   
   // Track card dimensions for ghost placeholder with caching
   const cardDimensionsRef = useRef<{ width: number; height: number } | null>(null);
   const dimensionsCacheRef = useRef<Map<string, { width: number; height: number }>>(new Map());
   
   // Handle click on blocked card
-  const handleBlockedClick = useCallback((hotel: Hotel) => {
-    setSelectedBlockedHotel(hotel);
+  const handleBlockedClick = useCallback((client: Client) => {
+    setSelectedBlockedClient(client);
     setBlockerModalOpen(true);
   }, []);
   
   // Handle click on card to open detail panel
-  const handleCardClick = useCallback((hotel: Hotel) => {
-    setSelectedHotel(hotel);
+  const handleCardClick = useCallback((client: Client) => {
+    setSelectedClient(client);
     setDetailPanelOpen(true);
   }, []);
   
   // Build blocker data for modal
-  const blockerData: BlockerData | null = blockerDetails && selectedBlockedHotel ? {
+  const blockerData: BlockerData | null = blockerDetails && selectedBlockedClient ? {
     id: blockerDetails.id,
     reason: blockerDetails.reason,
     blockerType: blockerDetails.blocker_type,
     autoRule: blockerDetails.auto_rule,
     createdAt: blockerDetails.created_at,
-    hotelId: selectedBlockedHotel.id,
-    hotelName: selectedBlockedHotel.name,
-    hotelPhase: selectedBlockedHotel.phase,
+    hotelId: selectedBlockedClient.id,
+    hotelName: selectedBlockedClient.name,
+    hotelPhase: selectedBlockedClient.phase,
   } : null;
 
   const sensors = useSensors(
@@ -140,15 +139,15 @@ export function KanbanBoard() {
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id as string);
-    const hotel = hotels?.find((h) => h.id === active.id);
-    setActiveHotel(hotel || null);
+    const client = clients?.find((c) => c.id === active.id);
+    setActiveClient(client || null);
     
     // Set grabbing cursor on body for consistent feedback
     document.body.style.cursor = 'grabbing';
     
     // Screen reader announcement
-    if (hotel) {
-      setAnnouncement(`Picked up ${hotel.name}. Drop into a column to change phase.`);
+    if (client) {
+      setAnnouncement(`Picked up ${client.name}. Drop into a column to change phase.`);
     }
     
     // Capture card dimensions for ghost placeholder with caching
@@ -164,7 +163,7 @@ export function KanbanBoard() {
         cardDimensionsRef.current = dims;
       }
     }
-  }, [hotels]);
+  }, [clients]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over } = event;
@@ -181,10 +180,10 @@ export function KanbanBoard() {
       setOverPhase(over.id as Enums<"lifecycle_phase">);
     } else {
       // Over a card - find its column
-      const targetHotel = hotels?.find((h) => h.id === over.id);
-      setOverPhase(targetHotel?.phase || null);
+      const targetClient = clients?.find((c) => c.id === over.id);
+      setOverPhase(targetClient?.phase || null);
     }
-  }, [hotels]);
+  }, [clients]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -193,7 +192,7 @@ export function KanbanBoard() {
     document.body.style.cursor = '';
     
     setActiveId(null);
-    setActiveHotel(null);
+    setActiveClient(null);
     setOverId(null);
     setOverPhase(null);
     cardDimensionsRef.current = null;
@@ -203,8 +202,8 @@ export function KanbanBoard() {
       return;
     }
 
-    const activeHotelData = hotels?.find((h) => h.id === active.id);
-    if (!activeHotelData) return;
+    const activeClientData = clients?.find((c) => c.id === active.id);
+    if (!activeClientData) return;
 
     // Determine target phase from the over id
     let targetPhase: Enums<"lifecycle_phase"> | null = null;
@@ -214,14 +213,14 @@ export function KanbanBoard() {
       targetPhase = over.id as Enums<"lifecycle_phase">;
     } else {
       // Dropped on another card - find which column that card is in
-      const targetHotel = hotels?.find((h) => h.id === over.id);
-      if (targetHotel) {
-        targetPhase = targetHotel.phase;
+      const targetClient = clients?.find((c) => c.id === over.id);
+      if (targetClient) {
+        targetPhase = targetClient.phase;
       }
     }
 
-    if (!targetPhase || targetPhase === activeHotelData.phase) {
-      setAnnouncement(`${activeHotelData.name} returned to original position.`);
+    if (!targetPhase || targetPhase === activeClientData.phase) {
+      setAnnouncement(`${activeClientData.name} returned to original position.`);
       return;
     }
 
@@ -231,7 +230,7 @@ export function KanbanBoard() {
     
     // Screen reader announcement
     const targetColumn = COLUMNS.find(c => c.phase === targetPhase);
-    setAnnouncement(`${activeHotelData.name} moved to ${targetColumn?.title || targetPhase}.`);
+    setAnnouncement(`${activeClientData.name} moved to ${targetColumn?.title || targetPhase}.`);
 
     // Trigger confetti for contracted phase
     if (targetPhase === "contracted") {
@@ -240,10 +239,10 @@ export function KanbanBoard() {
 
     // Mutation now uses optimistic updates - UI updates instantly!
     updatePhase.mutate({
-      hotelId: active.id as string,
+      clientId: active.id as string,
       newPhase: targetPhase,
     });
-  }, [hotels, updatePhase]);
+  }, [clients, updatePhase]);
 
   if (isLoading) {
     return (
@@ -261,17 +260,17 @@ export function KanbanBoard() {
   if (error) {
     return (
       <div className="text-center py-8 text-destructive">
-        Failed to load hotels: {error.message}
+        Failed to load clients: {error.message}
       </div>
     );
   }
 
-  const hotelsByPhase = COLUMNS.reduce(
+  const clientsByPhase = COLUMNS.reduce(
     (acc, col) => {
-      acc[col.phase] = (hotels || []).filter((h) => h.phase === col.phase);
+      acc[col.phase] = (clients || []).filter((c) => c.phase === col.phase);
       return acc;
     },
-    {} as Record<Enums<"lifecycle_phase">, Hotel[]>
+    {} as Record<Enums<"lifecycle_phase">, Client[]>
   );
 
   return (
@@ -286,22 +285,22 @@ export function KanbanBoard() {
       <LayoutGroup>
         <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x scrollbar-hide">
           {COLUMNS.map((col) => {
-          const columnHotels = hotelsByPhase[col.phase] || [];
-          const isOver = overId === col.phase || columnHotels.some((h) => h.id === overId);
+          const columnClients = clientsByPhase[col.phase] || [];
+          const isOver = overId === col.phase || columnClients.some((c) => c.id === overId);
           // Show ghost when hovering over a DIFFERENT column than the card's origin
-          const showGhost = overPhase === col.phase && activeHotel && activeHotel.phase !== col.phase;
+          const showGhost = overPhase === col.phase && activeClient && activeClient.phase !== col.phase;
           
           return (
             <SortableContext
               key={col.phase}
-              items={columnHotels.map((h) => h.id)}
+              items={columnClients.map((c) => c.id)}
               strategy={verticalListSortingStrategy}
             >
               <KanbanColumn
                 phase={col.phase}
                 title={col.title}
                 subtitle={col.subtitle}
-                hotels={columnHotels}
+                hotels={columnClients}
                 accentColor={col.accentColor}
                 isOver={isOver}
                 activeId={activeId}
@@ -319,8 +318,8 @@ export function KanbanBoard() {
 
       {/* Drag Overlay - Instant snap with no drop animation for crisp UX */}
       <DragOverlay dropAnimation={null}>
-        {activeHotel ? (
-          <HotelCardOverlay hotel={activeHotel} />
+        {activeClient ? (
+          <HotelCardOverlay hotel={activeClient} />
         ) : null}
       </DragOverlay>
       
@@ -334,12 +333,12 @@ export function KanbanBoard() {
         open={blockerModalOpen}
         onOpenChange={setBlockerModalOpen}
         blocker={blockerData}
-        onBlockerCleared={() => setSelectedBlockedHotel(null)}
+        onBlockerCleared={() => setSelectedBlockedClient(null)}
       />
       
-      {/* Hotel Detail Panel */}
+      {/* Client Detail Panel */}
       <HotelDetailPanel
-        hotel={selectedHotel}
+        hotel={selectedClient}
         open={detailPanelOpen}
         onOpenChange={setDetailPanelOpen}
       />

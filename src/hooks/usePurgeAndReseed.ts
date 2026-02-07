@@ -12,15 +12,15 @@ export function usePurgeAndReseed() {
     
     try {
       // Step 1: Delete all data in order (respecting foreign key constraints)
-      const tables = ['activity_logs', 'blocker_alerts', 'devices', 'hotel_contacts', 'hotels'] as const;
+      const tables = ['activity_logs', 'blocker_alerts', 'devices', 'client_contacts', 'clients'] as const;
       
       for (const table of tables) {
         const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error) throw new Error(`Failed to delete from ${table}: ${error.message}`);
       }
 
-      // Step 2: Generate hotel IDs
-      const hotelIds = {
+      // Step 2: Generate client IDs
+      const clientIds = {
         pearl: crypto.randomUUID(),
         seaside: crypto.randomUUID(),
         mountain: crypto.randomUUID(),
@@ -36,11 +36,11 @@ export function usePurgeAndReseed() {
       const now = new Date();
       const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 
-      // Step 3: Insert hotels
-      const hotels = [
+      // Step 3: Insert clients
+      const clients = [
         // Onboarding (3)
         {
-          id: hotelIds.pearl,
+          id: clientIds.pearl,
           name: "The Pearl Hotel",
           phase: "onboarding" as const,
           phase_started_at: daysAgo(5),
@@ -51,7 +51,7 @@ export function usePurgeAndReseed() {
           notes: "Boutique hotel in downtown area. Very responsive team.",
         },
         {
-          id: hotelIds.seaside,
+          id: clientIds.seaside,
           name: "Seaside Resort & Spa",
           phase: "onboarding" as const,
           phase_started_at: daysAgo(3),
@@ -62,7 +62,7 @@ export function usePurgeAndReseed() {
           notes: "Large resort property with multiple F&B outlets.",
         },
         {
-          id: hotelIds.mountain,
+          id: clientIds.mountain,
           name: "Mountain View Lodge",
           phase: "onboarding" as const,
           phase_started_at: daysAgo(18),
@@ -74,7 +74,7 @@ export function usePurgeAndReseed() {
         },
         // Pilot Live (4)
         {
-          id: hotelIds.urban,
+          id: clientIds.urban,
           name: "Urban Boutique Hotel",
           phase: "pilot_live" as const,
           phase_started_at: daysAgo(14),
@@ -85,7 +85,7 @@ export function usePurgeAndReseed() {
           notes: "Pilot going well. Good order volume.",
         },
         {
-          id: hotelIds.riverside,
+          id: clientIds.riverside,
           name: "The Riverside Hotel",
           phase: "pilot_live" as const,
           phase_started_at: daysAgo(21),
@@ -95,7 +95,7 @@ export function usePurgeAndReseed() {
           notes: "LOW ORDER VOLUME - Need to investigate guest engagement.",
         },
         {
-          id: hotelIds.lakefront,
+          id: clientIds.lakefront,
           name: "Lakefront Inn",
           phase: "pilot_live" as const,
           phase_started_at: daysAgo(7),
@@ -105,7 +105,7 @@ export function usePurgeAndReseed() {
           next_milestone_date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         },
         {
-          id: hotelIds.cityCenter,
+          id: clientIds.cityCenter,
           name: "City Center Hotel",
           phase: "pilot_live" as const,
           phase_started_at: daysAgo(10),
@@ -116,7 +116,7 @@ export function usePurgeAndReseed() {
         },
         // Contracted (3)
         {
-          id: hotelIds.royal,
+          id: clientIds.royal,
           name: "Royal Plaza Hotel",
           phase: "contracted" as const,
           phase_started_at: daysAgo(60),
@@ -127,7 +127,7 @@ export function usePurgeAndReseed() {
           notes: "Flagship property. Excellent performance.",
         },
         {
-          id: hotelIds.grand,
+          id: clientIds.grand,
           name: "Grand Metropolitan",
           phase: "contracted" as const,
           phase_started_at: daysAgo(90),
@@ -138,7 +138,7 @@ export function usePurgeAndReseed() {
           notes: "Premium contract. Multiple device locations.",
         },
         {
-          id: hotelIds.landmark,
+          id: clientIds.landmark,
           name: "The Landmark Hotel",
           phase: "contracted" as const,
           phase_started_at: daysAgo(45),
@@ -149,39 +149,39 @@ export function usePurgeAndReseed() {
         },
       ];
 
-      const { error: hotelsError } = await supabase.from("hotels").insert(hotels);
-      if (hotelsError) throw new Error(`Failed to insert hotels: ${hotelsError.message}`);
+      const { error: clientsError } = await supabase.from("clients").insert(clients);
+      if (clientsError) throw new Error(`Failed to insert clients: ${clientsError.message}`);
 
       // Step 4: Insert contacts
       const contacts = [
-        { hotel_id: hotelIds.pearl, name: "Sarah Chen", email: "s.chen@pearlhotel.com", phone: "+1 555-0101", role: "General Manager", is_primary: true },
-        { hotel_id: hotelIds.seaside, name: "Michael Torres", email: "m.torres@seasideresort.com", phone: "+1 555-0102", role: "F&B Director", is_primary: true },
-        { hotel_id: hotelIds.mountain, name: "David Kim", email: "d.kim@mountainview.com", phone: "+1 555-0103", role: "Operations Manager", is_primary: true },
-        { hotel_id: hotelIds.urban, name: "Emma Williams", email: "e.williams@urbanboutique.com", phone: "+1 555-0104", role: "Hotel Manager", is_primary: true },
-        { hotel_id: hotelIds.riverside, name: "James Brown", email: "j.brown@riverside.com", phone: "+1 555-0105", role: "GM", is_primary: true },
-        { hotel_id: hotelIds.lakefront, name: "Lisa Anderson", email: "l.anderson@lakefront.com", phone: "+1 555-0106", role: "Operations", is_primary: true },
-        { hotel_id: hotelIds.cityCenter, name: "Robert Martinez", email: "r.martinez@citycenter.com", phone: "+1 555-0107", role: "Director", is_primary: true },
-        { hotel_id: hotelIds.royal, name: "Jennifer Lee", email: "j.lee@royalplaza.com", phone: "+1 555-0108", role: "Regional Manager", is_primary: true },
-        { hotel_id: hotelIds.grand, name: "William Johnson", email: "w.johnson@grandmet.com", phone: "+1 555-0109", role: "VP Operations", is_primary: true },
-        { hotel_id: hotelIds.landmark, name: "Patricia Davis", email: "p.davis@landmark.com", phone: "+1 555-0110", role: "General Manager", is_primary: true },
+        { client_id: clientIds.pearl, name: "Sarah Chen", email: "s.chen@pearlhotel.com", phone: "+1 555-0101", role: "General Manager", is_primary: true },
+        { client_id: clientIds.seaside, name: "Michael Torres", email: "m.torres@seasideresort.com", phone: "+1 555-0102", role: "F&B Director", is_primary: true },
+        { client_id: clientIds.mountain, name: "David Kim", email: "d.kim@mountainview.com", phone: "+1 555-0103", role: "Operations Manager", is_primary: true },
+        { client_id: clientIds.urban, name: "Emma Williams", email: "e.williams@urbanboutique.com", phone: "+1 555-0104", role: "Hotel Manager", is_primary: true },
+        { client_id: clientIds.riverside, name: "James Brown", email: "j.brown@riverside.com", phone: "+1 555-0105", role: "GM", is_primary: true },
+        { client_id: clientIds.lakefront, name: "Lisa Anderson", email: "l.anderson@lakefront.com", phone: "+1 555-0106", role: "Operations", is_primary: true },
+        { client_id: clientIds.cityCenter, name: "Robert Martinez", email: "r.martinez@citycenter.com", phone: "+1 555-0107", role: "Director", is_primary: true },
+        { client_id: clientIds.royal, name: "Jennifer Lee", email: "j.lee@royalplaza.com", phone: "+1 555-0108", role: "Regional Manager", is_primary: true },
+        { client_id: clientIds.grand, name: "William Johnson", email: "w.johnson@grandmet.com", phone: "+1 555-0109", role: "VP Operations", is_primary: true },
+        { client_id: clientIds.landmark, name: "Patricia Davis", email: "p.davis@landmark.com", phone: "+1 555-0110", role: "General Manager", is_primary: true },
       ];
 
-      const { error: contactsError } = await supabase.from("hotel_contacts").insert(contacts);
+      const { error: contactsError } = await supabase.from("client_contacts").insert(contacts);
       if (contactsError) throw new Error(`Failed to insert contacts: ${contactsError.message}`);
 
-      // Step 5: Insert devices for contracted hotels
+      // Step 5: Insert devices for contracted clients
       const devices = [
-        { hotel_id: hotelIds.royal, serial_number: "DZ-2024-001", device_type: "Tablet", status: "online" as const, install_date: daysAgo(60).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.royal, serial_number: "DZ-2024-002", device_type: "Tablet", status: "online" as const, install_date: daysAgo(60).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.royal, serial_number: "DZ-2024-003", device_type: "Kiosk", status: "online" as const, install_date: daysAgo(55).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.grand, serial_number: "DZ-2024-004", device_type: "Tablet", status: "online" as const, install_date: daysAgo(90).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.grand, serial_number: "DZ-2024-005", device_type: "Tablet", status: "online" as const, install_date: daysAgo(90).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.grand, serial_number: "DZ-2024-006", device_type: "Tablet", status: "offline" as const, install_date: daysAgo(85).split('T')[0], last_check_in: daysAgo(3) },
-        { hotel_id: hotelIds.grand, serial_number: "DZ-2024-007", device_type: "Kiosk", status: "online" as const, install_date: daysAgo(80).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.landmark, serial_number: "DZ-2024-008", device_type: "Tablet", status: "online" as const, install_date: daysAgo(45).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.landmark, serial_number: "DZ-2024-009", device_type: "Tablet", status: "maintenance" as const, install_date: daysAgo(45).split('T')[0], last_check_in: daysAgo(1) },
-        { hotel_id: hotelIds.urban, serial_number: "DZ-2024-010", device_type: "Tablet", status: "online" as const, install_date: daysAgo(14).split('T')[0], last_check_in: daysAgo(0) },
-        { hotel_id: hotelIds.riverside, serial_number: "DZ-2024-011", device_type: "Tablet", status: "online" as const, install_date: daysAgo(21).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.royal, serial_number: "DZ-2024-001", device_type: "Tablet", status: "online" as const, install_date: daysAgo(60).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.royal, serial_number: "DZ-2024-002", device_type: "Tablet", status: "online" as const, install_date: daysAgo(60).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.royal, serial_number: "DZ-2024-003", device_type: "Kiosk", status: "online" as const, install_date: daysAgo(55).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.grand, serial_number: "DZ-2024-004", device_type: "Tablet", status: "online" as const, install_date: daysAgo(90).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.grand, serial_number: "DZ-2024-005", device_type: "Tablet", status: "online" as const, install_date: daysAgo(90).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.grand, serial_number: "DZ-2024-006", device_type: "Tablet", status: "offline" as const, install_date: daysAgo(85).split('T')[0], last_check_in: daysAgo(3) },
+        { client_id: clientIds.grand, serial_number: "DZ-2024-007", device_type: "Kiosk", status: "online" as const, install_date: daysAgo(80).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.landmark, serial_number: "DZ-2024-008", device_type: "Tablet", status: "online" as const, install_date: daysAgo(45).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.landmark, serial_number: "DZ-2024-009", device_type: "Tablet", status: "maintenance" as const, install_date: daysAgo(45).split('T')[0], last_check_in: daysAgo(1) },
+        { client_id: clientIds.urban, serial_number: "DZ-2024-010", device_type: "Tablet", status: "online" as const, install_date: daysAgo(14).split('T')[0], last_check_in: daysAgo(0) },
+        { client_id: clientIds.riverside, serial_number: "DZ-2024-011", device_type: "Tablet", status: "online" as const, install_date: daysAgo(21).split('T')[0], last_check_in: daysAgo(0) },
       ];
 
       const { error: devicesError } = await supabase.from("devices").insert(devices);
@@ -190,13 +190,13 @@ export function usePurgeAndReseed() {
       // Step 6: Insert task-based blocker alerts
       const blockerAlerts = [
         {
-          hotel_id: hotelIds.riverside,
+          client_id: clientIds.riverside,
           blocker_type: "automatic" as const,
           reason: "Pilot Agreement not signed - client has not completed the legal step",
           auto_rule: "incomplete_legal",
         },
         {
-          hotel_id: hotelIds.mountain,
+          client_id: clientIds.mountain,
           blocker_type: "automatic" as const,
           reason: "Brand identity incomplete - no logos uploaded yet",
           auto_rule: "incomplete_brand",
@@ -207,9 +207,9 @@ export function usePurgeAndReseed() {
       if (blockersError) throw new Error(`Failed to insert blocker alerts: ${blockersError.message}`);
 
       // Step 7: Invalidate queries to refresh UI
-      await queryClient.invalidateQueries({ queryKey: ["hotels-with-details"] });
+      await queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
 
-      toast.success("Database purged and reseeded with 10 hotels!");
+      toast.success("Database purged and reseeded with 10 clients!");
     } catch (error) {
       console.error("Purge and reseed failed:", error);
       toast.error(error instanceof Error ? error.message : "Failed to purge and reseed");

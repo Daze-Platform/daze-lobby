@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 import { Loader2 } from "lucide-react";
 import { isClient, hasDashboardAccess } from "@/lib/auth";
 import NoHotelAssigned from "@/pages/NoHotelAssigned";
@@ -12,12 +12,12 @@ interface PortalRouteProps {
 /**
  * Protected route for the Client Portal with multi-tenancy enforcement:
  * 1. Must be authenticated
- * 2. Must be a client OR an admin (admin can view any hotel)
- * 3. Clients MUST have a hotel assigned - redirect to error page if not
+ * 2. Must be a client OR an admin (admin can view any client)
+ * 3. Clients MUST have a client assigned - redirect to error page if not
  */
 export function PortalRoute({ children }: PortalRouteProps) {
   const { isAuthenticated, loading: authLoading, role } = useAuthContext();
-  const { hotelId, isLoading: hotelLoading, error } = useHotel();
+  const { clientId, isLoading: clientLoading, error } = useClient();
 
   const isAdmin = hasDashboardAccess(role);
 
@@ -40,10 +40,10 @@ export function PortalRoute({ children }: PortalRouteProps) {
     return <Navigate to="/" replace />;
   }
 
-  // For clients only: check if hotel is assigned
+  // For clients only: check if client is assigned
   if (isClient(role) && !isAdmin) {
-    // Still loading hotel
-    if (hotelLoading) {
+    // Still loading client
+    if (clientLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -51,12 +51,12 @@ export function PortalRoute({ children }: PortalRouteProps) {
       );
     }
 
-    // No hotel assigned - show error page
-    if (error === "no_hotel_assigned" || !hotelId) {
+    // No client assigned - show error page
+    if (error === "no_client_assigned" || !clientId) {
       return <NoHotelAssigned />;
     }
   }
 
-  // Admins can proceed without hotel (they'll select one in the portal)
+  // Admins can proceed without client (they'll select one in the portal)
   return <>{children}</>;
 }

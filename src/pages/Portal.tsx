@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
@@ -23,7 +23,7 @@ import type { Venue } from "@/components/portal/VenueCard";
 
 export default function Portal() {
   const { user, role } = useAuthContext();
-  const { hotel, hotelId, isAdminViewing, selectedHotelId } = useHotel();
+  const { client, clientId, isAdminViewing, selectedClientId } = useClient();
   const navigate = useNavigate();
   const [localVenues, setLocalVenues] = useState<Venue[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -53,7 +53,7 @@ export default function Portal() {
   useEffect(() => {
     if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
       setShowConfetti(true);
-      toast.success("🚀 Congratulations! Your hotel is now LIVE!");
+      toast.success("🚀 Congratulations! Your property is now LIVE!");
     }
     prevStatus.current = status;
   }, [status]);
@@ -91,8 +91,8 @@ export default function Portal() {
   // Sync venues from server when loaded
   const displayVenues = localVenues.length > 0 ? localVenues : venues;
 
-  // Admin without selected hotel - show hotel picker
-  if (isAdmin && !selectedHotelId) {
+  // Admin without selected client - show client picker
+  if (isAdmin && !selectedClientId) {
     return (
       <div className="min-h-screen bg-muted/30">
         <header className="glass-header">
@@ -122,11 +122,11 @@ export default function Portal() {
                 <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
               </div>
               <span className="label-micro">Admin Portal</span>
-              <CardTitle className="text-lg sm:text-xl">Select a Hotel</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Select a Client</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4 sm:space-y-6 px-4 sm:px-6">
               <p className="text-sm text-muted-foreground">
-                Select a hotel from the dropdown above to view their onboarding portal and debug their progress.
+                Select a client from the dropdown above to view their onboarding portal and debug their progress.
               </p>
               <AdminHotelSwitcher />
             </CardContent>
@@ -215,10 +215,10 @@ export default function Portal() {
         {/* Welcome Section - Hero entrance, aligned with card content */}
         <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
           <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
-            Welcome, {hotel?.name || "Partner"}
+            Welcome, {client?.name || "Partner"}
           </h1>
           <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
-            Complete the steps below to get your hotel ready for launch.
+            Complete the steps below to get your property ready for launch.
           </p>
         </div>
 
@@ -259,22 +259,22 @@ export default function Portal() {
                 isSigningLegal={isSigningLegal}
                 isUpdating={isUpdating}
                 hotelLegalEntity={{
-                  legal_entity_name: hotel?.legal_entity_name || undefined,
-                  billing_address: hotel?.billing_address || undefined,
-                  authorized_signer_name: hotel?.authorized_signer_name || undefined,
-                  authorized_signer_title: hotel?.authorized_signer_title || undefined,
+                  legal_entity_name: client?.legal_entity_name || undefined,
+                  billing_address: client?.billing_address || undefined,
+                  authorized_signer_name: client?.authorized_signer_name || undefined,
+                  authorized_signer_title: client?.authorized_signer_title || undefined,
                 }}
               />
             </CardContent>
           </Card>
         </div>
 
-        {/* No Hotel Assigned State (shouldn't reach here due to routing) */}
-        {!hotel && !isLoading && (
+        {/* No Client Assigned State (shouldn't reach here due to routing) */}
+        {!client && !isLoading && (
           <Card className="mt-8">
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">
-                No hotel has been assigned to your account yet. 
+                No client has been assigned to your account yet. 
                 Please contact your Daze representative.
               </p>
             </CardContent>
@@ -318,7 +318,7 @@ export default function Portal() {
       <ActivityFeedPanel
         open={showActivityFeed}
         onClose={() => setShowActivityFeed(false)}
-        hotelId={hotelId}
+        hotelId={clientId}
       />
     </div>
   );

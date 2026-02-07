@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface DocumentUploadSectionProps {
-  hotelId: string;
+  clientId: string;
 }
 
 interface Document {
@@ -66,7 +66,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   Other: { bg: "bg-muted", text: "text-muted-foreground" },
 };
 
-export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
+export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -81,12 +81,12 @@ export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
 
   // Fetch documents
   const { data: documents, isLoading } = useQuery({
-    queryKey: ["hotel-documents", hotelId],
+    queryKey: ["client-documents", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
         .select("*")
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -113,7 +113,7 @@ export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
       if (dbError) throw dbError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["hotel-documents", hotelId] });
+      queryClient.invalidateQueries({ queryKey: ["client-documents", clientId] });
       toast.success("Document deleted");
     },
     onError: (error) => {
@@ -177,7 +177,7 @@ export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
       // Generate unique file path
       const fileExt = selectedFile.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `${hotelId}/${fileName}`;
+      const filePath = `${clientId}/${fileName}`;
 
       // Simulate progress (Supabase doesn't provide real progress for small files)
       const progressInterval = setInterval(() => {
@@ -197,7 +197,7 @@ export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
 
       // Insert record into documents table
       const { error: dbError } = await supabase.from("documents").insert({
-        hotel_id: hotelId,
+        client_id: clientId,
         display_name: displayName.trim(),
         file_name: selectedFile.name,
         file_path: filePath,
@@ -212,7 +212,7 @@ export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
       setUploadComplete(true);
 
       // Refresh documents list
-      queryClient.invalidateQueries({ queryKey: ["hotel-documents", hotelId] });
+      queryClient.invalidateQueries({ queryKey: ["client-documents", clientId] });
 
       toast.success("Document uploaded successfully!");
 
@@ -500,17 +500,9 @@ export function DocumentUploadSection({ hotelId }: DocumentUploadSectionProps) {
             </Table>
           </div>
         ) : (
-          <div className="text-center py-8 border rounded-lg bg-muted/20">
-            <div className="relative inline-block mb-3">
-              <Cloud className="h-10 w-10 text-muted-foreground/30" />
-              <FileText className="h-5 w-5 text-[#0EA5E9] absolute -bottom-1 -right-1" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Your library is being prepared.
-            </p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
-              Upload documents to get started.
-            </p>
+          <div className="text-center py-8 text-muted-foreground">
+            <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No documents uploaded yet</p>
           </div>
         )}
       </div>
