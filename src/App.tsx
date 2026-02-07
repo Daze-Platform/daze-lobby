@@ -9,6 +9,10 @@ import { RoleBasedRoute } from "@/components/layout/RoleBasedRoute";
 import { AuthRedirect } from "@/components/layout/AuthRedirect";
 import { PortalRoute } from "@/components/layout/PortalRoute";
 import Dashboard from "./pages/Dashboard";
+import Clients from "./pages/Clients";
+import Blockers from "./pages/Blockers";
+import Devices from "./pages/Devices";
+import Revenue from "./pages/Revenue";
 import Portal from "./pages/Portal";
 import PortalPreview from "./pages/PortalPreview";
 import Auth from "./pages/Auth";
@@ -38,6 +42,46 @@ const App = () => (
                 element={
                   <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
                     <Dashboard />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <Dashboard />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/clients"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <Clients />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/blockers"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <Blockers />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/devices"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <Devices />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/revenue"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <Revenue />
                   </RoleBasedRoute>
                 }
               />
