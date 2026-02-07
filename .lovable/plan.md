@@ -1,208 +1,159 @@
 
+# Kanban Drag-and-Drop Positioning Fix
 
-# Kanban Board & Sidebar UI Enhancement
+## Problem Analysis
 
-## Overview
+After examining the code, I identified several issues causing the cards to appear improperly positioned during drag:
 
-Based on the current screenshot and code review, I'll enhance both the Kanban board and sidebar to better align with the "Series C" SaaS aesthetic (Linear/Ramp inspired) already established in the design system. The goal is to improve visual hierarchy, add more polish, and create a more information-dense yet clean interface.
+1. **Transform Conflict**: The `HotelCard` component applies BOTH dnd-kit's `CSS.Transform` AND Framer Motion's `layout`/`layoutId` props simultaneously, causing conflicting transform calculations
+2. **Ghost Card Visibility**: When dragging, the original card reduces to 0.4 opacity and scales to 0.98, but the transform is still being applied - making it look like two cards are moving
+3. **Missing Cursor Positioning**: The `DragOverlay` uses default positioning which can cause offset issues, especially in scrollable containers
+
+## Solution Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    BEFORE (Current)                         │
+├─────────────────────────────────────────────────────────────┤
+│  Original Card (motion.div)                                 │
+│  ├── dnd-kit transform (CSS.Transform)                      │
+│  ├── Framer Motion layout + layoutId                        │ ← Conflict!
+│  └── Framer Motion animate (opacity: 0.4, scale: 0.98)      │
+│                                                             │
+│  DragOverlay                                                │
+│  └── HotelCardOverlay (motion.div with lift effects)        │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                     AFTER (Fixed)                           │
+├─────────────────────────────────────────────────────────────┤
+│  Original Card (motion.div)                                 │
+│  ├── NO dnd-kit transform when dragging                     │
+│  ├── Framer Motion layout only (no layoutId)                │ ← No conflict
+│  └── visibility: hidden OR opacity: 0 when dragging         │
+│                                                             │
+│  DragOverlay                                                │
+│  └── HotelCardOverlay (pure clone, no motion conflicts)     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Implementation Plan
+
+### 1. Fix HotelCard Transform Logic
+
+**File**: `src/components/kanban/HotelCard.tsx`
+
+- When the card is being dragged (`isBeingDragged = true`), **skip applying the dnd-kit transform** since the `DragOverlay` handles the visual drag
+- Remove `layoutId` to prevent Framer Motion from trying to animate the card during drag handoff
+- Keep `layout="position"` for smooth reordering animations ONLY
+- Change the dragging state to use `visibility: hidden` or `opacity: 0` to completely hide the source card (instead of 0.4 opacity which causes visual confusion)
+
+### 2. Simplify DragOverlay Configuration
+
+**File**: `src/components/kanban/KanbanBoard.tsx`
+
+- Remove the custom `dropAnimation` configuration that may be causing timing issues
+- Use the default `DragOverlay` behavior for more predictable positioning
+- Ensure the overlay matches the exact styling of the card without extra transforms
+
+### 3. Clean Up HotelCardOverlay
+
+**File**: `src/components/kanban/HotelCard.tsx`
+
+- Remove the `motion.div` wrapper with `initial`/`animate` that adds extra scale/rotation
+- Render the overlay as a static, lifted card (using CSS only for the shadow/scale)
+- This prevents "double animation" from both dnd-kit and Framer Motion
+
+### 4. Improve Ghost Placeholder Behavior
+
+**File**: `src/components/kanban/KanbanColumn.tsx`
+
+- Adjust the ghost placeholder to appear at the TOP of the target column by default
+- Ensure smooth space allocation with `layout="position"` on sibling cards
 
 ---
 
-## Current Issues Identified
+## Technical Details
 
-### Kanban Board
-1. **Column headers** are functional but could be more visually refined with better contrast
-2. **Hotel cards** show good information but could benefit from cleaner layout and more visual polish
-3. **Avatar/initials** are small - could be more prominent as a visual anchor
-4. **Status badges** are compact but could have more visual weight
-5. **Empty states** could be more elegant and inviting
+### Key Code Changes
 
-### Sidebar
-1. **Navigation items** are simple but could use more visual distinction
-2. **Badge counts** are functional but could pop more
-3. **Section organization** could be improved with visual grouping
-4. **Collapse animation** could be smoother
+**HotelCard.tsx - Transform handling:**
+```typescript
+// BEFORE: Always applies transform
+const style = {
+  transform: CSS.Transform.toString(transform),
+  transition,
+};
 
----
-
-## Proposed Enhancements
-
-### 1. Kanban Column Header Redesign
-
-**Current:** Simple header with title, subtitle, and count badge
-**Enhanced:**
-- Cleaner header with subtle gradient accent line on top
-- Phase icon indicator (rocket for onboarding, play for pilot, check-circle for contracted)
-- Better visual separation between column header and content area
-- Card count as a more subtle pill
-
-```text
-┌────────────────────────────────────┐
-│ 🚀  Onboarding                   3 │  ← Icon + Title + Count pill
-│     Menu ingestion & setup         │  ← Muted subtitle
-├════════════════════════════════════┤  ← Accent color bar
-│                                    │
-│   [Cards...]                       │
-│                                    │
-└────────────────────────────────────┘
+// AFTER: Skip transform when dragging (overlay handles it)
+const style = isBeingDragged 
+  ? { opacity: 0 }  // Hidden - overlay is the visual representation
+  : {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
 ```
 
-### 2. Hotel Card Enhancements
+**HotelCard.tsx - Remove layoutId conflict:**
+```typescript
+// BEFORE
+<motion.div
+  layout
+  layoutId={hotel.id}  // Causes conflict with DragOverlay
+  ...
+>
 
-**Improvements:**
-- Larger, more prominent avatar with colored ring based on phase
-- Cleaner badge styling with subtle background
-- Better contact section layout
-- More refined hover state with subtle border glow
-- Add subtle device icon count for all phases (not just pilot_live)
-- Add ARR indicator for contracted clients
-
-```text
-┌──────────────────────────────────────┐
-│ ⋮  ┌──┐  The Pearl Hotel            │
-│    │TH│  ○ Healthy  💻 2            │
-│    └──┘  ──────────────────          │
-│         👤 Sarah Chen                │
-└──────────────────────────────────────┘
+// AFTER
+<motion.div
+  layout="position"  // Only animate position changes, not handoff
+  ...
+>
 ```
 
-### 3. Sidebar Navigation Enhancement
+**HotelCardOverlay - Static lift effect:**
+```typescript
+// BEFORE: Animated lift
+<motion.div
+  initial={{ scale: 1, rotate: 0 }}
+  animate={{ scale: 1.05, rotate: 1.5, ... }}
+>
 
-**Improvements:**
-- Add grouped sections with subtle dividers
-- More refined active state with left border accent
-- Larger touch targets with better hover animation
-- Animated badge counts with scale-in effect
-- Add subtle icon backgrounds for visual weight
-- Improved collapse/expand animation
+// AFTER: Static CSS-based lift
+<div 
+  className="transform scale-105 rotate-1 shadow-2xl ..."
+  style={{ transform: 'scale(1.05) rotate(1.5deg)' }}
+>
+```
 
-```text
-┌─────────────────────┐
-│ 📊 Dashboard        │  ← Active (ocean blue left border + bg)
-├─────────────────────┤
-│ CLIENTS             │  ← Section label (micro style)
-│ 👥 Clients      10  │
-│ ⚠️ Blockers     2   │  ← Red badge pulse
-├─────────────────────┤
-│ OPERATIONS          │
-│ 📱 Devices     11   │
-│ 💰 Revenue          │
-└─────────────────────┘
+**KanbanBoard.tsx - Simpler DragOverlay:**
+```typescript
+// BEFORE: Custom drop animation
+<DragOverlay dropAnimation={{
+  duration: 200,
+  easing: "cubic-bezier(0.2, 0.9, 0.3, 1)",
+}}>
+
+// AFTER: Default or null for instant snap
+<DragOverlay dropAnimation={null}>
 ```
 
 ---
 
-## Technical Implementation
-
-### Files to Modify
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/kanban/KanbanColumn.tsx` | Redesigned header with icon, accent bar, refined empty state |
-| `src/components/kanban/HotelCard.tsx` | Larger avatars, phase-colored rings, ARR display, cleaner layout |
-| `src/components/layout/DashboardSidebar.tsx` | Grouped sections, refined nav items, better badges, improved animations |
-| `src/components/kanban/KanbanBoard.tsx` | Update column configuration with icons |
-
-### New Design Tokens to Leverage
-
-The existing design system already has:
-- `shadow-soft-*` for elevation
-- `--spring-bounce` for animations  
-- `icon-squircle` for icon containers
-- `.glass-sidebar` for sidebar styling
-- `.label-micro` for section labels
-
-### Phase Accent Colors (Already Defined)
-
-- **Onboarding**: Blue (`bg-blue-500/10 border-blue-500`)
-- **Pilot Live**: Amber (`bg-amber-500/10 border-amber-500`)
-- **Contracted**: Emerald (`bg-emerald-500/10 border-emerald-500`)
+| `src/components/kanban/HotelCard.tsx` | Fix transform logic, remove layoutId, simplify overlay |
+| `src/components/kanban/KanbanBoard.tsx` | Simplify DragOverlay configuration |
+| `src/components/kanban/KanbanColumn.tsx` | Minor adjustments to layout animation props |
 
 ---
 
-## Detailed Changes
+## Expected Outcome
 
-### KanbanColumn.tsx Enhancements
-
-1. **Header with phase icon:**
-   - Add icon mapping: `Rocket` for onboarding, `Play` for pilot_live, `CheckCircle2` for contracted
-   - Icon in a small squircle container
-
-2. **Accent bar redesign:**
-   - Move colored accent to bottom border of header (cleaner look)
-   - Remove top rounding on droppable area
-
-3. **Empty state polish:**
-   - Use icon-stack pattern (large faint icon + small dark icon overlay)
-   - More inviting copy
-
-### HotelCard.tsx Enhancements
-
-1. **Avatar improvements:**
-   - Increase size to `h-10 w-10` on desktop
-   - Add phase-colored ring on avatar
-
-2. **Status badge refinement:**
-   - Use pill style with icon prefix
-   - `✓ Healthy` or `⚠ Blocked`
-
-3. **Metrics row:**
-   - Always show device count if > 0
-   - Add ARR display for contracted phase: `$48K ARR`
-
-4. **Contact section:**
-   - Cleaner divider using just spacing
-   - Avatar initials + name inline
-
-### DashboardSidebar.tsx Enhancements
-
-1. **Section grouping:**
-   - Group 1: Dashboard (standalone)
-   - Group 2: "CLIENTS" section (Clients, Blockers)
-   - Group 3: "OPERATIONS" section (Devices, Revenue)
-
-2. **Active state refinement:**
-   - Left border accent (3px ocean blue)
-   - Subtle background fill
-   - Icon color changes to primary
-
-3. **Badge improvements:**
-   - Larger, more prominent
-   - Red destructive style for Blockers count
-   - Pulse animation on Blockers badge
-
-4. **Hover states:**
-   - Subtle background on hover
-   - Icon lift effect
-
----
-
-## Animation Details
-
-### Card Interactions
-- **Hover**: Subtle border glow + slight lift (already implemented, will refine)
-- **Drag start**: Scale up slightly + shadow increase (already implemented)
-
-### Sidebar Transitions
-- **Section collapse**: Smooth accordion with opacity
-- **Badge count change**: Scale-in pop animation
-- **Nav item hover**: Background fade-in + icon color transition
-
----
-
-## Accessibility Considerations
-
-- Maintain minimum 44px touch targets on all interactive elements
-- Ensure color contrast meets WCAG AA
-- Keep keyboard navigation working for sidebar
-- Maintain screen reader labels for status indicators
-
----
-
-## Visual Reference Alignment
-
-The enhancements will bring the UI closer to:
-- **Linear**: Clean column headers with minimal chrome
-- **Ramp**: Information-dense cards with clear hierarchy
-- **Stripe Dashboard**: Refined sidebar with section grouping
-
+After these changes:
+- Cards will smoothly follow the cursor when grabbed
+- No visual "jumping" or offset issues
+- The source card becomes invisible while its overlay floats
+- Drop animation snaps cleanly into place
+- Sibling cards smoothly make room for the dropped card
