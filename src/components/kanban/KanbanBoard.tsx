@@ -120,9 +120,9 @@ export function KanbanBoard() {
     blockerType: blockerDetails.blocker_type,
     autoRule: blockerDetails.auto_rule,
     createdAt: blockerDetails.created_at,
-    hotelId: selectedBlockedClient.id,
-    hotelName: selectedBlockedClient.name,
-    hotelPhase: selectedBlockedClient.phase,
+    clientId: selectedBlockedClient.id,
+    clientName: selectedBlockedClient.name,
+    clientPhase: selectedBlockedClient.phase,
   } : null;
 
   const sensors = useSensors(

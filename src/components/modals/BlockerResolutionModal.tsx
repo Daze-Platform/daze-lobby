@@ -30,9 +30,9 @@ export interface BlockerData {
   blockerType: Enums<"blocker_type">;
   autoRule: string | null;
   createdAt: string;
-  hotelId: string;
-  hotelName: string;
-  hotelPhase: string;
+  clientId: string;
+  clientName: string;
+  clientPhase: string;
 }
 
 interface BlockerResolutionModalProps {
@@ -102,7 +102,7 @@ export function BlockerResolutionModal({
   const daysStalled = differenceInDays(new Date(), new Date(blocker.createdAt));
   const issueTitle = parseIssueTitle(blocker.autoRule, blocker.reason);
   const actionConfig = getActionConfig(blocker.autoRule);
-  const dazeNote = getDazeNote(blocker.autoRule, blocker.hotelPhase);
+  const dazeNote = getDazeNote(blocker.autoRule, blocker.clientPhase);
 
   const handlePrimaryAction = () => {
     if (actionConfig.path) {
@@ -117,8 +117,8 @@ export function BlockerResolutionModal({
     
     await clearBlocker.mutateAsync({
       blockerId: blocker.id,
-      hotelId: blocker.hotelId,
-      hotelName: blocker.hotelName,
+      clientId: blocker.clientId,
+      clientName: blocker.clientName,
     });
     
     onBlockerCleared?.();
@@ -151,7 +151,7 @@ export function BlockerResolutionModal({
                   Blocker Detected: {issueTitle}
                 </DialogTitle>
                 <DialogDescription className="text-sm text-muted-foreground mt-1">
-                  <span className="font-medium text-foreground">{blocker.hotelName}</span>
+                  <span className="font-medium text-foreground">{blocker.clientName}</span>
                   {" "}has been stalled for{" "}
                   <span className="font-semibold text-destructive">{daysStalled} day{daysStalled !== 1 ? "s" : ""}</span>
                 </DialogDescription>
