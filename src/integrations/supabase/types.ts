@@ -17,27 +17,27 @@ export type Database = {
       activity_logs: {
         Row: {
           action: string
+          client_id: string
           created_at: string
           details: Json | null
-          hotel_id: string
           id: string
           is_auto_logged: boolean | null
           user_id: string | null
         }
         Insert: {
           action: string
+          client_id: string
           created_at?: string
           details?: Json | null
-          hotel_id: string
           id?: string
           is_auto_logged?: boolean | null
           user_id?: string | null
         }
         Update: {
           action?: string
+          client_id?: string
           created_at?: string
           details?: Json | null
-          hotel_id?: string
           id?: string
           is_auto_logged?: boolean | null
           user_id?: string | null
@@ -45,9 +45,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "activity_logs_hotel_id_fkey"
-            columns: ["hotel_id"]
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "hotels"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -56,9 +56,9 @@ export type Database = {
         Row: {
           auto_rule: string | null
           blocker_type: Database["public"]["Enums"]["blocker_type"]
+          client_id: string
           created_at: string
           created_by_id: string | null
-          hotel_id: string
           id: string
           reason: string
           resolved_at: string | null
@@ -67,9 +67,9 @@ export type Database = {
         Insert: {
           auto_rule?: string | null
           blocker_type: Database["public"]["Enums"]["blocker_type"]
+          client_id: string
           created_at?: string
           created_by_id?: string | null
-          hotel_id: string
           id?: string
           reason: string
           resolved_at?: string | null
@@ -78,9 +78,9 @@ export type Database = {
         Update: {
           auto_rule?: string | null
           blocker_type?: Database["public"]["Enums"]["blocker_type"]
+          client_id?: string
           created_at?: string
           created_by_id?: string | null
-          hotel_id?: string
           id?: string
           reason?: string
           resolved_at?: string | null
@@ -89,144 +89,18 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "blocker_alerts_hotel_id_fkey"
-            columns: ["hotel_id"]
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "hotels"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
       }
-      client_hotels: {
+      client_contacts: {
         Row: {
-          created_at: string
-          hotel_id: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          hotel_id: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          hotel_id?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_hotels_hotel_id_fkey"
-            columns: ["hotel_id"]
-            isOneToOne: false
-            referencedRelation: "hotels"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      devices: {
-        Row: {
-          created_at: string
-          device_type: string
-          hotel_id: string
-          id: string
-          install_date: string | null
-          is_daze_owned: boolean
-          last_check_in: string | null
-          serial_number: string
-          status: Database["public"]["Enums"]["device_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          device_type: string
-          hotel_id: string
-          id?: string
-          install_date?: string | null
-          is_daze_owned?: boolean
-          last_check_in?: string | null
-          serial_number: string
-          status?: Database["public"]["Enums"]["device_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          device_type?: string
-          hotel_id?: string
-          id?: string
-          install_date?: string | null
-          is_daze_owned?: boolean
-          last_check_in?: string | null
-          serial_number?: string
-          status?: Database["public"]["Enums"]["device_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "devices_hotel_id_fkey"
-            columns: ["hotel_id"]
-            isOneToOne: false
-            referencedRelation: "hotels"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      documents: {
-        Row: {
-          category: string | null
-          created_at: string
-          display_name: string
-          file_name: string
-          file_path: string
-          file_size: number | null
-          hotel_id: string
-          id: string
-          mime_type: string | null
-          updated_at: string
-          uploaded_by_id: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          display_name: string
-          file_name: string
-          file_path: string
-          file_size?: number | null
-          hotel_id: string
-          id?: string
-          mime_type?: string | null
-          updated_at?: string
-          uploaded_by_id?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          display_name?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number | null
-          hotel_id?: string
-          id?: string
-          mime_type?: string | null
-          updated_at?: string
-          uploaded_by_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_hotel_id_fkey"
-            columns: ["hotel_id"]
-            isOneToOne: false
-            referencedRelation: "hotels"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      hotel_contacts: {
-        Row: {
+          client_id: string
           created_at: string
           email: string | null
-          hotel_id: string
           id: string
           is_primary: boolean | null
           name: string
@@ -235,9 +109,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_id: string
           created_at?: string
           email?: string | null
-          hotel_id: string
           id?: string
           is_primary?: boolean | null
           name: string
@@ -246,9 +120,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_id?: string
           created_at?: string
           email?: string | null
-          hotel_id?: string
           id?: string
           is_primary?: boolean | null
           name?: string
@@ -259,14 +133,14 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "hotel_contacts_hotel_id_fkey"
-            columns: ["hotel_id"]
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "hotels"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
       }
-      hotels: {
+      clients: {
         Row: {
           arr: number | null
           assigned_team_member_id: string | null
@@ -332,13 +206,148 @@ export type Database = {
         }
         Relationships: []
       }
+      devices: {
+        Row: {
+          client_id: string
+          created_at: string
+          device_type: string
+          id: string
+          install_date: string | null
+          is_daze_owned: boolean
+          last_check_in: string | null
+          serial_number: string
+          status: Database["public"]["Enums"]["device_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          device_type: string
+          id?: string
+          install_date?: string | null
+          is_daze_owned?: boolean
+          last_check_in?: string | null
+          serial_number: string
+          status?: Database["public"]["Enums"]["device_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          device_type?: string
+          id?: string
+          install_date?: string | null
+          is_daze_owned?: boolean
+          last_check_in?: string | null
+          serial_number?: string
+          status?: Database["public"]["Enums"]["device_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_hotel_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          display_name: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          updated_at: string
+          uploaded_by_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          display_name: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          display_name?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_hotel_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_tasks: {
         Row: {
+          client_id: string
           completed_at: string | null
           completed_by_id: string | null
           created_at: string
           data: Json | null
-          hotel_id: string
           id: string
           is_completed: boolean
           task_key: string
@@ -346,11 +355,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_id: string
           completed_at?: string | null
           completed_by_id?: string | null
           created_at?: string
           data?: Json | null
-          hotel_id: string
           id?: string
           is_completed?: boolean
           task_key: string
@@ -358,11 +367,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_id?: string
           completed_at?: string | null
           completed_by_id?: string | null
           created_at?: string
           data?: Json | null
-          hotel_id?: string
           id?: string
           is_completed?: boolean
           task_key?: string
@@ -372,9 +381,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "onboarding_tasks_hotel_id_fkey"
-            columns: ["hotel_id"]
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "hotels"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -436,6 +445,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_clients: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_hotels_hotel_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -459,24 +497,24 @@ export type Database = {
       }
       venues: {
         Row: {
+          client_id: string
           created_at: string
-          hotel_id: string
           id: string
           menu_pdf_url: string | null
           name: string
           updated_at: string
         }
         Insert: {
+          client_id: string
           created_at?: string
-          hotel_id: string
           id?: string
           menu_pdf_url?: string | null
           name: string
           updated_at?: string
         }
         Update: {
+          client_id?: string
           created_at?: string
-          hotel_id?: string
           id?: string
           menu_pdf_url?: string | null
           name?: string
@@ -485,9 +523,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "venues_hotel_id_fkey"
-            columns: ["hotel_id"]
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "hotels"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -497,10 +535,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_client: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_access_hotel: {
         Args: { _hotel_id: string; _user_id: string }
         Returns: boolean
       }
+      get_user_client_id: { Args: { _user_id: string }; Returns: string }
       get_user_hotel_id: { Args: { _user_id: string }; Returns: string }
       has_dashboard_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
