@@ -277,11 +277,8 @@ export function KanbanBoard() {
         </div>
       </LayoutGroup>
 
-      {/* Drag Overlay - The floating card with high-stiffness spring */}
-      <DragOverlay dropAnimation={{
-        duration: 200,
-        easing: "cubic-bezier(0.2, 0.9, 0.3, 1)",
-      }}>
+      {/* Drag Overlay - Instant snap with no drop animation for crisp UX */}
+      <DragOverlay dropAnimation={null}>
         {activeHotel ? (
           <HotelCardOverlay hotel={activeHotel} />
         ) : null}
