@@ -212,12 +212,12 @@ export default function Portal() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        {/* Welcome Section - Hero entrance */}
+        {/* Welcome Section - Hero entrance, aligned with card content */}
         <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
           <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
             Welcome, {hotel?.name || "Partner"}
           </h1>
-          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
