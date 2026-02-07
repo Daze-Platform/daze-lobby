@@ -141,7 +141,7 @@ export function TaskAccordion({
     <Accordion 
       type="single" 
       collapsible 
-      className="w-full space-y-3"
+      className="w-full space-y-4 sm:space-y-5"
       value={accordionValue}
       onValueChange={setAccordionValue}
     >

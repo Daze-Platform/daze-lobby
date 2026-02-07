@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Check, Image, AlertCircle } from "lucide-react";
+import { Upload, Check, Image, AlertCircle, Moon, Sun, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
-import { IconStack } from "@/components/ui/icon-container";
 
 interface LogoVariant {
   type: "dark" | "light" | "icon";
@@ -58,42 +57,82 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
     reader.readAsDataURL(file);
   };
 
+  // Separate primary variants (dark/light) from icon
+  const primaryVariants = logos.filter(l => l.type === "dark" || l.type === "light");
+  const iconVariant = logos.find(l => l.type === "icon");
+
+  const getVariantIcon = (type: string) => {
+    switch (type) {
+      case "dark": return Moon;
+      case "light": return Sun;
+      case "icon": return Sparkles;
+      default: return Image;
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <Label className="flex items-center gap-2">
+    <div className="space-y-5">
+      <Label className="flex items-center gap-2 text-sm font-medium">
         <Image className="w-4 h-4" strokeWidth={1.5} />
         Logo Variants
       </Label>
 
-      <div className="grid gap-4">
-        {logos.map((logo) => (
-          <div
-            key={logo.type}
-            className={cn(
-              "relative border rounded-lg p-4 transition-all",
-              logo.file ? "border-primary bg-primary/5" : "border-dashed"
-            )}
-          >
-            <div className="flex items-start gap-4">
-              {/* Preview / Upload Zone */}
+      {/* Primary Variants - Side by side on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {primaryVariants.map((logo) => {
+          const VariantIcon = getVariantIcon(logo.type);
+          return (
+            <div key={logo.type} className="space-y-2">
+              {/* Label above */}
+              <div className="flex items-center gap-2">
+                <VariantIcon className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+                <span className="text-sm font-medium">{logo.label}</span>
+                {logo.file && (
+                  <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
+                    <Check className="w-3 h-3" strokeWidth={2} />
+                    Uploaded
+                  </span>
+                )}
+              </div>
+              
+              {/* Upload Box - Larger and more prominent */}
               <label
                 className={cn(
-                  "flex-shrink-0 w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors",
-                  logo.type === "light" ? "bg-foreground" : "bg-muted",
-                  "hover:border-primary"
+                  "flex flex-col items-center justify-center cursor-pointer transition-all",
+                  "w-full aspect-[3/2] rounded-xl border-2 border-dashed",
+                  logo.type === "light" ? "bg-slate-800" : "bg-muted/50",
+                  logo.file 
+                    ? "border-primary bg-primary/5" 
+                    : "border-muted-foreground/30 hover:border-primary/60",
+                  "group"
                 )}
               >
                 {logo.preview ? (
                   <img
                     src={logo.preview}
                     alt={logo.label}
-                    className="w-full h-full object-contain rounded-lg p-1"
+                    className="w-full h-full object-contain rounded-lg p-3"
                   />
                 ) : (
-                  <Upload className={cn(
-                    "w-6 h-6",
-                    logo.type === "light" ? "text-muted" : "text-muted-foreground"
-                  )} strokeWidth={1.5} />
+                  <div className="flex flex-col items-center gap-2 p-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                      logo.type === "light" 
+                        ? "bg-slate-700 group-hover:bg-slate-600" 
+                        : "bg-muted group-hover:bg-muted/80"
+                    )}>
+                      <Upload className={cn(
+                        "w-5 h-5",
+                        logo.type === "light" ? "text-slate-400" : "text-muted-foreground"
+                      )} strokeWidth={1.5} />
+                    </div>
+                    <span className={cn(
+                      "text-xs text-center",
+                      logo.type === "light" ? "text-slate-400" : "text-muted-foreground"
+                    )}>
+                      {logo.description}
+                    </span>
+                  </div>
                 )}
                 <Input
                   type="file"
@@ -102,34 +141,83 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                   onChange={(e) => handleFileChange(logo.type, e.target.files?.[0])}
                 />
               </label>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-sm">{logo.label}</p>
-                  {logo.file && (
-                    <span className="inline-flex items-center gap-1 text-xs text-primary">
-                      <Check className="w-3 h-3" strokeWidth={2} />
-                      Uploaded
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {logo.description}
+              
+              {/* Filename if uploaded */}
+              {logo.file && (
+                <p className="text-xs text-muted-foreground truncate px-1">
+                  {logo.file.name}
                 </p>
-                {logo.file && (
-                  <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {logo.file.name}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <p className="text-xs text-muted-foreground flex items-center gap-1">
-        <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
+      {/* Icon/Favicon - Full width below */}
+      {iconVariant && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <span className="text-sm font-medium">{iconVariant.label}</span>
+            {iconVariant.file && (
+              <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
+                <Check className="w-3 h-3" strokeWidth={2} />
+                Uploaded
+              </span>
+            )}
+          </div>
+          
+          <label
+            className={cn(
+              "flex items-center gap-4 cursor-pointer transition-all",
+              "w-full p-4 rounded-xl border-2 border-dashed",
+              "bg-muted/50",
+              iconVariant.file 
+                ? "border-primary bg-primary/5" 
+                : "border-muted-foreground/30 hover:border-primary/60",
+              "group"
+            )}
+          >
+            {/* Square preview area */}
+            <div className={cn(
+              "w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
+              iconVariant.preview ? "bg-transparent" : "bg-muted group-hover:bg-muted/80"
+            )}>
+              {iconVariant.preview ? (
+                <img
+                  src={iconVariant.preview}
+                  alt={iconVariant.label}
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              ) : (
+                <Upload className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+              )}
+            </div>
+            
+            {/* Description */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-muted-foreground">
+                {iconVariant.description}
+              </p>
+              {iconVariant.file && (
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  {iconVariant.file.name}
+                </p>
+              )}
+            </div>
+            
+            <Input
+              type="file"
+              accept=".png,.svg,.jpg,.jpeg,image/png,image/jpeg,image/svg+xml"
+              className="sr-only"
+              onChange={(e) => handleFileChange("icon", e.target.files?.[0])}
+            />
+          </label>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+        <AlertCircle className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
         Accepted: PNG, SVG, JPG (max 5MB). Executables blocked.
       </p>
     </div>
