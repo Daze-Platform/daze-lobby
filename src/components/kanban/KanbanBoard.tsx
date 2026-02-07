@@ -21,6 +21,7 @@ import { DraggableHotelCard, HotelCardOverlay } from "./HotelCard";
 import { useHotels, useUpdateHotelPhase } from "@/hooks/useHotels";
 import { useBlockerDetails } from "@/hooks/useBlockerDetails";
 import { BlockerResolutionModal, type BlockerData } from "@/components/modals/BlockerResolutionModal";
+import { HotelDetailPanel } from "@/components/dashboard";
 import type { Enums } from "@/integrations/supabase/types";
 import type { Hotel } from "@/hooks/useHotels";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +84,10 @@ export function KanbanBoard() {
   const [blockerModalOpen, setBlockerModalOpen] = useState(false);
   const [selectedBlockedHotel, setSelectedBlockedHotel] = useState<Hotel | null>(null);
   
+  // Hotel detail panel state
+  const [detailPanelOpen, setDetailPanelOpen] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  
   // Fetch blocker details when a hotel is selected
   const { data: blockerDetails } = useBlockerDetails(selectedBlockedHotel?.id || null);
   
@@ -93,6 +98,12 @@ export function KanbanBoard() {
   const handleBlockedClick = useCallback((hotel: Hotel) => {
     setSelectedBlockedHotel(hotel);
     setBlockerModalOpen(true);
+  }, []);
+  
+  // Handle click on card to open detail panel
+  const handleCardClick = useCallback((hotel: Hotel) => {
+    setSelectedHotel(hotel);
+    setDetailPanelOpen(true);
   }, []);
   
   // Build blocker data for modal
@@ -255,6 +266,7 @@ export function KanbanBoard() {
                 showGhost={showGhost}
                 ghostDimensions={cardDimensionsRef.current}
                 onBlockedClick={handleBlockedClick}
+                onCardClick={handleCardClick}
               />
             </SortableContext>
           );
@@ -277,6 +289,13 @@ export function KanbanBoard() {
         onOpenChange={setBlockerModalOpen}
         blocker={blockerData}
         onBlockerCleared={() => setSelectedBlockedHotel(null)}
+      />
+      
+      {/* Hotel Detail Panel */}
+      <HotelDetailPanel
+        hotel={selectedHotel}
+        open={detailPanelOpen}
+        onOpenChange={setDetailPanelOpen}
       />
     </DndContext>
   );

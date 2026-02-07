@@ -172,6 +172,56 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          display_name: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          hotel_id: string
+          id: string
+          mime_type: string | null
+          updated_at: string
+          uploaded_by_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          display_name: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          hotel_id: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          display_name?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          hotel_id?: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotel_contacts: {
         Row: {
           created_at: string
