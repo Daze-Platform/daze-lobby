@@ -11,6 +11,7 @@ interface OnboardingTask {
 }
 
 interface LegalEntityData {
+  property_name?: string;
   legal_entity_name?: string;
   billing_address?: string;
   authorized_signer_name?: string;

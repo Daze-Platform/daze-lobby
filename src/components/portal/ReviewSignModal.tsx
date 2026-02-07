@@ -12,13 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SignaturePad, SignaturePadRef } from "./SignaturePad";
-import { Check, Loader2, Shield, Calendar, Download, Building2, MapPin, User, Briefcase } from "lucide-react";
+import { Check, Loader2, Shield, Calendar, Download, Building2, MapPin, User, Briefcase, Hotel } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { IconContainer } from "@/components/ui/icon-container";
 import { generateAgreementPdf } from "@/lib/generateAgreementPdf";
 
 interface LegalEntityData {
+  property_name?: string;
   legal_entity_name?: string;
   billing_address?: string;
   authorized_signer_name?: string;
@@ -183,6 +184,7 @@ export function ReviewSignModal({
   const [hasSignature, setHasSignature] = useState(false);
   
   // Form state
+  const [propertyName, setPropertyName] = useState("");
   const [legalEntityName, setLegalEntityName] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [authorizedSignerName, setAuthorizedSignerName] = useState("");
@@ -193,6 +195,7 @@ export function ReviewSignModal({
   // Pre-fill from saved data when modal opens
   useEffect(() => {
     if (open && initialLegalEntity) {
+      setPropertyName(initialLegalEntity.property_name || "");
       setLegalEntityName(initialLegalEntity.legal_entity_name || "");
       setBillingAddress(initialLegalEntity.billing_address || "");
       setAuthorizedSignerName(initialLegalEntity.authorized_signer_name || "");
@@ -202,17 +205,19 @@ export function ReviewSignModal({
 
   // Current entity data for real-time injection
   const currentEntity: LegalEntityData = useMemo(() => ({
+    property_name: propertyName,
     legal_entity_name: legalEntityName,
     billing_address: billingAddress,
     authorized_signer_name: authorizedSignerName,
     authorized_signer_title: authorizedSignerTitle,
-  }), [legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle]);
+  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle]);
 
   // Generate agreement text with injected values
   const agreementText = useMemo(() => createAgreementText(currentEntity), [currentEntity]);
 
   // Form validation - all fields required
   const isFormValid = 
+    propertyName.trim().length > 0 &&
     legalEntityName.trim().length > 0 &&
     billingAddress.trim().length > 0 &&
     authorizedSignerName.trim().length > 0 &&
@@ -226,6 +231,7 @@ export function ReviewSignModal({
     const dataUrl = signaturePadRef.current?.getDataUrl();
     if (dataUrl && isFormValid) {
       onSign(dataUrl, {
+        property_name: propertyName.trim(),
         legal_entity_name: legalEntityName.trim(),
         billing_address: billingAddress.trim(),
         authorized_signer_name: authorizedSignerName.trim(),
@@ -309,6 +315,24 @@ export function ReviewSignModal({
                           onChange={(e) => setLegalEntityName(e.target.value)}
                           className="h-9"
                         />
+                      </div>
+
+                      {/* Property Name - NEW FIELD */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-property-name" className="text-xs flex items-center gap-1.5">
+                          <Hotel className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                          Property Name <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="modal-property-name"
+                          placeholder="e.g., The Pensacola Beach Resort"
+                          value={propertyName}
+                          onChange={(e) => setPropertyName(e.target.value)}
+                          className="h-9"
+                        />
+                        <p className="text-2xs text-muted-foreground">
+                          The name of the property as it will appear in the Daze system
+                        </p>
                       </div>
 
                       {/* Registered Address */}
@@ -413,6 +437,9 @@ export function ReviewSignModal({
                   {/* Entity Summary */}
                   {initialLegalEntity && (
                     <div className="p-4 bg-muted/30 rounded-lg space-y-2 text-sm">
+                      {initialLegalEntity.property_name && (
+                        <p><span className="text-muted-foreground">Property:</span> <span className="font-medium">{initialLegalEntity.property_name}</span></p>
+                      )}
                       <p><span className="text-muted-foreground">Entity:</span> <span className="font-medium">{initialLegalEntity.legal_entity_name}</span></p>
                       <p><span className="text-muted-foreground">Address:</span> <span className="font-medium">{initialLegalEntity.billing_address}</span></p>
                       <p><span className="text-muted-foreground">Signed by:</span> <span className="font-medium">{initialLegalEntity.authorized_signer_name}, {initialLegalEntity.authorized_signer_title}</span></p>

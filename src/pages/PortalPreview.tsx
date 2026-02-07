@@ -56,6 +56,7 @@ export default function PortalPreview() {
   
   // Demo legal entity state
   const [hotelLegalEntity, setHotelLegalEntity] = useState({
+    property_name: "",
     legal_entity_name: "",
     billing_address: "",
     authorized_signer_name: "",
@@ -96,6 +97,7 @@ export default function PortalPreview() {
   }, [tasks, status]);
 
   const handleLegalSign = async (signatureDataUrl: string, legalEntityData: {
+    property_name?: string;
     legal_entity_name?: string;
     billing_address?: string;
     authorized_signer_name?: string;
@@ -105,6 +107,7 @@ export default function PortalPreview() {
     
     // Update demo legal entity state
     setHotelLegalEntity({
+      property_name: legalEntityData.property_name || "",
       legal_entity_name: legalEntityData.legal_entity_name || "",
       billing_address: legalEntityData.billing_address || "",
       authorized_signer_name: legalEntityData.authorized_signer_name || "",

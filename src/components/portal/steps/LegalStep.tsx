@@ -14,6 +14,7 @@ import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { format } from "date-fns";
 
 interface LegalEntityData {
+  property_name?: string;
   legal_entity_name?: string;
   billing_address?: string;
   authorized_signer_name?: string;
