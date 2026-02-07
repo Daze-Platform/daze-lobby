@@ -6,8 +6,7 @@ import { toast } from "sonner";
 export type Hotel = Tables<"hotels"> & {
   hasBlocker: boolean;
   primaryContact: Tables<"hotel_contacts"> | null;
-  deviceCount: number;
-  onlineDeviceCount: number;
+  dazeDeviceCount: number;
 };
 
 export function useHotels() {
@@ -44,25 +43,19 @@ export function useHotels() {
         contacts?.map((c) => [c.hotel_id, c]) || []
       );
 
-      // Fetch devices
+      // Fetch only Daze-owned devices
       const { data: devices, error: devicesError } = await supabase
         .from("devices")
-        .select("hotel_id, status");
+        .select("hotel_id")
+        .eq("is_daze_owned", true);
 
       if (devicesError) throw devicesError;
 
-      const devicesByHotel = new Map<
-        string,
-        { total: number; online: number }
-      >();
+      // Count Daze devices per hotel
+      const dazeDevicesByHotel = new Map<string, number>();
       devices?.forEach((d) => {
-        const current = devicesByHotel.get(d.hotel_id) || {
-          total: 0,
-          online: 0,
-        };
-        current.total++;
-        if (d.status === "online") current.online++;
-        devicesByHotel.set(d.hotel_id, current);
+        const current = dazeDevicesByHotel.get(d.hotel_id) || 0;
+        dazeDevicesByHotel.set(d.hotel_id, current + 1);
       });
 
       // Check for stale hotels (no activity > 48h)
@@ -72,17 +65,12 @@ export function useHotels() {
       return (hotels || []).map((hotel) => {
         const lastUpdate = new Date(hotel.updated_at);
         const isStale = now.getTime() - lastUpdate.getTime() > staleThreshold;
-        const deviceInfo = devicesByHotel.get(hotel.id) || {
-          total: 0,
-          online: 0,
-        };
 
         return {
           ...hotel,
           hasBlocker: blockerHotelIds.has(hotel.id) || isStale,
           primaryContact: contactsByHotel.get(hotel.id) || null,
-          deviceCount: deviceInfo.total,
-          onlineDeviceCount: deviceInfo.online,
+          dazeDeviceCount: dazeDevicesByHotel.get(hotel.id) || 0,
         } as Hotel;
       });
     },

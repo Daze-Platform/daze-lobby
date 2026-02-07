@@ -66,6 +66,8 @@ export default function PortalPreview() {
     { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} as Record<string, unknown> },
     { key: "brand", name: "Brand Identity", isCompleted: false, data: {} as Record<string, unknown> },
     { key: "venue", name: "Venue Manager", isCompleted: false, data: {} as Record<string, unknown> },
+    { key: "pos", name: "POS Integration", isCompleted: false, data: {} as Record<string, unknown> },
+    { key: "devices", name: "Device Setup", isCompleted: false, data: {} as Record<string, unknown> },
   ]);
 
   const completedCount = tasks.filter(t => t.isCompleted).length;

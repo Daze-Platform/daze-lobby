@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Accordion } from "@/components/ui/accordion";
-import { LegalStep, BrandStep, VenueStep, PosStep } from "./steps";
+import { LegalStep, BrandStep, VenueStep, PosStep, DevicesStep } from "./steps";
 import type { Venue } from "./VenueCard";
 
 interface OnboardingTask {
@@ -30,7 +30,7 @@ interface TaskAccordionProps {
   hotelLegalEntity?: LegalEntityData;
 }
 
-const TASK_ORDER = ["legal", "brand", "venue", "pos"];
+const TASK_ORDER = ["legal", "brand", "venue", "pos", "devices"];
 
 export function TaskAccordion({ 
   tasks, 
@@ -128,6 +128,14 @@ export function TaskAccordion({
     handleStepComplete("pos");
   };
 
+  const handleDevicesUpdate = (data: { use_daze_tablets: boolean; tablet_count?: number }) => {
+    onTaskUpdate("devices", data);
+  };
+
+  const handleDevicesComplete = () => {
+    handleStepComplete("devices");
+  };
+
   return (
     <Accordion 
       type="single" 
@@ -181,6 +189,17 @@ export function TaskAccordion({
         onStepComplete={handlePosComplete}
         isJustCompleted={recentlyCompleted === "pos"}
         isUnlocking={unlockingStep === "pos"}
+      />
+      
+      <DevicesStep
+        isCompleted={getTaskData("devices")?.isCompleted || false}
+        isLocked={isTaskLocked("devices")}
+        data={getTaskData("devices")?.data}
+        onUpdate={handleDevicesUpdate}
+        isSaving={isUpdating}
+        onStepComplete={handleDevicesComplete}
+        isJustCompleted={recentlyCompleted === "devices"}
+        isUnlocking={unlockingStep === "devices"}
       />
     </Accordion>
   );

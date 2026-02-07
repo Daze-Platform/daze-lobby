@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export type StepBadgeStatus = "pending" | "active" | "complete" | "locked";
 
 interface StepBadgeProps {
-  step: "A" | "B" | "C" | "D";
+  step: "A" | "B" | "C" | "D" | "E";
   status: StepBadgeStatus;
   isJustCompleted?: boolean;
 }
