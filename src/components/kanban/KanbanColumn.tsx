@@ -16,6 +16,7 @@ interface KanbanColumnProps {
   activeId?: string | null;
   showGhost?: boolean;
   ghostDimensions?: { width: number; height: number } | null;
+  lastDroppedId?: string | null;
   onBlockedClick?: (hotel: Hotel) => void;
   onCardClick?: (hotel: Hotel) => void;
 }
@@ -61,6 +62,7 @@ export function KanbanColumn({
   activeId,
   showGhost = false,
   ghostDimensions,
+  lastDroppedId,
   onBlockedClick,
   onCardClick,
 }: KanbanColumnProps) {
@@ -198,7 +200,7 @@ export function KanbanColumn({
               layout="position"
               transition={snapSpring}
             >
-              {/* Ghost Placeholder - Exact card dimensions with dashed Slate-200 border */}
+              {/* Ghost Placeholder - Breathing animation with magnetic effect */}
               <AnimatePresence mode="popLayout">
                 {showGhost && ghostDimensions && (
                   <motion.div
@@ -206,16 +208,19 @@ export function KanbanColumn({
                     layout
                     initial={{ opacity: 0, height: 0, scale: 0.95 }}
                     animate={{ 
-                      opacity: 1, 
+                      opacity: [0.5, 0.7, 0.5], // Breathing effect
                       height: ghostDimensions.height,
-                      scale: 1,
+                      scale: isActive ? 1.02 : 1, // Magnetic scale on hover
                     }}
                     exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                    transition={snapSpring}
+                    transition={{
+                      ...snapSpring,
+                      opacity: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                    }}
                     className={cn(
                       "rounded-xl border-2 border-dashed",
-                      "border-slate-200 bg-slate-100/50",
-                      "dark:border-slate-700 dark:bg-slate-800/30"
+                      "border-primary/50 bg-primary/5",
+                      "dark:border-primary/40 dark:bg-primary/10"
                     )}
                     style={{ width: "100%" }}
                   />
@@ -232,6 +237,7 @@ export function KanbanColumn({
                     hotel={hotel} 
                     index={index}
                     isDragging={activeId === hotel.id}
+                    isJustDropped={lastDroppedId === hotel.id}
                     onBlockedClick={onBlockedClick}
                     onCardClick={onCardClick}
                   />
