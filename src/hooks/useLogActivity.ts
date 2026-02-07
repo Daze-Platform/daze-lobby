@@ -8,16 +8,16 @@ interface LogActivityParams {
   details?: Record<string, unknown>;
 }
 
-export function useLogActivity(hotelId: string | null) {
+export function useLogActivity(clientId: string | null) {
   const { user } = useAuthContext();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ action, details }: LogActivityParams) => {
-      if (!hotelId || !user?.id) return;
+      if (!clientId || !user?.id) return;
 
       const { error } = await supabase.from("activity_logs").insert([{
-        hotel_id: hotelId,
+        client_id: clientId,
         user_id: user.id,
         action,
         details: (details || null) as Json,
@@ -31,7 +31,7 @@ export function useLogActivity(hotelId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["activity-logs", hotelId],
+        queryKey: ["activity-logs", clientId],
       });
     },
   });

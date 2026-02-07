@@ -9,17 +9,17 @@ export type ActivityLog = Tables<"activity_logs"> & {
   } | null;
 };
 
-export function useActivityLogs(hotelId: string | null) {
+export function useActivityLogs(clientId: string | null) {
   return useQuery({
-    queryKey: ["activity-logs", hotelId],
-    enabled: !!hotelId,
+    queryKey: ["activity-logs", clientId],
+    enabled: !!clientId,
     refetchInterval: 30000, // Refresh every 30 seconds for near-real-time
     queryFn: async () => {
       // First get the activity logs
       const { data: logs, error } = await supabase
         .from("activity_logs")
         .select("*")
-        .eq("hotel_id", hotelId!)
+        .eq("client_id", clientId!)
         .order("created_at", { ascending: false })
         .limit(50);
 

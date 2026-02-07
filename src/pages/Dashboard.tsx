@@ -4,20 +4,9 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, AlertTriangle, Cpu, TrendingUp, LucideIcon } from "lucide-react";
+import { Building2, AlertTriangle, Cpu, LucideIcon } from "lucide-react";
 import { KanbanBoard } from "@/components/kanban";
-import { useHotels } from "@/hooks/useHotels";
-
-// Format currency with K/M suffixes
-const formatCurrency = (amount: number): string => {
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  }
-  if (amount >= 1000) {
-    return `$${Math.round(amount / 1000)}K`;
-  }
-  return `$${amount.toLocaleString()}`;
-};
+import { useClients } from "@/hooks/useClients";
 
 interface StatCard {
   label: string;
@@ -27,37 +16,35 @@ interface StatCard {
 
 export default function Dashboard() {
   const { role } = useAuthContext();
-  const { data: hotels, isLoading } = useHotels();
+  const { data: clients, isLoading } = useClients();
 
-  // Compute stats from hotel data
+  // Compute stats from client data - focused on onboarding velocity (no ARR)
   const stats = useMemo<StatCard[]>(() => {
-    if (!hotels) {
+    if (!clients) {
       return [
         { label: "Total Clients", value: "0", icon: Building2 },
-        { label: "Active Blockers", value: "0", icon: AlertTriangle },
+        { label: "Incomplete", value: "0", icon: AlertTriangle },
         { label: "Devices", value: "0", icon: Cpu },
-        { label: "Total ARR", value: "$0", icon: TrendingUp },
       ];
     }
 
-    const totalClients = hotels.length;
-    const activeBlockers = hotels.filter(h => h.hasBlocker).length;
-    const totalDazeDevices = hotels.reduce((sum, h) => sum + h.dazeDeviceCount, 0);
-    const totalARR = hotels.reduce((sum, h) => sum + (h.arr || 0), 0);
+    const totalClients = clients.length;
+    // Incomplete = pending tasks + blockers combined
+    const incompleteCount = clients.reduce((sum, c) => sum + c.incompleteCount, 0);
+    const totalDazeDevices = clients.reduce((sum, c) => sum + c.dazeDeviceCount, 0);
 
     return [
       { label: "Total Clients", value: totalClients.toString(), icon: Building2 },
-      { label: "Active Blockers", value: activeBlockers.toString(), icon: AlertTriangle },
+      { label: "Incomplete", value: incompleteCount.toString(), icon: AlertTriangle },
       { label: "Devices", value: totalDazeDevices.toString(), icon: Cpu },
-      { label: "Total ARR", value: formatCurrency(totalARR), icon: TrendingUp },
     ];
-  }, [hotels]);
+  }, [clients]);
 
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        {/* Stats Overview - Staggered entrance */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Stats Overview - 3 cards focused on onboarding velocity */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {stats.map((stat, index) => (
             <Card 
               key={stat.label} 
