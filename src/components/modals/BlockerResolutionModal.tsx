@@ -42,41 +42,49 @@ interface BlockerResolutionModalProps {
   onBlockerCleared?: () => void;
 }
 
+// Task-based auto_rule values
+const TASK_RULES: Record<string, string> = {
+  incomplete_legal: "Legal Agreement Pending",
+  incomplete_brand: "Brand Identity Incomplete",
+  incomplete_venue: "Venue Setup Required",
+  incomplete_pos: "POS Integration Pending",
+  incomplete_devices: "Device Setup Required",
+};
+
 // Parse a human-readable issue title from auto_rule or fallback to reason
 function parseIssueTitle(autoRule: string | null, reason: string): string {
+  if (autoRule && TASK_RULES[autoRule]) {
+    return TASK_RULES[autoRule];
+  }
   if (autoRule) {
-    const titles: Record<string, string> = {
-      low_order_volume: "Low Order Volume",
-      missing_legal: "Missing Legal Signature",
-      device_offline: "Device Offline",
-      stale_onboarding: "Stale Onboarding",
-    };
-    return titles[autoRule] || autoRule.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    return autoRule.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   }
   // Extract first few words from reason as fallback
   return reason.split(" ").slice(0, 4).join(" ");
 }
 
 // Get context-aware action button config based on auto_rule
-function getActionConfig(autoRule: string | null): { label: string; path: string | null } {
-  const actions: Record<string, { label: string; path: string | null }> = {
-    low_order_volume: { label: "View Activity Log", path: null }, // Opens detail panel
-    missing_legal: { label: "Open Pilot Agreement", path: "/portal" },
-    device_offline: { label: "View Device Status", path: null },
-    stale_onboarding: { label: "Resume Onboarding", path: "/portal" },
+function getActionConfig(autoRule: string | null): { label: string; path: string } {
+  const actions: Record<string, { label: string; path: string }> = {
+    incomplete_legal: { label: "Open Pilot Agreement", path: "/portal" },
+    incomplete_brand: { label: "Complete Brand Setup", path: "/portal" },
+    incomplete_venue: { label: "Configure Venues", path: "/portal" },
+    incomplete_pos: { label: "Set Up POS", path: "/portal" },
+    incomplete_devices: { label: "Choose Devices", path: "/portal" },
   };
-  return actions[autoRule || ""] || { label: "View Details", path: null };
+  return actions[autoRule || ""] || { label: "Open Portal", path: "/portal" };
 }
 
 // Get a contextual "why this matters" note based on auto_rule
-function getDazeNote(autoRule: string | null, hotelPhase: string): string {
+function getDazeNote(autoRule: string | null, _hotelPhase: string): string {
   const notes: Record<string, string> = {
-    low_order_volume: "Resolving this allows the hotel to maintain healthy operational metrics and continue progressing.",
-    missing_legal: "Signing the pilot agreement is required before we can proceed to the Pilot Live stage.",
-    device_offline: "Reconnecting devices ensures accurate order tracking and seamless guest experiences.",
-    stale_onboarding: "Completing onboarding unlocks the next phase and brings the property closer to launch.",
+    incomplete_legal: "The pilot agreement must be signed before we can proceed to the next phase.",
+    incomplete_brand: "Brand assets help us configure the guest-facing experience.",
+    incomplete_venue: "Venue details are required for menu and ordering setup.",
+    incomplete_pos: "POS integration enables real-time order syncing.",
+    incomplete_devices: "Device selection determines hardware requirements for launch.",
   };
-  return notes[autoRule || ""] || `Resolving this blocker will help move ${hotelPhase === "onboarding" ? "onboarding" : "this hotel"} forward.`;
+  return notes[autoRule || ""] || "Completing this task unlocks the next phase.";
 }
 
 export function BlockerResolutionModal({

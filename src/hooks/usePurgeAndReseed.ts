@@ -187,13 +187,19 @@ export function usePurgeAndReseed() {
       const { error: devicesError } = await supabase.from("devices").insert(devices);
       if (devicesError) throw new Error(`Failed to insert devices: ${devicesError.message}`);
 
-      // Step 6: Insert blocker alert for Riverside (low order volume)
+      // Step 6: Insert task-based blocker alerts
       const blockerAlerts = [
         {
           hotel_id: hotelIds.riverside,
           blocker_type: "automatic" as const,
-          reason: "Low order volume detected - 15 orders in last 7 days (threshold: 50)",
-          auto_rule: "low_order_volume",
+          reason: "Pilot Agreement not signed - client has not completed the legal step",
+          auto_rule: "incomplete_legal",
+        },
+        {
+          hotel_id: hotelIds.mountain,
+          blocker_type: "automatic" as const,
+          reason: "Brand identity incomplete - no logos uploaded yet",
+          auto_rule: "incomplete_brand",
         },
       ];
 
