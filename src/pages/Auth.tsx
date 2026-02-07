@@ -18,8 +18,18 @@ export default function Auth() {
 
   // Check if user arrived via password reset link
   useEffect(() => {
-    const isReset = searchParams.get("reset") === "1";
+    // Check URL hash for recovery token (Supabase adds tokens to hash fragment)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
     
+    // If this is a recovery flow, show reset form immediately
+    if (type === 'recovery') {
+      setView("reset-password");
+      return;
+    }
+    
+    // Also check for reset query param as fallback
+    const isReset = searchParams.get("reset") === "1";
     if (isReset) {
       // Listen for the PASSWORD_RECOVERY event
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
