@@ -292,7 +292,7 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
       </Tooltip>
     </TooltipProvider>
   );
-}
+});
 
 // Overlay card shown while dragging - Static "Tactile Lift" effect
 interface HotelCardOverlayProps {
