@@ -118,25 +118,26 @@ export function KanbanColumn({
         </div>
       </div>
 
-      {/* Droppable Zone - Magnetic effect with border flash */}
+      {/* Droppable Zone - Enhanced magnetic effect with Ocean Blue border flash */}
       <motion.div
         ref={setNodeRef}
+        layout
         className={cn(
-          "flex-1 p-3 rounded-b-xl min-h-[280px] border border-t-0",
-          "bg-muted/30 border-border/50"
+          "flex-1 p-3 rounded-b-xl min-h-[280px] border-2 border-t-0",
+          "bg-muted/30 transition-colors duration-150"
         )}
         animate={{
           backgroundColor: isActive 
-            ? "hsl(217 91% 60% / 0.06)" 
+            ? "hsl(199 89% 48% / 0.04)" 
             : "hsl(220 14% 96% / 0.3)",
           borderColor: isActive 
-            ? "hsl(199 89% 48% / 0.5)" 
+            ? "hsl(199 89% 48% / 0.8)" // Daze Ocean Blue #0EA5E9
             : "hsl(220 13% 91% / 0.5)",
           boxShadow: isActive 
-            ? "0 0 30px -5px hsl(199 89% 48% / 0.25), inset 0 0 20px -10px hsl(199 89% 48% / 0.1)" 
+            ? "0 0 0 3px hsl(199 89% 48% / 0.15), inset 0 0 30px -10px hsl(199 89% 48% / 0.08)" 
             : "none",
         }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+        transition={snapSpring}
       >
         <AnimatePresence mode="popLayout">
           {hotels.length === 0 && !showGhost ? (
@@ -194,36 +195,47 @@ export function KanbanColumn({
           ) : (
             <motion.div 
               className="space-y-2.5"
-              layout
+              layout="position"
               transition={snapSpring}
             >
-              {/* Ghost Placeholder - Shows where card will land */}
-              <AnimatePresence>
+              {/* Ghost Placeholder - Exact card dimensions with dashed Slate-200 border */}
+              <AnimatePresence mode="popLayout">
                 {showGhost && ghostDimensions && (
                   <motion.div
                     key="ghost-placeholder"
-                    initial={{ opacity: 0, height: 0 }}
+                    layout
+                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
                     animate={{ 
                       opacity: 1, 
                       height: ghostDimensions.height,
+                      scale: 1,
                     }}
-                    exit={{ opacity: 0, height: 0 }}
+                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
                     transition={snapSpring}
-                    className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5"
+                    className={cn(
+                      "rounded-xl border-2 border-dashed",
+                      "border-slate-200 bg-slate-100/50",
+                      "dark:border-slate-700 dark:bg-slate-800/30"
+                    )}
                     style={{ width: "100%" }}
                   />
                 )}
               </AnimatePresence>
               
               {hotels.map((hotel, index) => (
-                <DraggableHotelCard 
-                  key={hotel.id} 
-                  hotel={hotel} 
-                  index={index}
-                  isDragging={activeId === hotel.id}
-                  onBlockedClick={onBlockedClick}
-                  onCardClick={onCardClick}
-                />
+                <motion.div
+                  key={hotel.id}
+                  layout="position"
+                  transition={snapSpring}
+                >
+                  <DraggableHotelCard 
+                    hotel={hotel} 
+                    index={index}
+                    isDragging={activeId === hotel.id}
+                    onBlockedClick={onBlockedClick}
+                    onCardClick={onCardClick}
+                  />
+                </motion.div>
               ))}
             </motion.div>
           )}
