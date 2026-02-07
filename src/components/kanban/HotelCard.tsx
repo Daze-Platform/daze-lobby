@@ -270,10 +270,17 @@ export function DraggableHotelCard({ hotel, index, isDragging = false, onBlocked
   );
 }
 
-// Overlay card shown while dragging - "Tactile Lift" effect
+// Overlay card shown while dragging - "Tactile Lift" effect with enhanced physics
 interface HotelCardOverlayProps {
   hotel: Hotel;
 }
+
+// Enhanced spring with user-requested stiffness
+const liftSpring = {
+  type: "spring" as const,
+  stiffness: 500,
+  damping: 30,
+};
 
 export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
   const daysInPhase = differenceInDays(
@@ -292,29 +299,32 @@ export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
 
   return (
     <motion.div
-      initial={{ scale: 1 }}
-      animate={{ scale: 1.03 }}
-      transition={snapSpring}
+      initial={{ scale: 1, rotate: 0 }}
+      animate={{ 
+        scale: 1.05, 
+        rotate: 1.5,
+        boxShadow: "0 25px 60px -12px hsl(199 89% 48% / 0.35), 0 12px 25px -8px hsl(0 0% 0% / 0.15)"
+      }}
+      transition={liftSpring}
     >
       <Card
         className={cn(
           "cursor-grabbing shadow-2xl border",
-          "ring-2 ring-[hsl(199,89%,48%)]/40 ring-offset-2 ring-offset-background",
-          "shadow-[0_25px_50px_-12px_hsl(199,89%,48%,0.3)]",
+          "ring-2 ring-primary/40 ring-offset-2 ring-offset-background",
           hotel.hasBlocker && "border-destructive/40 bg-destructive/5"
         )}
       >
         <CardContent className="p-3.5">
           <div className="flex items-start gap-3">
             {/* Drag Handle - Active state */}
-            <div className="mt-1.5 text-[hsl(199,89%,48%)]">
+            <div className="mt-1.5 text-primary">
               <GripVertical className="h-4 w-4" />
             </div>
 
             {/* Hotel Avatar */}
             <Avatar className={cn(
               "h-10 w-10 shrink-0 ring-2 shadow-soft",
-              "ring-[hsl(199,89%,48%)]/40"
+              "ring-primary/40"
             )}>
               <AvatarImage src={hotel.logo_url || undefined} />
               <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
