@@ -8,7 +8,8 @@ import {
   Tablet, 
   DollarSign,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,14 @@ import { useState } from "react";
 interface NavItem {
   title: string;
   href: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   badge?: number;
+  badgeVariant?: "default" | "destructive";
+}
+
+interface NavGroup {
+  label?: string;
+  items: NavItem[];
 }
 
 export function DashboardSidebar() {
@@ -62,42 +69,57 @@ export function DashboardSidebar() {
     },
   });
 
-  const navItems: NavItem[] = [
+  const navGroups: NavGroup[] = [
     {
-      title: "Dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
+      items: [
+        {
+          title: "Dashboard",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+        },
+      ],
     },
     {
-      title: "Clients",
-      href: "/clients",
-      icon: Users,
-      badge: clientsCount ?? undefined,
+      label: "CLIENTS",
+      items: [
+        {
+          title: "Clients",
+          href: "/clients",
+          icon: Users,
+          badge: clientsCount ?? undefined,
+        },
+        {
+          title: "Blockers",
+          href: "/blockers",
+          icon: AlertTriangle,
+          badge: blockersCount ?? undefined,
+          badgeVariant: "destructive",
+        },
+      ],
     },
     {
-      title: "Blockers",
-      href: "/blockers",
-      icon: AlertTriangle,
-      badge: blockersCount ?? undefined,
-    },
-    {
-      title: "Devices",
-      href: "/devices",
-      icon: Tablet,
-      badge: devicesCount ?? undefined,
-    },
-    {
-      title: "Revenue",
-      href: "/revenue",
-      icon: DollarSign,
+      label: "OPERATIONS",
+      items: [
+        {
+          title: "Devices",
+          href: "/devices",
+          icon: Tablet,
+          badge: devicesCount ?? undefined,
+        },
+        {
+          title: "Revenue",
+          href: "/revenue",
+          icon: DollarSign,
+        },
+      ],
     },
   ];
 
   return (
     <aside 
       className={cn(
-        "relative flex flex-col h-full bg-background border-r border-border/50 transition-all duration-300 ease-out",
-        isCollapsed ? "w-16" : "w-60"
+        "relative flex flex-col h-full bg-card border-r border-border/40 transition-all duration-300 ease-out",
+        isCollapsed ? "w-[68px]" : "w-60"
       )}
     >
       {/* Collapse Toggle */}
@@ -106,8 +128,8 @@ export function DashboardSidebar() {
         size="icon"
         onClick={() => setIsCollapsed(!isCollapsed)}
         className={cn(
-          "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-background shadow-soft",
-          "hover:bg-muted transition-colors"
+          "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-card shadow-soft",
+          "hover:bg-muted transition-all hover:scale-110"
         )}
       >
         {isCollapsed ? (
@@ -118,53 +140,101 @@ export function DashboardSidebar() {
       </Button>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
-              "text-muted-foreground transition-all duration-200",
-              "hover:bg-muted/50 hover:-translate-y-0.5 hover:shadow-soft",
-              isCollapsed && "justify-center px-2"
+      <nav className="flex-1 px-3 py-4">
+        {navGroups.map((group, groupIndex) => (
+          <div key={groupIndex} className={cn(groupIndex > 0 && "mt-6")}>
+            {/* Section label */}
+            {group.label && !isCollapsed && (
+              <div className="px-3 mb-2">
+                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/60">
+                  {group.label}
+                </span>
+              </div>
             )}
-            activeClassName="bg-[#0EA5E9]/10 text-[#0EA5E9] hover:bg-[#0EA5E9]/15 shadow-soft"
-          >
-            <item.icon 
-              className={cn(
-                "shrink-0 transition-colors",
-                isCollapsed ? "h-5 w-5" : "h-4 w-4"
-              )} 
-              strokeWidth={1.5} 
-            />
-            {!isCollapsed && (
-              <>
-                <span className="flex-1">{item.title}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={cn(
-                    "min-w-[20px] h-5 px-1.5 flex items-center justify-center",
-                    "text-2xs font-semibold rounded-full",
-                    item.title === "Blockers" 
-                      ? "bg-destructive text-destructive-foreground"
-                      : "bg-muted text-muted-foreground"
+            
+            {/* Section divider for collapsed state */}
+            {group.label && isCollapsed && (
+              <div className="px-2 mb-2">
+                <div className="h-px bg-border/60" />
+              </div>
+            )}
+            
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    "group/nav relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                    "text-muted-foreground transition-all duration-200",
+                    "hover:bg-muted/60 hover:text-foreground",
+                    isCollapsed && "justify-center px-2"
+                  )}
+                  activeClassName={cn(
+                    "bg-primary/10 text-primary",
+                    "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
+                    "before:w-[3px] before:h-5 before:rounded-full before:bg-primary"
+                  )}
+                >
+                  {/* Icon with subtle background on hover */}
+                  <div className={cn(
+                    "flex items-center justify-center shrink-0 transition-all",
+                    "group-hover/nav:-translate-y-0.5"
                   )}>
-                    {item.badge > 99 ? "99+" : item.badge}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+                    <item.icon 
+                      className={cn(
+                        "transition-colors",
+                        isCollapsed ? "h-5 w-5" : "h-4 w-4"
+                      )} 
+                      strokeWidth={1.5} 
+                    />
+                  </div>
+                  
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1">{item.title}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className={cn(
+                          "min-w-[22px] h-5 px-1.5 flex items-center justify-center",
+                          "text-[10px] font-semibold rounded-full transition-transform",
+                          "group-hover/nav:scale-105",
+                          item.badgeVariant === "destructive"
+                            ? "bg-destructive text-destructive-foreground animate-gentle-pulse"
+                            : "bg-muted text-muted-foreground"
+                        )}>
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Badge for collapsed state */}
+                  {isCollapsed && item.badge !== undefined && item.badge > 0 && (
+                    <span className={cn(
+                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1",
+                      "flex items-center justify-center",
+                      "text-[9px] font-bold rounded-full",
+                      item.badgeVariant === "destructive"
+                        ? "bg-destructive text-destructive-foreground animate-gentle-pulse"
+                        : "bg-muted-foreground text-background"
+                    )}>
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Bottom section - can add user info or settings here */}
+      {/* Bottom section */}
       <div className={cn(
-        "border-t border-border/50 p-3",
+        "border-t border-border/40 p-3",
         isCollapsed && "flex justify-center"
       )}>
         {!isCollapsed && (
-          <p className="text-2xs text-muted-foreground/60 text-center">
+          <p className="text-[10px] text-muted-foreground/50 text-center font-medium tracking-wide">
             Daze Control Tower
           </p>
         )}

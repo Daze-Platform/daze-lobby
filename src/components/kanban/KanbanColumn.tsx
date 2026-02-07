@@ -4,6 +4,7 @@ import { DraggableHotelCard } from "./HotelCard";
 import type { Hotel } from "@/hooks/useHotels";
 import type { Enums } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
+import { Rocket, Play, CheckCircle2, Plus, type LucideIcon } from "lucide-react";
 
 interface KanbanColumnProps {
   phase: Enums<"lifecycle_phase">;
@@ -18,6 +19,30 @@ interface KanbanColumnProps {
   onBlockedClick?: (hotel: Hotel) => void;
   onCardClick?: (hotel: Hotel) => void;
 }
+
+// Phase icon mapping
+const PHASE_ICONS: Record<Enums<"lifecycle_phase">, LucideIcon> = {
+  onboarding: Rocket,
+  reviewing: Rocket,
+  pilot_live: Play,
+  contracted: CheckCircle2,
+};
+
+// Phase accent colors for icon containers
+const PHASE_ICON_COLORS: Record<Enums<"lifecycle_phase">, string> = {
+  onboarding: "bg-blue-500/15 text-blue-600",
+  reviewing: "bg-purple-500/15 text-purple-600",
+  pilot_live: "bg-amber-500/15 text-amber-600",
+  contracted: "bg-emerald-500/15 text-emerald-600",
+};
+
+// Phase border colors
+const PHASE_BORDER_COLORS: Record<Enums<"lifecycle_phase">, string> = {
+  onboarding: "border-blue-500",
+  reviewing: "border-purple-500",
+  pilot_live: "border-amber-500",
+  contracted: "border-emerald-500",
+};
 
 // High-stiffness spring for snappy animations
 const snapSpring = {
@@ -45,29 +70,51 @@ export function KanbanColumn({
 
   const blockerCount = hotels.filter((h) => h.hasBlocker).length;
   const isActive = isOver || isDroppableOver;
+  
+  const PhaseIcon = PHASE_ICONS[phase];
 
   return (
-    <div className="flex flex-col min-w-[260px] sm:min-w-[280px] max-w-[320px] flex-shrink-0 lg:flex-shrink lg:flex-1 lg:max-w-none group/column scroll-snap-start">
-      {/* Column Header */}
-      <div
-        className={cn(
-          "flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-t-xl border-b-2 transition-colors duration-200",
-          accentColor
-        )}
-      >
-        <div className="min-w-0">
-          <h3 className="font-semibold text-sm tracking-tight truncate">{title}</h3>
-          <p className="text-2xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          <span className="text-xs sm:text-sm font-semibold bg-background/90 backdrop-blur-sm px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-soft">
-            {hotels.length}
-          </span>
-          {blockerCount > 0 && (
-            <span className="text-2xs font-medium bg-destructive text-destructive-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg animate-gentle-pulse">
-              {blockerCount} blocked
+    <div className="flex flex-col min-w-[280px] sm:min-w-[300px] max-w-[340px] flex-shrink-0 lg:flex-shrink lg:flex-1 lg:max-w-none group/column scroll-snap-start">
+      {/* Column Header - Refined design */}
+      <div className="relative bg-card rounded-t-xl shadow-soft overflow-hidden">
+        {/* Top accent bar */}
+        <div className={cn(
+          "absolute top-0 left-0 right-0 h-1",
+          PHASE_BORDER_COLORS[phase].replace("border-", "bg-")
+        )} />
+        
+        <div className="flex items-center justify-between px-4 py-3.5 pt-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Phase icon in squircle container */}
+            <div className={cn(
+              "flex items-center justify-center w-9 h-9 rounded-[10px] shrink-0",
+              PHASE_ICON_COLORS[phase]
+            )}>
+              <PhaseIcon className="h-4.5 w-4.5" strokeWidth={1.5} />
+            </div>
+            
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm tracking-tight text-foreground">{title}</h3>
+              <p className="text-2xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Hotel count pill */}
+            <span className={cn(
+              "text-xs font-semibold px-2.5 py-1 rounded-full",
+              "bg-muted/80 text-muted-foreground"
+            )}>
+              {hotels.length}
             </span>
-          )}
+            
+            {/* Blocker count badge */}
+            {blockerCount > 0 && (
+              <span className="text-2xs font-semibold bg-destructive text-destructive-foreground px-2 py-1 rounded-full animate-gentle-pulse">
+                {blockerCount} blocked
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -75,24 +122,21 @@ export function KanbanColumn({
       <motion.div
         ref={setNodeRef}
         className={cn(
-          "flex-1 p-3 rounded-b-xl min-h-[240px] transition-all duration-150",
-          "bg-muted/20"
+          "flex-1 p-3 rounded-b-xl min-h-[280px] border border-t-0",
+          "bg-muted/30 border-border/50"
         )}
         animate={{
           backgroundColor: isActive 
-            ? "hsl(217 91% 60% / 0.08)" 
-            : "hsl(214 32% 96% / 0.2)",
-          // Border flash - Daze Ocean Blue (#0EA5E9 = hsl 199 89% 48%)
+            ? "hsl(217 91% 60% / 0.06)" 
+            : "hsl(220 14% 96% / 0.3)",
           borderColor: isActive 
-            ? "hsl(199 89% 48%)" 
-            : "hsl(214 32% 91%)",
-          borderWidth: isActive ? "2px" : "1px",
+            ? "hsl(199 89% 48% / 0.5)" 
+            : "hsl(220 13% 91% / 0.5)",
           boxShadow: isActive 
-            ? "0 0 30px -5px hsl(199 89% 48% / 0.35), inset 0 0 20px -10px hsl(199 89% 48% / 0.15)" 
+            ? "0 0 30px -5px hsl(199 89% 48% / 0.25), inset 0 0 20px -10px hsl(199 89% 48% / 0.1)" 
             : "none",
         }}
         transition={{ duration: 0.15, ease: "easeOut" }}
-        style={{ borderStyle: "solid", borderTopWidth: 0 }}
       >
         <AnimatePresence mode="popLayout">
           {hotels.length === 0 && !showGhost ? (
@@ -101,35 +145,55 @@ export function KanbanColumn({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={cn(
-                "flex flex-col items-center justify-center h-full text-muted-foreground text-sm gap-2"
-              )}
+              className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3 py-8"
             >
-              <motion.div
-                className={cn(
-                  "w-12 h-12 rounded-xl border-2 border-dashed flex items-center justify-center",
-                  isActive ? "border-primary bg-primary/10" : "border-muted-foreground/30"
-                )}
-                animate={{
-                  scale: isActive ? 1.1 : 1,
-                  borderColor: isActive ? "hsl(199 89% 48%)" : "hsl(215 16% 47% / 0.3)",
-                }}
-                transition={snapSpring}
-              >
-                <span className="text-lg">+</span>
-              </motion.div>
-              <motion.span
-                className="font-medium"
-                animate={{
-                  color: isActive ? "hsl(199 89% 48%)" : "hsl(215 16% 47%)",
-                }}
-              >
-                {isActive ? "Drop here" : "No hotels"}
-              </motion.span>
+              {/* Icon stack for empty state */}
+              <div className="relative">
+                {/* Large faint background icon */}
+                <PhaseIcon 
+                  className={cn(
+                    "h-16 w-16 opacity-10",
+                    isActive && "opacity-20"
+                  )} 
+                  strokeWidth={1} 
+                />
+                {/* Small overlay icon */}
+                <motion.div
+                  className={cn(
+                    "absolute bottom-0 right-0 w-7 h-7 rounded-lg flex items-center justify-center",
+                    "bg-background border-2 border-dashed shadow-soft",
+                    isActive ? "border-primary" : "border-muted-foreground/30"
+                  )}
+                  animate={{
+                    scale: isActive ? 1.1 : 1,
+                    borderColor: isActive ? "hsl(199 89% 48%)" : "hsl(215 16% 47% / 0.3)",
+                  }}
+                  transition={snapSpring}
+                >
+                  <Plus className={cn(
+                    "h-3.5 w-3.5",
+                    isActive ? "text-primary" : "text-muted-foreground/50"
+                  )} />
+                </motion.div>
+              </div>
+              
+              <div className="text-center">
+                <motion.p
+                  className="text-sm font-medium"
+                  animate={{
+                    color: isActive ? "hsl(199 89% 48%)" : "hsl(215 16% 47%)",
+                  }}
+                >
+                  {isActive ? "Drop here" : "No clients yet"}
+                </motion.p>
+                <p className="text-2xs text-muted-foreground/60 mt-0.5">
+                  {isActive ? "Release to move" : `Drag clients to ${title.toLowerCase()}`}
+                </p>
+              </div>
             </motion.div>
           ) : (
             <motion.div 
-              className="space-y-2"
+              className="space-y-2.5"
               layout
               transition={snapSpring}
             >
@@ -145,7 +209,7 @@ export function KanbanColumn({
                     }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={snapSpring}
-                    className="rounded-lg border-2 border-dashed border-primary/50 bg-primary/5"
+                    className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5"
                     style={{ width: "100%" }}
                   />
                 )}
