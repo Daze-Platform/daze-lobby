@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { sanitizeFilename } from "@/lib/fileValidation";
 import { useLogActivity } from "@/hooks/useLogActivity";
+import { dataUrlToBlob } from "@/lib/dataUrlToBlob";
 
 interface OnboardingTask {
   id: string;
@@ -140,9 +141,9 @@ export function useClientPortal() {
         if (hotelError) throw hotelError;
       }
 
-      // Convert base64 data URL to Blob
-      const response = await fetch(signatureDataUrl);
-      const blob = await response.blob();
+      // Convert base64 data URL to Blob using robust utility
+      // This avoids MIME type issues and potential stack overflow with large files
+      const blob = dataUrlToBlob(signatureDataUrl);
 
       // MULTI-TENANT PATH: contracts/{hotel_id}/pilot_agreement.png
       const filePath = `${hotelId}/pilot_agreement.png`;
@@ -150,7 +151,7 @@ export function useClientPortal() {
       const { error: uploadError } = await supabase.storage
         .from("contracts")
         .upload(filePath, blob, {
-          contentType: "image/png",
+          contentType: "image/png", // Explicitly set content type
           upsert: true,
         });
 
