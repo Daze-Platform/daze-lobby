@@ -16,6 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { LayoutGroup } from "framer-motion";
 import { KanbanColumn } from "./KanbanColumn";
 import { DraggableHotelCard, HotelCardOverlay } from "./HotelCard";
 import { useHotels, useUpdateHotelPhase } from "@/hooks/useHotels";
@@ -242,8 +243,10 @@ export function KanbanBoard() {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x scrollbar-hide">
-        {COLUMNS.map((col) => {
+      {/* LayoutGroup enables smooth cross-column layoutId animations */}
+      <LayoutGroup>
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x scrollbar-hide">
+          {COLUMNS.map((col) => {
           const columnHotels = hotelsByPhase[col.phase] || [];
           const isOver = overId === col.phase || columnHotels.some((h) => h.id === overId);
           // Show ghost when hovering over a DIFFERENT column than the card's origin
@@ -269,14 +272,15 @@ export function KanbanBoard() {
                 onCardClick={handleCardClick}
               />
             </SortableContext>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </LayoutGroup>
 
       {/* Drag Overlay - The floating card with high-stiffness spring */}
       <DragOverlay dropAnimation={{
-        duration: 250,
-        easing: "cubic-bezier(0.18, 0.67, 0.6, 1.12)",
+        duration: 200,
+        easing: "cubic-bezier(0.2, 0.9, 0.3, 1)",
       }}>
         {activeHotel ? (
           <HotelCardOverlay hotel={activeHotel} />
