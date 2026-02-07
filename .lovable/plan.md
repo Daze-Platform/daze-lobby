@@ -1,104 +1,80 @@
 
-# Automatic Role Assignment for Daze Team Members
+# Fix Password Reset Flow
 
-## Overview
+## Problem Identified
 
-This plan adds automatic role assignment for users signing up with `@dazeapp.com` email addresses. When Brian (or any future Daze team member) signs up, they'll automatically receive the `admin` role and have full access to the Control Tower.
+The password reset flow isn't working properly because:
 
----
+1. **Token handling issue**: When you click the reset link in your email, the authentication system redirects you with tokens in the URL. However, the current code only listens for the `PASSWORD_RECOVERY` event *after* checking for `?reset=1`, creating a timing issue where the event might fire before the listener is set up.
 
-## Current State
+2. **Race condition**: The global auth listener in `useAuth.ts` may process the session before the Auth page can detect it's a password recovery flow.
 
-The existing `handle_new_user()` database trigger only creates a profile entry:
-
-```sql
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (user_id, full_name)
-  VALUES (NEW.id, NEW.raw_user_meta_data ->> 'full_name');
-  RETURN NEW;
-END;
-$$;
-```
+3. **Missing hash fragment detection**: Supabase includes the recovery token in the URL hash (`#access_token=...`), but we're not checking for this.
 
 ---
 
-## Implementation
+## Solution
 
-### Modify the `handle_new_user()` Trigger
+### 1. Improve Token Detection in Auth.tsx
 
-Add domain-based role assignment logic to the existing trigger:
+Update the Auth page to:
+- Check for recovery tokens in the URL hash immediately on mount
+- Set the view to `reset-password` before anything else processes
+- Handle both the event-based and URL-based detection
 
-```sql
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Create profile for the new user
-  INSERT INTO public.profiles (user_id, full_name)
-  VALUES (NEW.id, NEW.raw_user_meta_data ->> 'full_name');
+### 2. Add Immediate Hash Check
+
+```typescript
+useEffect(() => {
+  // Check URL hash for recovery token (Supabase adds tokens to hash)
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const type = hashParams.get('type');
   
-  -- Auto-assign admin role for @dazeapp.com team members
-  IF NEW.email LIKE '%@dazeapp.com' THEN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id, 'admin')
-    ON CONFLICT (user_id, role) DO NOTHING;
-  END IF;
+  // If this is a recovery flow, show reset form immediately
+  if (type === 'recovery') {
+    setView("reset-password");
+    return;
+  }
   
-  RETURN NEW;
-END;
-$$;
+  // Also check for reset query param as fallback
+  const isReset = searchParams.get("reset") === "1";
+  if (isReset) {
+    // Listen for the PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setView("reset-password");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }
+}, [searchParams]);
 ```
 
----
+### 3. Handle Session Exchange Before Showing Form
 
-## How It Works
-
-| Email Domain | Role Assigned | Access Level |
-|--------------|---------------|--------------|
-| `@dazeapp.com` | `admin` | Full Control Tower access |
-| Any other domain | None (manual assignment required) | No access until role assigned |
+Ensure the access token from the hash is properly exchanged for a session before showing the reset form, so `updateUser` can work.
 
 ---
 
-## What Brian Will Experience
+## Files to Modify
 
-1. Brian visits `/auth` and clicks "Sign in with Google"
-2. He authenticates with `brian@dazeapp.com`
-3. The database trigger fires automatically:
-   - Creates his profile
-   - Assigns the `admin` role
-4. He's redirected to the dashboard with full access
+| File | Change |
+|------|--------|
+| `src/pages/Auth.tsx` | Add URL hash parsing for recovery detection, handle session exchange |
 
 ---
 
-## Security Considerations
+## Flow After Fix
 
-- The trigger runs with `SECURITY DEFINER` privileges, allowing it to insert into `user_roles` regardless of RLS policies
-- Email domain check happens server-side in PostgreSQL (cannot be spoofed from client)
-- `ON CONFLICT DO NOTHING` prevents duplicate role entries if the user somehow triggers signup twice
-
----
-
-## Database Changes
-
-**Single migration** to update the `handle_new_user()` function - no new tables or columns needed.
+1. You request password reset → email is sent
+2. You click the email link → redirected to `/auth?reset=1#access_token=...&type=recovery`
+3. Auth page detects `type=recovery` in hash → immediately shows `ResetPasswordForm`
+4. Session is automatically established from the tokens
+5. You enter new password → `supabase.auth.updateUser({ password })` succeeds
+6. You're redirected to the dashboard
 
 ---
 
-## Future Flexibility
+## Additional Consideration
 
-If you later want different roles for different domains or email patterns, the trigger can be extended:
-
-```sql
--- Example future expansion
-IF NEW.email LIKE '%@dazeapp.com' THEN
-  INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'admin');
-ELSIF NEW.email LIKE '%@partner.com' THEN
-  INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'ops_manager');
-END IF;
-```
+The password reset email currently uses your preview URL. When you publish the app, you may want to update the redirect URL in `ForgotPasswordForm.tsx` to use your published domain (`https://daze-onboarding-demo.lovable.app`) for production use.
