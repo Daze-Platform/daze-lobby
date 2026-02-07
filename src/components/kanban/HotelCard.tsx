@@ -29,8 +29,8 @@ const PHASE_RING_COLORS: Record<string, string> = {
 // High-stiffness spring for snappy drop animation
 const snapSpring = {
   type: "spring" as const,
-  stiffness: 600,
-  damping: 30,
+  stiffness: 500,
+  damping: 35,
 };
 
 // Format ARR for display

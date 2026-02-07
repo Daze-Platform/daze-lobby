@@ -44,11 +44,11 @@ const PHASE_BORDER_COLORS: Record<Enums<"lifecycle_phase">, string> = {
   contracted: "border-emerald-500",
 };
 
-// High-stiffness spring for snappy animations
+// High-stiffness spring for fluid animations
 const snapSpring = {
   type: "spring" as const,
-  stiffness: 600,
-  damping: 30,
+  stiffness: 500,
+  damping: 35,
 };
 
 export function KanbanColumn({
