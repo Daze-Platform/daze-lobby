@@ -33,20 +33,20 @@ export default function Dashboard() {
   const stats = useMemo<StatCard[]>(() => {
     if (!hotels) {
       return [
-        { label: "Total Hotels", value: "0", icon: Building2 },
+        { label: "Total Clients", value: "0", icon: Building2 },
         { label: "Active Blockers", value: "0", icon: AlertTriangle },
-        { label: "Devices Online", value: "0", icon: Cpu },
+        { label: "Devices", value: "0", icon: Cpu },
         { label: "Total ARR", value: "$0", icon: TrendingUp },
       ];
     }
 
-    const totalHotels = hotels.length;
+    const totalClients = hotels.length;
     const activeBlockers = hotels.filter(h => h.hasBlocker).length;
     const totalDazeDevices = hotels.reduce((sum, h) => sum + h.dazeDeviceCount, 0);
     const totalARR = hotels.reduce((sum, h) => sum + (h.arr || 0), 0);
 
     return [
-      { label: "Total Hotels", value: totalHotels.toString(), icon: Building2 },
+      { label: "Total Clients", value: totalClients.toString(), icon: Building2 },
       { label: "Active Blockers", value: activeBlockers.toString(), icon: AlertTriangle },
       { label: "Devices", value: totalDazeDevices.toString(), icon: Cpu },
       { label: "Total ARR", value: formatCurrency(totalARR), icon: TrendingUp },
@@ -84,14 +84,13 @@ export default function Dashboard() {
         {/* Kanban Lifecycle Board - Entrance delayed */}
         <div className="space-y-3 sm:space-y-4 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg sm:text-xl font-semibold">Hotel Lifecycle</h2>
+            <h2 className="font-display text-lg sm:text-xl font-semibold">Client Lifecycle</h2>
             <Badge variant="secondary" className="text-2xs font-medium hidden sm:inline-flex">
               Drag to change phase
             </Badge>
           </div>
           <KanbanBoard />
         </div>
-
       </div>
     </DashboardLayout>
   );

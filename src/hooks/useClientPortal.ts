@@ -107,6 +107,7 @@ export function useClientPortal() {
     }: { 
       signatureDataUrl: string;
       legalEntityData?: {
+        property_name?: string;
         legal_entity_name?: string;
         billing_address?: string;
         authorized_signer_name?: string;
@@ -117,16 +118,23 @@ export function useClientPortal() {
         throw new Error("Not authenticated or no hotel assigned");
       }
 
-      // First save legal entity data to hotels table
+      // Update hotel record with legal entity data AND property name
       if (legalEntityData) {
+        const updateData: Record<string, unknown> = {
+          legal_entity_name: legalEntityData.legal_entity_name || null,
+          billing_address: legalEntityData.billing_address || null,
+          authorized_signer_name: legalEntityData.authorized_signer_name || null,
+          authorized_signer_title: legalEntityData.authorized_signer_title || null,
+        };
+
+        // Update the hotel name if property_name is provided
+        if (legalEntityData.property_name) {
+          updateData.name = legalEntityData.property_name;
+        }
+
         const { error: hotelError } = await supabase
           .from("hotels")
-          .update({
-            legal_entity_name: legalEntityData.legal_entity_name || null,
-            billing_address: legalEntityData.billing_address || null,
-            authorized_signer_name: legalEntityData.authorized_signer_name || null,
-            authorized_signer_title: legalEntityData.authorized_signer_title || null,
-          })
+          .update(updateData)
           .eq("id", hotelId);
 
         if (hotelError) throw hotelError;
@@ -167,6 +175,7 @@ export function useClientPortal() {
             signature_url: signatureUrl,
             signed_at: signedAt,
             signature_path: filePath,
+            property_name: legalEntityData?.property_name,
             signer_name: legalEntityData?.authorized_signer_name,
             signer_title: legalEntityData?.authorized_signer_title,
             legal_entity: legalEntityData?.legal_entity_name,
