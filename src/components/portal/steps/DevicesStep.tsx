@@ -13,7 +13,7 @@ import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { Tablet, Monitor, Check, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 
 interface DevicesStepProps {
   isCompleted: boolean;
@@ -38,8 +38,8 @@ export function DevicesStep({
   isJustCompleted,
   isUnlocking
 }: DevicesStepProps) {
-  const { hotelId } = useHotel();
-  const logActivity = useLogActivity(hotelId);
+  const { clientId } = useClient();
+  const logActivity = useLogActivity(clientId);
   
   const savedChoice = data?.use_daze_tablets !== undefined 
     ? (data.use_daze_tablets ? "daze" : "own") as DeviceChoice

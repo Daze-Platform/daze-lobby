@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useHotel } from "@/contexts/HotelContext";
+import { useClient } from "@/contexts/ClientContext";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { sanitizeFilename } from "@/lib/fileValidation";
@@ -10,7 +10,7 @@ import { dataUrlToBlob } from "@/lib/dataUrlToBlob";
 
 interface OnboardingTask {
   id: string;
-  hotel_id: string;
+  client_id: string;
   task_key: string;
   task_name: string;
   is_completed: boolean;
@@ -20,7 +20,7 @@ interface OnboardingTask {
 
 interface DbVenue {
   id: string;
-  hotel_id: string;
+  client_id: string;
   name: string;
   menu_pdf_url: string | null;
   created_at: string;
@@ -29,47 +29,50 @@ interface DbVenue {
 
 export function useClientPortal() {
   const { user } = useAuthContext();
-  const { hotel, hotelId, isLoading: isHotelLoading } = useHotel();
+  const { client, clientId, isLoading: isClientLoading } = useClient();
   const queryClient = useQueryClient();
-  const logActivity = useLogActivity(hotelId);
+  const logActivity = useLogActivity(clientId);
 
-  // Fetch onboarding tasks for the hotel
+  // Fetch onboarding tasks for the client
   const { data: tasks, isLoading: isLoadingTasks } = useQuery({
-    queryKey: ["onboarding-tasks", hotelId],
+    queryKey: ["onboarding-tasks", clientId],
     queryFn: async () => {
-      if (!hotelId) return [];
+      if (!clientId) return [];
       
       const { data, error } = await supabase
         .from("onboarding_tasks")
         .select("*")
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return (data as OnboardingTask[]) || [];
+      return (data || []).map((task) => ({
+        ...task,
+        data: task.data as Record<string, unknown>,
+      })) as OnboardingTask[];
     },
-    enabled: !!hotelId,
+    enabled: !!clientId,
   });
 
-  // Fetch venues for the hotel
+  // Fetch venues for the client
   const { data: venuesData, isLoading: isLoadingVenues } = useQuery({
-    queryKey: ["venues", hotelId],
+    queryKey: ["venues", clientId],
     queryFn: async () => {
-      if (!hotelId) return [];
+      if (!clientId) return [];
       
       const { data, error } = await supabase
         .from("venues")
         .select("*")
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return (data as DbVenue[]) || [];
+      return (data || []) as DbVenue[];
     },
-    enabled: !!hotelId,
+    enabled: !!clientId,
   });
 
-  // Save legal entity info to hotels table (draft save)
+  // Save legal entity info to clients table (draft save)
   const saveLegalEntityMutation = useMutation({
     mutationFn: async (data: {
       legal_entity_name?: string;
@@ -77,22 +80,22 @@ export function useClientPortal() {
       authorized_signer_name?: string;
       authorized_signer_title?: string;
     }) => {
-      if (!hotelId) throw new Error("No hotel found");
+      if (!clientId) throw new Error("No client found");
 
       const { error } = await supabase
-        .from("hotels")
+        .from("clients")
         .update({
           legal_entity_name: data.legal_entity_name || null,
           billing_address: data.billing_address || null,
           authorized_signer_name: data.authorized_signer_name || null,
           authorized_signer_title: data.authorized_signer_title || null,
         })
-        .eq("id", hotelId);
+        .eq("id", clientId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["hotel"] });
+      queryClient.invalidateQueries({ queryKey: ["client"] });
       toast.success("Legal entity information saved");
     },
     onError: (error) => {
@@ -100,7 +103,7 @@ export function useClientPortal() {
     },
   });
 
-  // Sign legal document - ISOLATED PATH: contracts/{hotel_id}/pilot_agreement.png
+  // Sign legal document - ISOLATED PATH: contracts/{client_id}/pilot_agreement.png
   const signLegalMutation = useMutation({
     mutationFn: async ({ 
       signatureDataUrl,
@@ -115,11 +118,11 @@ export function useClientPortal() {
         authorized_signer_title?: string;
       };
     }) => {
-      if (!user?.id || !hotelId) {
-        throw new Error("Not authenticated or no hotel assigned");
+      if (!user?.id || !clientId) {
+        throw new Error("Not authenticated or no client assigned");
       }
 
-      // Update hotel record with legal entity data AND property name
+      // Update client record with legal entity data AND property name
       if (legalEntityData) {
         const updateData: Record<string, unknown> = {
           legal_entity_name: legalEntityData.legal_entity_name || null,
@@ -128,25 +131,25 @@ export function useClientPortal() {
           authorized_signer_title: legalEntityData.authorized_signer_title || null,
         };
 
-        // Update the hotel name if property_name is provided
+        // Update the client name if property_name is provided
         if (legalEntityData.property_name) {
           updateData.name = legalEntityData.property_name;
         }
 
-        const { error: hotelError } = await supabase
-          .from("hotels")
+        const { error: clientError } = await supabase
+          .from("clients")
           .update(updateData)
-          .eq("id", hotelId);
+          .eq("id", clientId);
 
-        if (hotelError) throw hotelError;
+        if (clientError) throw clientError;
       }
 
       // Convert base64 data URL to Blob using robust utility
       // This avoids MIME type issues and potential stack overflow with large files
       const blob = dataUrlToBlob(signatureDataUrl);
 
-      // MULTI-TENANT PATH: contracts/{hotel_id}/pilot_agreement.png
-      const filePath = `${hotelId}/pilot_agreement.png`;
+      // MULTI-TENANT PATH: contracts/{client_id}/pilot_agreement.png
+      const filePath = `${clientId}/pilot_agreement.png`;
 
       const { error: uploadError } = await supabase.storage
         .from("contracts")
@@ -182,7 +185,7 @@ export function useClientPortal() {
             legal_entity: legalEntityData?.legal_entity_name,
           },
         } as never)
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .eq("task_key", "legal");
 
       if (updateError) throw updateError;
@@ -191,7 +194,7 @@ export function useClientPortal() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["hotel"] });
+      queryClient.invalidateQueries({ queryKey: ["client"] });
       
       // Log activity
       logActivity.mutate({
@@ -217,7 +220,7 @@ export function useClientPortal() {
       taskKey: string; 
       data: Record<string, unknown> 
     }) => {
-      if (!hotelId) throw new Error("No hotel found");
+      if (!clientId) throw new Error("No client found");
 
       const { error } = await supabase
         .from("onboarding_tasks")
@@ -226,7 +229,7 @@ export function useClientPortal() {
           is_completed: true,
           completed_at: new Date().toISOString(),
         } as never)
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .eq("task_key", taskKey);
 
       if (error) throw error;
@@ -249,7 +252,7 @@ export function useClientPortal() {
     },
   });
 
-  // Upload logo file - ISOLATED PATH: brands/{hotel_id}/logo_{variant}_{timestamp}.png
+  // Upload logo file - ISOLATED PATH: brands/{client_id}/logo_{variant}_{timestamp}.png
   const uploadLogoMutation = useMutation({
     mutationFn: async ({ 
       file, 
@@ -258,12 +261,12 @@ export function useClientPortal() {
       file: File; 
       variant: string;
     }) => {
-      if (!hotelId) throw new Error("No hotel found");
+      if (!clientId) throw new Error("No client found");
 
       const safeName = sanitizeFilename(file.name);
       const timestamp = Date.now();
-      // MULTI-TENANT PATH: brands/{hotel_id}/logo_{variant}_{timestamp}_{filename}
-      const filePath = `${hotelId}/logo_${variant}_${timestamp}_${safeName}`;
+      // MULTI-TENANT PATH: brands/{client_id}/logo_{variant}_{timestamp}_{filename}
+      const filePath = `${clientId}/logo_${variant}_${timestamp}_${safeName}`;
       
       const { error: uploadError, data } = await supabase.storage
         .from("onboarding-assets")
@@ -292,7 +295,7 @@ export function useClientPortal() {
             }
           },
         } as never)
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .eq("task_key", "brand");
 
       if (updateError) throw updateError;
@@ -317,7 +320,7 @@ export function useClientPortal() {
     },
   });
 
-  // Upload venue menu - ISOLATED PATH: venues/{hotel_id}/{venue_name}/menu.pdf
+  // Upload venue menu - ISOLATED PATH: venues/{client_id}/{venue_name}/menu.pdf
   const uploadVenueMenuMutation = useMutation({
     mutationFn: async ({ 
       venueId,
@@ -328,12 +331,12 @@ export function useClientPortal() {
       venueName: string;
       file: File;
     }) => {
-      if (!hotelId) throw new Error("No hotel found");
+      if (!clientId) throw new Error("No client found");
 
       // Sanitize venue name for path
       const safeVenueName = venueName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      // MULTI-TENANT PATH: venues/{hotel_id}/{venue_name}/menu.pdf
-      const filePath = `${hotelId}/${safeVenueName}/menu.pdf`;
+      // MULTI-TENANT PATH: venues/{client_id}/{venue_name}/menu.pdf
+      const filePath = `${clientId}/${safeVenueName}/menu.pdf`;
       
       const { error: uploadError } = await supabase.storage
         .from("onboarding-assets")
@@ -374,7 +377,7 @@ export function useClientPortal() {
     },
   });
 
-  // Upload file (generic) - maintains hotel isolation
+  // Upload file (generic) - maintains client isolation
   const uploadFileMutation = useMutation({
     mutationFn: async ({ 
       taskKey, 
@@ -385,11 +388,11 @@ export function useClientPortal() {
       file: File; 
       fieldName: string;
     }) => {
-      if (!hotelId) throw new Error("No hotel found");
+      if (!clientId) throw new Error("No client found");
 
       const safeName = sanitizeFilename(file.name);
-      // MULTI-TENANT PATH: {hotel_id}/{task_key}/{fieldName}_{timestamp}_{filename}
-      const filePath = `${hotelId}/${taskKey}/${fieldName}_${Date.now()}_${safeName}`;
+      // MULTI-TENANT PATH: {client_id}/{task_key}/{fieldName}_{timestamp}_{filename}
+      const filePath = `${clientId}/${taskKey}/${fieldName}_${Date.now()}_${safeName}`;
       
       const { error: uploadError } = await supabase.storage
         .from("onboarding-assets")
@@ -407,7 +410,7 @@ export function useClientPortal() {
         .update({ 
           data: { ...existingData, [fieldName]: filePath },
         } as never)
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .eq("task_key", taskKey);
 
       if (updateError) throw updateError;
@@ -421,23 +424,23 @@ export function useClientPortal() {
     },
   });
 
-  // Save venues - with hotel_id injection
+  // Save venues - with client_id injection
   const saveVenuesMutation = useMutation({
     mutationFn: async (venues: Venue[]) => {
-      if (!hotelId) throw new Error("No hotel found");
+      if (!clientId) throw new Error("No client found");
 
-      // Delete existing venues for this hotel only
+      // Delete existing venues for this client only
       await supabase
         .from("venues")
         .delete()
-        .eq("hotel_id", hotelId);
+        .eq("client_id", clientId);
 
-      // Insert new venues with hotel_id injected
+      // Insert new venues with client_id injected
       if (venues.length > 0) {
         const venueInserts = venues
           .filter(v => v.name.trim())
           .map(v => ({
-            hotel_id: hotelId, // CRITICAL: Inject hotel_id
+            client_id: clientId, // CRITICAL: Inject client_id
             name: v.name,
             menu_pdf_url: v.menuPdfUrl || null,
           }));
@@ -459,7 +462,7 @@ export function useClientPortal() {
           completed_at: new Date().toISOString(),
           data: { venue_count: venues.filter(v => v.name.trim()).length },
         } as never)
-        .eq("hotel_id", hotelId)
+        .eq("client_id", clientId)
         .eq("task_key", "venue");
 
       if (taskError) throw taskError;
@@ -493,41 +496,40 @@ export function useClientPortal() {
 
   // Get status based on phase
   const getStatus = (): "onboarding" | "reviewing" | "live" => {
-    const phase = hotel?.phase;
+    const phase = client?.phase;
     if (phase === "contracted") return "live";
     if (phase === "pilot_live") return "reviewing";
     return "onboarding";
   };
 
-  // Convert DB venues to UI format
-  const formatVenues = (): Venue[] => {
-    if (!venuesData) return [];
-    return venuesData.map(v => ({
-      id: v.id,
-      name: v.name,
-      menuPdfUrl: v.menu_pdf_url || undefined,
-    }));
-  };
+  // Transform venues to component format
+  const venues: Venue[] = (venuesData || []).map(v => ({
+    id: v.id,
+    name: v.name,
+    menuPdfUrl: v.menu_pdf_url || undefined,
+  }));
 
   return {
-    hotel,
-    hotelId,
+    hotel: client, // Backwards compat alias
+    hotelId: clientId, // Backwards compat alias
+    client,
+    clientId,
     tasks: tasks || [],
-    venues: formatVenues(),
-    isLoading: isHotelLoading || isLoadingTasks || isLoadingVenues,
+    venues,
+    isLoading: isClientLoading || isLoadingTasks || isLoadingVenues,
     progress: calculateProgress(),
     status: getStatus(),
-    signLegal: signLegalMutation.mutate,
+    // Mutations
     saveLegalEntity: saveLegalEntityMutation.mutate,
+    signLegal: signLegalMutation.mutate,
     updateTask: updateTaskMutation.mutate,
-    uploadFile: uploadFileMutation.mutate,
     uploadLogo: uploadLogoMutation.mutate,
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
+    uploadFile: uploadFileMutation.mutate,
     saveVenues: saveVenuesMutation.mutate,
-    isSigningLegal: signLegalMutation.isPending,
+    // States
     isSavingLegalEntity: saveLegalEntityMutation.isPending,
-    isUpdating: updateTaskMutation.isPending,
-    isUploading: uploadFileMutation.isPending || uploadLogoMutation.isPending,
-    isSavingVenues: saveVenuesMutation.isPending,
+    isSigningLegal: signLegalMutation.isPending,
+    isUpdating: updateTaskMutation.isPending || saveVenuesMutation.isPending,
   };
 }

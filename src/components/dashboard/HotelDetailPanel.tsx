@@ -14,13 +14,12 @@ import {
   Cpu, 
   Activity,
   FileText,
-  Building2
 } from "lucide-react";
 import { DocumentUploadSection } from "./DocumentUploadSection";
-import type { Hotel } from "@/hooks/useHotels";
+import type { Client } from "@/hooks/useClients";
 
 interface HotelDetailPanelProps {
-  hotel: Hotel | null;
+  hotel: Client | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -104,7 +103,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: HotelDetailPanel
           </TabsContent>
 
           <TabsContent value="documents" className="mt-4">
-            <DocumentUploadSection hotelId={hotel.id} />
+            <DocumentUploadSection clientId={hotel.id} />
           </TabsContent>
         </Tabs>
       </SheetContent>

@@ -4,15 +4,15 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export type BlockerAlert = Tables<"blocker_alerts">;
 
-export function useBlockerDetails(hotelId: string | null) {
+export function useBlockerDetails(clientId: string | null) {
   return useQuery({
-    queryKey: ["blocker-details", hotelId],
-    enabled: !!hotelId,
+    queryKey: ["blocker-details", clientId],
+    enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blocker_alerts")
         .select("*")
-        .eq("hotel_id", hotelId!)
+        .eq("client_id", clientId!)
         .is("resolved_at", null)
         .order("created_at", { ascending: false })
         .limit(1)

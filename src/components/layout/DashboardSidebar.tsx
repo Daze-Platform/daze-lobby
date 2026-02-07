@@ -36,7 +36,7 @@ export function DashboardSidebar() {
     queryKey: ["clients-count"],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from("hotels")
+        .from("clients")
         .select("*", { count: "exact", head: true });
       if (error) throw error;
       return count || 0;

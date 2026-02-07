@@ -6,17 +6,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertTriangle, CheckCircle, Cpu, GripVertical, Lock, DollarSign } from "lucide-react";
-import type { Hotel } from "@/hooks/useHotels";
+import type { Client } from "@/hooks/useClients";
 import { cn } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
 
 interface HotelCardProps {
-  hotel: Hotel;
+  hotel: Client;
   index: number;
   isDragging?: boolean;
   isJustDropped?: boolean;
-  onBlockedClick?: (hotel: Hotel) => void;
-  onCardClick?: (hotel: Hotel) => void;
+  onBlockedClick?: (hotel: Client) => void;
+  onCardClick?: (hotel: Client) => void;
 }
 
 // Phase ring colors for avatars
@@ -296,7 +296,7 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
 
 // Overlay card shown while dragging - Static "Tactile Lift" effect
 interface HotelCardOverlayProps {
-  hotel: Hotel;
+  hotel: Client;
 }
 
 export function HotelCardOverlay({ hotel }: HotelCardOverlayProps) {
