@@ -89,7 +89,7 @@ export function DashboardSidebar() {
           badge: clientsCount ?? undefined,
         },
         {
-          title: "Blockers",
+          title: "Incomplete",
           href: "/blockers",
           icon: AlertTriangle,
           badge: blockersCount ?? undefined,
