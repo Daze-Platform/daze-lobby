@@ -47,6 +47,7 @@ export default function Portal() {
     updateTask, 
     uploadFile,
     saveVenues,
+    checkAndTransitionToLive,
     isSigningLegal,
     isUpdating
   } = useClientPortal();
@@ -59,6 +60,13 @@ export default function Portal() {
     }
     prevStatus.current = status;
   }, [status]);
+
+  // Auto-transition to live when all tasks are complete
+  useEffect(() => {
+    if (progress === 100) {
+      checkAndTransitionToLive();
+    }
+  }, [progress, checkAndTransitionToLive]);
 
   const handleSignOut = async () => {
     try {
