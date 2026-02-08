@@ -8,6 +8,7 @@ import { SaveButton } from "@/components/ui/save-button";
 import { cn } from "@/lib/utils";
 import { ColorPaletteManager } from "../ColorPaletteManager";
 import { MultiLogoUpload } from "../MultiLogoUpload";
+import { BrandDocumentUpload } from "../BrandDocumentUpload";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { useLogActivity } from "@/hooks/useLogActivity";
@@ -20,10 +21,12 @@ interface BrandStepProps {
   data?: Record<string, unknown>;
   onSave: (data: { brand_palette: string[]; logos: Record<string, File> }) => void;
   onLogoUpload: (file: File, variant: string) => void;
+  onDocumentUpload?: (file: File, fieldName: string) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
+  paletteDocumentUrl?: string | null;
 }
 
 export function BrandStep({ 
@@ -33,13 +36,16 @@ export function BrandStep({
   data, 
   onSave, 
   onLogoUpload,
+  onDocumentUpload,
   isSaving,
   onStepComplete,
   isJustCompleted,
-  isUnlocking
+  isUnlocking,
+  paletteDocumentUrl
 }: BrandStepProps) {
   const { clientId } = useClient();
   const logActivity = useLogActivity(clientId);
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted 
@@ -67,6 +73,15 @@ export function BrandStep({
     Object.entries(newLogos).forEach(([variant, file]) => {
       onLogoUpload(file, variant);
     });
+  };
+
+  const handleDocumentUpload = (file: File) => {
+    if (onDocumentUpload) {
+      setIsUploadingDocument(true);
+      onDocumentUpload(file, "palette_document");
+      // Reset uploading state after a delay (real upload happens via parent)
+      setTimeout(() => setIsUploadingDocument(false), 1500);
+    }
   };
 
   const handleSave = async () => {
@@ -109,6 +124,13 @@ export function BrandStep({
         <div className="space-y-4 sm:space-y-6 pt-1 sm:pt-2">
           {/* Multi Logo Upload */}
           <MultiLogoUpload onLogosChange={handleLogosChange} />
+
+          {/* Color Palette Document Upload */}
+          <BrandDocumentUpload
+            onUpload={handleDocumentUpload}
+            existingUrl={paletteDocumentUrl}
+            isUploading={isUploadingDocument}
+          />
 
           {/* Color Palette Manager */}
           <ColorPaletteManager 
