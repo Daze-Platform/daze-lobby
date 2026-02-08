@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -10,10 +10,8 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
-  type Modifier,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { KanbanColumn } from "./KanbanColumn";
 import { HotelCardOverlay } from "./HotelCard";
 import { useClients, useUpdateClientPhase, type Client } from "@/hooks/useClients";
@@ -68,9 +66,6 @@ export function KanbanBoard() {
   const [activeClient, setActiveClient] = useState<Client | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
   
-  // Store cursor offset for precise drag positioning
-  const [cursorOffset, setCursorOffset] = useState<{ x: number; y: number } | null>(null);
-  
   // Blocker modal state
   const [blockerModalOpen, setBlockerModalOpen] = useState(false);
   const [selectedBlockedClient, setSelectedBlockedClient] = useState<Client | null>(null);
@@ -113,25 +108,6 @@ export function KanbanBoard() {
     })
   );
 
-  // Custom modifier that applies the cursor offset for precise grab positioning
-  const cursorOffsetModifier: Modifier = useMemo(() => {
-    return ({ transform, activatorEvent, activeNodeRect }) => {
-      if (!activatorEvent || !activeNodeRect) return transform;
-      
-      const activatorCoords = (activatorEvent as PointerEvent);
-      if (!activatorCoords.clientX) return transform;
-      
-      // Calculate offset from where user clicked to the center of the card
-      const offsetX = activatorCoords.clientX - (activeNodeRect.left + activeNodeRect.width / 2);
-      const offsetY = activatorCoords.clientY - (activeNodeRect.top + activeNodeRect.height / 2);
-      
-      return {
-        ...transform,
-        x: transform.x + offsetX,
-        y: transform.y + offsetY,
-      };
-    };
-  }, []);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
@@ -164,7 +140,6 @@ export function KanbanBoard() {
     setActiveId(null);
     setActiveClient(null);
     setOverColumnId(null);
-    setCursorOffset(null);
 
     if (!over) return;
 
@@ -199,7 +174,6 @@ export function KanbanBoard() {
     setActiveId(null);
     setActiveClient(null);
     setOverColumnId(null);
-    setCursorOffset(null);
   }, []);
 
   if (isLoading) {
@@ -235,7 +209,6 @@ export function KanbanBoard() {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      modifiers={[cursorOffsetModifier, restrictToWindowEdges]}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
