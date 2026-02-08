@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signIn } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuthContext } from "@/contexts/AuthContext";
 import dazeLogo from "@/assets/daze-logo.png";
@@ -23,8 +24,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shouldShake, setShouldShake] = useState(false);
-  const [pendingLogin, setPendingLogin] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const navigationAttemptedRef = useRef(false);
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading } = useAuthContext();
 
@@ -37,23 +38,43 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     }
   }, [error]);
 
-  // Navigate when auth state confirms login (prevents double-click issue)
+  // Navigate when auth state confirms login
+  // Uses a ref to ensure we only attempt navigation once
   useEffect(() => {
-    if (pendingLogin && isAuthenticated && !authLoading) {
-      navigate("/");
+    if (isAuthenticated && !authLoading && !navigationAttemptedRef.current) {
+      console.log("[LoginForm] Auth confirmed, navigating to dashboard...");
+      navigationAttemptedRef.current = true;
+      navigate("/", { replace: true });
     }
-  }, [pendingLogin, isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (loading) {
+      console.log("[LoginForm] Already processing login, ignoring");
+      return;
+    }
+    
+    console.log("[LoginForm] Login attempt started");
     setLoading(true);
     setError(null);
 
     try {
-      await signIn(email, password);
-      // Signal that we're waiting for auth state to update before navigating
-      setPendingLogin(true);
+      const result = await signIn(email, password);
+      console.log("[LoginForm] Supabase response received:", result.user?.email);
+      
+      // Check if session is already established (handles race condition)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && !navigationAttemptedRef.current) {
+        console.log("[LoginForm] Session confirmed, redirecting immediately");
+        navigationAttemptedRef.current = true;
+        navigate("/", { replace: true });
+      }
+      // If not, the useEffect above will handle navigation when auth context updates
     } catch (err: any) {
+      console.error("[LoginForm] Login error:", err.message);
       setError(err.message || "Failed to sign in");
       setLoading(false);
     }
