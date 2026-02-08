@@ -487,6 +487,39 @@ export function useClientPortal() {
     },
   });
 
+  // Mutation to update client phase to pilot_live (triggers "live" status)
+  const updateClientPhaseMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientId) throw new Error("No client found");
+
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          phase: "pilot_live" as const,
+          phase_started_at: new Date().toISOString(),
+        })
+        .eq("id", clientId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
+      
+      // Log activity
+      logActivity.mutate({
+        action: "status_changed",
+        details: {
+          new_phase: "pilot_live",
+          trigger: "onboarding_complete",
+        },
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to update status: " + error.message);
+    },
+  });
+
   // Calculate progress
   const calculateProgress = () => {
     if (!tasks || tasks.length === 0) return 0;
@@ -494,11 +527,25 @@ export function useClientPortal() {
     return Math.round((completed / tasks.length) * 100);
   };
 
+  // Check if all tasks are complete and auto-transition to live
+  const checkAndTransitionToLive = () => {
+    if (!tasks || tasks.length === 0) return;
+    
+    const allCompleted = tasks.every(t => t.is_completed);
+    const currentPhase = client?.phase;
+    
+    // Only transition if all tasks complete and not already in pilot_live or contracted
+    if (allCompleted && currentPhase === "onboarding") {
+      updateClientPhaseMutation.mutate();
+    }
+  };
+
   // Get status based on phase
   const getStatus = (): "onboarding" | "reviewing" | "live" => {
     const phase = client?.phase;
     if (phase === "contracted") return "live";
-    if (phase === "pilot_live") return "reviewing";
+    if (phase === "pilot_live") return "live"; // Changed: pilot_live now shows as "live"
+    if (phase === "reviewing") return "reviewing";
     return "onboarding";
   };
 
@@ -527,9 +574,12 @@ export function useClientPortal() {
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
     saveVenues: saveVenuesMutation.mutate,
+    // Auto-transition to live
+    checkAndTransitionToLive,
     // States
     isSavingLegalEntity: saveLegalEntityMutation.isPending,
     isSigningLegal: signLegalMutation.isPending,
     isUpdating: updateTaskMutation.isPending || saveVenuesMutation.isPending,
+    isTransitioningToLive: updateClientPhaseMutation.isPending,
   };
 }

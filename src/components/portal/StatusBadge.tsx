@@ -33,7 +33,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       variant={config.variant} 
       className={cn(
         "text-sm px-3 py-1.5 transition-all duration-300",
-        isLive && "bg-emerald-500 text-white border-0 shadow-[0_0_12px_rgba(16,185,129,0.4)]",
+        isLive && "bg-emerald-500 text-white border-0 shadow-[0_0_12px_rgba(16,185,129,0.4)] animate-live-pulse",
         className
       )}
     >
