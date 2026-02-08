@@ -1,72 +1,65 @@
 
-# Add Mock Data to Client Detail Panel Tabs
 
-Replace the "coming soon" placeholders with functional mock data displays for the Contacts, Devices, and Activity tabs in the client detail sidebar.
+## Document Sync: Admin Uploads Visible in Client Portal
 
-## Overview
+This plan ensures documents uploaded via the Control Tower (admin sidebar) immediately appear in both the real Client Portal and the Portal Preview.
 
-The `HotelDetailPanel` currently shows placeholder messages for three tabs. We'll populate them with hardcoded mock data that mimics real data structures, making it easy to swap to real database queries later.
+### Current Behavior
 
-## Files to Modify
+- **Admin Side**: `DocumentUploadSection.tsx` uploads files to the `hotel-documents` bucket and inserts records into the `documents` table with the correct `client_id`
+- **Real Portal** (`/portal`): `PortalDocuments.tsx` queries the `documents` table - this already works correctly
+- **Preview Portal** (`/portal-preview`): `DemoPortalDocuments.tsx` displays hardcoded mock data - it never shows real documents
 
-### 1. HotelDetailPanel.tsx
+### Solution
 
-Update the component to include inline mock data and render proper UI for each tab:
+There are two issues to address:
 
-**Contacts Tab:**
-- Display a list of 2-3 mock contacts per client
-- Show name, role, email, phone with appropriate icons
-- Highlight the primary contact with a badge
-- Use Avatar components with initials
+**Issue 1: Portal Preview shows mock data instead of real documents**
 
-**Devices Tab:**
-- Show 2-4 mock devices with status indicators
-- Display device type, serial number, and last check-in time
-- Use color-coded status badges (online/offline/pending)
-- Show Daze-owned vs property-owned distinction
+The Portal Preview (`/portal-preview`) uses a demo component that only displays static mock documents. To show real documents, the preview needs to use the real `PortalDocuments` component.
 
-**Activity Tab:**
-- Render 5-8 mock activity log entries
-- Display user avatars, action descriptions, and timestamps
-- Use the same styling patterns as the existing ActivityFeedPanel
-- Show variety of actions (uploads, completions, updates)
+**Issue 2: Query cache synchronization (optional enhancement)**
 
-## Mock Data Structure
+Currently, admin and client portals use different query keys (`client-documents` vs `portal-documents`). While this doesn't affect real-time database updates (both query fresh data), it means they don't share cache. For consistency, both could use the same key.
 
-```text
-Contacts:
-+------------------+---------------+--------------------+
-| Name             | Role          | Contact Info       |
-+------------------+---------------+--------------------+
-| Sarah Johnson    | GM (Primary)  | sarah@example.com  |
-| Mike Chen        | IT Director   | mike@example.com   |
-| Lisa Rodriguez   | F&B Manager   | lisa@example.com   |
-+------------------+---------------+--------------------+
+### Implementation Steps
 
-Devices:
-+-------------+---------------+--------+---------------+
-| Type        | Serial        | Status | Last Check-in |
-+-------------+---------------+--------+---------------+
-| iPad Pro    | DZ-2024-001   | Online | 5 min ago     |
-| iPad Air    | DZ-2024-002   | Online | 12 min ago    |
-| Surface Go  | PROP-SG-001   | Offline| 2 days ago    |
-+-------------+---------------+--------+---------------+
+**Step 1: Update Portal Preview to use real documents**
 
-Activity:
-Timeline of recent actions with avatars and timestamps
-```
+Modify `src/pages/PortalPreview.tsx`:
+- Import `PortalDocuments` instead of `DemoPortalDocuments` for the documents view
+- The real component will query the database using the `clientId` from context
+- Since portal preview already uses `ClientProvider`, it will have access to the selected client
 
-## UI Components Used
+**Step 2: Wrap PortalPreview with ClientContext (if needed)**
 
-- Avatar with initials and fallback colors
-- Badge for status indicators and role labels
-- Card-like rows with hover states
-- Muted icons from lucide-react
-- Relative timestamps using date-fns
+Check if `PortalPreview` has access to client context. If admin-selected client is not being passed, update the context handling to allow the preview to receive a `clientId` parameter or use the admin's selected client.
 
-## Technical Notes
+**Step 3: Unify query keys (optional enhancement)**
 
-- All mock data is inline (no new files needed)
-- Mock data uses the same field names as database schema
-- Easy migration path: replace mock arrays with hooks like `useClientContacts(clientId)`
-- Responsive design maintained with existing patterns
+Standardize the query key in both components to `["documents", clientId]` for cache consistency. This ensures that when admin uploads and invalidates the cache, both views refresh automatically.
+
+### Technical Details
+
+**Files to Modify:**
+
+1. `src/pages/PortalPreview.tsx`
+   - Replace `DemoPortalDocuments` usage with `PortalDocuments`
+   - Ensure ClientContext is available for the documents query
+
+2. `src/components/portal/PortalDocuments.tsx` (optional)
+   - Change query key from `["portal-documents", clientId]` to `["documents", clientId]`
+
+3. `src/components/dashboard/DocumentUploadSection.tsx` (optional)
+   - Change query key from `["client-documents", clientId]` to `["documents", clientId]`
+   - Update invalidation calls to use the unified key
+
+### RLS Security (Already in Place)
+
+The existing Row-Level Security policies ensure:
+- **Documents table**: Clients can only view documents where `client_id` matches their assigned client via `user_clients`
+- **Storage bucket**: Clients can only download files from their `{client_id}/` folder path
+- **Dashboard access**: Admins can view/upload/delete all documents
+
+No database changes are required - the infrastructure is fully functional.
+
