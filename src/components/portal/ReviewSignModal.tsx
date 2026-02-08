@@ -18,6 +18,13 @@ import { cn } from "@/lib/utils";
 import { IconContainer } from "@/components/ui/icon-container";
 import { generateAgreementPdf } from "@/lib/generateAgreementPdf";
 
+interface AddressData {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}
+
 interface LegalEntityData {
   property_name?: string;
   legal_entity_name?: string;
@@ -25,6 +32,42 @@ interface LegalEntityData {
   authorized_signer_name?: string;
   authorized_signer_title?: string;
 }
+
+// Helper to parse address string into structured data
+const parseAddress = (address?: string): AddressData => {
+  if (!address) return {};
+  // Try to parse "street, city, state ZIP" format
+  const parts = address.split(',').map(p => p.trim());
+  if (parts.length >= 3) {
+    const stateZip = parts[2].split(' ').filter(Boolean);
+    return {
+      street: parts[0],
+      city: parts[1],
+      state: stateZip[0] || '',
+      zip: stateZip.slice(1).join(' ') || '',
+    };
+  } else if (parts.length === 2) {
+    const stateZip = parts[1].split(' ').filter(Boolean);
+    return {
+      street: parts[0],
+      city: '',
+      state: stateZip[0] || '',
+      zip: stateZip.slice(1).join(' ') || '',
+    };
+  }
+  return { street: address };
+};
+
+// Helper to format address data into string
+const formatAddress = (addr: AddressData): string => {
+  const parts: string[] = [];
+  if (addr.street?.trim()) parts.push(addr.street.trim());
+  if (addr.city?.trim()) parts.push(addr.city.trim());
+  if (addr.state?.trim() || addr.zip?.trim()) {
+    parts.push(`${addr.state?.trim() || ''} ${addr.zip?.trim() || ''}`.trim());
+  }
+  return parts.join(', ');
+};
 
 interface ReviewSignModalProps {
   open: boolean;
@@ -186,20 +229,39 @@ export function ReviewSignModal({
   // Form state
   const [propertyName, setPropertyName] = useState("");
   const [legalEntityName, setLegalEntityName] = useState("");
-  const [billingAddress, setBillingAddress] = useState("");
   const [authorizedSignerName, setAuthorizedSignerName] = useState("");
   const [authorizedSignerTitle, setAuthorizedSignerTitle] = useState("");
+  
+  // Structured address state
+  const [addressStreet, setAddressStreet] = useState("");
+  const [addressCity, setAddressCity] = useState("");
+  const [addressState, setAddressState] = useState("");
+  const [addressZip, setAddressZip] = useState("");
 
   const isSigned = !!existingSignatureUrl;
+
+  // Computed billing address from structured fields
+  const billingAddress = formatAddress({
+    street: addressStreet,
+    city: addressCity,
+    state: addressState,
+    zip: addressZip,
+  });
 
   // Pre-fill from saved data when modal opens
   useEffect(() => {
     if (open && initialLegalEntity) {
       setPropertyName(initialLegalEntity.property_name || "");
       setLegalEntityName(initialLegalEntity.legal_entity_name || "");
-      setBillingAddress(initialLegalEntity.billing_address || "");
       setAuthorizedSignerName(initialLegalEntity.authorized_signer_name || "");
       setAuthorizedSignerTitle(initialLegalEntity.authorized_signer_title || "");
+      
+      // Parse structured address
+      const parsed = parseAddress(initialLegalEntity.billing_address);
+      setAddressStreet(parsed.street || "");
+      setAddressCity(parsed.city || "");
+      setAddressState(parsed.state || "");
+      setAddressZip(parsed.zip || "");
     }
   }, [open, initialLegalEntity]);
 
@@ -219,7 +281,10 @@ export function ReviewSignModal({
   const isFormValid = 
     propertyName.trim().length > 0 &&
     legalEntityName.trim().length > 0 &&
-    billingAddress.trim().length > 0 &&
+    addressStreet.trim().length > 0 &&
+    addressCity.trim().length > 0 &&
+    addressState.trim().length > 0 &&
+    addressZip.trim().length > 0 &&
     authorizedSignerName.trim().length > 0 &&
     authorizedSignerTitle.trim().length > 0;
 
@@ -332,20 +397,47 @@ export function ReviewSignModal({
                         />
                       </div>
 
-                      {/* Registered Address */}
-                      <div className="space-y-1">
-                        <Label htmlFor="modal-address" className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                      {/* Structured Address */}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
                           <MapPin className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                           Address <span className="text-destructive">*</span>
                         </Label>
-                        <Textarea
-                          id="modal-address"
-                          placeholder="Street, city, state, ZIP"
-                          value={billingAddress}
-                          onChange={(e) => setBillingAddress(e.target.value)}
-                          rows={2}
-                          className="resize-none text-xs sm:text-sm"
-                        />
+                        <div className="grid gap-2 sm:gap-2.5">
+                          {/* Street Address */}
+                          <Input
+                            id="modal-address-street"
+                            placeholder="Street address"
+                            value={addressStreet}
+                            onChange={(e) => setAddressStreet(e.target.value)}
+                            className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                          {/* City */}
+                          <Input
+                            id="modal-address-city"
+                            placeholder="City"
+                            value={addressCity}
+                            onChange={(e) => setAddressCity(e.target.value)}
+                            className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                          {/* State & ZIP row */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              id="modal-address-state"
+                              placeholder="State"
+                              value={addressState}
+                              onChange={(e) => setAddressState(e.target.value)}
+                              className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                            <Input
+                              id="modal-address-zip"
+                              placeholder="ZIP code"
+                              value={addressZip}
+                              onChange={(e) => setAddressZip(e.target.value)}
+                              className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       {/* Signer fields - Stack on mobile */}
