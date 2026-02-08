@@ -1,48 +1,72 @@
 
-# Add Documents Tab to Portal Preview
+# Add Mock Data to Client Detail Panel Tabs
 
-The Documents tab navigation was added to the main Portal page but the PortalPreview (demo) page was not updated. We need to integrate the same navigation pattern into PortalPreview.
+Replace the "coming soon" placeholders with functional mock data displays for the Contacts, Devices, and Activity tabs in the client detail sidebar.
 
-## What's Happening
+## Overview
 
-- **Portal.tsx** (actual client portal): Has the new `PortalHeader` with Onboarding/Documents tabs
-- **PortalPreview.tsx** (demo page): Still uses the old inline header without the tabs
+The `HotelDetailPanel` currently shows placeholder messages for three tabs. We'll populate them with hardcoded mock data that mimics real data structures, making it easy to swap to real database queries later.
 
 ## Files to Modify
 
-### 1. PortalPreview.tsx
+### 1. HotelDetailPanel.tsx
 
-Update the preview page to include:
-- Import the `PortalHeader` component and `PortalView` type
-- Add `activeView` state to track which tab is selected
-- Replace the inline header with the `PortalHeader` component
-- Conditionally render either the onboarding content or a demo documents view
-- Update mobile bottom navigation to include Onboarding/Documents tabs
+Update the component to include inline mock data and render proper UI for each tab:
 
-### 2. Create Demo Documents View
+**Contacts Tab:**
+- Display a list of 2-3 mock contacts per client
+- Show name, role, email, phone with appropriate icons
+- Highlight the primary contact with a badge
+- Use Avatar components with initials
 
-Since this is a preview/demo page without real data, we'll show:
-- The same Documents UI structure as `PortalDocuments`
-- Hardcoded sample documents for demonstration
-- Working download buttons (can show a toast for demo)
+**Devices Tab:**
+- Show 2-4 mock devices with status indicators
+- Display device type, serial number, and last check-in time
+- Use color-coded status badges (online/offline/pending)
+- Show Daze-owned vs property-owned distinction
 
-## Implementation Details
+**Activity Tab:**
+- Render 5-8 mock activity log entries
+- Display user avatars, action descriptions, and timestamps
+- Use the same styling patterns as the existing ActivityFeedPanel
+- Show variety of actions (uploads, completions, updates)
 
-The header will change from:
+## Mock Data Structure
+
+```text
+Contacts:
++------------------+---------------+--------------------+
+| Name             | Role          | Contact Info       |
++------------------+---------------+--------------------+
+| Sarah Johnson    | GM (Primary)  | sarah@example.com  |
+| Mike Chen        | IT Director   | mike@example.com   |
+| Lisa Rodriguez   | F&B Manager   | lisa@example.com   |
++------------------+---------------+--------------------+
+
+Devices:
++-------------+---------------+--------+---------------+
+| Type        | Serial        | Status | Last Check-in |
++-------------+---------------+--------+---------------+
+| iPad Pro    | DZ-2024-001   | Online | 5 min ago     |
+| iPad Air    | DZ-2024-002   | Online | 12 min ago    |
+| Surface Go  | PROP-SG-001   | Offline| 2 days ago    |
++-------------+---------------+--------+---------------+
+
+Activity:
+Timeline of recent actions with avatars and timestamps
 ```
-[Logo] [PREVIEW badge] ... [Reset Tour] [Activity] [Back to Login]
-```
 
-To:
-```
-[Logo] [PREVIEW badge] ... [Onboarding | Documents tabs] [Reset Tour] [Activity] [Back to Login]
-```
+## UI Components Used
 
-Since PortalPreview doesn't have a real `clientId` or database access, we'll:
-1. Create a simple inline demo documents list with sample data
-2. Show the same empty state or sample documents
-3. Keep the demo functionality working
+- Avatar with initials and fallback colors
+- Badge for status indicators and role labels
+- Card-like rows with hover states
+- Muted icons from lucide-react
+- Relative timestamps using date-fns
 
-## Mobile Navigation Update
+## Technical Notes
 
-Add Onboarding and Documents buttons to the mobile bottom nav, matching the pattern from Portal.tsx.
+- All mock data is inline (no new files needed)
+- Mock data uses the same field names as database schema
+- Easy migration path: replace mock arrays with hooks like `useClientContacts(clientId)`
+- Responsive design maintained with existing patterns
