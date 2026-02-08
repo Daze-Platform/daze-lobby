@@ -112,11 +112,6 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           icon: Tablet,
           badge: devicesCount ?? undefined,
         },
-        {
-          title: "Revenue",
-          href: "/revenue",
-          icon: DollarSign,
-        },
       ],
     },
   ];
