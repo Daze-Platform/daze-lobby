@@ -101,6 +101,10 @@ export function TaskAccordion({
     onFileUpload("brand", file, `logo_${variant}`);
   };
 
+  const handleBrandDocumentUpload = (file: File, fieldName: string) => {
+    onFileUpload("brand", file, fieldName);
+  };
+
   const handleLegalSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
     onLegalSign(signatureDataUrl, legalEntityData);
     // Trigger step completion after a brief delay for the save to process
@@ -151,10 +155,12 @@ export function TaskAccordion({
         data={getTaskData("brand")?.data}
         onSave={handleBrandSave}
         onLogoUpload={handleLogoUpload}
+        onDocumentUpload={handleBrandDocumentUpload}
         isSaving={isUpdating}
         onStepComplete={handleBrandComplete}
         isJustCompleted={recentlyCompleted === "brand"}
         isUnlocking={unlockingStep === "brand"}
+        paletteDocumentUrl={(getTaskData("brand")?.data?.palette_document_url as string) || null}
       />
       
       <VenueStep
