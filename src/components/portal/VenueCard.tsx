@@ -62,35 +62,20 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
         <div className="space-y-2">
           <Label 
             htmlFor={`venue-name-${venue.id}`}
-            className={cn(
-              "flex items-center gap-2 text-sm font-medium",
-              !hasName && "text-destructive"
-            )}
+            className="flex items-center gap-2 text-sm font-medium"
           >
             <Store className="w-4 h-4" strokeWidth={1.5} />
             Venue Name
             <span className="text-destructive">*</span>
           </Label>
-          <div className="relative">
-            <Input
-              id={`venue-name-${venue.id}`}
-              value={venue.name}
-              onChange={(e) => onUpdate({ ...venue, name: e.target.value })}
-              placeholder="e.g., Pool Deck, Lobby Bar, Room Service"
-              className={cn(
-                "font-medium transition-all",
-                !hasName && "border-destructive/50 bg-destructive/5 focus-visible:ring-destructive"
-              )}
-              maxLength={100}
-              autoFocus={!hasName}
-            />
-            {!hasName && (
-              <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
-                Please enter a venue name
-              </p>
-            )}
-          </div>
+          <Input
+            id={`venue-name-${venue.id}`}
+            value={venue.name}
+            onChange={(e) => onUpdate({ ...venue, name: e.target.value })}
+            placeholder="e.g., Pool Deck, Lobby Bar, Room Service"
+            className="font-medium"
+            maxLength={100}
+          />
         </div>
 
         {/* Menu Upload */}
