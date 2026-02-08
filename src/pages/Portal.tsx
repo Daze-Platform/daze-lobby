@@ -184,13 +184,14 @@ export default function Portal() {
       />
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+      <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {activeView === "onboarding" ? (
           <>
             {/* Welcome Section - Hero entrance, aligned with card content */}
             <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
+              <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
               <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
-                Welcome, {client?.name || "Partner"}
+                {client?.name || "Partner"}
               </h1>
               <p className="text-xs sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
                 Complete the steps below to get your property ready for launch.
