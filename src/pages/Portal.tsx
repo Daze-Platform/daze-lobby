@@ -12,6 +12,7 @@ import { WelcomeTour } from "@/components/portal/WelcomeTour";
 import { ActivityFeedPanel } from "@/components/portal/ActivityFeedPanel";
 import { PortalHeader, type PortalView } from "@/components/portal/PortalHeader";
 import { PortalDocuments } from "@/components/portal/PortalDocuments";
+import { useUnreadNotificationCount } from "@/hooks/useUnreadNotificationCount";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,9 @@ export default function Portal() {
   
   // Welcome tour for first-time users (only for client role)
   const { showTour, completeTour } = useWelcomeTour(user?.id);
+  
+  // Unread notification count for badge
+  const { unreadCount, markAsRead } = useUnreadNotificationCount(clientId);
   
   const isAdmin = hasDashboardAccess(role);
   
@@ -180,7 +184,11 @@ export default function Portal() {
         isAdminViewing={isAdminViewing}
         userEmail={user?.email}
         onSignOut={handleSignOut}
-        onActivityFeedOpen={() => setShowActivityFeed(true)}
+        onActivityFeedOpen={() => {
+          markAsRead();
+          setShowActivityFeed(true);
+        }}
+        unreadNotificationCount={unreadCount}
       />
 
       {/* Main Content */}
@@ -298,11 +306,19 @@ export default function Portal() {
           <Button
             variant="ghost"
             size="sm"
-            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
-            onClick={() => setShowActivityFeed(true)}
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px] relative"
+            onClick={() => {
+              markAsRead();
+              setShowActivityFeed(true);
+            }}
           >
             <Clock className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px]">Activity</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-2 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center animate-pulse">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </Button>
           
           <Button

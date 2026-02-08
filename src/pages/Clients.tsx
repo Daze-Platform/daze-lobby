@@ -4,8 +4,21 @@ import { HotelDetailPanel } from "@/components/dashboard/HotelDetailPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Building2, Mail, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Users, Building2, Mail, Phone, Bell, Loader2 } from "lucide-react";
 import { useClients, type Client } from "@/hooks/useClients";
+import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
 
 const phaseColors: Record<string, string> = {
   onboarding: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
@@ -18,11 +31,34 @@ export default function Clients() {
   const { data: clients, isLoading } = useClients();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [notifyClient, setNotifyClient] = useState<Client | null>(null);
+  
+  const sendNotification = useSendBlockerNotification();
 
   const handleClientClick = (client: Client) => {
     setSelectedClient(client);
     setIsPanelOpen(true);
   };
+
+  const handleNotifyClick = (e: React.MouseEvent, client: Client) => {
+    e.stopPropagation(); // Prevent card click
+    setNotifyClient(client);
+  };
+
+  const handleSendNotification = () => {
+    if (!notifyClient) return;
+    
+    sendNotification.mutate({
+      clientId: notifyClient.id,
+      blockerReason: "Action required on your onboarding tasks",
+      message: "Please review and complete your pending onboarding tasks to proceed.",
+    }, {
+      onSettled: () => {
+        setNotifyClient(null);
+      }
+    });
+  };
+
 
   return (
     <DashboardLayout>
@@ -71,9 +107,31 @@ export default function Clients() {
                       <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                       <span className="truncate">{client.name}</span>
                     </CardTitle>
-                    <Badge className={phaseColors[client.phase] || phaseColors.onboarding}>
-                      {client.phase.replace("_", " ")}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {/* Notify Button - Only show for blocked clients */}
+                      {client.hasBlocker && (
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                onClick={(e) => handleNotifyClick(e, client)}
+                              >
+                                <Bell className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Notify client about blocker</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <Badge className={phaseColors[client.phase] || phaseColors.onboarding}>
+                        {client.phase.replace("_", " ")}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="px-4 sm:px-6">
@@ -115,6 +173,29 @@ export default function Clients() {
         open={isPanelOpen}
         onOpenChange={setIsPanelOpen}
       />
+
+      {/* Notification Confirmation Dialog */}
+      <AlertDialog open={!!notifyClient} onOpenChange={(open) => !open && setNotifyClient(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notify {notifyClient?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send a notification to the client's activity feed, alerting them to review and complete their pending onboarding tasks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSendNotification}
+              disabled={sendNotification.isPending}
+              className="gap-2"
+            >
+              {sendNotification.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send Notification
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

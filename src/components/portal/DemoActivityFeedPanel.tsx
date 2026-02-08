@@ -12,7 +12,8 @@ import {
   Settings,
   Copy,
   Send,
-  Sparkles
+  Sparkles,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -47,6 +48,7 @@ function getActionConfig(action: string): { icon: React.ElementType; color: stri
     pos_instructions_copied: { icon: Copy, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
     pos_sent_to_it: { icon: Send, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     welcome: { icon: Sparkles, color: "text-primary", bgColor: "bg-primary/10" },
+    blocker_notification: { icon: Bell, color: "text-amber-500", bgColor: "bg-amber-500/10" },
   };
   
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
@@ -66,6 +68,7 @@ function formatAction(activity: DemoActivity): { userName: string; actionText: s
     menu_uploaded: `uploaded menu for ${(details?.venue_name as string) || "a venue"}`,
     pos_provider_selected: `selected ${(details?.provider as string) || "a POS provider"}`,
     welcome: "started onboarding session",
+    blocker_notification: `sent a notification: "${(details?.message as string) || "Action required"}"`,
   };
   
   return { 

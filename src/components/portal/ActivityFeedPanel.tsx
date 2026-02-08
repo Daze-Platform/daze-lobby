@@ -14,7 +14,8 @@ import {
   Activity,
   Settings,
   Copy,
-  Send
+  Send,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,6 +45,8 @@ function getActionConfig(action: string): { icon: React.ElementType; color: stri
     pos_provider_selected: { icon: Settings, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
     pos_instructions_copied: { icon: Copy, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
     pos_sent_to_it: { icon: Send, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+    // Blocker notification from admin
+    blocker_notification: { icon: Bell, color: "text-amber-500", bgColor: "bg-amber-500/10" },
   };
   
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
@@ -64,6 +67,7 @@ function formatAction(log: ActivityLog): { userName: string; actionText: string 
     menu_uploaded: `uploaded menu for ${(details?.venue_name as string) || "a venue"}`,
     blocker_created: `flagged a blocker: ${(details?.reason as string)?.substring(0, 30) || "issue detected"}`,
     blocker_force_cleared: "manually cleared a blocker",
+    blocker_notification: `sent a notification: "${(details?.message as string) || (details?.blocker_reason as string) || "Action required"}"`,
   };
   
   // Check for custom message in details
