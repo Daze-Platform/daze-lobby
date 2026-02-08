@@ -4,20 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser, UserWithRole } from "@/lib/auth";
 
 // Auth hook with proper loading state management
-// Fixes race condition where loading state was set to false before user data was fetched
+// Separates initial load from ongoing auth changes to prevent race conditions
 
 export function useAuth() {
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const initialLoadComplete = useRef(false);
-  const isFetchingUser = useRef(false);
 
   const fetchUser = useCallback(async (): Promise<UserWithRole | null> => {
-    // Prevent concurrent fetches
-    if (isFetchingUser.current) return null;
-    isFetchingUser.current = true;
-    
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
@@ -26,8 +21,6 @@ export function useAuth() {
       console.error("Error fetching user:", error);
       setUser(null);
       return null;
-    } finally {
-      isFetchingUser.current = false;
     }
   }, []);
 
@@ -60,39 +53,27 @@ export function useAuth() {
     };
 
     // Listener for ONGOING auth changes
-    // This fires AFTER initializeAuth completes for existing sessions
-    // and also fires when user signs in/out
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       if (!isMounted) return;
 
-      // Update session immediately
       setSession(nextSession);
 
-      // Handle sign in - await user fetch to complete before removing loading
       if (event === "SIGNED_IN" && nextSession?.user) {
-        // Set loading true during sign-in transition
         if (initialLoadComplete.current) {
           setLoading(true);
         }
-        
         await fetchUser();
-        
         if (isMounted) {
           setLoading(false);
         }
-      } 
-      // Handle sign out
-      else if (event === "SIGNED_OUT") {
+      } else if (event === "SIGNED_OUT") {
         setUser(null);
         if (isMounted && initialLoadComplete.current) {
           setLoading(false);
         }
-      }
-      // Handle token refresh and other events
-      else if (nextSession?.user && initialLoadComplete.current) {
-        // Fire and forget for token refresh - user data should already be loaded
+      } else if (nextSession?.user && initialLoadComplete.current) {
         fetchUser();
       } else if (!nextSession) {
         setUser(null);
