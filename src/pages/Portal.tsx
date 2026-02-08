@@ -160,7 +160,7 @@ export default function Portal() {
       ];
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-20 md:pb-0">
+    <div className="min-h-screen bg-muted/30 pb-24 sm:pb-20 md:pb-0">
       {/* Welcome Tour for first-time users (clients only) */}
       {showTour && !isAdmin && (
         <WelcomeTour onComplete={completeTour} />
@@ -211,27 +211,28 @@ export default function Portal() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+      <main className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
         {/* Welcome Section - Hero entrance, aligned with card content */}
-        <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
-          <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
+        <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
+          <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
             Welcome, {client?.name || "Partner"}
           </h1>
-          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
+          <p className="text-xs sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
             Complete the steps below to get your property ready for launch.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-lg sm:text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 px-4 sm:px-6">
+            <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
               <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} size={160} className="sm:scale-100" />
+                <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
+                <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
               </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
@@ -243,11 +244,11 @@ export default function Portal() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-lg sm:text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 px-2 sm:px-4 md:px-6">
+            <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
               <TaskAccordion 
                 tasks={formattedTasks}
                 onLegalSign={handleLegalSign}

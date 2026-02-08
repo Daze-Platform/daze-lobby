@@ -180,7 +180,7 @@ export default function PortalPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/50 dark:bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-muted/50 dark:bg-background pb-24 sm:pb-20 md:pb-0">
       {/* Welcome Tour */}
       {showTour && (
         <WelcomeTour onComplete={completeTour} />
@@ -240,29 +240,30 @@ export default function PortalPreview() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12">
+      <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {/* Welcome Section - Hero entrance */}
-        <div className="mb-6 sm:mb-8 lg:mb-12 entrance-hero">
-          <span className="label-micro mb-2 block">Welcome Back</span>
-          <h1 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-2 sm:mb-3">
+        <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
+          <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
+          <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
             Grand Hyatt Demo
           </h1>
-          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
+          <p className="text-xs sm:text-base lg:text-lg text-muted-foreground">
             Complete the steps below to get your hotel ready for launch.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Hero Section - Progress */}
           <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
               <span className="label-micro">Progress</span>
-              <CardTitle className="text-lg sm:text-xl">Onboarding</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 px-4 sm:px-6">
-              {/* Responsive Progress Ring */}
+            <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
+              {/* Responsive Progress Ring - smaller on mobile */}
               <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} size={160} />
+                <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
+                <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
               </div>
               <StatusBadge status={status} />
               <ConfettiCelebration 
@@ -271,18 +272,18 @@ export default function PortalPreview() {
               />
               
               {/* Demo Status Toggle - Horizontal scroll on mobile */}
-              <div className="w-full pt-4 sm:pt-6 border-t border-border/20">
-                <p className="label-micro mb-3 text-center">Demo: Toggle Status</p>
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-2 px-2 scrollbar-hide">
+              <div className="w-full pt-3 sm:pt-6 border-t border-border/20">
+                <p className="label-micro mb-2 sm:mb-3 text-center">Demo: Toggle Status</p>
+                <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                   {(["onboarding", "reviewing", "live"] as const).map((s) => (
                     <Button
                       key={s}
                       size="sm"
                       variant={status === s ? "default" : "secondary"}
                       onClick={() => setStatus(s)}
-                      className="flex-1 min-w-[70px] sm:min-w-[80px] text-xs capitalize min-h-[44px] whitespace-nowrap"
+                      className="flex-1 min-w-[60px] sm:min-w-[80px] text-[10px] sm:text-xs capitalize min-h-[40px] sm:min-h-[44px] whitespace-nowrap px-2 sm:px-3"
                     >
-                      {s === "reviewing" ? "in-progress" : s}
+                      {s === "reviewing" ? "In-Progress" : s}
                     </Button>
                   ))}
                 </div>
@@ -292,11 +293,11 @@ export default function PortalPreview() {
 
           {/* Task List - Content entrance */}
           <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
               <span className="label-micro">Checklist</span>
-              <CardTitle className="text-lg sm:text-xl">Setup Tasks</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 px-2 sm:px-4 md:px-6">
+            <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
               <TaskAccordion 
                 tasks={tasks}
                 onLegalSign={handleLegalSign}
@@ -314,7 +315,7 @@ export default function PortalPreview() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           <Button
             variant="ghost"

@@ -79,14 +79,14 @@ export function LegalStep({
       <AccordionItem 
         value="legal" 
         className={cn(
-          "px-5 relative overflow-hidden transition-all duration-300 border-0",
+          "px-3 sm:px-5 relative overflow-hidden transition-all duration-300 border-0",
           isLocked && "opacity-50 pointer-events-none",
           isUnlocking && "animate-unlock-glow"
         )}
         disabled={isLocked}
       >
         <StepCompletionEffect isActive={isJustCompleted || false} />
-        <AccordionTrigger className="hover:no-underline py-3 md:py-4">
+        <AccordionTrigger className="hover:no-underline py-2.5 md:py-4">
           <div className="flex items-center gap-2 md:gap-3">
             <StepBadge 
               step="A" 
@@ -94,13 +94,13 @@ export function LegalStep({
               isJustCompleted={isJustCompleted} 
             />
             <div className="text-left min-w-0">
-              <p className="font-semibold text-sm md:text-base truncate">Legal & Agreements</p>
-              <p className="text-xs md:text-sm text-muted-foreground truncate">Review and sign required agreements</p>
+              <p className="font-semibold text-xs sm:text-sm md:text-base truncate">Legal & Agreements</p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">Review and sign required agreements</p>
             </div>
           </div>
         </AccordionTrigger>
-        <AccordionContent className="pb-4">
-          <div className="space-y-3 md:space-y-4 pt-2">
+        <AccordionContent className="pb-3 sm:pb-4">
+          <div className="space-y-2.5 sm:space-y-4 pt-1 sm:pt-2">
             {/* Pilot Agreement */}
             <div className={cn(
               "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 md:p-4 rounded-xl transition-all duration-300 group border-0",

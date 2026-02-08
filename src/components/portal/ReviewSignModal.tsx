@@ -264,21 +264,21 @@ export function ReviewSignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-5xl h-[100dvh] sm:h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-5xl h-[100dvh] sm:h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-4 border-b shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-sm sm:text-lg">
             {documentTitle}
             {isSigned && (
-              <span className="inline-flex items-center gap-1 text-xs font-normal bg-success/10 text-success px-2 py-0.5 rounded-full">
-                <Shield className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-normal bg-success/10 text-success px-1.5 sm:px-2 py-0.5 rounded-full">
+                <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 Signed
               </span>
             )}
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">
+          <DialogDescription className="text-[10px] sm:text-sm">
             {isSigned 
-              ? "This agreement has been digitally signed and cannot be modified"
-              : "Complete the entity information below. Your details will appear in the contract in real-time."
+              ? "This agreement has been digitally signed"
+              : "Complete entity info below. Details appear in the contract."
             }
           </DialogDescription>
         </DialogHeader>
@@ -287,99 +287,96 @@ export function ReviewSignModal({
           {/* Left Panel: Form + Agreement Text */}
           <div className="border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 overflow-hidden">
             <ScrollArea className="flex-1">
-              <div className="p-4 sm:p-5 space-y-4 sm:space-y-6">
+              <div className="p-3 sm:p-5 space-y-3 sm:space-y-6">
                 {/* Entity Information Form */}
                 {!isSigned && (
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 rounded-xl bg-secondary/40 border border-border/50">
+                  <div className="space-y-2.5 sm:space-y-4 p-2.5 sm:p-4 rounded-xl bg-secondary/40 border border-border/50">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <IconContainer icon={Building2} size="sm" variant="primary" />
                       <div>
-                        <h3 className="font-semibold text-sm">Entity Information</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Complete all fields. Your information will appear in the contract below.
+                        <h3 className="font-semibold text-xs sm:text-sm">Entity Information</h3>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
+                          Complete all fields.
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:gap-4">
+                    <div className="grid gap-2.5 sm:gap-4">
                       {/* Legal Entity Name */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="modal-entity-name" className="text-xs flex items-center gap-1.5">
+                      <div className="space-y-1">
+                        <Label htmlFor="modal-entity-name" className="text-[10px] sm:text-xs flex items-center gap-1.5">
                           <Building2 className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                          Legal Entity Name <span className="text-destructive">*</span>
+                          Legal Entity <span className="text-destructive">*</span>
                         </Label>
                         <Input
                           id="modal-entity-name"
-                          placeholder="e.g., Pensacola Beach Hospitality Group, LLC"
+                          placeholder="e.g., Hospitality Group, LLC"
                           value={legalEntityName}
                           onChange={(e) => setLegalEntityName(e.target.value)}
-                          className="h-9"
+                          className="h-8 sm:h-9 text-xs sm:text-sm"
                         />
                       </div>
 
-                      {/* Property Name - NEW FIELD */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="modal-property-name" className="text-xs flex items-center gap-1.5">
+                      {/* Property Name */}
+                      <div className="space-y-1">
+                        <Label htmlFor="modal-property-name" className="text-[10px] sm:text-xs flex items-center gap-1.5">
                           <Hotel className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                           Property Name <span className="text-destructive">*</span>
                         </Label>
                         <Input
                           id="modal-property-name"
-                          placeholder="e.g., The Pensacola Beach Resort"
+                          placeholder="e.g., The Beach Resort"
                           value={propertyName}
                           onChange={(e) => setPropertyName(e.target.value)}
-                          className="h-9"
+                          className="h-8 sm:h-9 text-xs sm:text-sm"
                         />
-                        <p className="text-2xs text-muted-foreground">
-                          The name of the property as it will appear in the Daze system
-                        </p>
                       </div>
 
                       {/* Registered Address */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="modal-address" className="text-xs flex items-center gap-1.5">
+                      <div className="space-y-1">
+                        <Label htmlFor="modal-address" className="text-[10px] sm:text-xs flex items-center gap-1.5">
                           <MapPin className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                          Registered Address <span className="text-destructive">*</span>
+                          Address <span className="text-destructive">*</span>
                         </Label>
                         <Textarea
                           id="modal-address"
-                          placeholder="Full street address, city, state, ZIP"
+                          placeholder="Street, city, state, ZIP"
                           value={billingAddress}
                           onChange={(e) => setBillingAddress(e.target.value)}
                           rows={2}
-                          className="resize-none text-sm"
+                          className="resize-none text-xs sm:text-sm"
                         />
                       </div>
 
                       {/* Signer fields - Stack on mobile */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                         {/* Authorized Signer Name */}
-                        <div className="space-y-1.5">
-                          <Label htmlFor="modal-signer-name" className="text-xs flex items-center gap-1.5">
+                        <div className="space-y-1">
+                          <Label htmlFor="modal-signer-name" className="text-[10px] sm:text-xs flex items-center gap-1.5">
                             <User className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                            Authorized Signer <span className="text-destructive">*</span>
+                            Signer Name <span className="text-destructive">*</span>
                           </Label>
                           <Input
                             id="modal-signer-name"
                             placeholder="Full name"
                             value={authorizedSignerName}
                             onChange={(e) => setAuthorizedSignerName(e.target.value)}
-                            className="h-9"
+                            className="h-8 sm:h-9 text-xs sm:text-sm"
                           />
                         </div>
 
                         {/* Signer Title */}
-                        <div className="space-y-1.5">
-                          <Label htmlFor="modal-signer-title" className="text-xs flex items-center gap-1.5">
+                        <div className="space-y-1">
+                          <Label htmlFor="modal-signer-title" className="text-[10px] sm:text-xs flex items-center gap-1.5">
                             <Briefcase className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
                             Title <span className="text-destructive">*</span>
                           </Label>
                           <Input
                             id="modal-signer-title"
-                            placeholder="e.g., General Manager"
+                            placeholder="e.g., GM"
                             value={authorizedSignerTitle}
                             onChange={(e) => setAuthorizedSignerTitle(e.target.value)}
-                            className="h-9"
+                            className="h-8 sm:h-9 text-xs sm:text-sm"
                           />
                         </div>
                       </div>
@@ -389,21 +386,22 @@ export function ReviewSignModal({
 
                 {/* Agreement Document */}
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-muted-foreground">Agreement Document</p>
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Agreement</p>
                     <Button
                       variant="secondary"
                       size="sm"
                       onClick={handleDownload}
-                      className="h-7 gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium"
+                      className="h-6 sm:h-7 gap-1 sm:gap-1.5 text-[10px] sm:text-xs bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium px-2 sm:px-3"
                     >
-                      <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
-                      Download
+                      <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" strokeWidth={1.5} />
+                      <span className="hidden sm:inline">Download</span>
+                      <span className="sm:hidden">PDF</span>
                     </Button>
                   </div>
-                  <div className="p-4 bg-white dark:bg-background border rounded-lg text-sm leading-relaxed">
+                  <div className="p-3 sm:p-4 bg-white dark:bg-background border rounded-lg text-xs sm:text-sm leading-relaxed max-h-[200px] sm:max-h-none overflow-y-auto">
                     {agreementText.split('\n\n').map((paragraph, index) => (
-                      <p key={index} className="whitespace-pre-wrap mb-3 last:mb-0">
+                      <p key={index} className="whitespace-pre-wrap mb-2 sm:mb-3 last:mb-0">
                         <HighlightedText text={paragraph} entity={currentEntity} />
                       </p>
                     ))}
@@ -415,12 +413,12 @@ export function ReviewSignModal({
 
           {/* Right Panel: Signature */}
           <div className="flex flex-col min-h-0 overflow-hidden">
-            <div className="px-4 py-2 sm:py-3 bg-muted/50 border-b shrink-0">
-              <p className="text-sm font-medium text-muted-foreground">
+            <div className="px-3 sm:px-4 py-2 bg-muted/50 border-b shrink-0">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {isSigned ? "Digital Signature" : "Your Signature"}
               </p>
             </div>
-            <div className="flex-1 p-4 sm:p-6 flex flex-col min-h-0 overflow-auto">
+            <div className="flex-1 p-3 sm:p-6 flex flex-col min-h-0 overflow-auto">
               {isSigned ? (
                 /* ========== SIGNED STATE ========== */
                 <div className="space-y-6">
@@ -482,8 +480,8 @@ export function ReviewSignModal({
                         </p>
                       </div>
                     )}
-                    <p className="text-sm text-muted-foreground mb-4">
-                      By signing below, you agree to the terms and conditions outlined in the Pilot Agreement on behalf of <span className="font-semibold text-foreground">{legalEntityName || "[Your Entity]"}</span>.
+                    <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
+                      By signing, you agree to the terms on behalf of <span className="font-semibold text-foreground">{legalEntityName || "[Your Entity]"}</span>.
                     </p>
                     <div className={cn(
                       "transition-opacity",
@@ -496,37 +494,37 @@ export function ReviewSignModal({
                     </div>
                   </div>
 
-                  <div className="mt-auto pt-4 space-y-3 border-t shrink-0">
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <div className="mt-auto pt-3 sm:pt-4 space-y-2 sm:space-y-3 border-t shrink-0">
+                    <div className="flex gap-2 sm:gap-3">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleClear}
                         disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="w-full sm:flex-1 min-h-[44px]"
+                        className="flex-1 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm"
                       >
                         Clear
                       </Button>
                       <Button
                         onClick={handleConfirmSign}
                         disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="w-full sm:flex-[2] gap-2 min-h-[44px]"
+                        className="flex-[2] gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm"
                       >
                         {isSubmitting ? (
                           <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                             Signing...
                           </>
                         ) : (
                           <>
-                            <Check className="w-4 h-4" />
-                            Confirm & Sign
+                            <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            Sign
                           </>
                         )}
                       </Button>
                     </div>
-                    <p className="text-xs text-center text-muted-foreground">
-                      Your signature will be securely stored and timestamped
+                    <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
+                      Signature is securely stored and timestamped
                     </p>
                   </div>
                 </>
