@@ -15,9 +15,14 @@ interface VenueStepProps {
   isActive?: boolean;
   data?: Record<string, unknown>;
   venues: Venue[];
-  onVenuesChange: (venues: Venue[]) => void;
-  onSave: () => Promise<void> | void;
-  isSaving?: boolean;
+  onAddVenue: () => Promise<Venue | undefined>;
+  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string }) => Promise<void>;
+  onRemoveVenue: (id: string) => Promise<void>;
+  onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onCompleteStep: () => Promise<void>;
+  isAdding?: boolean;
+  isUpdating?: boolean;
+  isDeleting?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
@@ -29,9 +34,14 @@ export function VenueStep({
   isActive = false,
   data, 
   venues,
-  onVenuesChange,
-  onSave,
-  isSaving,
+  onAddVenue,
+  onUpdateVenue,
+  onRemoveVenue,
+  onUploadMenu,
+  onCompleteStep,
+  isAdding,
+  isUpdating,
+  isDeleting,
   onStepComplete,
   isJustCompleted,
   isUnlocking
@@ -45,6 +55,12 @@ export function VenueStep({
       : isActive 
         ? "active" 
         : "pending";
+
+  const handleCompleteStep = async () => {
+    await onCompleteStep();
+    onStepComplete?.();
+  };
+
   return (
     <AccordionItem 
       value="venue" 
@@ -73,10 +89,14 @@ export function VenueStep({
         <div className="pt-1 sm:pt-2">
           <VenueManager
             venues={venues}
-            onVenuesChange={onVenuesChange}
-            onSave={onSave}
-            isSaving={isSaving}
-            onStepComplete={onStepComplete}
+            onAddVenue={onAddVenue}
+            onUpdateVenue={onUpdateVenue}
+            onRemoveVenue={onRemoveVenue}
+            onUploadMenu={onUploadMenu}
+            onCompleteStep={handleCompleteStep}
+            isAdding={isAdding}
+            isUpdating={isUpdating}
+            isDeleting={isDeleting}
           />
         </div>
       </AccordionContent>

@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SaveButton } from "@/components/ui/save-button";
 import { Label } from "@/components/ui/label";
@@ -6,45 +7,78 @@ import { VenueCard, type Venue } from "./VenueCard";
 
 interface VenueManagerProps {
   venues: Venue[];
-  onVenuesChange: (venues: Venue[]) => void;
-  onSave: () => Promise<void> | void;
-  isSaving?: boolean;
-  onStepComplete?: () => void;
+  onAddVenue: () => Promise<Venue | undefined>;
+  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string }) => Promise<void>;
+  onRemoveVenue: (id: string) => Promise<void>;
+  onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onCompleteStep: () => Promise<void>;
+  isAdding?: boolean;
+  isUpdating?: boolean;
+  isDeleting?: boolean;
 }
 
-// Simple ID generator since we can't use uuid without adding dependency
-const generateId = () => Math.random().toString(36).substring(2, 15);
+// Debounce helper
+function debounce<T extends (...args: Parameters<T>) => void>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
 
 export function VenueManager({ 
   venues, 
-  onVenuesChange, 
-  onSave, 
-  isSaving,
-  onStepComplete
+  onAddVenue, 
+  onUpdateVenue, 
+  onRemoveVenue,
+  onUploadMenu,
+  onCompleteStep,
+  isAdding,
+  isUpdating,
+  isDeleting,
 }: VenueManagerProps) {
-  const addVenue = () => {
-    const newVenue: Venue = {
-      id: generateId(),
-      name: "",
-    };
-    onVenuesChange([...venues, newVenue]);
+  const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
+  const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
+  
+  // Debounced update for venue names
+  const debouncedUpdate = useMemo(
+    () => debounce(async (id: string, name: string) => {
+      setPendingUpdates(prev => new Set(prev).add(id));
+      try {
+        await onUpdateVenue(id, { name });
+      } finally {
+        setPendingUpdates(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    }, 600),
+    [onUpdateVenue]
+  );
+
+  const handleAddVenue = async () => {
+    const newVenue = await onAddVenue();
+    if (newVenue) {
+      setNewlyAddedId(newVenue.id);
+      // Clear the focus indicator after a short delay
+      setTimeout(() => setNewlyAddedId(null), 100);
+    }
   };
 
-  const updateVenue = (updatedVenue: Venue) => {
-    onVenuesChange(
-      venues.map((v) => (v.id === updatedVenue.id ? updatedVenue : v))
-    );
+  const handleVenueNameChange = (venue: Venue, newName: string) => {
+    // Optimistically update locally, then debounce save
+    debouncedUpdate(venue.id, newName);
   };
 
-  const removeVenue = (id: string) => {
-    onVenuesChange(venues.filter((v) => v.id !== id));
+  const handleMenuUpload = async (venue: Venue, file: File) => {
+    await onUploadMenu(venue.id, venue.name, file);
   };
 
   const hasValidVenues = venues.length > 0 && venues.some(v => v.name.trim());
-
-  const handleSave = async () => {
-    await onSave();
-  };
 
   return (
     <div className="space-y-4">
@@ -54,7 +88,7 @@ export function VenueManager({
           Venue Locations
         </Label>
         <span className="text-xs text-muted-foreground">
-          {venues.length} venue{venues.length !== 1 ? "s" : ""}
+          {venues.length} venue{venues.length !== 1 ? "s" : ""} • Auto-saved
         </span>
       </div>
 
@@ -65,8 +99,12 @@ export function VenueManager({
             <VenueCard
               key={venue.id}
               venue={venue}
-              onUpdate={updateVenue}
-              onRemove={removeVenue}
+              onNameChange={(name) => handleVenueNameChange(venue, name)}
+              onMenuUpload={(file) => handleMenuUpload(venue, file)}
+              onRemove={() => onRemoveVenue(venue.id)}
+              isSaving={pendingUpdates.has(venue.id)}
+              isDeleting={isDeleting}
+              autoFocus={venue.id === newlyAddedId}
             />
           ))}
         </div>
@@ -84,21 +122,22 @@ export function VenueManager({
       <Button
         type="button"
         variant="outline"
-        onClick={addVenue}
+        onClick={handleAddVenue}
+        disabled={isAdding}
         className="w-full gap-2 min-h-[44px]"
       >
         <Plus className="w-4 h-4" />
-        Add Venue
+        {isAdding ? "Adding..." : "Add Venue"}
       </Button>
 
-      {/* Save Button */}
       {venues.length > 0 && (
         <SaveButton
-          onClick={handleSave}
-          onSuccess={onStepComplete}
-          disabled={!hasValidVenues}
+          onClick={onCompleteStep}
+          disabled={!hasValidVenues || isUpdating}
           className="w-full min-h-[44px]"
-          idleText="Save Venue Configuration"
+          idleText="Complete Step"
+          loadingText="Completing..."
+          successText="Completed!"
         />
       )}
     </div>

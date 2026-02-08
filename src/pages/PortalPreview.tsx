@@ -192,7 +192,36 @@ export default function PortalPreview() {
     toast.success(`File "${file.name}" uploaded. (Demo mode)`);
   };
 
-  const handleVenuesSave = () => {
+  // Venue CRUD handlers for demo mode
+  const handleAddVenue = async (): Promise<Venue | undefined> => {
+    const newVenue: Venue = {
+      id: crypto.randomUUID(),
+      name: "",
+    };
+    setVenues(prev => [...prev, newVenue]);
+    return newVenue;
+  };
+
+  const handleUpdateVenue = async (id: string, updates: { name?: string; menuPdfUrl?: string }) => {
+    setVenues(prev => prev.map(v => 
+      v.id === id ? { ...v, ...updates } : v
+    ));
+  };
+
+  const handleRemoveVenue = async (id: string) => {
+    setVenues(prev => prev.filter(v => v.id !== id));
+    toast.success("Venue removed. (Demo mode)");
+  };
+
+  const handleUploadMenu = async (venueId: string, venueName: string, file: File) => {
+    setVenues(prev => prev.map(v =>
+      v.id === venueId ? { ...v, menuFileName: file.name } : v
+    ));
+    logDemoActivity("menu_uploaded", { venue_name: venueName, file_name: file.name });
+    toast.success(`Menu uploaded for ${venueName}. (Demo mode)`);
+  };
+
+  const handleCompleteVenueStep = async () => {
     if (venues.length > 0 && venues.some(v => v.name.trim())) {
       setTasks(prev => prev.map(task =>
         task.key === "venue"
@@ -200,9 +229,8 @@ export default function PortalPreview() {
           : task
       ));
       
-      // Log demo activity
       logDemoActivity("venue_updated", { venue_count: venues.filter(v => v.name.trim()).length });
-      toast.success("Venues saved! (Demo mode)");
+      toast.success("Venue step completed! (Demo mode)");
     }
   };
 
@@ -299,8 +327,11 @@ export default function PortalPreview() {
                     onTaskUpdate={handleTaskUpdate}
                     onFileUpload={handleFileUpload}
                     venues={venues}
-                    onVenuesChange={setVenues}
-                    onVenuesSave={handleVenuesSave}
+                    onAddVenue={handleAddVenue}
+                    onUpdateVenue={handleUpdateVenue}
+                    onRemoveVenue={handleRemoveVenue}
+                    onUploadMenu={handleUploadMenu}
+                    onCompleteVenueStep={handleCompleteVenueStep}
                     isSigningLegal={isSigningLegal}
                     hotelLegalEntity={hotelLegalEntity}
                   />

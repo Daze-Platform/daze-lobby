@@ -23,9 +23,16 @@ interface TaskAccordionProps {
   onLegalSign: (signatureDataUrl: string, legalEntityData: LegalEntityData) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
-  venues?: Venue[];
-  onVenuesChange?: (venues: Venue[]) => void;
-  onVenuesSave?: () => void;
+  // Venue CRUD handlers
+  venues: Venue[];
+  onAddVenue: () => Promise<Venue | undefined>;
+  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string }) => Promise<void>;
+  onRemoveVenue: (id: string) => Promise<void>;
+  onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onCompleteVenueStep: () => Promise<void>;
+  isAddingVenue?: boolean;
+  isUpdatingVenue?: boolean;
+  isDeletingVenue?: boolean;
   isSigningLegal?: boolean;
   isUpdating?: boolean;
   hotelLegalEntity?: LegalEntityData;
@@ -38,9 +45,15 @@ export function TaskAccordion({
   onLegalSign,
   onTaskUpdate, 
   onFileUpload,
-  venues = [],
-  onVenuesChange,
-  onVenuesSave,
+  venues,
+  onAddVenue,
+  onUpdateVenue,
+  onRemoveVenue,
+  onUploadMenu,
+  onCompleteVenueStep,
+  isAddingVenue,
+  isUpdatingVenue,
+  isDeletingVenue,
   isSigningLegal,
   isUpdating,
   hotelLegalEntity
@@ -115,12 +128,6 @@ export function TaskAccordion({
     handleStepComplete("brand");
   };
 
-  const handleVenueSave = async () => {
-    if (onVenuesSave) {
-      await onVenuesSave();
-    }
-  };
-
   const handleVenueComplete = () => {
     handleStepComplete("venue");
   };
@@ -168,9 +175,14 @@ export function TaskAccordion({
         isLocked={isTaskLocked("venue")}
         data={getTaskData("venue")?.data}
         venues={venues}
-        onVenuesChange={onVenuesChange || (() => {})}
-        onSave={handleVenueSave}
-        isSaving={isUpdating}
+        onAddVenue={onAddVenue}
+        onUpdateVenue={onUpdateVenue}
+        onRemoveVenue={onRemoveVenue}
+        onUploadMenu={onUploadMenu}
+        onCompleteStep={onCompleteVenueStep}
+        isAdding={isAddingVenue}
+        isUpdating={isUpdatingVenue}
+        isDeleting={isDeletingVenue}
         onStepComplete={handleVenueComplete}
         isJustCompleted={recentlyCompleted === "venue"}
         isUnlocking={unlockingStep === "venue"}

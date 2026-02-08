@@ -1,12 +1,24 @@
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Upload, FileText, X, Check, Loader2, AlertCircle, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateMenuFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
-import { IconContainer, IconStack } from "@/components/ui/icon-container";
+import { IconStack } from "@/components/ui/icon-container";
 
 export interface Venue {
   id: string;
@@ -18,12 +30,42 @@ export interface Venue {
 
 interface VenueCardProps {
   venue: Venue;
-  onUpdate: (venue: Venue) => void;
-  onRemove: (id: string) => void;
+  onNameChange: (name: string) => void;
+  onMenuUpload: (file: File) => void;
+  onRemove: () => void;
+  isSaving?: boolean;
+  isDeleting?: boolean;
   isUploading?: boolean;
+  autoFocus?: boolean;
 }
 
-export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardProps) {
+export function VenueCard({ 
+  venue, 
+  onNameChange, 
+  onMenuUpload, 
+  onRemove, 
+  isSaving,
+  isDeleting,
+  isUploading,
+  autoFocus,
+}: VenueCardProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [localName, setLocalName] = useState(venue.name);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Sync local name when venue changes from server
+  useEffect(() => {
+    setLocalName(venue.name);
+  }, [venue.name]);
+  
+  // Auto-focus when newly added
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [autoFocus]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -36,29 +78,58 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
       return;
     }
 
-    onUpdate({
-      ...venue,
-      menuFile: file,
-      menuFileName: file.name,
-    });
+    onMenuUpload(file);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setLocalName(newName);
+    onNameChange(newName);
+  };
+
+  const handleDelete = () => {
+    setShowDeleteConfirm(false);
+    onRemove();
   };
 
   const hasMenu = venue.menuFile || venue.menuPdfUrl;
-  const hasName = venue.name.trim().length > 0;
 
   return (
     <Card className="relative group">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        onClick={() => onRemove(venue.id)}
-      >
-        <X className="w-4 h-4" strokeWidth={1.5} />
-      </Button>
+      {/* Delete Button with Confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <X className="w-4 h-4" strokeWidth={1.5} />
+            )}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Venue</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove "{venue.name || "this venue"}" and its menu. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CardContent className="p-4 space-y-4">
-        {/* Venue Name - Now prominent with label */}
+        {/* Venue Name - with save indicator */}
         <div className="space-y-2">
           <Label 
             htmlFor={`venue-name-${venue.id}`}
@@ -67,11 +138,18 @@ export function VenueCard({ venue, onUpdate, onRemove, isUploading }: VenueCardP
             <Store className="w-4 h-4" strokeWidth={1.5} />
             Venue Name
             <span className="text-destructive">*</span>
+            {isSaving && (
+              <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Saving...
+              </span>
+            )}
           </Label>
           <Input
+            ref={inputRef}
             id={`venue-name-${venue.id}`}
-            value={venue.name}
-            onChange={(e) => onUpdate({ ...venue, name: e.target.value })}
+            value={localName}
+            onChange={handleNameChange}
             placeholder="e.g., Pool Deck, Lobby Bar, Room Service"
             className="font-medium"
             maxLength={100}
