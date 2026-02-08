@@ -1,119 +1,180 @@
 
-# Bell Icon Enhancement Plan
+# Venue Management Enhancement Plan
 
-## Overview
-This plan updates the notification bell icon on client cards to:
-1. Only show when there are **pending tasks** (incomplete onboarding items)
-2. Display in **green** when a reminder has already been sent, otherwise **amber**
+## Current State Analysis
 
-## Implementation Steps
+The current implementation has several issues that prevent optimal multi-venue management:
 
-### 1. Update the `useClients` Hook
+1. **Destructive Save Pattern**: The `saveVenuesMutation` deletes ALL venues and re-inserts them on every save, which:
+   - Loses the original database IDs (new UUIDs assigned each time)
+   - Breaks referential integrity for any future venue-linked data
+   - Creates unnecessary database churn
 
-**File:** `src/hooks/useClients.ts`
+2. **Local State Disconnect**: The Portal page uses `localVenues` state that only syncs FROM the server on initial load, not bidirectionally. This means venues loaded from the database need manual sync.
 
-Add a query to check for the most recent `blocker_notification` in `activity_logs` per client:
+3. **No Immediate Persistence**: Adding a venue only stores it in local state until "Save Venue Configuration" is clicked, which can lead to data loss if the user navigates away.
+
+4. **File Uploads Not Linked**: Menu PDF uploads happen separately via `uploadVenueMenuMutation`, but since IDs change on every save, the linkage is brittle.
+
+## Proposed Solution
+
+### Architecture Overview
+
+```text
+User adds venue
+      |
+      v
+[VenueCard] --> onUpdate --> [VenueManager] --> auto-save individual venue
+      |                                                    |
+      v                                                    v
+Local state updated                             supabase.from("venues").upsert()
+      |                                                    |
+      v                                                    v
+UI reflects change immediately              Database persists permanently
+```
+
+### 1. Add Individual Venue CRUD Mutations
+
+**File:** `src/hooks/useClientPortal.ts`
+
+Replace the bulk "delete all + insert all" pattern with granular operations:
 
 ```typescript
-// Fetch latest blocker notifications per client
-const { data: notifications, error: notificationsError } = await supabase
-  .from("activity_logs")
-  .select("client_id, created_at")
-  .eq("action", "blocker_notification")
-  .order("created_at", { ascending: false });
+// Add single venue
+const addVenueMutation = useMutation({
+  mutationFn: async (venue: { name: string }) => {
+    if (!clientId) throw new Error("No client found");
+    
+    const { data, error } = await supabase
+      .from("venues")
+      .insert({ client_id: clientId, name: venue.name })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+  },
+});
 
-// Track clients with recent notifications (e.g., within last 24-48 hours)
-const recentNotificationsByClient = new Map<string, Date>();
-notifications?.forEach((n) => {
-  if (!recentNotificationsByClient.has(n.client_id)) {
-    recentNotificationsByClient.set(n.client_id, new Date(n.created_at));
-  }
+// Update venue (name or menu_pdf_url)
+const updateVenueMutation = useMutation({
+  mutationFn: async ({ id, updates }: { id: string; updates: Partial<Venue> }) => {
+    const { error } = await supabase
+      .from("venues")
+      .update({ name: updates.name, menu_pdf_url: updates.menuPdfUrl })
+      .eq("id", id)
+      .eq("client_id", clientId); // Security: ensure client ownership
+    
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+  },
+});
+
+// Delete single venue
+const deleteVenueMutation = useMutation({
+  mutationFn: async (venueId: string) => {
+    const { error } = await supabase
+      .from("venues")
+      .delete()
+      .eq("id", venueId)
+      .eq("client_id", clientId);
+    
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+  },
 });
 ```
 
-Update the `Client` type to include:
-```typescript
-export type Client = Tables<"clients"> & {
-  // ... existing fields
-  hasPendingTasks: boolean;      // True if incompleteCount > 0
-  hasRecentReminder: boolean;    // True if a reminder was sent recently
-  lastReminderAt: Date | null;   // Timestamp of last reminder
-};
-```
+### 2. Update VenueManager Component
 
-### 2. Update Client Cards UI
+**File:** `src/components/portal/VenueManager.tsx`
 
-**File:** `src/pages/Clients.tsx`
+Transform from batch-save to auto-save pattern:
 
-Change the visibility condition from `client.hasBlocker` to `client.incompleteCount > 0`:
+- **Add Venue**: Immediately creates in database, then shows in list
+- **Update Venue**: Debounced auto-save as user types (500ms delay)
+- **Remove Venue**: Confirmation dialog, then permanent delete
+- **Save Button**: Changes to "Complete Step" - marks the task complete without re-saving venues
 
 ```typescript
-{/* Notify Button - Only show when there are pending tasks */}
-{client.incompleteCount > 0 && (
-  <TooltipProvider delayDuration={0}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-8 w-8",
-            client.hasRecentReminder
-              ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-              : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-          )}
-          onClick={(e) => handleNotifyClick(e, client)}
-        >
-          <Bell className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">
-        <p>{client.hasRecentReminder ? "Reminder already sent" : "Send reminder to client"}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-)}
+interface VenueManagerProps {
+  venues: Venue[];
+  onAddVenue: () => Promise<Venue>;
+  onUpdateVenue: (id: string, updates: Partial<Venue>) => Promise<void>;
+  onRemoveVenue: (id: string) => Promise<void>;
+  onCompleteStep: () => void;
+  isSaving?: boolean;
+}
+
+// Debounced name update
+const debouncedUpdate = useMemo(
+  () => debounce((id: string, name: string) => {
+    onUpdateVenue(id, { name });
+  }, 500),
+  [onUpdateVenue]
+);
 ```
 
-### 3. Tooltip Feedback
+### 3. Improve VenueCard UX
 
-The tooltip will dynamically show:
-- **Amber bell**: "Send reminder to client"
-- **Green bell**: "Reminder already sent" (with optional: click to send another)
+**File:** `src/components/portal/VenueCard.tsx`
 
-## Data Flow
+- Add visual save indicator (subtle checkmark or spinner while saving)
+- Add confirmation dialog for venue deletion ("This will permanently remove this venue")
+- Show upload progress for menu PDFs
+- Disable delete button while saving
 
-```text
-activity_logs table
-      |
-      v
-useClients hook fetches latest "blocker_notification" per client
-      |
-      v
-Sets hasRecentReminder = true if notification exists (optionally within X hours)
-      |
-      v
-Clients.tsx renders:
-  - Bell visible when incompleteCount > 0
-  - Bell is green when hasRecentReminder = true
-  - Bell is amber when hasRecentReminder = false
-```
+### 4. Update VenueStep to Pass New Props
+
+**File:** `src/components/portal/steps/VenueStep.tsx`
+
+Update props interface to accept the new individual handlers.
+
+### 5. Update TaskAccordion Wiring
+
+**File:** `src/components/portal/TaskAccordion.tsx`
+
+Wire the new handlers from `useClientPortal` to the `VenueStep`.
+
+### 6. Update Portal.tsx
+
+**File:** `src/pages/Portal.tsx`
+
+- Remove `localVenues` state - venues now come directly from the server
+- Simplify venue handling since persistence is automatic
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useClients.ts` | Add notification query, update Client type with `hasRecentReminder` |
-| `src/pages/Clients.tsx` | Update bell visibility condition and dynamic styling |
+| `src/hooks/useClientPortal.ts` | Add `addVenue`, `updateVenue`, `deleteVenue` mutations; keep `completeVenueStep` for task marking |
+| `src/components/portal/VenueManager.tsx` | Refactor to auto-save pattern with debouncing; change button to "Complete Step" |
+| `src/components/portal/VenueCard.tsx` | Add save indicator, delete confirmation, improved upload UX |
+| `src/components/portal/steps/VenueStep.tsx` | Update props to pass individual handlers |
+| `src/components/portal/TaskAccordion.tsx` | Wire new venue handlers |
+| `src/pages/Portal.tsx` | Remove `localVenues` state, simplify venue flow |
 
-## Technical Details
+## User Experience Flow
 
-### Reminder Freshness (Optional Enhancement)
-Consider a reminder "recent" if sent within the last 24 hours to allow re-sending after a day:
-```typescript
-const REMINDER_FRESHNESS_MS = 24 * 60 * 60 * 1000; // 24 hours
-const isRecent = lastReminderAt && 
-  (now.getTime() - lastReminderAt.getTime()) < REMINDER_FRESHNESS_MS;
-```
+1. User opens "Venue Manager" step
+2. Existing venues (if any) load from database immediately
+3. User clicks "Add Venue" - new row appears with focus on name input
+4. As user types venue name, it auto-saves after 500ms pause (with subtle indicator)
+5. User can upload menu PDF - uploads immediately with progress indicator
+6. User can remove venue - confirmation dialog appears, then deletes permanently
+7. When ready, user clicks "Complete Step" to mark the task done and unlock next step
 
-For the initial implementation, we'll treat any notification as "recent" (always green after sending).
+## Technical Benefits
+
+- **Persistence**: Each venue exists in the database the moment it's created
+- **No Data Loss**: Users can navigate away without losing venues
+- **Better File Linking**: Menu PDFs link to stable venue IDs
+- **Cleaner UX**: No "save all" confusion - each action is atomic
+- **Activity Logging**: Individual venue actions can be logged separately
