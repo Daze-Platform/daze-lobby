@@ -6,10 +6,10 @@ import {
   Users, 
   AlertTriangle, 
   Tablet, 
-  DollarSign,
   ChevronLeft,
   ChevronRight,
   X,
+  Eye,
   type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -111,6 +111,16 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           href: "/devices",
           icon: Tablet,
           badge: devicesCount ?? undefined,
+        },
+      ],
+    },
+    {
+      label: "PREVIEW",
+      items: [
+        {
+          title: "Client Portal",
+          href: "/portal-preview",
+          icon: Eye,
         },
       ],
     },
