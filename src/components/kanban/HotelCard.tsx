@@ -84,7 +84,8 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isBeingDragged ? 0.5 : 1,
+    opacity: isBeingDragged ? 0 : 1,
+    pointerEvents: isBeingDragged ? "none" : undefined,
   };
 
   return (
@@ -101,7 +102,7 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
           "group/card transition-all duration-200 border",
           hotel.hasBlocker 
             ? "cursor-pointer border-destructive/30 bg-destructive/5 hover:border-destructive/50" 
-            : "cursor-grab hover:shadow-md hover:border-border hover:-translate-y-0.5 active:cursor-grabbing",
+            : "cursor-grab hover:shadow-md hover:border-border active:cursor-grabbing",
           isBeingDragged && "shadow-lg ring-2 ring-primary/30"
         )}
         onClick={handleCardClick}
@@ -214,10 +215,9 @@ export function HotelCardOverlay({ hotel }: { hotel: Client }) {
   const formattedARR = hotel.phase === "contracted" ? formatARR(hotel.arr) : null;
 
   return (
-    <div 
-      className="transform rotate-2"
-      style={{ 
-        boxShadow: "0 20px 50px -12px rgba(0, 0, 0, 0.25)"
+    <div
+      style={{
+        boxShadow: "0 20px 50px -12px rgba(0, 0, 0, 0.25)",
       }}
     >
       <Card className="cursor-grabbing border ring-2 ring-primary/40 ring-offset-2 ring-offset-background">
