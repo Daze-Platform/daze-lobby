@@ -1,12 +1,25 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { AlertTriangle, Clock, Building2, ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle, Clock, Building2, ExternalLink, Bell, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Task step mapping
 const TASK_STEPS: Record<string, { letter: string; name: string }> = {
@@ -59,6 +72,20 @@ const mockBlockers: MockBlocker[] = [
 
 export default function Blockers() {
   const navigate = useNavigate();
+  const [notifyBlocker, setNotifyBlocker] = useState<MockBlocker | null>(null);
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendReminder = () => {
+    if (!notifyBlocker) return;
+    
+    setIsSending(true);
+    // Simulate sending - in real implementation this would use useSendBlockerNotification
+    setTimeout(() => {
+      toast.success(`Reminder sent to ${notifyBlocker.hotelName}`);
+      setIsSending(false);
+      setNotifyBlocker(null);
+    }, 800);
+  };
 
   return (
     <DashboardLayout>
@@ -132,15 +159,40 @@ export default function Blockers() {
                         Created {formatDistanceToNow(blocker.createdAt, { addSuffix: true })}
                       </div>
                       
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="gap-1.5 text-primary hover:text-primary min-h-[44px] w-full sm:w-auto"
-                        onClick={() => navigate("/portal")}
-                      >
-                        Open in Portal
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        {/* Send Reminder Button */}
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="gap-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 min-h-[44px]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNotifyBlocker(blocker);
+                                }}
+                              >
+                                <Bell className="h-4 w-4" />
+                                <span className="sm:hidden">Send Reminder</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Send reminder to client</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="gap-1.5 text-primary hover:text-primary min-h-[44px] flex-1 sm:flex-none"
+                          onClick={() => navigate("/portal")}
+                        >
+                          Open in Portal
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -149,6 +201,29 @@ export default function Blockers() {
           })}
         </div>
       </div>
+
+      {/* Notification Confirmation Dialog */}
+      <AlertDialog open={!!notifyBlocker} onOpenChange={(open) => !open && setNotifyBlocker(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send reminder to {notifyBlocker?.hotelName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send a notification to the client's activity feed about: <span className="font-medium text-foreground">{notifyBlocker?.reason}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSendReminder}
+              disabled={isSending}
+              className="gap-2"
+            >
+              {isSending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send Reminder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
