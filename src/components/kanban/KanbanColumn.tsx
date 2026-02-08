@@ -139,10 +139,7 @@ export function KanbanColumn({
               ))
             )}
             
-            {/* Drop indicator */}
-            {isActive && clients.length > 0 && (
-              <div className="h-16 rounded-lg border-2 border-dashed border-primary/40 bg-primary/5" />
-            )}
+            {/* Intentionally no layout-shifting drop indicator while dragging */}
           </div>
         </SortableContext>
       </div>

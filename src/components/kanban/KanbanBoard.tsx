@@ -3,6 +3,8 @@ import {
   DndContext,
   DragOverlay,
   closestCenter,
+  pointerWithin,
+  type CollisionDetection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -58,6 +60,15 @@ function triggerMiniConfetti() {
   });
 }
 
+const kanbanCollisionDetection: CollisionDetection = (args) => {
+  // Pointer-accurate when using a mouse/trackpad, but still works for keyboard dragging.
+  if (args.pointerCoordinates) {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) return pointerCollisions;
+  }
+  return closestCenter(args);
+};
+
 export function KanbanBoard() {
   const { data: clients, isLoading, error } = useClients();
   const updatePhase = useUpdateClientPhase();
@@ -100,7 +111,7 @@ export function KanbanBoard() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 2,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -208,7 +219,7 @@ export function KanbanBoard() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={kanbanCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
