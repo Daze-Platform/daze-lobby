@@ -10,11 +10,12 @@ import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
 import { WelcomeTour } from "@/components/portal/WelcomeTour";
 import { ActivityFeedPanel } from "@/components/portal/ActivityFeedPanel";
+import { PortalHeader, type PortalView } from "@/components/portal/PortalHeader";
+import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, LogOut, Building2, Clock } from "lucide-react";
+import { Loader2, LogOut, Building2, ClipboardList, FileText, Clock } from "lucide-react";
 import { signOut, hasDashboardAccess } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ export default function Portal() {
   const [localVenues, setLocalVenues] = useState<Venue[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
+  const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const prevStatus = useRef<string | null>(null);
   
   // Welcome tour for first-time users (only for client role)
@@ -165,110 +167,83 @@ export default function Portal() {
       {showTour && !isAdmin && (
         <WelcomeTour onComplete={completeTour} />
       )}
-      {/* Glass Header - Immediate entrance */}
-      <header className="glass-header entrance-header">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
-            {isAdminViewing && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
-                Admin
-              </Badge>
-            )}
-          </div>
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-3 lg:gap-4">
-            {isAdmin && <AdminHotelSwitcher />}
-            
-            {/* Activity Feed Button */}
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowActivityFeed(true)}
-                    className="h-9 w-9 rounded-full"
-                  >
-                    <Clock className="w-4 h-4" strokeWidth={1.5} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Activity Feed</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <span className="text-sm text-muted-foreground truncate max-w-[200px]">
-              {user?.email}
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="min-h-[44px]">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+
+      {/* Portal Header with Navigation */}
+      <PortalHeader
+        activeView={activeView}
+        onViewChange={setActiveView}
+        isAdmin={isAdmin}
+        isAdminViewing={isAdminViewing}
+        userEmail={user?.email}
+        onSignOut={handleSignOut}
+        onActivityFeedOpen={() => setShowActivityFeed(true)}
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
-        {/* Welcome Section - Hero entrance, aligned with card content */}
-        <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
-          <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
-            Welcome, {client?.name || "Partner"}
-          </h1>
-          <p className="text-xs sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
-            Complete the steps below to get your property ready for launch.
-          </p>
-        </div>
+        {activeView === "onboarding" ? (
+          <>
+            {/* Welcome Section - Hero entrance, aligned with card content */}
+            <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
+              <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
+                Welcome, {client?.name || "Partner"}
+              </h1>
+              <p className="text-xs sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
+                Complete the steps below to get your property ready for launch.
+              </p>
+            </div>
 
-        <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
-          {/* Hero Section - Progress */}
-          <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-              <span className="label-micro">Progress</span>
-              <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
-              <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
-                <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
-              </div>
-              <StatusBadge status={status} />
-              <ConfettiCelebration 
-                trigger={showConfetti} 
-                onComplete={() => setShowConfetti(false)} 
-              />
-            </CardContent>
-          </Card>
+            <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
+              {/* Hero Section - Progress */}
+              <Card className="lg:col-span-1 entrance-hero">
+                <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+                  <span className="label-micro">Progress</span>
+                  <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
+                  <div className="w-full flex justify-center">
+                    <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
+                    <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
+                  </div>
+                  <StatusBadge status={status} />
+                  <ConfettiCelebration 
+                    trigger={showConfetti} 
+                    onComplete={() => setShowConfetti(false)} 
+                  />
+                </CardContent>
+              </Card>
 
-          {/* Task List - Content entrance */}
-          <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-              <span className="label-micro">Checklist</span>
-              <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
-              <TaskAccordion 
-                tasks={formattedTasks}
-                onLegalSign={handleLegalSign}
-                onTaskUpdate={handleTaskUpdate}
-                onFileUpload={handleFileUpload}
-                venues={displayVenues}
-                onVenuesChange={setLocalVenues}
-                onVenuesSave={handleVenuesSave}
-                isSigningLegal={isSigningLegal}
-                isUpdating={isUpdating}
-                hotelLegalEntity={{
-                  legal_entity_name: client?.legal_entity_name || undefined,
-                  billing_address: client?.billing_address || undefined,
-                  authorized_signer_name: client?.authorized_signer_name || undefined,
-                  authorized_signer_title: client?.authorized_signer_title || undefined,
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
+              {/* Task List - Content entrance */}
+              <Card className="lg:col-span-2 entrance-content">
+                <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+                  <span className="label-micro">Checklist</span>
+                  <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
+                  <TaskAccordion 
+                    tasks={formattedTasks}
+                    onLegalSign={handleLegalSign}
+                    onTaskUpdate={handleTaskUpdate}
+                    onFileUpload={handleFileUpload}
+                    venues={displayVenues}
+                    onVenuesChange={setLocalVenues}
+                    onVenuesSave={handleVenuesSave}
+                    isSigningLegal={isSigningLegal}
+                    isUpdating={isUpdating}
+                    hotelLegalEntity={{
+                      legal_entity_name: client?.legal_entity_name || undefined,
+                      billing_address: client?.billing_address || undefined,
+                      authorized_signer_name: client?.authorized_signer_name || undefined,
+                      authorized_signer_title: client?.authorized_signer_title || undefined,
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        ) : (
+          <PortalDocuments />
+        )}
 
         {/* No Client Assigned State (shouldn't reach here due to routing) */}
         {!client && !isLoading && (
@@ -287,10 +262,32 @@ export default function Portal() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           {isAdmin && (
-            <div className="flex-1 flex justify-center max-w-[200px]">
+            <div className="flex-1 flex justify-center max-w-[120px]">
               <AdminHotelSwitcher />
             </div>
           )}
+          
+          {/* Mobile Onboarding Tab */}
+          <Button
+            variant={activeView === "onboarding" ? "secondary" : "ghost"}
+            size="sm"
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+            onClick={() => setActiveView("onboarding")}
+          >
+            <ClipboardList className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Onboarding</span>
+          </Button>
+
+          {/* Mobile Documents Tab */}
+          <Button
+            variant={activeView === "documents" ? "secondary" : "ghost"}
+            size="sm"
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+            onClick={() => setActiveView("documents")}
+          >
+            <FileText className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Documents</span>
+          </Button>
           
           {/* Mobile Activity Feed Button */}
           <Button
