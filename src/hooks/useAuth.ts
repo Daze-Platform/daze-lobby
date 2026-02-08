@@ -10,31 +10,35 @@ export function useAuth() {
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialLoadComplete = useRef(false);
+  
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
 
   const fetchUser = useCallback(async (): Promise<UserWithRole | null> => {
     try {
       const currentUser = await getCurrentUser();
-      setUser(currentUser);
+      if (isMountedRef.current) {
+        setUser(currentUser);
+      }
       return currentUser;
     } catch (error) {
       console.error("Error fetching user:", error);
-      setUser(null);
+      if (isMountedRef.current) {
+        setUser(null);
+      }
       return null;
     }
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
 
     // INITIAL load (controls loading state)
     const initializeAuth = async () => {
       try {
-        const {
-          data: { session: initialSession },
-        } = await supabase.auth.getSession();
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
 
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         setSession(initialSession);
 
@@ -45,45 +49,32 @@ export function useAuth() {
       } catch (error) {
         console.error("Error initializing auth:", error);
       } finally {
-        if (isMounted) {
-          initialLoadComplete.current = true;
+        if (isMountedRef.current) {
           setLoading(false);
         }
       }
     };
 
-    // Listener for ONGOING auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
-      if (!isMounted) return;
+    // Listener for ONGOING auth changes (does NOT control loading after initial load)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        if (!isMountedRef.current) return;
 
-      setSession(nextSession);
+        setSession(currentSession);
 
-      if (event === "SIGNED_IN" && nextSession?.user) {
-        if (initialLoadComplete.current) {
-          setLoading(true);
+        // Fire and forget - don't await, don't affect loading state
+        if (currentSession?.user) {
+          fetchUser();
+        } else {
+          setUser(null);
         }
-        await fetchUser();
-        if (isMounted) {
-          setLoading(false);
-        }
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        if (isMounted && initialLoadComplete.current) {
-          setLoading(false);
-        }
-      } else if (nextSession?.user && initialLoadComplete.current) {
-        fetchUser();
-      } else if (!nextSession) {
-        setUser(null);
       }
-    });
+    );
 
     initializeAuth();
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       subscription.unsubscribe();
     };
   }, [fetchUser]);
