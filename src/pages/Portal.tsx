@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useClient } from "@/contexts/ClientContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -47,12 +47,30 @@ export default function Portal() {
     updateTask, 
     uploadFile,
     saveVenues,
-    checkAndTransitionToLive,
     isSigningLegal,
     isUpdating
   } = useClientPortal();
 
-  // Trigger confetti when status changes to live
+  // MEMOIZED: Format tasks for the accordion - MUST be before early returns
+  const formattedTasks = useMemo(() => 
+    tasks.length > 0 
+      ? tasks.map(t => ({
+          key: t.task_key,
+          name: t.task_name,
+          isCompleted: t.is_completed,
+          data: t.data as Record<string, unknown>,
+        }))
+      : [
+          { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} },
+          { key: "brand", name: "Brand Identity", isCompleted: false, data: {} },
+          { key: "venue", name: "Venue Manager", isCompleted: false, data: {} },
+          { key: "pos", name: "POS Integration", isCompleted: false, data: {} },
+        ],
+    [tasks]
+  );
+
+  // SINGLE REACTIVE PATH: Confetti & toast celebration when status changes to live
+  // The auto-transition logic is now encapsulated in useClientPortal hook
   useEffect(() => {
     if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
       setShowConfetti(true);
@@ -60,13 +78,6 @@ export default function Portal() {
     }
     prevStatus.current = status;
   }, [status]);
-
-  // Auto-transition to live when all tasks are complete
-  useEffect(() => {
-    if (progress === 100) {
-      checkAndTransitionToLive();
-    }
-  }, [progress, checkAndTransitionToLive]);
 
   const handleSignOut = async () => {
     try {
@@ -153,21 +164,6 @@ export default function Portal() {
       </div>
     );
   }
-
-  // Format tasks for the accordion - now with venue and POS steps
-  const formattedTasks = tasks.length > 0 
-    ? tasks.map(t => ({
-        key: t.task_key,
-        name: t.task_name,
-        isCompleted: t.is_completed,
-        data: t.data as Record<string, unknown>,
-      }))
-    : [
-        { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} },
-        { key: "brand", name: "Brand Identity", isCompleted: false, data: {} },
-        { key: "venue", name: "Venue Manager", isCompleted: false, data: {} },
-        { key: "pos", name: "POS Integration", isCompleted: false, data: {} },
-      ];
 
   return (
     <div className="min-h-screen bg-muted/30 pb-24 sm:pb-20 md:pb-0">
