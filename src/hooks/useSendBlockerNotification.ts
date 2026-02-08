@@ -54,6 +54,9 @@ export function useSendBlockerNotification() {
       queryClient.invalidateQueries({
         queryKey: ["unread-notification-count", clientId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["clients-with-details"],
+      });
       toast.success("Notification sent to client");
     },
     onError: (error) => {
