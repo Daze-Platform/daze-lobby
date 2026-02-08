@@ -1,10 +1,9 @@
 import { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
   pointerWithin,
-  type CollisionDetection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -13,7 +12,6 @@ import {
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { KanbanColumn } from "./KanbanColumn";
 import { HotelCardOverlay } from "./HotelCard";
 import { useClients, useUpdateClientPhase, type Client } from "@/hooks/useClients";
@@ -60,15 +58,6 @@ function triggerMiniConfetti() {
   });
 }
 
-const kanbanCollisionDetection: CollisionDetection = (args) => {
-  // Pointer-accurate when using a mouse/trackpad, but still works for keyboard dragging.
-  if (args.pointerCoordinates) {
-    const pointerCollisions = pointerWithin(args);
-    if (pointerCollisions.length > 0) return pointerCollisions;
-  }
-  return closestCenter(args);
-};
-
 export function KanbanBoard() {
   const { data: clients, isLoading, error } = useClients();
   const updatePhase = useUpdateClientPhase();
@@ -111,14 +100,11 @@ export function KanbanBoard() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 2,
+        distance: 5,
       },
     }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor)
   );
-
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
@@ -135,14 +121,10 @@ export function KanbanBoard() {
       return;
     }
     
+    // Since columns are the only droppables, over.id is always a phase
     const columnPhase = COLUMNS.find((col) => col.phase === over.id)?.phase;
-    if (columnPhase) {
-      setOverColumnId(columnPhase);
-    } else {
-      const targetClient = clients?.find((c) => c.id === over.id);
-      setOverColumnId(targetClient?.phase || null);
-    }
-  }, [clients]);
+    setOverColumnId(columnPhase || null);
+  }, []);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -157,18 +139,11 @@ export function KanbanBoard() {
     const activeClientData = clients?.find((c) => c.id === active.id);
     if (!activeClientData) return;
 
-    let targetPhase: Enums<"lifecycle_phase"> | null = null;
+    // over.id is always a column phase now
+    const targetPhase = over.id as Enums<"lifecycle_phase">;
     
-    if (COLUMNS.some((col) => col.phase === over.id)) {
-      targetPhase = over.id as Enums<"lifecycle_phase">;
-    } else {
-      const targetClient = clients?.find((c) => c.id === over.id);
-      if (targetClient) {
-        targetPhase = targetClient.phase;
-      }
-    }
-
-    if (!targetPhase || targetPhase === activeClientData.phase) return;
+    if (!COLUMNS.some((col) => col.phase === targetPhase)) return;
+    if (targetPhase === activeClientData.phase) return;
 
     if (targetPhase === "contracted") {
       setTimeout(triggerMiniConfetti, 200);
@@ -219,7 +194,7 @@ export function KanbanBoard() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={kanbanCollisionDetection}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -246,14 +221,19 @@ export function KanbanBoard() {
         })}
       </div>
 
-      <DragOverlay 
-        dropAnimation={{
-          duration: 200,
-          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-        }}
-      >
-        {activeClient ? <HotelCardOverlay hotel={activeClient} /> : null}
-      </DragOverlay>
+      {/* Portal DragOverlay to document.body to avoid transform offset issues */}
+      {createPortal(
+        <DragOverlay 
+          dropAnimation={{
+            duration: 200,
+            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+          }}
+          style={{ zIndex: 9999 }}
+        >
+          {activeClient ? <HotelCardOverlay hotel={activeClient} /> : null}
+        </DragOverlay>,
+        document.body
+      )}
 
       <BlockerResolutionModal
         open={blockerModalOpen}

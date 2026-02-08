@@ -1,6 +1,5 @@
 import * as React from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useDraggable } from "@dnd-kit/core";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertTriangle, CheckCircle, Cpu, GripVertical, Lock, DollarSign } from "lucide-react";
@@ -40,11 +39,8 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
-    isDragging: isSortableDragging,
-    isSorting,
-  } = useSortable({
+    isDragging: isDraggableActive,
+  } = useDraggable({
     id: hotel.id,
     disabled: hotel.hasBlocker,
   });
@@ -80,27 +76,19 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
     .toUpperCase() || "?";
   const showDaysWarning = hotel.phase === "onboarding" && daysInPhase > 14;
   const formattedARR = hotel.phase === "contracted" ? formatARR(hotel.arr) : null;
-  const isBeingDragged = isDragging || isSortableDragging;
-
-  const freezeLayoutWhileDragging = isSorting && !isSortableDragging;
-
-  const style: React.CSSProperties = {
-    // While a drag is active, dnd-kit will try to shift other cards to show an insertion point.
-    // We *disable* those transforms so the board doesn't "make space" until drop.
-    transform: freezeLayoutWhileDragging ? undefined : CSS.Transform.toString(transform),
-    transition: freezeLayoutWhileDragging ? undefined : transition,
-    opacity: isBeingDragged ? 0 : 1, // hide source card; DragOverlay is the only moving visual
-    pointerEvents: isBeingDragged ? "none" : undefined,
-  };
+  const isBeingDragged = isDragging || isDraggableActive;
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
       data-hotel-id={hotel.id}
       className={cn(
         isShaking && "animate-[shake_0.5s_ease-in-out]"
       )}
+      style={{
+        opacity: isBeingDragged ? 0 : 1,
+        pointerEvents: isBeingDragged ? "none" : undefined,
+      }}
     >
       <Card
         className={cn(
