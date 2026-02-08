@@ -62,19 +62,20 @@ export default function Blockers() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Responsive header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Active Blockers</h1>
-            <p className="text-sm text-muted-foreground">Incomplete tasks preventing phase transitions</p>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Active Blockers</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Incomplete tasks preventing phase transitions</p>
           </div>
-          <Badge variant="destructive" className="gap-1.5">
+          <Badge variant="destructive" className="gap-1.5 self-start sm:self-auto">
             <AlertTriangle className="h-3.5 w-3.5" />
             {mockBlockers.length} Active
           </Badge>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {mockBlockers.map((blocker) => {
             const taskInfo = TASK_STEPS[blocker.incompleteTask];
             const progressPercent = (blocker.completedTasks / 5) * 100;
@@ -84,57 +85,57 @@ export default function Blockers() {
                 key={blocker.id} 
                 className="border-destructive/30 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
-                      {blocker.hotelName}
+                <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{blocker.hotelName}</span>
                     </CardTitle>
                     
                     {/* Task Step Badge */}
                     <div className="flex items-center gap-2">
                       <div 
                         className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold",
+                          "w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold",
                           "bg-destructive/10 text-destructive border border-destructive/20"
                         )}
                       >
                         {taskInfo.letter}
                       </div>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs">
                         {taskInfo.name}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="px-4 sm:px-6">
+                  <div className="space-y-3 sm:space-y-4">
                     {/* Blocker Reason */}
                     <div className="flex items-start gap-2 text-destructive">
-                      <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                      <span className="text-sm">{blocker.reason}</span>
+                      <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 shrink-0" />
+                      <span className="text-xs sm:text-sm">{blocker.reason}</span>
                     </div>
 
                     {/* Progress Bar */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
                         <span>Onboarding Progress</span>
                         <span className="font-medium">{blocker.completedTasks}/5 tasks</span>
                       </div>
-                      <Progress value={progressPercent} className="h-2" />
+                      <Progress value={progressPercent} className="h-1.5 sm:h-2" />
                     </div>
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" />
+                    {/* Footer - stack on mobile */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+                      <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                         Created {formatDistanceToNow(blocker.createdAt, { addSuffix: true })}
                       </div>
                       
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="gap-1.5 text-primary hover:text-primary"
+                        className="gap-1.5 text-primary hover:text-primary min-h-[44px] w-full sm:w-auto"
                         onClick={() => navigate("/portal")}
                       >
                         Open in Portal

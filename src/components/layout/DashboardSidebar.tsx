@@ -9,6 +9,7 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
+  X,
   type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,12 @@ interface NavGroup {
   items: NavItem[];
 }
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Fetch clients count
@@ -115,36 +121,62 @@ export function DashboardSidebar() {
     },
   ];
 
+  // On mobile, always show full width, no collapse
+  const showCollapsed = !isMobile && isCollapsed;
+
+  const handleNavClick = () => {
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <aside 
       className={cn(
         "relative flex flex-col h-full bg-card border-r border-border/40 transition-all duration-300 ease-out",
-        isCollapsed ? "w-[68px]" : "w-60"
+        isMobile ? "w-full" : (showCollapsed ? "w-[68px]" : "w-60")
       )}
     >
-      {/* Collapse Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className={cn(
-          "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-card shadow-soft",
-          "hover:bg-muted transition-all hover:scale-110"
-        )}
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
-      </Button>
+      {/* Mobile close button */}
+      {isMobile && onClose && (
+        <div className="flex items-center justify-end p-3 border-b border-border/40">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-10 w-10"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close menu</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Collapse Toggle - only on desktop */}
+      {!isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-card shadow-soft",
+            "hover:bg-muted transition-all hover:scale-110"
+          )}
+        >
+          {showCollapsed ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronLeft className="h-3 w-3" />
+          )}
+        </Button>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4">
         {navGroups.map((group, groupIndex) => (
           <div key={groupIndex} className={cn(groupIndex > 0 && "mt-6")}>
             {/* Section label */}
-            {group.label && !isCollapsed && (
+            {group.label && !showCollapsed && (
               <div className="px-3 mb-2">
                 <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/60">
                   {group.label}
@@ -153,7 +185,7 @@ export function DashboardSidebar() {
             )}
             
             {/* Section divider for collapsed state */}
-            {group.label && isCollapsed && (
+            {group.label && showCollapsed && (
               <div className="px-2 mb-2">
                 <div className="h-px bg-border/60" />
               </div>
@@ -164,11 +196,12 @@ export function DashboardSidebar() {
                 <NavLink
                   key={item.href}
                   to={item.href}
+                  onClick={handleNavClick}
                   className={cn(
-                    "group/nav relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                    "group/nav relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium min-h-[44px]",
                     "text-muted-foreground transition-all duration-200",
                     "hover:bg-muted/60 hover:text-foreground",
-                    isCollapsed && "justify-center px-2"
+                    showCollapsed && "justify-center px-2"
                   )}
                   activeClassName={cn(
                     "bg-primary/10 text-primary",
@@ -184,13 +217,13 @@ export function DashboardSidebar() {
                     <item.icon 
                       className={cn(
                         "transition-colors",
-                        isCollapsed ? "h-5 w-5" : "h-4 w-4"
+                        showCollapsed ? "h-5 w-5" : "h-4 w-4"
                       )} 
                       strokeWidth={1.5} 
                     />
                   </div>
                   
-                  {!isCollapsed && (
+                  {!showCollapsed && (
                     <>
                       <span className="flex-1">{item.title}</span>
                       {item.badge !== undefined && item.badge > 0 && (
@@ -209,7 +242,7 @@ export function DashboardSidebar() {
                   )}
                   
                   {/* Badge for collapsed state */}
-                  {isCollapsed && item.badge !== undefined && item.badge > 0 && (
+                  {showCollapsed && item.badge !== undefined && item.badge > 0 && (
                     <span className={cn(
                       "absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1",
                       "flex items-center justify-center",
@@ -231,9 +264,9 @@ export function DashboardSidebar() {
       {/* Bottom section */}
       <div className={cn(
         "border-t border-border/40 p-3",
-        isCollapsed && "flex justify-center"
+        showCollapsed && "flex justify-center"
       )}>
-        {!isCollapsed && (
+        {!showCollapsed && (
           <p className="text-[10px] text-muted-foreground/50 text-center font-medium tracking-wide">
             Daze Control Tower
           </p>

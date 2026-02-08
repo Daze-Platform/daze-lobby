@@ -20,6 +20,7 @@ import { BlockerResolutionModal, type BlockerData } from "@/components/modals/Bl
 import { HotelDetailPanel } from "@/components/dashboard";
 import type { Enums } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 import confetti from "canvas-confetti";
 
 const COLUMNS: {
@@ -61,6 +62,7 @@ function triggerMiniConfetti() {
 export function KanbanBoard() {
   const { data: clients, isLoading, error } = useClients();
   const updatePhase = useUpdateClientPhase();
+  const isMobile = useIsMobile();
   
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeClient, setActiveClient] = useState<Client | null>(null);
@@ -164,13 +166,15 @@ export function KanbanBoard() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {COLUMNS.map((col) => (
-          <div key={col.phase} className="space-y-2">
-            <Skeleton className="h-14 w-full rounded-xl" />
-            <Skeleton className="h-[320px] w-full rounded-xl" />
-          </div>
-        ))}
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-4">
+        <div className="flex gap-4 md:grid md:grid-cols-3" style={{ minWidth: isMobile ? 'max-content' : undefined }}>
+          {COLUMNS.map((col) => (
+            <div key={col.phase} className="min-w-[280px] md:min-w-0 space-y-2">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-[320px] w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -200,25 +204,32 @@ export function KanbanBoard() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {COLUMNS.map((col) => {
-          const columnClients = clientsByPhase[col.phase] || [];
-          const isOver = overColumnId === col.phase && activeClient?.phase !== col.phase;
-          
-          return (
-            <KanbanColumn
-              key={col.phase}
-              phase={col.phase}
-              title={col.title}
-              subtitle={col.subtitle}
-              clients={columnClients}
-              isOver={isOver}
-              activeId={activeId}
-              onBlockedClick={handleBlockedClick}
-              onCardClick={handleCardClick}
-            />
-          );
-        })}
+      {/* Horizontal scroll on mobile with snap points */}
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 snap-x snap-mandatory md:snap-none">
+        <div 
+          className="flex gap-4 md:grid md:grid-cols-3" 
+          style={{ minWidth: isMobile ? 'max-content' : undefined }}
+        >
+          {COLUMNS.map((col) => {
+            const columnClients = clientsByPhase[col.phase] || [];
+            const isOver = overColumnId === col.phase && activeClient?.phase !== col.phase;
+            
+            return (
+              <div key={col.phase} className="snap-center md:snap-align-none min-w-[280px] md:min-w-0">
+                <KanbanColumn
+                  phase={col.phase}
+                  title={col.title}
+                  subtitle={col.subtitle}
+                  clients={columnClients}
+                  isOver={isOver}
+                  activeId={activeId}
+                  onBlockedClick={handleBlockedClick}
+                  onCardClick={handleCardClick}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Portal DragOverlay to document.body to avoid transform offset issues */}

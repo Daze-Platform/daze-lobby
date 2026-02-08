@@ -20,45 +20,46 @@ const phaseColors: Record<string, string> = {
 export default function Clients() {
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Responsive header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Clients</h1>
-            <p className="text-sm text-muted-foreground">Manage all client properties</p>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Clients</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Manage all client properties</p>
           </div>
-          <Badge variant="secondary" className="gap-1.5">
+          <Badge variant="secondary" className="gap-1.5 self-start sm:self-auto">
             <Users className="h-3.5 w-3.5" />
             {mockClients.length} Total
           </Badge>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {mockClients.map((client) => (
             <Card key={client.id} className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-muted-foreground" />
-                    {client.name}
+              <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{client.name}</span>
                   </CardTitle>
                   <Badge className={phaseColors[client.phase]}>
                     {client.phase.replace("_", " ")}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
+              <CardContent className="px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    {client.contact}
+                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{client.contact}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    {client.email}
+                    <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{client.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    {client.phone}
+                  <div className="hidden sm:flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span>{client.phone}</span>
                   </div>
                 </div>
               </CardContent>

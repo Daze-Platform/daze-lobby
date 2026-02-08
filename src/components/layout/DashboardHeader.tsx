@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,12 +16,18 @@ import { useNavigate } from "react-router-dom";
 import dazeLogo from "@/assets/daze-logo.png";
 import { isTestEnvironment } from "@/lib/environment";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { user, role } = useAuthContext();
   const navigate = useNavigate();
   const isTest = isTestEnvironment();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,8 +54,21 @@ export function DashboardHeader() {
 
   return (
     <header className="glass-header">
-      <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+      <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Mobile hamburger menu */}
+          {isMobile && onMenuToggle && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onMenuToggle}
+              className="h-10 w-10 shrink-0"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          )}
+          
           <div className="flex items-center gap-2 sm:gap-3">
             <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
             <div className="flex flex-col">
@@ -85,12 +104,12 @@ export function DashboardHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border/50" />
-              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer min-h-[44px]">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border/50" />
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer min-h-[44px]">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
