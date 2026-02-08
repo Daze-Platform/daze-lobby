@@ -20,4 +20,8 @@ export default defineConfig(({ mode }) => ({
     // Prevent duplicate React instances
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },
+  // Ensure dependencies are properly bundled
+  optimizeDeps: {
+    include: ["react", "react-dom", "@tanstack/react-query", "next-themes"],
+  },
 }));
