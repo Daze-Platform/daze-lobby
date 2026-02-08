@@ -1,170 +1,149 @@
 
 
-# POS Provider Dropdown with Logos
+# Client Status Approval Workflow
 
 ## Overview
 
-Transform the POS provider selection from a 2x2 button grid to a polished Select dropdown with official POS provider logos displayed alongside provider names.
+Implement a proper review-and-approval workflow where clients cannot change their own status. When a client completes all onboarding tasks, they transition to "Reviewing" status. The Daze admin team then reviews their submissions and can approve them through the Control Tower, which moves them to "Live".
 
-## Current Implementation
+## Current State Analysis
 
-The `PosStep.tsx` component currently uses:
-- A grid of 4 `motion.button` elements arranged in a 2x2 layout
-- Each provider shows a Lucide icon (Utensils, Cpu, Tablet, Smartphone) instead of actual logos
-- Selecting a provider triggers a slide animation to show integration instructions
+| Component | Current Behavior |
+|-----------|-----------------|
+| `PortalPreview.tsx` | Has "Demo: Toggle Status" buttons for testing - **appropriate for demo** |
+| `Portal.tsx` | No toggle buttons - status is read-only from database - **already correct** |
+| `useClientPortal.ts` | Auto-transitions to `pilot_live` when all tasks complete - **needs change** |
+| `KanbanBoard.tsx` | Admins can drag cards between phases - **already works for approval** |
 
 ## Proposed Changes
 
-### 1. Add POS Provider Logo Assets
+### 1. Modify Auto-Transition Logic
 
-Create a new directory `public/pos-logos/` and add official logos for each provider:
+**File:** `src/hooks/useClientPortal.ts`
 
-| Provider | File | Source |
-|----------|------|--------|
-| Toast | `toast.svg` | Orange flame icon from Toast brand assets |
-| Oracle MICROS | `oracle-micros.svg` | Red Oracle "O" with MICROS text |
-| NCR Aloha | `ncr-aloha.svg` | NCR Voyix green brand mark |
-| Lavu | `lavu.svg` | Lavu blue text logo |
+Change the auto-transition when all tasks complete from `pilot_live` to `reviewing`:
 
-Logo specifications:
-- Format: SVG (scalable, small file size)
-- Size: ~24px display height in dropdown
-- Transparent background
-
-### 2. Update `PosStep.tsx` Component
-
-**Remove:**
-- The 2x2 grid of `motion.button` elements
-- Lucide icon imports for placeholder icons (Utensils, Cpu, Tablet, Smartphone)
-
-**Add:**
-- Import Select components from `@/components/ui/select`
-- Replace grid with a single `Select` dropdown
-
-**Updated PROVIDERS array:**
 ```typescript
-const PROVIDERS = [
-  {
-    id: "toast" as const,
-    name: "Toast",
-    logo: "/pos-logos/toast.svg",
+// Line 546-556: Change target phase
+const updateClientPhaseMutation = useMutation({
+  mutationFn: async () => {
+    const { error } = await supabase
+      .from("clients")
+      .update({
+        phase: "reviewing" as const,  // Changed from "pilot_live"
+        phase_started_at: new Date().toISOString(),
+      })
+      .eq("id", clientId);
+    // ...
   },
-  {
-    id: "micros" as const,
-    name: "Oracle MICROS",
-    logo: "/pos-logos/oracle-micros.svg",
-  },
-  {
-    id: "ncr" as const,
-    name: "NCR Aloha",
-    logo: "/pos-logos/ncr-aloha.svg",
-  },
-  {
-    id: "lavu" as const,
-    name: "Lavu",
-    logo: "/pos-logos/lavu.svg",
-  },
+  // Update activity log to reflect "reviewing"
+});
+```
+
+### 2. Add "Reviewing" Column to Kanban Board
+
+**File:** `src/components/kanban/KanbanBoard.tsx`
+
+The `lifecycle_phase` enum already includes `reviewing`, but it's not shown as a column. Update COLUMNS array to include it:
+
+```typescript
+const COLUMNS = [
+  { phase: "onboarding", title: "Onboarding", subtitle: "Setup & data collection" },
+  { phase: "reviewing", title: "In Review", subtitle: "Pending approval" },  // Add this
+  { phase: "pilot_live", title: "Pilot Live", subtitle: "Testing & adoption" },
+  { phase: "contracted", title: "Contracted", subtitle: "Revenue generation" },
 ];
 ```
 
-**Dropdown implementation:**
-```tsx
-<Select 
-  value={selectedProvider || ""} 
-  onValueChange={(value) => handleProviderSelect(value as PosProvider)}
->
-  <SelectTrigger className="h-12 text-left">
-    <SelectValue placeholder="Select your POS provider" />
-  </SelectTrigger>
-  <SelectContent>
-    {PROVIDERS.map((provider) => (
-      <SelectItem key={provider.id} value={provider.id}>
-        <div className="flex items-center gap-3">
-          <img 
-            src={provider.logo} 
-            alt={`${provider.name} logo`}
-            className="w-6 h-6 object-contain"
-          />
-          <span className="font-medium">{provider.name}</span>
-        </div>
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
-```
+### 3. Update Portal Preview Demo Toggle (Optional Clarification)
 
-### 3. UI Flow Changes
+**File:** `src/pages/PortalPreview.tsx`
 
-**Before (grid selection):**
-1. User sees 4-button grid
-2. User clicks a button
-3. View animates to instructions panel
+The demo toggle is intentional for testing. Add clearer labeling that this is admin/demo functionality only. The real Portal.tsx already has no toggle buttons.
 
-**After (dropdown selection):**
-1. User sees a dropdown with placeholder text
-2. User opens dropdown, sees providers with logos
-3. User selects provider
-4. View animates to instructions panel (same as before)
+### 4. Update ProgressRing Message for "Reviewing"
 
-### 4. Instructions Panel Update
+**File:** `src/components/portal/ProgressRing.tsx`
 
-Update the header section to show the logo instead of a Lucide icon:
-```tsx
-<div className="flex items-center gap-3">
-  {providerInfo && (
-    <img 
-      src={providerInfo.logo} 
-      alt={`${providerInfo.name} logo`}
-      className="w-10 h-10 object-contain"
-    />
-  )}
-  <h3 className="font-semibold text-lg">{instructions?.headline}</h3>
-</div>
-```
+Already shows "In Review" when `isReviewing` is true (line 187) - no changes needed.
 
-## Files to Create/Modify
+### 5. Update StatusBadge
 
-| File | Action |
-|------|--------|
-| `public/pos-logos/toast.svg` | Create - Toast logo |
-| `public/pos-logos/oracle-micros.svg` | Create - Oracle MICROS logo |
-| `public/pos-logos/ncr-aloha.svg` | Create - NCR Aloha logo |
-| `public/pos-logos/lavu.svg` | Create - Lavu logo |
-| `src/components/portal/steps/PosStep.tsx` | Modify - Replace grid with Select dropdown |
+**File:** `src/components/portal/StatusBadge.tsx`
 
-## Visual Comparison
+Already configured for `reviewing` status with "In Review" label - no changes needed.
 
-**Current Grid:**
+## Workflow After Implementation
+
 ```text
-+---------------+---------------+
-|     (icon)    |     (icon)    |
-|     Toast     | Oracle MICROS |
-+---------------+---------------+
-|     (icon)    |     (icon)    |
-|   NCR Aloha   |     Lavu      |
-+---------------+---------------+
+                    CLIENT ACTIONS                          ADMIN ACTIONS
+                          │                                       │
+                          ▼                                       │
+    ┌─────────────────────────────────────┐                      │
+    │           ONBOARDING                │                      │
+    │     (Client completes tasks)        │                      │
+    └─────────────────────────────────────┘                      │
+                          │                                       │
+                          │ All 5 tasks complete                  │
+                          │ (automatic transition)                │
+                          ▼                                       │
+    ┌─────────────────────────────────────┐                      │
+    │           REVIEWING                 │                      │
+    │     "In Review" badge shown         │◄─────────────────────┤
+    │     Client waits for approval       │                      │
+    └─────────────────────────────────────┘                      │
+                          │                                       │
+                          │              Admin reviews & approves │
+                          │              (drag card on Kanban)    │
+                          ▼                                       ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │                      PILOT LIVE                              │
+    │         "Live" badge with emerald glow + confetti            │
+    └─────────────────────────────────────────────────────────────┘
 ```
 
-**New Dropdown:**
-```text
-+------------------------------------------+
-| [Select icon] Select your POS provider ▼ |
-+------------------------------------------+
-           |
-           v (when open)
-+------------------------------------------+
-| [Toast logo]        Toast                |
-| [MICROS logo]       Oracle MICROS        |
-| [NCR logo]          NCR Aloha            |
-| [Lavu logo]         Lavu                 |
-+------------------------------------------+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/hooks/useClientPortal.ts` | Change auto-transition target from `pilot_live` to `reviewing` |
+| `src/components/kanban/KanbanBoard.tsx` | Add "Reviewing" column between Onboarding and Pilot Live |
+| `src/components/kanban/KanbanColumn.tsx` | Styling already exists for `reviewing` phase |
+
+## Client Portal Experience
+
+1. Client sees status badge showing "Onboarding" while completing tasks
+2. Progress ring shows percentage and "Ready for Takeoff" message
+3. When all tasks are complete:
+   - Status automatically changes to "In Review"
+   - Progress ring shows "In Review" text
+   - Badge shows "In Review" with outline style
+4. Client cannot change status themselves - they wait for admin approval
+5. When admin approves (drags card to Pilot Live):
+   - Status changes to "Live"
+   - Confetti celebration triggers
+   - Badge shows emerald "Live" with glow animation
+   - Progress ring shows rocket icon and "Launched" text
+
+## Admin Control Tower Experience
+
+1. New column "In Review" appears between "Onboarding" and "Pilot Live"
+2. When a client completes all tasks, their card automatically moves to "In Review"
+3. Admin reviews submitted documents, logos, agreements in HotelDetailPanel
+4. Admin drags card from "In Review" to "Pilot Live" to approve
+5. Client portal immediately reflects the status change via real-time sync
+
+## Technical Details
+
+### Database Schema
+The `lifecycle_phase` enum already includes `reviewing`:
+```sql
+lifecycle_phase: "onboarding" | "reviewing" | "pilot_live" | "contracted"
 ```
 
-## Benefits
-
-1. **Cleaner UI**: Single dropdown vs 4 buttons reduces visual clutter
-2. **Authentic branding**: Official logos build trust with hospitality clients
-3. **Scalability**: Easy to add more POS providers in the future
-4. **Consistency**: Matches the Select pattern already used in NewClientModal
-5. **Mobile-friendly**: Dropdown works better on small screens than a grid
+### Real-time Sync
+Status changes sync automatically because:
+- Admin drag-and-drop calls `useUpdateClientPhase` which updates `clients.phase`
+- Client portal's `useClientPortal` derives `status` from `client.phase` via memoized computation
+- React Query cache invalidation triggers re-render with new status
 
