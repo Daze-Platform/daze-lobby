@@ -102,8 +102,8 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
         onMouseDown={handleMouseDown}
         {...(hotel.hasBlocker ? {} : { ...attributes, ...listeners })}
       >
-        <CardContent className="p-3">
-          <div className="flex items-start gap-3">
+        <CardContent className="p-2.5 sm:p-3">
+          <div className="flex items-start gap-2 sm:gap-3">
             {/* Drag Handle */}
             <div className={cn(
               "mt-1 transition-colors flex-shrink-0",
@@ -112,72 +112,73 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
                 : "text-muted-foreground/40 group-hover/card:text-muted-foreground"
             )}>
               {hotel.hasBlocker ? (
-                <Lock className="h-4 w-4" />
+                <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               ) : (
-                <GripVertical className="h-4 w-4" />
+                <GripVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               )}
             </div>
 
             {/* Avatar */}
             <Avatar className={cn(
-              "h-10 w-10 shrink-0 ring-2",
+              "h-8 w-8 sm:h-10 sm:w-10 shrink-0 ring-2",
               PHASE_RING_COLORS[hotel.phase] || "ring-border"
             )}>
               <AvatarImage src={hotel.logo_url || undefined} />
-              <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+              <AvatarFallback className="text-[10px] sm:text-xs font-semibold bg-primary/10 text-primary">
                 {hotel.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm truncate">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-semibold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">
                   {hotel.name}
                 </span>
                 {hotel.hasBlocker && (
-                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive shrink-0" />
                 )}
               </div>
 
-              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <div className="flex items-center gap-1 sm:gap-1.5 mt-1 sm:mt-1.5 flex-wrap">
                 <div className={cn(
-                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
+                  "inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium",
                   hotel.hasBlocker 
                     ? "bg-destructive/10 text-destructive" 
                     : "bg-emerald-500/10 text-emerald-600"
                 )}>
                   {hotel.hasBlocker ? (
-                    <AlertTriangle className="h-2.5 w-2.5" />
+                    <AlertTriangle className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                   ) : (
-                    <CheckCircle className="h-2.5 w-2.5" />
+                    <CheckCircle className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                   )}
-                  <span>{hotel.hasBlocker ? "Blocked" : "Healthy"}</span>
+                  <span className="hidden sm:inline">{hotel.hasBlocker ? "Blocked" : "Healthy"}</span>
                 </div>
 
                 {hotel.dazeDeviceCount > 0 && (
-                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-muted-foreground bg-muted">
-                    <Cpu className="h-2.5 w-2.5" />
+                  <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] text-muted-foreground bg-muted">
+                    <Cpu className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                     <span>{hotel.dazeDeviceCount}</span>
                   </div>
                 )}
 
                 {formattedARR && (
-                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-emerald-600 bg-emerald-500/10">
-                    <DollarSign className="h-2.5 w-2.5" />
+                  <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] text-emerald-600 bg-emerald-500/10">
+                    <DollarSign className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                     <span className="font-semibold">{formattedARR}</span>
                   </div>
                 )}
 
                 {showDaysWarning && (
-                  <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  <span className="text-[9px] sm:text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1 sm:px-1.5 py-0.5 rounded">
                     {daysInPhase}d
                   </span>
                 )}
               </div>
 
+              {/* Contact info - hidden on very small screens */}
               {hotel.primaryContact && (
-                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30">
+                <div className="hidden sm:flex items-center gap-2 mt-2 pt-2 border-t border-border/30">
                   <Avatar className="h-4 w-4">
                     <AvatarFallback className="text-[8px] bg-muted font-medium text-muted-foreground">
                       {initials}
@@ -213,7 +214,7 @@ export function HotelCardOverlay({ hotel }: { hotel: Client }) {
         boxShadow: "0 20px 50px -12px rgba(0, 0, 0, 0.25)",
       }}
     >
-      <Card className="cursor-grabbing border ring-2 ring-primary/40 ring-offset-2 ring-offset-background">
+      <Card className="cursor-grabbing border ring-2 ring-primary/40 ring-offset-2 ring-offset-background min-w-[240px]">
         <CardContent className="p-3">
           <div className="flex items-start gap-3">
             <div className="mt-1 text-primary">

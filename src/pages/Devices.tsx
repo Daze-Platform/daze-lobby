@@ -26,13 +26,14 @@ export default function Devices() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Responsive header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Daze Devices</h1>
-            <p className="text-sm text-muted-foreground">Hardware inventory and status</p>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Daze Devices</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Hardware inventory and status</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Badge variant="secondary" className="gap-1.5">
               <Tablet className="h-3.5 w-3.5" />
               {mockDevices.length} Total
@@ -44,35 +45,35 @@ export default function Devices() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {mockDevices.map((device) => {
             const config = statusConfig[device.status];
             const StatusIcon = config.icon;
             
             return (
               <Card key={device.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-medium">{device.serial}</CardTitle>
+                <CardHeader className="pb-2 px-4 sm:px-6">
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-sm sm:text-base font-medium truncate">{device.serial}</CardTitle>
                     <Badge className={config.color}>
                       <StatusIcon className="h-3 w-3 mr-1" />
-                      {config.label}
+                      <span className="hidden sm:inline">{config.label}</span>
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm text-muted-foreground">
+                <CardContent className="px-4 sm:px-6">
+                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <Tablet className="h-4 w-4" />
+                      <Tablet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       {device.type}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      {device.hotel}
+                      <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                      <span className="truncate">{device.hotel}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Installed {format(new Date(device.installDate), "MMM d, yyyy")}
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                      <span className="hidden sm:inline">Installed </span>{format(new Date(device.installDate), "MMM d, yyyy")}
                     </div>
                   </div>
                 </CardContent>
