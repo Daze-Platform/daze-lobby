@@ -543,7 +543,7 @@ export function useClientPortal() {
     },
   });
 
-  // Mutation to update client phase to pilot_live (triggers "live" status)
+  // Mutation to update client phase to "reviewing" (awaiting admin approval)
   const updateClientPhaseMutation = useMutation({
     mutationFn: async () => {
       if (!clientId) throw new Error("No client found");
@@ -551,7 +551,7 @@ export function useClientPortal() {
       const { error } = await supabase
         .from("clients")
         .update({
-          phase: "pilot_live" as const,
+          phase: "reviewing" as const,
           phase_started_at: new Date().toISOString(),
         })
         .eq("id", clientId);
@@ -566,7 +566,7 @@ export function useClientPortal() {
       logActivity.mutate({
         action: "status_changed",
         details: {
-          new_phase: "pilot_live",
+          new_phase: "reviewing",
           trigger: "onboarding_complete",
         },
       });

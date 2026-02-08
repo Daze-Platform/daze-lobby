@@ -34,6 +34,11 @@ const COLUMNS: {
     subtitle: "Menu ingestion & setup",
   },
   {
+    phase: "reviewing",
+    title: "In Review",
+    subtitle: "Pending approval",
+  },
+  {
     phase: "pilot_live",
     title: "Pilot Live",
     subtitle: "Testing & adoption",
@@ -169,9 +174,9 @@ export function KanbanBoard() {
   if (isLoading) {
     return (
       <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 pb-4">
-        <div className="flex gap-4 lg:grid lg:grid-cols-3" style={{ minWidth: useHorizontalScroll ? 'max-content' : undefined }}>
+        <div className="flex gap-4 lg:grid lg:grid-cols-4" style={{ minWidth: useHorizontalScroll ? 'max-content' : undefined }}>
           {COLUMNS.map((col) => (
-            <div key={col.phase} className="min-w-[300px] sm:min-w-[320px] lg:min-w-0 space-y-2">
+            <div key={col.phase} className="min-w-[280px] sm:min-w-[300px] lg:min-w-0 space-y-2">
               <Skeleton className="h-14 w-full rounded-xl" />
               <Skeleton className="h-[320px] w-full rounded-xl" />
             </div>
@@ -209,7 +214,7 @@ export function KanbanBoard() {
       {/* Horizontal scroll on mobile/tablet with snap points */}
       <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 pb-4 lg:pb-0 snap-x snap-mandatory lg:snap-none">
         <div 
-          className="flex gap-4 lg:grid lg:grid-cols-3" 
+          className="flex gap-4 lg:grid lg:grid-cols-4" 
           style={{ minWidth: useHorizontalScroll ? 'max-content' : undefined }}
         >
           {COLUMNS.map((col) => {
@@ -217,7 +222,7 @@ export function KanbanBoard() {
             const isOver = overColumnId === col.phase && activeClient?.phase !== col.phase;
             
             return (
-              <div key={col.phase} className="snap-center lg:snap-align-none min-w-[300px] sm:min-w-[320px] lg:min-w-0">
+              <div key={col.phase} className="snap-center lg:snap-align-none min-w-[280px] sm:min-w-[300px] lg:min-w-0">
                 <KanbanColumn
                   phase={col.phase}
                   title={col.title}
