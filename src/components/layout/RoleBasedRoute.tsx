@@ -26,7 +26,12 @@ export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) 
 
   // If specific roles are required, check them
   if (allowedRoles && allowedRoles.length > 0) {
-    if (!role || !allowedRoles.includes(role)) {
+    // Role is still hydrating OR missing entirely -> resolve in /post-auth to avoid loops
+    if (!role) {
+      return <Navigate to="/post-auth" replace />;
+    }
+
+    if (!allowedRoles.includes(role)) {
       // Redirect to appropriate route based on role
       if (isClient(role)) {
         return <Navigate to="/portal" replace />;
@@ -34,8 +39,7 @@ export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) 
       if (hasDashboardAccess(role)) {
         return <Navigate to="/" replace />;
       }
-      // No role assigned - show auth page
-      return <Navigate to="/auth" replace />;
+      return <Navigate to="/post-auth" replace />;
     }
   }
 

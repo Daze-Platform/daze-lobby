@@ -98,15 +98,22 @@ export function useAuth() {
     const initializeAuth = async () => {
       console.log("[Auth] Checking for existing session...");
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Session check timed out")), 10000)
+          ),
+        ]);
+
+        const initialSession = (sessionResult as any)?.data?.session ?? null;
+
         if (!isMountedRef.current) return;
 
         console.log("[Auth] Initial session check:", initialSession?.user?.email || "no session");
-        
+
         // Only set session if listener hasn't already done so
         if (initialSession) {
-          setSession(prev => prev || initialSession);
+          setSession((prev) => prev || initialSession);
           await fetchUser();
         }
       } catch (error) {

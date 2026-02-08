@@ -12,6 +12,35 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import dazeLogo from "@/assets/daze-logo.png";
 
+const withTimeout = async <T,>(
+  promise: Promise<T>,
+  ms: number,
+  message: string
+): Promise<T> => {
+  const timeout = new Promise<T>((_, reject) => {
+    const id = window.setTimeout(() => {
+      window.clearTimeout(id);
+      reject(new Error(message));
+    }, ms);
+  });
+
+  return (await Promise.race([promise, timeout])) as T;
+};
+
+const isBackendConfigured = () => {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const ok = !!url && !!key;
+
+  if (!ok) {
+    console.error(
+      "[LoginForm] Missing backend env vars (VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY)."
+    );
+  }
+
+  return ok;
+};
+
 interface LoginFormProps {
   onSwitchToSignUp: () => void;
   onForgotPassword: () => void;
@@ -35,17 +64,24 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     const checkExistingSession = async () => {
       try {
         console.log("[LoginForm] Checking for existing session on mount...");
-        const { data: { session } } = await supabase.auth.getSession();
+
+        const sessionResult = await withTimeout(
+          supabase.auth.getSession(),
+          8000,
+          "Session check timed out"
+        );
+        const session = (sessionResult as any)?.data?.session ?? null;
+
         if (session && !navigationAttemptedRef.current) {
           console.log("[LoginForm] Existing session found, redirecting immediately");
           navigationAttemptedRef.current = true;
-          navigate("/", { replace: true });
+          navigate("/post-auth", { replace: true });
         }
       } catch (err) {
         console.error("[LoginForm] Error checking session:", err);
       }
     };
-    
+
     checkExistingSession();
   }, [navigate]);
 
@@ -61,51 +97,86 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   // Navigate when auth state confirms login
   useEffect(() => {
     if (isAuthenticated && !authLoading && !navigationAttemptedRef.current) {
-      console.log("[LoginForm] Auth context confirmed, navigating to dashboard...");
+      console.log("[LoginForm] Auth context confirmed, navigating...");
       navigationAttemptedRef.current = true;
-      navigate("/", { replace: true });
+      navigate("/post-auth", { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Prevent double submission
     if (loading) {
       console.log("[LoginForm] Already processing login, ignoring");
       return;
     }
-    
+
+    if (!isBackendConfigured()) {
+      const errorMessage = "App is misconfigured (missing backend settings).";
+      setError(errorMessage);
+      toast({
+        title: "Configuration Error",
+        description: "Sign-in is temporarily unavailable. Please refresh or contact support.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log("[LoginForm] Login attempt started");
     setLoading(true);
     setError(null);
 
     try {
-      const result = await signIn(email, password);
-      console.log("[LoginForm] Supabase response received:", result.user?.email);
-      
-      // Check if session is already established (handles race condition)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && !navigationAttemptedRef.current) {
-        console.log("[LoginForm] Session confirmed, redirecting immediately");
+      // Handle "silent success" / in-flight sessions
+      const preSessionResult = await withTimeout(
+        supabase.auth.getSession(),
+        8000,
+        "Session check timed out"
+      );
+      const preSession = (preSessionResult as any)?.data?.session ?? null;
+
+      if (preSession && !navigationAttemptedRef.current) {
+        console.log("[LoginForm] Session already present, redirecting");
         navigationAttemptedRef.current = true;
-        navigate("/", { replace: true });
-        return; // Exit early on success
+        navigate("/post-auth", { replace: true });
+        return;
       }
-      
+
+      const result = await withTimeout(
+        signIn(email, password),
+        15000,
+        "Sign in timed out. Please try again."
+      );
+      console.log("[LoginForm] Supabase response received:", result.user?.email);
+
+      const session =
+        (result as any)?.session ??
+        ((await withTimeout(
+          supabase.auth.getSession(),
+          8000,
+          "Session check timed out"
+        )) as any)?.data?.session ??
+        null;
+
+      if (session && !navigationAttemptedRef.current) {
+        console.log("[LoginForm] Session confirmed, redirecting");
+        navigationAttemptedRef.current = true;
+        navigate("/post-auth", { replace: true });
+        return;
+      }
+
       // If we get here without a session, something unexpected happened
-      if (!session) {
-        console.warn("[LoginForm] Sign-in succeeded but no session found");
-        setError("Authentication succeeded but session not established. Please try again.");
-        toast({
-          title: "Authentication Issue",
-          description: "Please try signing in again.",
-          variant: "destructive",
-        });
-      }
+      console.warn("[LoginForm] Sign-in succeeded but no session found");
+      setError("Authentication succeeded but session not established. Please try again.");
+      toast({
+        title: "Authentication Issue",
+        description: "Please try signing in again.",
+        variant: "destructive",
+      });
     } catch (err: any) {
-      console.error("[LoginForm] Login error:", err.message);
-      const errorMessage = err.message || "Failed to sign in";
+      console.error("[LoginForm] Login error:", err?.message || err);
+      const errorMessage = err?.message || "Failed to sign in";
       setError(errorMessage);
       toast({
         title: "Sign In Failed",
