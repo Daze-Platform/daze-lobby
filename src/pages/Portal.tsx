@@ -27,7 +27,6 @@ export default function Portal() {
   const { user, role } = useAuthContext();
   const { client, clientId, isAdminViewing, selectedClientId } = useClient();
   const navigate = useNavigate();
-  const [localVenues, setLocalVenues] = useState<Venue[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
@@ -50,9 +49,16 @@ export default function Portal() {
     signLegal,
     updateTask, 
     uploadFile,
-    saveVenues,
+    uploadVenueMenu,
+    addVenue,
+    updateVenue,
+    deleteVenue,
+    completeVenueStep,
     isSigningLegal,
-    isUpdating
+    isUpdating,
+    isAddingVenue,
+    isUpdatingVenue,
+    isDeletingVenue,
   } = useClientPortal();
 
   // MEMOIZED: Format tasks for the accordion - MUST be before early returns
@@ -110,12 +116,37 @@ export default function Portal() {
     uploadFile({ taskKey, file, fieldName });
   };
 
-  const handleVenuesSave = () => {
-    saveVenues(localVenues);
+  // Venue CRUD handlers
+  const handleAddVenue = async (): Promise<Venue | undefined> => {
+    const result = await addVenue({ name: "" });
+    // addVenue returns a DbVenue with menu_pdf_url
+    if (result) {
+      return {
+        id: result.id,
+        name: result.name,
+        menuPdfUrl: (result as { menu_pdf_url?: string | null }).menu_pdf_url || undefined,
+      };
+    }
+    return undefined;
   };
 
-  // Sync venues from server when loaded
-  const displayVenues = localVenues.length > 0 ? localVenues : venues;
+  const handleUpdateVenue = async (id: string, updates: { name?: string; menuPdfUrl?: string }) => {
+    await updateVenue({ id, updates });
+  };
+
+  const handleRemoveVenue = async (id: string) => {
+    await deleteVenue(id);
+  };
+
+  const handleUploadMenu = async (venueId: string, venueName: string, file: File) => {
+    await uploadVenueMenu({ venueId, venueName, file });
+  };
+
+  const handleCompleteVenueStep = async () => {
+    await completeVenueStep();
+  };
+
+  // venues from useClientPortal is already transformed to UI format
 
   // Admin without selected client - show client picker
   if (isAdmin && !selectedClientId) {
@@ -239,9 +270,15 @@ export default function Portal() {
                     onLegalSign={handleLegalSign}
                     onTaskUpdate={handleTaskUpdate}
                     onFileUpload={handleFileUpload}
-                    venues={displayVenues}
-                    onVenuesChange={setLocalVenues}
-                    onVenuesSave={handleVenuesSave}
+                    venues={venues}
+                    onAddVenue={handleAddVenue}
+                    onUpdateVenue={handleUpdateVenue}
+                    onRemoveVenue={handleRemoveVenue}
+                    onUploadMenu={handleUploadMenu}
+                    onCompleteVenueStep={handleCompleteVenueStep}
+                    isAddingVenue={isAddingVenue}
+                    isUpdatingVenue={isUpdatingVenue}
+                    isDeletingVenue={isDeletingVenue}
                     isSigningLegal={isSigningLegal}
                     isUpdating={isUpdating}
                     hotelLegalEntity={{

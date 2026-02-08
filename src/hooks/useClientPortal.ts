@@ -425,66 +425,121 @@ export function useClientPortal() {
     },
   });
 
-  // Save venues - with client_id injection
-  const saveVenuesMutation = useMutation({
-    mutationFn: async (venues: Venue[]) => {
+  // Add single venue to database
+  const addVenueMutation = useMutation({
+    mutationFn: async (venue: { name: string }) => {
       if (!clientId) throw new Error("No client found");
+      
+      const { data, error } = await supabase
+        .from("venues")
+        .insert({ client_id: clientId, name: venue.name || "New Venue" })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+      
+      logActivity.mutate({
+        action: "venue_created",
+        details: { venue_name: data.name },
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to add venue: " + error.message);
+    },
+  });
 
-      // Delete existing venues for this client only
-      await supabase
+  // Update single venue (name or menu_pdf_url)
+  const updateVenueMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string } }) => {
+      if (!clientId) throw new Error("No client found");
+      
+      const updateData: Record<string, unknown> = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.menuPdfUrl !== undefined) updateData.menu_pdf_url = updates.menuPdfUrl;
+      
+      const { error } = await supabase
+        .from("venues")
+        .update(updateData)
+        .eq("id", id)
+        .eq("client_id", clientId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update venue: " + error.message);
+    },
+  });
+
+  // Delete single venue
+  const deleteVenueMutation = useMutation({
+    mutationFn: async (venueId: string) => {
+      if (!clientId) throw new Error("No client found");
+      
+      const { error } = await supabase
         .from("venues")
         .delete()
+        .eq("id", venueId)
         .eq("client_id", clientId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+      
+      logActivity.mutate({
+        action: "venue_deleted",
+        details: {},
+      });
+      
+      toast.success("Venue removed");
+    },
+    onError: (error) => {
+      toast.error("Failed to remove venue: " + error.message);
+    },
+  });
 
-      // Insert new venues with client_id injected
-      if (venues.length > 0) {
-        const venueInserts = venues
-          .filter(v => v.name.trim())
-          .map(v => ({
-            client_id: clientId, // CRITICAL: Inject client_id
-            name: v.name,
-            menu_pdf_url: v.menuPdfUrl || null,
-          }));
-
-        if (venueInserts.length > 0) {
-          const { error } = await supabase
-            .from("venues")
-            .insert(venueInserts);
-
-          if (error) throw error;
-        }
-      }
-
-      // Mark venue task as complete
-      const { error: taskError } = await supabase
+  // Complete venue step (marks task as done without re-saving venues)
+  const completeVenueStepMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientId) throw new Error("No client found");
+      
+      // Get current venue count
+      const { data: venueCount } = await supabase
+        .from("venues")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientId);
+      
+      const { error } = await supabase
         .from("onboarding_tasks")
         .update({
           is_completed: true,
           completed_at: new Date().toISOString(),
-          data: { venue_count: venues.filter(v => v.name.trim()).length },
+          data: { venue_count: venueCount || 0 },
         } as never)
         .eq("client_id", clientId)
         .eq("task_key", "venue");
-
-      if (taskError) throw taskError;
+      
+      if (error) throw error;
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["venues"] });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
       
-      // Log activity
-      const venueCount = variables.filter(v => v.name.trim()).length;
       logActivity.mutate({
-        action: venueCount > 0 ? "venue_updated" : "venue_created",
-        details: {
-          venue_count: venueCount,
-        },
+        action: "venue_step_completed",
+        details: {},
       });
       
-      toast.success("Venues saved successfully!");
+      toast.success("Venue step completed!");
     },
     onError: (error) => {
-      toast.error("Failed to save venues: " + error.message);
+      toast.error("Failed to complete step: " + error.message);
     },
   });
 
@@ -591,11 +646,18 @@ export function useClientPortal() {
     uploadLogo: uploadLogoMutation.mutate,
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
-    saveVenues: saveVenuesMutation.mutate,
+    // Individual venue CRUD
+    addVenue: addVenueMutation.mutateAsync,
+    updateVenue: updateVenueMutation.mutateAsync,
+    deleteVenue: deleteVenueMutation.mutateAsync,
+    completeVenueStep: completeVenueStepMutation.mutateAsync,
     // States
     isSavingLegalEntity: saveLegalEntityMutation.isPending,
     isSigningLegal: signLegalMutation.isPending,
-    isUpdating: updateTaskMutation.isPending || saveVenuesMutation.isPending,
+    isUpdating: updateTaskMutation.isPending,
+    isAddingVenue: addVenueMutation.isPending,
+    isUpdatingVenue: updateVenueMutation.isPending,
+    isDeletingVenue: deleteVenueMutation.isPending,
     isTransitioningToLive: updateClientPhaseMutation.isPending,
   };
 }
