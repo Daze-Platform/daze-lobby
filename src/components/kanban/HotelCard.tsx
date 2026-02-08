@@ -43,6 +43,7 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
     transform,
     transition,
     isDragging: isSortableDragging,
+    isSorting,
   } = useSortable({
     id: hotel.id,
     disabled: hotel.hasBlocker,
@@ -81,10 +82,14 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
   const formattedARR = hotel.phase === "contracted" ? formatARR(hotel.arr) : null;
   const isBeingDragged = isDragging || isSortableDragging;
 
+  const freezeLayoutWhileDragging = isSorting && !isSortableDragging;
+
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isBeingDragged ? 0 : 1,
+    // While a drag is active, dnd-kit will try to shift other cards to show an insertion point.
+    // We *disable* those transforms so the board doesn't "make space" until drop.
+    transform: freezeLayoutWhileDragging ? undefined : CSS.Transform.toString(transform),
+    transition: freezeLayoutWhileDragging ? undefined : transition,
+    opacity: isBeingDragged ? 0 : 1, // hide source card; DragOverlay is the only moving visual
     pointerEvents: isBeingDragged ? "none" : undefined,
   };
 
