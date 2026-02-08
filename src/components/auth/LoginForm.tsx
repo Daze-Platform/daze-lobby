@@ -9,6 +9,7 @@ import { signIn } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import dazeLogo from "@/assets/daze-logo.png";
 
 interface LoginFormProps {
@@ -29,6 +30,25 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading } = useAuthContext();
 
+  // Check for existing session on mount - handles "silent success"
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      try {
+        console.log("[LoginForm] Checking for existing session on mount...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && !navigationAttemptedRef.current) {
+          console.log("[LoginForm] Existing session found, redirecting immediately");
+          navigationAttemptedRef.current = true;
+          navigate("/", { replace: true });
+        }
+      } catch (err) {
+        console.error("[LoginForm] Error checking session:", err);
+      }
+    };
+    
+    checkExistingSession();
+  }, [navigate]);
+
   // Trigger shake animation on error
   useEffect(() => {
     if (error) {
@@ -39,10 +59,9 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   }, [error]);
 
   // Navigate when auth state confirms login
-  // Uses a ref to ensure we only attempt navigation once
   useEffect(() => {
     if (isAuthenticated && !authLoading && !navigationAttemptedRef.current) {
-      console.log("[LoginForm] Auth confirmed, navigating to dashboard...");
+      console.log("[LoginForm] Auth context confirmed, navigating to dashboard...");
       navigationAttemptedRef.current = true;
       navigate("/", { replace: true });
     }
@@ -71,14 +90,33 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         console.log("[LoginForm] Session confirmed, redirecting immediately");
         navigationAttemptedRef.current = true;
         navigate("/", { replace: true });
+        return; // Exit early on success
       }
-      // If not, the useEffect above will handle navigation when auth context updates
+      
+      // If we get here without a session, something unexpected happened
+      if (!session) {
+        console.warn("[LoginForm] Sign-in succeeded but no session found");
+        setError("Authentication succeeded but session not established. Please try again.");
+        toast({
+          title: "Authentication Issue",
+          description: "Please try signing in again.",
+          variant: "destructive",
+        });
+      }
     } catch (err: any) {
       console.error("[LoginForm] Login error:", err.message);
-      setError(err.message || "Failed to sign in");
+      const errorMessage = err.message || "Failed to sign in";
+      setError(errorMessage);
+      toast({
+        title: "Sign In Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      // CRITICAL: Always reset loading state to prevent infinite spinner
       setLoading(false);
+      console.log("[LoginForm] Login attempt finalized, loading reset");
     }
-    // Don't setLoading(false) on success - let the navigation happen first
   };
 
   const handleGoogleSignIn = async () => {
@@ -89,10 +127,22 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         redirect_uri: window.location.origin,
       });
       if (error) {
-        setError(error.message || "Failed to sign in with Google");
+        const errorMessage = error.message || "Failed to sign in with Google";
+        setError(errorMessage);
+        toast({
+          title: "Google Sign In Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+      const errorMessage = err.message || "Failed to sign in with Google";
+      setError(errorMessage);
+      toast({
+        title: "Google Sign In Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setGoogleLoading(false);
     }
