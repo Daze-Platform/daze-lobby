@@ -25,21 +25,26 @@ const CATEGORY_COLORS: Record<string, string> = {
   Other: "bg-muted text-muted-foreground",
 };
 
-export function PortalDocuments() {
-  const { clientId } = useClient();
+interface PortalDocumentsProps {
+  clientIdOverride?: string | null;
+}
+
+export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {}) {
+  const clientContext = useClient();
+  const resolvedClientId = clientIdOverride || clientContext.clientId;
 
   const { data: documents, isLoading } = useQuery({
-    queryKey: ["portal-documents", clientId],
+    queryKey: ["documents", resolvedClientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
         .select("*")
-        .eq("client_id", clientId!)
+        .eq("client_id", resolvedClientId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!clientId,
+    enabled: !!resolvedClientId,
   });
 
   const handleDownload = async (filePath: string, displayName: string) => {

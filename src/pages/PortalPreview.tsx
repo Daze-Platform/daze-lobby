@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { WelcomeTour } from "@/components/portal/WelcomeTour";
 import { DemoActivityFeedPanel, type DemoActivity, type PortalView } from "@/components/portal";
+import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { DemoPortalDocuments } from "@/components/portal/DemoPortalDocuments";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -16,12 +17,15 @@ import dazeLogo from "@/assets/daze-logo.png";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
+import { ClientProvider } from "@/contexts/ClientContext";
 /**
  * Preview/Demo version of the Client Portal V2
  * This is for testing the UI without authentication
  */
 export default function PortalPreview() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const previewClientId = searchParams.get("clientId");
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -259,7 +263,13 @@ export default function PortalPreview() {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {activeView === "documents" ? (
-          <DemoPortalDocuments />
+          previewClientId ? (
+            <ClientProvider>
+              <PortalDocuments clientIdOverride={previewClientId} />
+            </ClientProvider>
+          ) : (
+            <DemoPortalDocuments />
+          )
         ) : (
           <>
             {/* Welcome Section - Hero entrance */}
