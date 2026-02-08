@@ -5,11 +5,13 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { WelcomeTour } from "@/components/portal/WelcomeTour";
-import { DemoActivityFeedPanel, type DemoActivity } from "@/components/portal";
+import { DemoActivityFeedPanel, type DemoActivity, type PortalView } from "@/components/portal";
+import { DemoPortalDocuments } from "@/components/portal/DemoPortalDocuments";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, RotateCcw, Clock } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, RotateCcw, Clock, ClipboardList, FileText } from "lucide-react";
 import dazeLogo from "@/assets/daze-logo.png";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
@@ -20,6 +22,7 @@ import { signOut } from "@/lib/auth";
  */
 export default function PortalPreview() {
   const navigate = useNavigate();
+  const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
@@ -198,6 +201,20 @@ export default function PortalPreview() {
           </div>
           {/* Desktop nav buttons - hidden on mobile */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4">
+            {/* View Tabs */}
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as PortalView)}>
+              <TabsList className="bg-muted/50">
+                <TabsTrigger value="onboarding" className="gap-2">
+                  <ClipboardList className="w-4 h-4" />
+                  Onboarding
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  Documents
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
             <Button 
               variant="ghost" 
               size="sm" 
@@ -241,93 +258,105 @@ export default function PortalPreview() {
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
-        {/* Welcome Section - Hero entrance */}
-        <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
-          <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
-          <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
-            Grand Hyatt Demo
-          </h1>
-          <p className="text-xs sm:text-base lg:text-lg text-muted-foreground">
-            Complete the steps below to get your hotel ready for launch.
-          </p>
-        </div>
+        {activeView === "documents" ? (
+          <DemoPortalDocuments />
+        ) : (
+          <>
+            {/* Welcome Section - Hero entrance */}
+            <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
+              <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
+              <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
+                Grand Hyatt Demo
+              </h1>
+              <p className="text-xs sm:text-base lg:text-lg text-muted-foreground">
+                Complete the steps below to get your hotel ready for launch.
+              </p>
+            </div>
 
-        <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
-          {/* Hero Section - Progress */}
-          <Card className="lg:col-span-1 entrance-hero">
-            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-              <span className="label-micro">Progress</span>
-              <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
-              {/* Responsive Progress Ring - smaller on mobile */}
-              <div className="w-full flex justify-center">
-                <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
-                <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
-              </div>
-              <StatusBadge status={status} />
-              <ConfettiCelebration 
-                trigger={showConfetti} 
-                onComplete={() => setShowConfetti(false)} 
-              />
-              
-              {/* Demo Status Toggle - Horizontal scroll on mobile */}
-              <div className="w-full pt-3 sm:pt-6 border-t border-border/20">
-                <p className="label-micro mb-2 sm:mb-3 text-center">Demo: Toggle Status</p>
-                <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                  {(["onboarding", "reviewing", "live"] as const).map((s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={status === s ? "default" : "secondary"}
-                      onClick={() => setStatus(s)}
-                      className="flex-1 min-w-[60px] sm:min-w-[80px] text-[10px] sm:text-xs capitalize min-h-[40px] sm:min-h-[44px] whitespace-nowrap px-2 sm:px-3"
-                    >
-                      {s === "reviewing" ? "In-Progress" : s}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
+              {/* Hero Section - Progress */}
+              <Card className="lg:col-span-1 entrance-hero">
+                <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+                  <span className="label-micro">Progress</span>
+                  <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
+                  {/* Responsive Progress Ring - smaller on mobile */}
+                  <div className="w-full flex justify-center">
+                    <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
+                    <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
+                  </div>
+                  <StatusBadge status={status} />
+                  <ConfettiCelebration 
+                    trigger={showConfetti} 
+                    onComplete={() => setShowConfetti(false)} 
+                  />
+                  
+                  {/* Demo Status Toggle - Horizontal scroll on mobile */}
+                  <div className="w-full pt-3 sm:pt-6 border-t border-border/20">
+                    <p className="label-micro mb-2 sm:mb-3 text-center">Demo: Toggle Status</p>
+                    <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                      {(["onboarding", "reviewing", "live"] as const).map((s) => (
+                        <Button
+                          key={s}
+                          size="sm"
+                          variant={status === s ? "default" : "secondary"}
+                          onClick={() => setStatus(s)}
+                          className="flex-1 min-w-[60px] sm:min-w-[80px] text-[10px] sm:text-xs capitalize min-h-[40px] sm:min-h-[44px] whitespace-nowrap px-2 sm:px-3"
+                        >
+                          {s === "reviewing" ? "In-Progress" : s}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Task List - Content entrance */}
-          <Card className="lg:col-span-2 entrance-content">
-            <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-              <span className="label-micro">Checklist</span>
-              <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
-              <TaskAccordion 
-                tasks={tasks}
-                onLegalSign={handleLegalSign}
-                onTaskUpdate={handleTaskUpdate}
-                onFileUpload={handleFileUpload}
-                venues={venues}
-                onVenuesChange={setVenues}
-                onVenuesSave={handleVenuesSave}
-                isSigningLegal={isSigningLegal}
-                hotelLegalEntity={hotelLegalEntity}
-              />
-            </CardContent>
-          </Card>
-        </div>
+              {/* Task List - Content entrance */}
+              <Card className="lg:col-span-2 entrance-content">
+                <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+                  <span className="label-micro">Checklist</span>
+                  <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
+                  <TaskAccordion 
+                    tasks={tasks}
+                    onLegalSign={handleLegalSign}
+                    onTaskUpdate={handleTaskUpdate}
+                    onFileUpload={handleFileUpload}
+                    venues={venues}
+                    onVenuesChange={setVenues}
+                    onVenuesSave={handleVenuesSave}
+                    isSigningLegal={isSigningLegal}
+                    hotelLegalEntity={hotelLegalEntity}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
       </main>
 
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           <Button
-            variant="ghost"
+            variant={activeView === "onboarding" ? "default" : "ghost"}
             size="sm"
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
-            onClick={() => {
-              resetTour();
-              toast.info("Welcome tour reset!");
-            }}
+            onClick={() => setActiveView("onboarding")}
           >
-            <RotateCcw className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px]">Reset</span>
+            <ClipboardList className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Onboarding</span>
+          </Button>
+          <Button
+            variant={activeView === "documents" ? "default" : "ghost"}
+            size="sm"
+            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+            onClick={() => setActiveView("documents")}
+          >
+            <FileText className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Documents</span>
           </Button>
           <Button
             variant="ghost"
