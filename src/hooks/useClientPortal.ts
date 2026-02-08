@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
@@ -520,41 +521,58 @@ export function useClientPortal() {
     },
   });
 
-  // Calculate progress
-  const calculateProgress = () => {
+  // DEBOUNCE GUARD: Track if transition is in progress to prevent multiple calls
+  const transitionInProgressRef = useRef(false);
+
+  // Calculate progress - MEMOIZED for performance
+  const progress = useMemo(() => {
     if (!tasks || tasks.length === 0) return 0;
     const completed = tasks.filter(t => t.is_completed).length;
     return Math.round((completed / tasks.length) * 100);
-  };
+  }, [tasks]);
 
-  // Check if all tasks are complete and auto-transition to live
-  const checkAndTransitionToLive = () => {
-    if (!tasks || tasks.length === 0) return;
-    
-    const allCompleted = tasks.every(t => t.is_completed);
-    const currentPhase = client?.phase;
-    
-    // Only transition if all tasks complete and not already in pilot_live or contracted
-    if (allCompleted && currentPhase === "onboarding") {
-      updateClientPhaseMutation.mutate();
-    }
-  };
-
-  // Get status based on phase
-  const getStatus = (): "onboarding" | "reviewing" | "live" => {
+  // Get status based on phase - MEMOIZED for performance
+  const status = useMemo((): "onboarding" | "reviewing" | "live" => {
     const phase = client?.phase;
     if (phase === "contracted") return "live";
-    if (phase === "pilot_live") return "live"; // Changed: pilot_live now shows as "live"
+    if (phase === "pilot_live") return "live";
     if (phase === "reviewing") return "reviewing";
     return "onboarding";
-  };
+  }, [client?.phase]);
 
-  // Transform venues to component format
-  const venues: Venue[] = (venuesData || []).map(v => ({
-    id: v.id,
-    name: v.name,
-    menuPdfUrl: v.menu_pdf_url || undefined,
-  }));
+  // SINGLE REACTIVE PATH: Auto-transition when all tasks complete
+  // This effect replaces the competing listener in Portal.tsx
+  useEffect(() => {
+    // Guard: Only run if we have tasks and client data
+    if (!tasks || tasks.length === 0 || !client) return;
+    
+    // Guard: Already transitioned or transitioning
+    if (transitionInProgressRef.current) return;
+    if (client.phase !== "onboarding") return;
+    
+    // Check if all tasks are complete
+    const allCompleted = tasks.every(t => t.is_completed);
+    
+    if (allCompleted) {
+      transitionInProgressRef.current = true;
+      updateClientPhaseMutation.mutate(undefined, {
+        onSettled: () => {
+          // Reset guard after mutation completes (success or failure)
+          transitionInProgressRef.current = false;
+        },
+      });
+    }
+  }, [tasks, client, updateClientPhaseMutation]);
+
+  // Transform venues to component format - MEMOIZED
+  const venues: Venue[] = useMemo(() => 
+    (venuesData || []).map(v => ({
+      id: v.id,
+      name: v.name,
+      menuPdfUrl: v.menu_pdf_url || undefined,
+    })),
+    [venuesData]
+  );
 
   return {
     hotel: client, // Backwards compat alias
@@ -564,8 +582,8 @@ export function useClientPortal() {
     tasks: tasks || [],
     venues,
     isLoading: isClientLoading || isLoadingTasks || isLoadingVenues,
-    progress: calculateProgress(),
-    status: getStatus(),
+    progress, // Now memoized, derived directly
+    status,   // Now memoized, derived directly
     // Mutations
     saveLegalEntity: saveLegalEntityMutation.mutate,
     signLegal: signLegalMutation.mutate,
@@ -574,8 +592,6 @@ export function useClientPortal() {
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
     saveVenues: saveVenuesMutation.mutate,
-    // Auto-transition to live
-    checkAndTransitionToLive,
     // States
     isSavingLegalEntity: saveLegalEntityMutation.isPending,
     isSigningLegal: signLegalMutation.isPending,
