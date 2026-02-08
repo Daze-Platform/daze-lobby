@@ -65,10 +65,11 @@ export default function Portal() {
           data: t.data as Record<string, unknown>,
         }))
       : [
-          { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} },
           { key: "brand", name: "Brand Identity", isCompleted: false, data: {} },
           { key: "venue", name: "Venue Manager", isCompleted: false, data: {} },
           { key: "pos", name: "POS Integration", isCompleted: false, data: {} },
+          { key: "devices", name: "Device Setup", isCompleted: false, data: {} },
+          { key: "legal", name: "Legal & Agreements", isCompleted: false, data: {} },
         ],
     [tasks]
   );
