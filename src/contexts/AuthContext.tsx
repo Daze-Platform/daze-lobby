@@ -9,7 +9,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   role: AppRole | null;
-  refetchUser: () => Promise<void>;
+  refetchUser: () => Promise<UserWithRole | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
