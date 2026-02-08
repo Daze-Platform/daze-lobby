@@ -20,7 +20,7 @@ import { BlockerResolutionModal, type BlockerData } from "@/components/modals/Bl
 import { HotelDetailPanel } from "@/components/dashboard";
 import type { Enums } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import confetti from "canvas-confetti";
 
 const COLUMNS: {
@@ -63,6 +63,8 @@ export function KanbanBoard() {
   const { data: clients, isLoading, error } = useClients();
   const updatePhase = useUpdateClientPhase();
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const useHorizontalScroll = isMobile || isTablet;
   
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeClient, setActiveClient] = useState<Client | null>(null);
@@ -166,10 +168,10 @@ export function KanbanBoard() {
 
   if (isLoading) {
     return (
-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-4">
-        <div className="flex gap-4 md:grid md:grid-cols-3" style={{ minWidth: isMobile ? 'max-content' : undefined }}>
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 pb-4">
+        <div className="flex gap-4 lg:grid lg:grid-cols-3" style={{ minWidth: useHorizontalScroll ? 'max-content' : undefined }}>
           {COLUMNS.map((col) => (
-            <div key={col.phase} className="min-w-[280px] md:min-w-0 space-y-2">
+            <div key={col.phase} className="min-w-[300px] sm:min-w-[320px] lg:min-w-0 space-y-2">
               <Skeleton className="h-14 w-full rounded-xl" />
               <Skeleton className="h-[320px] w-full rounded-xl" />
             </div>
@@ -204,18 +206,18 @@ export function KanbanBoard() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      {/* Horizontal scroll on mobile with snap points */}
-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 snap-x snap-mandatory md:snap-none">
+      {/* Horizontal scroll on mobile/tablet with snap points */}
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 pb-4 lg:pb-0 snap-x snap-mandatory lg:snap-none">
         <div 
-          className="flex gap-4 md:grid md:grid-cols-3" 
-          style={{ minWidth: isMobile ? 'max-content' : undefined }}
+          className="flex gap-4 lg:grid lg:grid-cols-3" 
+          style={{ minWidth: useHorizontalScroll ? 'max-content' : undefined }}
         >
           {COLUMNS.map((col) => {
             const columnClients = clientsByPhase[col.phase] || [];
             const isOver = overColumnId === col.phase && activeClient?.phase !== col.phase;
             
             return (
-              <div key={col.phase} className="snap-center md:snap-align-none min-w-[280px] md:min-w-0">
+              <div key={col.phase} className="snap-center lg:snap-align-none min-w-[300px] sm:min-w-[320px] lg:min-w-0">
                 <KanbanColumn
                   phase={col.phase}
                   title={col.title}

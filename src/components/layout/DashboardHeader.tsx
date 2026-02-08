@@ -16,18 +16,20 @@ import { useNavigate } from "react-router-dom";
 import dazeLogo from "@/assets/daze-logo.png";
 import { isTestEnvironment } from "@/lib/environment";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobileOrTablet } from "@/hooks/use-mobile";
 
 interface DashboardHeaderProps {
   onMenuToggle?: () => void;
+  showMenuButton?: boolean;
 }
 
-export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
+export function DashboardHeader({ onMenuToggle, showMenuButton }: DashboardHeaderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { user, role } = useAuthContext();
   const navigate = useNavigate();
   const isTest = isTestEnvironment();
-  const isMobile = useIsMobile();
+  // Fallback to hook if showMenuButton not provided
+  const shouldShowMenu = showMenuButton ?? useIsMobileOrTablet();
 
   const handleSignOut = async () => {
     await signOut();
@@ -56,8 +58,8 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
     <header className="glass-header">
       <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Mobile hamburger menu */}
-          {isMobile && onMenuToggle && (
+          {/* Menu button for mobile and tablet */}
+          {shouldShowMenu && onMenuToggle && (
             <Button 
               variant="ghost" 
               size="icon" 
