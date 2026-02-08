@@ -116,14 +116,14 @@ export function DevicesStep({
     <AccordionItem
       value="devices"
       className={cn(
-        "px-5 relative overflow-hidden transition-all duration-300 border-0",
+        "px-3 sm:px-5 relative overflow-hidden transition-all duration-300 border-0",
         isLocked && "opacity-50 pointer-events-none",
         isUnlocking && "animate-unlock-glow"
       )}
       disabled={isLocked}
     >
       <StepCompletionEffect isActive={isJustCompleted || false} />
-      <AccordionTrigger className="hover:no-underline py-3 md:py-4">
+      <AccordionTrigger className="hover:no-underline py-2.5 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
           <StepBadge
             step="E"
@@ -132,21 +132,21 @@ export function DevicesStep({
           />
           <div className="text-left min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-sm md:text-base truncate">Device Setup</p>
+              <p className="font-semibold text-xs sm:text-sm md:text-base truncate">Device Setup</p>
               {isConfirmed && !isCompleted && selectedChoice && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium bg-primary/10 text-primary">
+                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-2xs font-medium bg-primary/10 text-primary">
                   {selectedChoice === "daze" ? `${tabletCount} Tablets` : "Own Devices"}
                 </span>
               )}
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground truncate">
+            <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">
               Choose your hardware preference
             </p>
           </div>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="pb-4">
-        <div className="relative min-h-[280px] pt-2">
+      <AccordionContent className="pb-3 sm:pb-4">
+        <div className="relative min-h-[260px] sm:min-h-[280px] pt-1 sm:pt-2">
           <AnimatePresence mode="wait">
             {!isConfirmed ? (
               /* Selection UI */
@@ -156,20 +156,20 @@ export function DevicesStep({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                className="space-y-4"
+                className="space-y-3 sm:space-y-4"
               >
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   How would you like to display the ordering system?
                 </p>
                 
                 {/* Device Choice Cards */}
-                <div className="grid gap-3">
+                <div className="grid gap-2 sm:gap-3">
                   {/* Daze Tablets Option */}
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleChoiceSelect("daze")}
                     className={cn(
-                      "relative flex items-start gap-4 p-4 rounded-xl text-left",
+                      "relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left",
                       "bg-card border-2 transition-all duration-200",
                       "hover:shadow-soft-md hover:-translate-y-0.5",
                       "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
@@ -179,14 +179,14 @@ export function DevicesStep({
                     )}
                   >
                     <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                      "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0",
                       "bg-primary/10"
                     )}>
-                      <Tablet className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                      <Tablet className="w-5 h-5 sm:w-6 sm:h-6 text-primary" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">Use Daze Tablets</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="font-semibold text-xs sm:text-sm">Use Daze Tablets</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                         We'll ship pre-configured tablets ready to deploy
                       </p>
                     </div>
@@ -208,7 +208,7 @@ export function DevicesStep({
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleChoiceSelect("own")}
                     className={cn(
-                      "relative flex items-start gap-4 p-4 rounded-xl text-left",
+                      "relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left",
                       "bg-card border-2 transition-all duration-200",
                       "hover:shadow-soft-md hover:-translate-y-0.5",
                       "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
@@ -218,14 +218,14 @@ export function DevicesStep({
                     )}
                   >
                     <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                      "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0",
                       "bg-muted"
                     )}>
-                      <Monitor className="w-6 h-6 text-muted-foreground" strokeWidth={1.5} />
+                      <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">Use Our Own Devices</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="font-semibold text-xs sm:text-sm">Use Our Own Devices</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                         We'll use existing tablets or kiosks at the property
                       </p>
                     </div>
