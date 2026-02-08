@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signIn } from "@/lib/auth";
 import { lovable } from "@/integrations/lovable";
+import { useAuthContext } from "@/contexts/AuthContext";
 import dazeLogo from "@/assets/daze-logo.png";
 
 interface LoginFormProps {
@@ -22,8 +23,10 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shouldShake, setShouldShake] = useState(false);
+  const [pendingLogin, setPendingLogin] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+  const { isAuthenticated, loading: authLoading } = useAuthContext();
 
   // Trigger shake animation on error
   useEffect(() => {
@@ -34,6 +37,13 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     }
   }, [error]);
 
+  // Navigate when auth state confirms login (prevents double-click issue)
+  useEffect(() => {
+    if (pendingLogin && isAuthenticated && !authLoading) {
+      navigate("/");
+    }
+  }, [pendingLogin, isAuthenticated, authLoading, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -41,12 +51,13 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
 
     try {
       await signIn(email, password);
-      navigate("/");
+      // Signal that we're waiting for auth state to update before navigating
+      setPendingLogin(true);
     } catch (err: any) {
       setError(err.message || "Failed to sign in");
-    } finally {
       setLoading(false);
     }
+    // Don't setLoading(false) on success - let the navigation happen first
   };
 
   const handleGoogleSignIn = async () => {
