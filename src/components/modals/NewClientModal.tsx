@@ -135,8 +135,8 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       return client.id;
     },
     onSuccess: (clientId) => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-      queryClient.invalidateQueries({ queryKey: ["clients-count"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
+      queryClient.invalidateQueries({ queryKey: ["all-clients-admin"] });
       toast.success("Client created successfully!");
       handleClose();
       navigate(`/clients?selected=${clientId}`);
