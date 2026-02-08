@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -12,19 +13,21 @@ interface StatCard {
   label: string;
   value: string;
   icon: LucideIcon;
+  route: string;
 }
 
 export default function Dashboard() {
   const { role } = useAuthContext();
   const { data: clients, isLoading } = useClients();
+  const navigate = useNavigate();
 
   // Compute stats from client data - focused on onboarding velocity (no ARR)
   const stats = useMemo<StatCard[]>(() => {
     if (!clients) {
       return [
-        { label: "Total Clients", value: "0", icon: Building2 },
-        { label: "Incomplete", value: "0", icon: AlertTriangle },
-        { label: "Devices", value: "0", icon: Cpu },
+        { label: "Total Clients", value: "0", icon: Building2, route: "/clients" },
+        { label: "Incomplete", value: "0", icon: AlertTriangle, route: "/blockers" },
+        { label: "Devices", value: "0", icon: Cpu, route: "/devices" },
       ];
     }
 
@@ -34,9 +37,9 @@ export default function Dashboard() {
     const totalDazeDevices = clients.reduce((sum, c) => sum + c.dazeDeviceCount, 0);
 
     return [
-      { label: "Total Clients", value: totalClients.toString(), icon: Building2 },
-      { label: "Incomplete", value: incompleteCount.toString(), icon: AlertTriangle },
-      { label: "Devices", value: totalDazeDevices.toString(), icon: Cpu },
+      { label: "Total Clients", value: totalClients.toString(), icon: Building2, route: "/clients" },
+      { label: "Incomplete", value: incompleteCount.toString(), icon: AlertTriangle, route: "/blockers" },
+      { label: "Devices", value: totalDazeDevices.toString(), icon: Cpu, route: "/devices" },
     ];
   }, [clients]);
 
@@ -50,6 +53,7 @@ export default function Dashboard() {
               key={stat.label} 
               className="hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer animate-fade-in-up transition-all duration-300"
               style={{ animationDelay: `${index * 80}ms` }}
+              onClick={() => navigate(stat.route)}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 pt-3 sm:pt-4 px-4 sm:px-6">
                 <span className="label-micro text-[9px] sm:text-[10px]">{stat.label}</span>
