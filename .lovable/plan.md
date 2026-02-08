@@ -1,93 +1,199 @@
 
-## Goal
-Make Kanban dragging feel “1:1” with the cursor (no offset), and stop the board from trying to “make space” or behaving unpredictably while a drag is in progress.
+# Mobile Responsiveness Overhaul Plan
 
-## What’s likely causing the “card far from cursor” problem
-Your app’s `animate-fade-in-up` utility **uses `transform`** and (critically) uses **animation fill-mode `both`**, which means elements keep a `transform: translateY(0)` after the animation completes.
+## Problem Summary
+Based on the screenshots and code review, there are significant mobile responsiveness issues:
 
-In CSS, any ancestor with `transform` creates a new containing block, which can break expectations for elements that rely on `position: fixed`. `@dnd-kit/core`’s drag overlay behavior is commonly impacted by this, resulting in the dragged preview appearing offset from the cursor and making drop targeting feel “hard to contain”.
-
-In `src/pages/Dashboard.tsx`, the container that wraps the Kanban board currently uses `animate-fade-in-up`, so the Kanban board lives inside a transformed ancestor.
-
-## Solution overview (high confidence, minimal risk)
-We’ll do two complementary fixes that together eliminate offset issues even if future layout animations are added:
-
-1) **Remove transform-based animation from the Kanban wrapper** (keep an entrance animation, but use opacity-only).
-2) **Render the DragOverlay in a portal attached to `document.body`**, so it is not affected by transformed ancestors / stacking contexts.
-
-Then, if needed (optional but recommended for your “no space until drop” request), we’ll simplify DnD so columns are the only drop targets and cards don’t participate in “sortable” insertion logic.
+1. **Sidebar overlap on mobile**: The sidebar is always visible and overlapping with content, consuming valuable screen real estate
+2. **Kanban board cramped on tablet**: Cards are truncated showing "Se...", "Th...", "M..." due to narrow columns
+3. **Dashboard sidebar persists**: No way to collapse/hide the sidebar on mobile devices
+4. **Content overflow**: Main content is being pushed off-screen or cut off
 
 ---
 
-## Implementation steps
+## Technical Analysis
 
-### Step 1 — Stop applying transform animation around the Kanban board
-**File:** `src/pages/Dashboard.tsx`
+### Current Layout Structure
+```
+DashboardLayout.tsx
+├── DashboardHeader (glass-header, sticky)
+├── Sidebar (w-60 or w-[68px] collapsed)
+└── Main content area (flex-1)
+```
 
-- Change the Kanban section wrapper from `animate-fade-in-up` (transform + opacity) to `animate-fade-in` (opacity only).
-- Keep the same delay so the UI still feels polished, but it won’t create a transformed containing block.
-
-**Expected impact**
-- Removes the most likely root cause of overlay/cursor misalignment.
-- Improves drop containment because what you see (overlay) and what the pointer is doing line up again.
-
----
-
-### Step 2 — Portal the DragOverlay to `document.body`
-**File:** `src/components/kanban/KanbanBoard.tsx`
-
-- Import `createPortal` from `react-dom`.
-- Render the `<DragOverlay>` via `createPortal(..., document.body)`.
-- Add an explicit high `z-index` wrapper (or style) so the overlay always stays above headers/sidebars.
-
-**Expected impact**
-- Even if any parent container has `transform` / `filter` / `backdrop-filter` / etc., the overlay remains aligned to the viewport and stays locked to the cursor.
+### Root Causes
+1. **DashboardLayout** uses `flex` with sidebar always visible - no mobile-specific hiding
+2. **DashboardSidebar** has only a "collapse" toggle (68px) but never fully hides on mobile
+3. **Kanban columns** use `grid-cols-1 md:grid-cols-3` but columns remain cramped on tablet
+4. **HotelCard** content truncates aggressively without mobile-optimized layout
+5. **Page padding** (`p-6`) doesn't adapt for smaller screens
 
 ---
 
-### Step 3 (recommended) — Remove “sortable insertion” behavior entirely (no filling space until drop)
-Right now cards are `useSortable` inside a `SortableContext`, which is designed for reordering and can lead to “insertion” behaviors. You’ve already tried freezing transforms, but the underlying sortable system still adds complexity and can feel slippery.
+## Implementation Plan
 
-**Files:**
-- `src/components/kanban/HotelCard.tsx`
-- `src/components/kanban/KanbanColumn.tsx`
-- `src/components/kanban/KanbanBoard.tsx`
+### Phase 1: Mobile-First Dashboard Layout
 
-**Changes**
-- Convert cards from `useSortable` to `useDraggable`.
-- Remove `SortableContext` from columns.
-- Keep `useDroppable({ id: phase })` on columns so **columns are the only droppable targets**.
-- Update `handleDragOver` / `handleDragEnd` logic so `over.id` is always a lifecycle phase (simplifies drop rules and makes them more “containable”).
+**File: `src/components/layout/DashboardLayout.tsx`**
+- Import `useIsMobile` hook
+- Add mobile sidebar state management
+- Render sidebar as a Sheet/Drawer on mobile (slides in from left)
+- Keep desktop behavior unchanged (persistent sidebar)
 
-**Why this matches your requirement**
-- No reordering math.
-- No layout “making space” / insertion point logic.
-- Dragging becomes: “pick up card → hover a column → drop → phase updates”.
+**File: `src/components/layout/DashboardHeader.tsx`**
+- Add hamburger menu button (visible only on mobile)
+- Pass `onMenuToggle` prop to toggle mobile sidebar
+- Ensure header touch targets are 44px minimum
 
-**Preserved behavior**
-- Clicking a card still opens the detail panel.
-- Blocked cards remain non-draggable and open blocker modal (with shake feedback).
-- Confetti on drop to “contracted” stays.
+**File: `src/components/layout/DashboardSidebar.tsx`**
+- Add `isMobile` and `onClose` props
+- On mobile: render as overlay with backdrop
+- On desktop: keep current collapsible behavior
+- Add close button visible on mobile
 
 ---
 
-## Validation checklist (what you should feel after)
-1) Grab a card from multiple points (top-left, center, bottom-right): the overlay should stay locked to that exact grab point.
-2) Drag over columns: the highlight should match exactly where your cursor is.
-3) While dragging: other cards should not shift around to create insertion space.
-4) Drop behavior: only the intended column should accept the drop (no accidental phase changes).
-5) Clicking a card (no drag) still opens the detail panel reliably.
+### Phase 2: Kanban Board Mobile Optimization
+
+**File: `src/components/kanban/KanbanBoard.tsx`**
+- On mobile: switch to horizontal scroll with snap points
+- Add touch-friendly swipe navigation between columns
+- Reduce padding and gaps for mobile
+
+**File: `src/components/kanban/KanbanColumn.tsx`**
+- Reduce header padding on mobile
+- Shrink icon container size on smaller screens
+- Use `min-w-[280px]` for horizontal scroll on mobile
+
+**File: `src/components/kanban/HotelCard.tsx`**
+- Optimize card layout for narrow widths
+- Ensure hotel name doesn't truncate too aggressively
+- Stack badges vertically on very small screens
+- Hide non-essential elements (contact info) on mobile
 
 ---
 
-## Files that will be changed
-- `src/pages/Dashboard.tsx` (switch Kanban wrapper animation to opacity-only)
-- `src/components/kanban/KanbanBoard.tsx` (portal DragOverlay; simplify drop logic if Step 3 is approved)
-- `src/components/kanban/KanbanColumn.tsx` (remove SortableContext if Step 3 is approved)
-- `src/components/kanban/HotelCard.tsx` (switch from useSortable to useDraggable if Step 3 is approved)
+### Phase 3: Page-Level Responsive Fixes
+
+**File: `src/pages/Dashboard.tsx`**
+- Reduce padding: `p-4 sm:p-6`
+- Stats cards: ensure readable on small screens
+- Kanban section: add horizontal scroll wrapper on mobile
+
+**File: `src/pages/Blockers.tsx`**
+- Reduce padding: `p-4 sm:p-6`
+- Stack header and badge vertically on mobile
+- Card footer: stack items vertically on small screens
+
+**File: `src/pages/Clients.tsx`**
+- Reduce padding and ensure cards don't overflow
+- Contact info: hide phone on very small screens
+
+**File: `src/pages/Devices.tsx`**
+- Adjust grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+
+**File: `src/pages/Revenue.tsx`**
+- Summary cards: `grid-cols-1 sm:grid-cols-3`
 
 ---
 
-## Notes / tradeoffs
-- The portal + removing transform animation should address the “cursor far from card” issue with very high confidence.
-- Moving away from `SortableContext` is the cleanest way to guarantee “no filling space until drop”, since sortable is inherently designed to visualize reordering.
+### Phase 4: Component-Level Refinements
+
+**File: `src/components/ui/sheet.tsx`**
+- Ensure mobile sheets are full-width on small screens
+- Already has `w-3/4` but may need `w-full` breakpoint
+
+**File: `src/index.css`**
+- Add safe-area-inset utility for notched devices
+- Add `.safe-area-pb` for bottom padding on iOS
+- Ensure touch target minimum of 44px is enforced
+
+---
+
+## Specific Changes by File
+
+### 1. DashboardLayout.tsx
+```tsx
+// Add state for mobile sidebar
+const [sidebarOpen, setSidebarOpen] = useState(false);
+const isMobile = useIsMobile();
+
+// Conditionally render sidebar as Sheet on mobile
+{isMobile ? (
+  <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+    <SheetContent side="left" className="w-64 p-0">
+      <DashboardSidebar onClose={() => setSidebarOpen(false)} />
+    </SheetContent>
+  </Sheet>
+) : (
+  <DashboardSidebar />
+)}
+```
+
+### 2. DashboardHeader.tsx
+```tsx
+// Add mobile menu button
+{isMobile && (
+  <Button variant="ghost" size="icon" onClick={onMenuToggle}>
+    <Menu className="h-5 w-5" />
+  </Button>
+)}
+```
+
+### 3. KanbanBoard.tsx
+Mobile horizontal scroll wrapper:
+```tsx
+<div className="overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
+  <div className="flex gap-4 md:grid md:grid-cols-3 pb-4 md:pb-0" 
+       style={{ minWidth: isMobile ? 'max-content' : undefined }}>
+    {/* columns with min-w-[280px] on mobile */}
+  </div>
+</div>
+```
+
+### 4. HotelCard.tsx
+Responsive adjustments:
+- Reduce avatar size on mobile: `h-8 w-8 sm:h-10 sm:w-10`
+- Hide contact section on very small screens
+- Ensure name doesn't over-truncate
+
+### 5. Blockers.tsx
+```tsx
+// Header responsive
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  ...
+</div>
+
+// Card footer responsive
+<div className="flex flex-col sm:flex-row items-start sm:items-center 
+              justify-between gap-3 pt-2">
+  ...
+</div>
+```
+
+---
+
+## Files to Modify
+1. `src/components/layout/DashboardLayout.tsx` - Mobile sidebar as Sheet
+2. `src/components/layout/DashboardHeader.tsx` - Add hamburger menu
+3. `src/components/layout/DashboardSidebar.tsx` - Support mobile mode
+4. `src/components/kanban/KanbanBoard.tsx` - Horizontal scroll on mobile
+5. `src/components/kanban/KanbanColumn.tsx` - Mobile-optimized sizing
+6. `src/components/kanban/HotelCard.tsx` - Prevent over-truncation
+7. `src/pages/Dashboard.tsx` - Reduce mobile padding
+8. `src/pages/Blockers.tsx` - Responsive header/cards
+9. `src/pages/Clients.tsx` - Responsive cards
+10. `src/pages/Devices.tsx` - Responsive grid
+11. `src/pages/Revenue.tsx` - Responsive summary cards
+12. `src/index.css` - Safe area utilities
+
+---
+
+## Expected Results After Implementation
+- Sidebar hidden by default on mobile, accessible via hamburger menu
+- Kanban board scrolls horizontally with snap points on mobile
+- Cards display full hotel names without aggressive truncation
+- All pages have appropriate padding for small screens
+- Touch targets meet 44px minimum requirement
+- Content never overlaps or gets cut off
+- Tablet view shows a balanced sidebar/content ratio
