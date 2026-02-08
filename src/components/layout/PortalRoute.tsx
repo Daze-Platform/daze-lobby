@@ -36,6 +36,10 @@ export function PortalRoute({ children }: PortalRouteProps) {
   }
 
   // Check role - must be client or admin
+  if (!role) {
+    return <Navigate to="/post-auth" replace />;
+  }
+
   if (!isClient(role) && !isAdmin) {
     return <Navigate to="/" replace />;
   }

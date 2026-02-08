@@ -16,6 +16,7 @@ import Revenue from "./pages/Revenue";
 import Portal from "./pages/Portal";
 import PortalPreview from "./pages/PortalPreview";
 import Auth from "./pages/Auth";
+import PostAuth from "./pages/PostAuth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
                   </AuthRedirect>
                 } 
               />
+              <Route path="/post-auth" element={<PostAuth />} />
               <Route
                 path="/"
                 element={
