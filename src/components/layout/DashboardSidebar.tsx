@@ -10,11 +10,13 @@ import {
   ChevronRight,
   X,
   Eye,
+  Plus,
   type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { NewClientModal } from "@/components/modals/NewClientModal";
 
 interface NavItem {
   title: string;
@@ -36,6 +38,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
 
   // Fetch clients count
   const { data: clientsCount } = useQuery({
@@ -176,6 +179,21 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         </Button>
       )}
 
+      {/* New Client Button */}
+      <div className={cn("px-3 pt-4", showCollapsed && "px-2")}>
+        <Button
+          onClick={() => setIsNewClientOpen(true)}
+          className={cn(
+            "w-full gap-2 shadow-soft",
+            showCollapsed && "px-0"
+          )}
+          size={showCollapsed ? "icon" : "default"}
+        >
+          <Plus className="w-4 h-4" />
+          {!showCollapsed && <span>New Client</span>}
+        </Button>
+      </div>
+
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4">
         {navGroups.map((group, groupIndex) => (
@@ -277,6 +295,9 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           </p>
         )}
       </div>
+
+      {/* New Client Modal */}
+      <NewClientModal open={isNewClientOpen} onOpenChange={setIsNewClientOpen} />
     </aside>
   );
 }
