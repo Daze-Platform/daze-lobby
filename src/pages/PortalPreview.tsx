@@ -5,19 +5,19 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
 import { WelcomeTour } from "@/components/portal/WelcomeTour";
-import { DemoActivityFeedPanel, type DemoActivity, type PortalView } from "@/components/portal";
+import { DemoActivityFeedPanel, type DemoActivity } from "@/components/portal";
+import { PortalHeader, type PortalView } from "@/components/portal/PortalHeader";
 import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { DemoPortalDocuments } from "@/components/portal/DemoPortalDocuments";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, RotateCcw, Clock, ClipboardList, FileText } from "lucide-react";
-import dazeLogo from "@/assets/daze-logo.png";
+import { ClipboardList, FileText, Clock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
 import { ClientProvider } from "@/contexts/ClientContext";
+
 /**
  * Preview/Demo version of the Client Portal V2
  * This is for testing the UI without authentication
@@ -103,6 +103,16 @@ export default function PortalPreview() {
     }
   }, [tasks, status]);
 
+  const handleSignOut = () => {
+    navigate("/auth?force=1");
+    void signOut().catch(() => {});
+  };
+
+  const handleResetTour = () => {
+    resetTour();
+    toast.info("Welcome tour reset!");
+  };
+
   const handleLegalSign = async (signatureDataUrl: string, legalEntityData: {
     property_name?: string;
     legal_entity_name?: string;
@@ -187,78 +197,22 @@ export default function PortalPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/50 dark:bg-background pb-24 sm:pb-20 md:pb-0">
+    <div className="min-h-screen bg-muted/30 pb-24 sm:pb-20 md:pb-0">
       {/* Welcome Tour */}
       {showTour && (
         <WelcomeTour onComplete={completeTour} />
       )}
 
-      {/* Glass Header - Frosted canopy */}
-      <header className="glass-header entrance-header">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 flex items-center justify-between">
-          {/* Mobile: Center logo */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
-            <span className="label-micro bg-warning/10 text-warning px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs">
-              Preview
-            </span>
-          </div>
-          {/* Desktop nav buttons - hidden on mobile */}
-          <div className="hidden md:flex items-center gap-3 lg:gap-4">
-            {/* View Tabs */}
-            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as PortalView)}>
-              <TabsList className="bg-muted/50">
-                <TabsTrigger value="onboarding" className="gap-2">
-                  <ClipboardList className="w-4 h-4" />
-                  Onboarding
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="gap-2">
-                  <FileText className="w-4 h-4" />
-                  Documents
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="gap-2 text-muted-foreground min-h-[44px]"
-              onClick={() => {
-                resetTour();
-                toast.info("Welcome tour reset!");
-              }}
-            >
-              <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
-              Reset Tour
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-full relative"
-              onClick={() => setIsActivityFeedOpen(true)}
-            >
-              <Clock className="w-4 h-4" strokeWidth={1.5} />
-              {demoActivities.length > 1 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
-                  {demoActivities.length > 9 ? "9+" : demoActivities.length}
-                </span>
-              )}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="gap-2 min-h-[44px]"
-              onClick={() => {
-                navigate("/auth?force=1");
-                void signOut().catch(() => {});
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-              Back to Login
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Portal Header - Same component as real portal */}
+      <PortalHeader
+        activeView={activeView}
+        onViewChange={setActiveView}
+        isPreview={true}
+        onSignOut={handleSignOut}
+        onActivityFeedOpen={() => setIsActivityFeedOpen(true)}
+        activityCount={demoActivities.length}
+        onResetTour={handleResetTour}
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
@@ -347,11 +301,12 @@ export default function PortalPreview() {
         )}
       </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - Same structure as Portal */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
+          {/* Mobile Onboarding Tab */}
           <Button
-            variant={activeView === "onboarding" ? "default" : "ghost"}
+            variant={activeView === "onboarding" ? "secondary" : "ghost"}
             size="sm"
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
             onClick={() => setActiveView("onboarding")}
@@ -359,8 +314,10 @@ export default function PortalPreview() {
             <ClipboardList className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px]">Onboarding</span>
           </Button>
+
+          {/* Mobile Documents Tab */}
           <Button
-            variant={activeView === "documents" ? "default" : "ghost"}
+            variant={activeView === "documents" ? "secondary" : "ghost"}
             size="sm"
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
             onClick={() => setActiveView("documents")}
@@ -368,6 +325,8 @@ export default function PortalPreview() {
             <FileText className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px]">Documents</span>
           </Button>
+          
+          {/* Mobile Activity Feed Button */}
           <Button
             variant="ghost"
             size="sm"
@@ -382,14 +341,12 @@ export default function PortalPreview() {
               </span>
             )}
           </Button>
+          
           <Button
             variant="ghost"
             size="sm"
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
-            onClick={() => {
-              navigate("/auth?force=1");
-              void signOut().catch(() => {});
-            }}
+            onClick={handleSignOut}
           >
             <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px]">Login</span>
