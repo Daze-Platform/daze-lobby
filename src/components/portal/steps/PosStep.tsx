@@ -5,6 +5,13 @@ import {
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { StepCompletionEffect } from "../StepCompletionEffect";
@@ -13,10 +20,6 @@ import {
   ArrowLeft,
   Copy, 
   Check,
-  Cpu,
-  Utensils,
-  Tablet,
-  Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
@@ -40,30 +43,22 @@ const PROVIDERS = [
   {
     id: "toast" as const,
     name: "Toast",
-    icon: Utensils,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
+    logo: "/pos-logos/toast.svg",
   },
   {
     id: "micros" as const,
     name: "Oracle MICROS",
-    icon: Cpu,
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
+    logo: "/pos-logos/oracle-micros.svg",
   },
   {
     id: "ncr" as const,
     name: "NCR Aloha",
-    icon: Tablet,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
+    logo: "/pos-logos/ncr-aloha.svg",
   },
   {
     id: "lavu" as const,
     name: "Lavu",
-    icon: Smartphone,
-    color: "text-violet-500",
-    bgColor: "bg-violet-500/10",
+    logo: "/pos-logos/lavu.svg",
   },
 ];
 
@@ -318,62 +313,43 @@ export function PosStep({
         </div>
       </AccordionTrigger>
       <AccordionContent className="pb-3 sm:pb-4">
-        <div className="relative min-h-[260px] sm:min-h-[280px] pt-1 sm:pt-2">
+        <div className="relative min-h-[200px] sm:min-h-[220px] pt-1 sm:pt-2">
           <AnimatePresence mode="wait">
             {!showInstructions ? (
-              /* Provider Selection Grid */
+              /* Provider Selection Dropdown */
               <motion.div
-                key="grid"
+                key="dropdown"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                className="space-y-2 sm:space-y-3"
+                className="space-y-3 sm:space-y-4"
               >
-                <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Select your POS provider to get integration instructions:
                 </p>
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  {PROVIDERS.map((provider) => {
-                    const Icon = provider.icon;
-                    const isSelected = selectedProvider === provider.id;
-                    
-                    return (
-                      <motion.button
-                        key={provider.id}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleProviderSelect(provider.id)}
-                        className={cn(
-                          "relative flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-6 rounded-xl",
-                          "bg-card border-2 transition-all duration-200",
-                          "hover:shadow-soft-md hover:-translate-y-0.5",
-                          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                          isSelected 
-                            ? "border-primary scale-95 shadow-soft-md" 
-                            : "border-transparent"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center",
-                          provider.bgColor
-                        )}>
-                          <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", provider.color)} strokeWidth={1.5} />
-                        </div>
-                        <span className="font-medium text-xs sm:text-sm text-center">{provider.name}</span>
-                        
-                        {/* Selection indicator */}
-                        {isSelected && (
-                          <motion.div
-                            layoutId="provider-selection"
-                            className="absolute inset-0 rounded-xl border-2 border-primary"
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                <Select 
+                  value={selectedProvider || ""} 
+                  onValueChange={(value) => handleProviderSelect(value as PosProvider)}
+                >
+                  <SelectTrigger className="h-12 text-left bg-background">
+                    <SelectValue placeholder="Select your POS provider" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={provider.logo} 
+                            alt={`${provider.name} logo`}
+                            className="w-6 h-6 object-contain rounded"
                           />
-                        )}
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                          <span className="font-medium">{provider.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </motion.div>
             ) : (
               /* Instructions Panel */
@@ -397,12 +373,11 @@ export function PosStep({
                 {/* Header */}
                 <div className="flex items-center gap-3">
                   {providerInfo && (
-                    <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center",
-                      providerInfo.bgColor
-                    )}>
-                      <providerInfo.icon className={cn("w-5 h-5", providerInfo.color)} strokeWidth={1.5} />
-                    </div>
+                    <img 
+                      src={providerInfo.logo} 
+                      alt={`${providerInfo.name} logo`}
+                      className="w-10 h-10 object-contain rounded-lg"
+                    />
                   )}
                   <h3 className="font-semibold text-lg">{instructions?.headline}</h3>
                 </div>
