@@ -68,8 +68,8 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Kanban Lifecycle Board - Entrance delayed */}
-        <div className="space-y-3 sm:space-y-4 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
+        {/* Kanban Lifecycle Board - Entrance delayed (opacity-only to avoid DnD offset issues) */}
+        <div className="space-y-3 sm:space-y-4 animate-fade-in" style={{ animationDelay: '320ms' }}>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg sm:text-xl font-semibold">Client Lifecycle</h2>
             <Badge variant="secondary" className="text-2xs font-medium hidden sm:inline-flex">

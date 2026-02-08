@@ -1,5 +1,4 @@
 import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { DraggableHotelCard } from "./HotelCard";
 import type { Client } from "@/hooks/useClients";
 import type { Enums } from "@/integrations/supabase/types";
@@ -100,7 +99,7 @@ export function KanbanColumn({
         </div>
       </div>
 
-      {/* Droppable Zone */}
+      {/* Droppable Zone - columns are the only drop targets */}
       <div
         ref={setNodeRef}
         className={cn(
@@ -109,39 +108,33 @@ export function KanbanColumn({
           isActive && "bg-primary/5 border-primary/40 ring-2 ring-primary/20"
         )}
       >
-        <SortableContext
-          items={clients.map((c) => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-2.5">
-            {clients.length === 0 ? (
-              <div className={cn(
-                "flex flex-col items-center justify-center py-12 text-center",
-                "text-muted-foreground"
-              )}>
-                <PhaseIcon className="h-10 w-10 opacity-20 mb-3" strokeWidth={1} />
-                <p className="text-sm font-medium">
-                  {isActive ? "Drop here" : "No clients"}
-                </p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
-                  {isActive ? "Release to move" : `Drag clients to ${title.toLowerCase()}`}
-                </p>
-              </div>
-            ) : (
-              clients.map((client) => (
-                <DraggableHotelCard
-                  key={client.id}
-                  hotel={client}
-                  isDragging={activeId === client.id}
-                  onBlockedClick={onBlockedClick}
-                  onCardClick={onCardClick}
-                />
-              ))
-            )}
-            
-            {/* Intentionally no layout-shifting drop indicator while dragging */}
-          </div>
-        </SortableContext>
+        {/* No SortableContext - cards use useDraggable only */}
+        <div className="space-y-2.5">
+          {clients.length === 0 ? (
+            <div className={cn(
+              "flex flex-col items-center justify-center py-12 text-center",
+              "text-muted-foreground"
+            )}>
+              <PhaseIcon className="h-10 w-10 opacity-20 mb-3" strokeWidth={1} />
+              <p className="text-sm font-medium">
+                {isActive ? "Drop here" : "No clients"}
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                {isActive ? "Release to move" : `Drag clients to ${title.toLowerCase()}`}
+              </p>
+            </div>
+          ) : (
+            clients.map((client) => (
+              <DraggableHotelCard
+                key={client.id}
+                hotel={client}
+                isDragging={activeId === client.id}
+                onBlockedClick={onBlockedClick}
+                onCardClick={onCardClick}
+              />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
