@@ -31,7 +31,7 @@ interface TaskAccordionProps {
   hotelLegalEntity?: LegalEntityData;
 }
 
-const TASK_ORDER = ["legal", "brand", "venue", "pos", "devices"];
+const TASK_ORDER = ["brand", "venue", "pos", "devices", "legal"];
 
 export function TaskAccordion({ 
   tasks, 
@@ -145,17 +145,6 @@ export function TaskAccordion({
       value={accordionValue}
       onValueChange={setAccordionValue}
     >
-      <LegalStep
-        isCompleted={getTaskData("legal")?.isCompleted || false}
-        isLocked={isTaskLocked("legal")}
-        data={getTaskData("legal")?.data}
-        onSign={handleLegalSign}
-        isSubmitting={isSigningLegal}
-        isJustCompleted={recentlyCompleted === "legal"}
-        isUnlocking={unlockingStep === "legal"}
-        hotelLegalEntity={hotelLegalEntity}
-      />
-      
       <BrandStep
         isCompleted={getTaskData("brand")?.isCompleted || false}
         isLocked={isTaskLocked("brand")}
@@ -201,6 +190,17 @@ export function TaskAccordion({
         onStepComplete={handleDevicesComplete}
         isJustCompleted={recentlyCompleted === "devices"}
         isUnlocking={unlockingStep === "devices"}
+      />
+      
+      <LegalStep
+        isCompleted={getTaskData("legal")?.isCompleted || false}
+        isLocked={isTaskLocked("legal")}
+        data={getTaskData("legal")?.data}
+        onSign={handleLegalSign}
+        isSubmitting={isSigningLegal}
+        isJustCompleted={recentlyCompleted === "legal"}
+        isUnlocking={unlockingStep === "legal"}
+        hotelLegalEntity={hotelLegalEntity}
       />
     </Accordion>
   );
