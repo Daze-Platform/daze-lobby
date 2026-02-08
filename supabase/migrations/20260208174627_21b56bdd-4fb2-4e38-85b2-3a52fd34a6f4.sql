@@ -1,0 +1,45 @@
+-- Update the existing check_onboarding_completion function to transition to 'pilot_live' (Live status)
+-- instead of 'reviewing' when all onboarding tasks are complete
+
+CREATE OR REPLACE FUNCTION public.check_onboarding_completion()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  total_tasks INTEGER;
+  completed_tasks INTEGER;
+BEGIN
+  -- Only run when a task is being marked as completed
+  IF NEW.is_completed = true AND (OLD.is_completed = false OR OLD.is_completed IS NULL) THEN
+    -- Count total tasks and completed tasks for this client
+    SELECT 
+      COUNT(*),
+      COUNT(*) FILTER (WHERE is_completed = true)
+    INTO total_tasks, completed_tasks
+    FROM public.onboarding_tasks
+    WHERE client_id = NEW.client_id;
+    
+    -- If all tasks are complete, transition client to pilot_live (Live status)
+    IF total_tasks > 0 AND total_tasks = completed_tasks THEN
+      UPDATE public.clients
+      SET phase = 'pilot_live',
+          phase_started_at = now(),
+          onboarding_progress = 100
+      WHERE id = NEW.client_id
+        AND phase = 'onboarding';
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$function$;
+
+-- Ensure the trigger exists on onboarding_tasks table
+DROP TRIGGER IF EXISTS trigger_check_onboarding_completion ON public.onboarding_tasks;
+
+CREATE TRIGGER trigger_check_onboarding_completion
+  AFTER UPDATE ON public.onboarding_tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION public.check_onboarding_completion();
