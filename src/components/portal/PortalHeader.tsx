@@ -20,6 +20,8 @@ interface PortalHeaderProps {
   isPreview?: boolean;
   activityCount?: number;
   onResetTour?: () => void;
+  // Notification badge for real portal
+  unreadNotificationCount?: number;
 }
 
 export function PortalHeader({
@@ -33,7 +35,10 @@ export function PortalHeader({
   isPreview = false,
   activityCount = 0,
   onResetTour,
+  unreadNotificationCount = 0,
 }: PortalHeaderProps) {
+  // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
+  const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
   return (
     <header className="glass-header entrance-header">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 flex items-center justify-between">
@@ -93,9 +98,9 @@ export function PortalHeader({
                   className="h-9 w-9 rounded-full relative"
                 >
                   <Clock className="w-4 h-4" strokeWidth={1.5} />
-                  {isPreview && activityCount > 1 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
-                      {activityCount > 9 ? "9+" : activityCount}
+                  {badgeCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center animate-pulse">
+                      {badgeCount > 9 ? "9+" : badgeCount}
                     </span>
                   )}
                 </Button>

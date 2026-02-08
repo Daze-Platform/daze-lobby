@@ -38,9 +38,19 @@ export default function PortalPreview() {
   const [demoActivities, setDemoActivities] = useState<DemoActivity[]>([
     {
       id: crypto.randomUUID(),
+      action: "blocker_notification",
+      userName: "Daze Team",
+      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
+      details: {
+        message: "Please complete your pending onboarding tasks to proceed.",
+        sent_by: "Daze Support",
+      },
+    },
+    {
+      id: crypto.randomUUID(),
       action: "welcome",
       userName: "Demo User",
-      timestamp: new Date(),
+      timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
     },
   ]);
 
