@@ -81,7 +81,7 @@ export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) 
 
   // Fetch documents
   const { data: documents, isLoading } = useQuery({
-    queryKey: ["client-documents", clientId],
+    queryKey: ["documents", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
@@ -113,7 +113,7 @@ export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) 
       if (dbError) throw dbError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["client-documents", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       toast.success("Document deleted");
     },
     onError: (error) => {
@@ -212,7 +212,7 @@ export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) 
       setUploadComplete(true);
 
       // Refresh documents list
-      queryClient.invalidateQueries({ queryKey: ["client-documents", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
 
       toast.success("Document uploaded successfully!");
 
