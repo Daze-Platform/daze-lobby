@@ -179,20 +179,6 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         </Button>
       )}
 
-      {/* New Client Button */}
-      <div className={cn("px-3 pt-4", showCollapsed && "px-2")}>
-        <Button
-          onClick={() => setIsNewClientOpen(true)}
-          className={cn(
-            "w-full gap-2 shadow-soft",
-            showCollapsed && "px-0"
-          )}
-          size={showCollapsed ? "icon" : "default"}
-        >
-          <Plus className="w-4 h-4" />
-          {!showCollapsed && <span>New Client</span>}
-        </Button>
-      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4">
@@ -215,6 +201,23 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
             )}
             
             <div className="space-y-1">
+              {/* New Client Button - only in CLIENTS section */}
+              {group.label === "CLIENTS" && (
+                <Button
+                  onClick={() => setIsNewClientOpen(true)}
+                  variant="ghost"
+                  className={cn(
+                    "w-full gap-3 px-3 py-2.5 justify-start text-sm font-medium min-h-[44px]",
+                    "text-primary hover:bg-primary/10 hover:text-primary",
+                    showCollapsed && "justify-center px-2"
+                  )}
+                  size="default"
+                >
+                  <Plus className={cn("shrink-0", showCollapsed ? "h-5 w-5" : "h-4 w-4")} strokeWidth={1.5} />
+                  {!showCollapsed && <span>New Client</span>}
+                </Button>
+              )}
+              
               {group.items.map((item) => (
                 <NavLink
                   key={item.href}
