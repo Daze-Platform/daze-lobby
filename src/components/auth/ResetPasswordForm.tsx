@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import dazeLogo from "@/assets/daze-logo.png";
+import { validatePassword } from "@/lib/passwordValidation";
+import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 
 export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -18,6 +20,9 @@ export function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const showStrengthIndicator = password.length > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -27,8 +32,8 @@ export function ResetPasswordForm() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!passwordValidation.isAcceptable) {
+      setError("Please choose a stronger password");
       return;
     }
 
@@ -114,6 +119,10 @@ export function ResetPasswordForm() {
                 )}
               </button>
             </div>
+            <PasswordStrengthIndicator 
+              validation={passwordValidation} 
+              show={showStrengthIndicator} 
+            />
           </div>
 
           <div className="space-y-2">
