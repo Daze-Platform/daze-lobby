@@ -390,26 +390,41 @@ export type Database = {
       }
       profiles: {
         Row: {
+          alert_agreement_signed: boolean | null
+          alert_device_offline: boolean | null
+          alert_new_property: boolean | null
           avatar_url: string | null
           created_at: string
+          dark_mode: boolean | null
           full_name: string | null
           id: string
+          two_factor_enabled: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          alert_agreement_signed?: boolean | null
+          alert_device_offline?: boolean | null
+          alert_new_property?: boolean | null
           avatar_url?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           full_name?: string | null
           id?: string
+          two_factor_enabled?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          alert_agreement_signed?: boolean | null
+          alert_device_offline?: boolean | null
+          alert_new_property?: boolean | null
           avatar_url?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           full_name?: string | null
           id?: string
+          two_factor_enabled?: boolean | null
           updated_at?: string
           user_id?: string
         }
