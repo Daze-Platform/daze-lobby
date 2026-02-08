@@ -19,6 +19,7 @@ import {
 import { Users, Building2, Mail, Phone, Bell, Loader2 } from "lucide-react";
 import { useClients, type Client } from "@/hooks/useClients";
 import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
+import { cn } from "@/lib/utils";
 
 const phaseColors: Record<string, string> = {
   onboarding: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
@@ -108,22 +109,27 @@ export default function Clients() {
                       <span className="truncate">{client.name}</span>
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      {/* Notify Button - Only show for blocked clients */}
-                      {client.hasBlocker && (
+                      {/* Notify Button - Only show when there are pending tasks */}
+                      {client.incompleteCount > 0 && (
                         <TooltipProvider delayDuration={0}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                className={cn(
+                                  "h-8 w-8",
+                                  client.hasRecentReminder
+                                    ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                    : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                )}
                                 onClick={(e) => handleNotifyClick(e, client)}
                               >
                                 <Bell className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent side="top">
-                              <p>Notify client about blocker</p>
+                              <p>{client.hasRecentReminder ? "Reminder already sent" : "Send reminder to client"}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>

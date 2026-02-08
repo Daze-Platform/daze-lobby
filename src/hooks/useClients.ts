@@ -9,6 +9,8 @@ export type Client = Tables<"clients"> & {
   dazeDeviceCount: number;
   // Incomplete items count (pending tasks + active blockers)
   incompleteCount: number;
+  // True if a blocker notification was sent for this client
+  hasRecentReminder: boolean;
 };
 
 export function useClients() {
@@ -82,6 +84,19 @@ export function useClients() {
         pendingTasksByClient.set(t.client_id, current + 1);
       });
 
+      // Fetch blocker notifications to track which clients have been reminded
+      const { data: notifications, error: notificationsError } = await supabase
+        .from("activity_logs")
+        .select("client_id")
+        .eq("action", "blocker_notification");
+
+      if (notificationsError) throw notificationsError;
+
+      // Track clients that have received at least one reminder
+      const clientsWithReminders = new Set(
+        notifications?.map((n) => n.client_id) || []
+      );
+
       // Check for stale clients (no activity > 48h)
       const now = new Date();
       const staleThreshold = 48 * 60 * 60 * 1000; // 48 hours in ms
@@ -98,6 +113,7 @@ export function useClients() {
           primaryContact: contactsByClient.get(client.id) || null,
           dazeDeviceCount: dazeDevicesByClient.get(client.id) || 0,
           incompleteCount: blockerCount + pendingCount,
+          hasRecentReminder: clientsWithReminders.has(client.id),
         } as Client;
       });
     },
