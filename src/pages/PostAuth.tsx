@@ -19,22 +19,29 @@ export default function PostAuth() {
   const location = useLocation();
   const [showRoleMissing, setShowRoleMissing] = useState(false);
 
-  // Read returnTo from query params (validated to /portal/ paths only)
+  // Detect portal origin from query params
+  const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
   const returnTo = useMemo(() => {
-    const params = new URLSearchParams(location.search);
     const raw = params.get("returnTo");
     if (raw && raw.startsWith("/portal/")) return raw;
     return null;
-  }, [location.search]);
+  }, [params]);
+
+  // True when the user entered via the client portal login flow
+  const isPortalOrigin = useMemo(() => {
+    return params.get("origin") === "portal" || !!returnTo;
+  }, [params, returnTo]);
 
   const targetPath = useMemo(() => {
-    if (!isAuthenticated) return "/auth";
+    if (!isAuthenticated) return isPortalOrigin ? "/portal/login" : "/auth";
     // If there's a valid returnTo, use it regardless of role
     if (returnTo) return returnTo;
+    // Client users must always go to /portal, never /dashboard or /auth
     if (isClient(role)) return "/portal";
     if (hasDashboardAccess(role)) return "/dashboard";
     return null;
-  }, [isAuthenticated, role, returnTo]);
+  }, [isAuthenticated, role, returnTo, isPortalOrigin]);
 
   // Give hydration a brief moment after sign-in to avoid flashing an error.
   useEffect(() => {
@@ -55,7 +62,8 @@ export default function PostAuth() {
     if (loading) return;
 
     if (!isAuthenticated) {
-      navigate("/auth", { replace: true, state: { from: location } });
+      const loginPath = isPortalOrigin ? "/portal/login" : "/auth";
+      navigate(loginPath, { replace: true, state: { from: location } });
       return;
     }
 
@@ -90,10 +98,11 @@ export default function PostAuth() {
           <Button
             variant="secondary"
             onClick={async () => {
+              const loginPath = isPortalOrigin ? "/portal/login" : "/auth";
               try {
                 await signOut();
               } finally {
-                navigate("/auth", { replace: true });
+                navigate(loginPath, { replace: true });
               }
             }}
           >

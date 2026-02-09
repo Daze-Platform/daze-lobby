@@ -47,7 +47,7 @@ export function PortalRoute({ children }: PortalRouteProps) {
 
   // Must be a client role to access /portal
   if (!isClient(role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/portal/login" replace />;
   }
 
   // Client role - check if client is assigned
