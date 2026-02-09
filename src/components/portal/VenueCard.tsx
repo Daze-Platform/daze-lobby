@@ -110,6 +110,11 @@ export function VenueCard({
   const hasMenu = venue.menuFile || venue.menuPdfUrl;
   const hasLogo = venue.logoFile || venue.logoUrl;
 
+  // Derive menu file name from URL or local file
+  const menuDisplayName = venue.menuFileName 
+    || (venue.menuPdfUrl ? decodeURIComponent(venue.menuPdfUrl.split('/').pop() || '').replace(/^\d+_/, '') || 'Menu uploaded' : undefined)
+    || (venue.menuFile ? venue.menuFile.name : undefined);
+
   return (
     <Card className="relative group">
       {/* Delete Button with Confirmation */}
@@ -256,7 +261,7 @@ export function VenueCard({
                   <Check className="w-4 h-4" strokeWidth={2} />
                 </div>
                 <span className="text-sm font-medium text-foreground">
-                  {venue.menuFileName || "Menu uploaded"}
+                  {menuDisplayName || "Menu uploaded"}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">
                   Click to replace
