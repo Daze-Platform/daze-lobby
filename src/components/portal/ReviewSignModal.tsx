@@ -397,8 +397,6 @@ export function ReviewSignModal({
       setOutlet3(outlets[2] || "");
       setOutlet4(outlets[3] || "");
       setHardwareOption(d.hardware_option || "none");
-      setNumTablets(d.num_tablets != null ? String(d.num_tablets) : "");
-      setMountsStands(d.mounts_stands || "");
 
       if (d.start_date) {
         try { setStartDate(new Date(d.start_date)); } catch { setStartDate(undefined); }
