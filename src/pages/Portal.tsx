@@ -161,14 +161,14 @@ export default function Portal() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="min-h-screen flex items-center justify-center bg-ambient dark:bg-ambient-dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-24 sm:pb-20 md:pb-0">
+    <div className="min-h-screen bg-ambient dark:bg-ambient-dark pb-24 sm:pb-20 md:pb-0">
       {/* Welcome Tour for first-time users */}
       {showTour && (
         <WelcomeTour onComplete={completeTour} />
