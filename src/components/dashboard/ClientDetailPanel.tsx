@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Users, 
   Cpu, 
@@ -23,9 +26,11 @@ import {
   FileSignature,
   Palette,
   Settings2,
+  Plus,
 } from "lucide-react";
 import { DocumentUploadSection } from "./DocumentUploadSection";
 import { PortalManagementPanel } from "./portal-management";
+import { NewDeviceModal } from "@/components/modals/NewDeviceModal";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/hooks/useClients";
 
