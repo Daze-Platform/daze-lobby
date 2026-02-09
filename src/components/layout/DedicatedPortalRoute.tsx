@@ -3,6 +3,9 @@ import { Loader2 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { hasDashboardAccess } from "@/lib/auth";
 
+/** Portal paths that admin/ops/support users are allowed to access directly */
+const ADMIN_ALLOWED_PORTAL_PATHS = ["/portal/daze-beach-resort"];
+
 interface DedicatedPortalRouteProps {
   children: React.ReactNode;
 }
@@ -10,7 +13,8 @@ interface DedicatedPortalRouteProps {
 /**
  * Auth guard for dedicated client portal routes (e.g. /portal/daze-beach-resort).
  * - Unauthenticated users → /portal/login with returnTo
- * - Admin/ops/support users → /portal/admin (they use the Control Tower viewer)
+ * - Admin/ops/support users on non-allowed paths → /portal/admin
+ * - Admin/ops/support users on allowed paths → render the portal
  * - Client users → render the dedicated portal
  */
 export function DedicatedPortalRoute({ children }: DedicatedPortalRouteProps) {
@@ -34,9 +38,12 @@ export function DedicatedPortalRoute({ children }: DedicatedPortalRouteProps) {
     );
   }
 
-  // Admin/ops/support users should use the Control Tower portal viewer
+  // Admin/ops/support users can only access allowlisted portal paths
   if (hasDashboardAccess(role)) {
-    return <Navigate to="/portal/admin" replace />;
+    const isAllowed = ADMIN_ALLOWED_PORTAL_PATHS.includes(location.pathname);
+    if (!isAllowed) {
+      return <Navigate to="/portal/admin" replace />;
+    }
   }
 
   return <>{children}</>;
