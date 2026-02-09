@@ -10,8 +10,10 @@ export function SketchyArtPanel() {
       />
       {/* Cover the baked-in "Preview Client Portal" button at the bottom-right of the image */}
       <div 
-        className="absolute bottom-0 right-0 w-[260px] h-[52px]"
-        style={{ backgroundColor: "#d97a2e" }}
+        className="absolute bottom-0 right-0 w-[300px] h-[80px]"
+        style={{ 
+          background: "radial-gradient(ellipse at 100% 100%, #d4842f 0%, #d4842f 60%, transparent 100%)"
+        }}
       />
     </div>
   );
