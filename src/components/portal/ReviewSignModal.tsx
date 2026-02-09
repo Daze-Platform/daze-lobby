@@ -423,8 +423,6 @@ export function ReviewSignModal({
     contact_email: contactEmail,
     covered_outlets: [outlet1, outlet2, outlet3, outlet4].filter(o => o.trim()),
     hardware_option: hardwareOption,
-    num_tablets: numTablets ? parseInt(numTablets, 10) : undefined,
-    mounts_stands: mountsStands,
     start_date: startDate?.toISOString(),
     pilot_term_days: pilotTermDays ? parseInt(pilotTermDays, 10) : undefined,
     pricing_model: pricingModel,
