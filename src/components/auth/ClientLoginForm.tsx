@@ -146,8 +146,8 @@ export function ClientLoginForm() {
         description: "Please try signing in again.",
         variant: "destructive",
       });
-    } catch (err: any) {
-      const errorMessage = err?.message || "Failed to sign in";
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in";
       setError(errorMessage);
       toast({
         title: "Sign In Failed",
@@ -179,8 +179,8 @@ export function ClientLoginForm() {
           variant: "destructive",
         });
       }
-    } catch (err: any) {
-      const errorMessage = err?.message || "Failed to sign in with Google";
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Google";
       setError(errorMessage);
       toast({
         title: "Google Sign In Failed",

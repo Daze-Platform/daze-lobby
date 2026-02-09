@@ -108,7 +108,7 @@ export function BlockerResolutionModal({
     if (actionConfig.path) {
       navigate(actionConfig.path);
     }
-    // TODO: For non-navigation actions, could open a detail panel
+    // Close the modal and navigate to the relevant portal page
     onOpenChange(false);
   };
 

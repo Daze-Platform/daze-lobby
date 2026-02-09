@@ -26,7 +26,7 @@ const phaseStyles: Record<string, string> = {
   contracted: "bg-violet-500/10 text-violet-600 border-violet-500/20",
 };
 
-export function AdminHotelSwitcher() {
+export function AdminClientSwitcher() {
   const { 
     allClients, 
     isLoadingAllClients, 

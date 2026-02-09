@@ -29,7 +29,7 @@ import { PortalManagementPanel } from "./portal-management";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/hooks/useClients";
 
-interface HotelDetailPanelProps {
+interface ClientDetailPanelProps {
   hotel: Client | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -301,7 +301,7 @@ function ActivityItem({ activity }: { activity: MockActivity }) {
   );
 }
 
-export function HotelDetailPanel({ hotel, open, onOpenChange }: HotelDetailPanelProps) {
+export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPanelProps) {
   const [activeTab, setActiveTab] = useState("portal");
 
   if (!hotel) return null;

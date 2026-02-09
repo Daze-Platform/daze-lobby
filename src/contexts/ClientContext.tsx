@@ -174,7 +174,4 @@ export function useClient() {
   return context;
 }
 
-// Backwards compatibility exports
-export const HotelProvider = ClientProvider;
-export const useHotel = useClient;
-export type Hotel = Client;
+// Note: Type Client is now available from @/types
