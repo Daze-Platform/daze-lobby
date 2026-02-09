@@ -16,7 +16,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Clock, Building2, ExternalLink, Bell, Loader2 } from "lucide-react";
+import { 
+  Warning, 
+  Clock, 
+  Buildings, 
+  ArrowSquareOut, 
+  Bell, 
+  CircleNotch,
+  CircleDashed
+} from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -97,7 +105,7 @@ export default function Blockers() {
             <p className="text-xs sm:text-sm text-muted-foreground">Incomplete tasks preventing phase transitions</p>
           </div>
           <Badge variant="destructive" className="gap-1.5 self-start sm:self-auto">
-            <AlertTriangle className="h-3.5 w-3.5" />
+            <Warning size={14} weight="duotone" />
             {mockBlockers.length} Active
           </Badge>
         </div>
@@ -115,7 +123,7 @@ export default function Blockers() {
                 <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                      <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
                       <span className="truncate">{blocker.hotelName}</span>
                     </CardTitle>
                     
@@ -139,7 +147,7 @@ export default function Blockers() {
                   <div className="space-y-3 sm:space-y-4">
                     {/* Blocker Reason */}
                     <div className="flex items-start gap-2 text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 shrink-0" />
+                      <Warning size={16} weight="duotone" className="mt-0.5 shrink-0" />
                       <span className="text-xs sm:text-sm">{blocker.reason}</span>
                     </div>
 
@@ -155,7 +163,7 @@ export default function Blockers() {
                     {/* Footer - stack on mobile */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
                       <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                        <Clock size={14} weight="duotone" />
                         Created {formatDistanceToNow(blocker.createdAt, { addSuffix: true })}
                       </div>
                       
@@ -173,7 +181,7 @@ export default function Blockers() {
                                   setNotifyBlocker(blocker);
                                 }}
                               >
-                                <Bell className="h-4 w-4" />
+                                <Bell size={16} weight="duotone" />
                                 <span className="sm:hidden">Send Reminder</span>
                               </Button>
                             </TooltipTrigger>
@@ -186,11 +194,11 @@ export default function Blockers() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="gap-1.5 text-primary hover:text-primary min-h-[44px] flex-1 sm:flex-none"
+                          className="gap-1.5 text-primary hover:text-primary min-h-[44px] flex-1 sm:flex-none group/btn"
                           onClick={() => navigate("/portal")}
                         >
                           Open in Portal
-                          <ExternalLink className="h-3.5 w-3.5" />
+                          <ArrowSquareOut size={14} weight="duotone" className="transition-transform group-hover/btn:scale-110" />
                         </Button>
                       </div>
                     </div>
@@ -218,7 +226,7 @@ export default function Blockers() {
               disabled={isSending}
               className="gap-2"
             >
-              {isSending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isSending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
               Send Reminder
             </AlertDialogAction>
           </AlertDialogFooter>

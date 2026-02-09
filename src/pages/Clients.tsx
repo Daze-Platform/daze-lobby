@@ -16,7 +16,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Building2, Mail, Phone, Bell, Loader2 } from "lucide-react";
+import { 
+  Buildings, 
+  User, 
+  EnvelopeSimple, 
+  Phone, 
+  Bell, 
+  CircleNotch,
+  CheckCircle,
+  Timer,
+  CircleDashed
+} from "@phosphor-icons/react";
 import { useClients, type Client } from "@/hooks/useClients";
 import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
 import { cn } from "@/lib/utils";
@@ -71,7 +81,7 @@ export default function Clients() {
             <p className="text-xs sm:text-sm text-muted-foreground">Manage all client properties</p>
           </div>
           <Badge variant="secondary" className="gap-1.5 self-start sm:self-auto">
-            <Users className="h-3.5 w-3.5" />
+            <User size={14} weight="duotone" />
             {isLoading ? "..." : `${clients?.length ?? 0} Total`}
           </Badge>
         </div>
@@ -96,79 +106,112 @@ export default function Clients() {
               </Card>
             ))
           ) : (
-            clients?.map((client) => (
-              <Card 
-                key={client.id} 
-                className="hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-                onClick={() => handleClientClick(client)}
-              >
-                <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                      <span className="truncate">{client.name}</span>
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      {/* Notify Button - Only show when there are pending tasks */}
-                      {client.incompleteCount > 0 && (
-                        <TooltipProvider delayDuration={0}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className={cn(
-                                  "h-8 w-8",
-                                  client.hasRecentReminder
-                                    ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                                    : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                                )}
-                                onClick={(e) => handleNotifyClick(e, client)}
-                              >
-                                <Bell className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                              <p>{client.hasRecentReminder ? "Reminder already sent" : "Send reminder to client"}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      <Badge className={phaseColors[client.phase] || phaseColors.onboarding}>
-                        {client.phase.replace("_", " ")}
-                      </Badge>
-                    </div>
+            clients?.length === 0 ? (
+              // Empty state
+              <Card className="py-12 sm:py-16">
+                <div className="flex flex-col items-center justify-center text-center px-4">
+                  <div className="relative">
+                    <CircleDashed 
+                      size={64} 
+                      weight="duotone" 
+                      className="text-orange-400 animate-pulse"
+                      style={{ 
+                        '--ph-duotone-opacity': 0.2 
+                      } as React.CSSProperties}
+                    />
                   </div>
-                </CardHeader>
-                <CardContent className="px-4 sm:px-6">
-                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                    {client.primaryContact && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                          <span className="truncate">{client.primaryContact.name}</span>
-                        </div>
-                        {client.primaryContact.email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                            <span className="truncate">{client.primaryContact.email}</span>
-                          </div>
-                        )}
-                        {client.primaryContact.phone && (
-                          <div className="hidden sm:flex items-center gap-2">
-                            <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                            <span>{client.primaryContact.phone}</span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {!client.primaryContact && (
-                      <span className="text-muted-foreground/60 italic">No primary contact</span>
-                    )}
-                  </div>
-                </CardContent>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">No clients yet</h3>
+                  <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                    Add your first client to get started with the onboarding process.
+                  </p>
+                </div>
               </Card>
-            ))
+            ) : (
+              clients?.map((client) => {
+                const isContracted = client.phase === "contracted";
+                const isPending = client.phase === "onboarding" || client.phase === "reviewing";
+
+                return (
+                  <Card 
+                    key={client.id} 
+                    className="hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                    onClick={() => handleClientClick(client)}
+                  >
+                    <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                          <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
+                          <span className="truncate">{client.name}</span>
+                          {/* Status icon */}
+                          {isContracted ? (
+                            <CheckCircle size={16} weight="duotone" className="text-emerald-500 shrink-0" />
+                          ) : isPending ? (
+                            <Timer size={16} weight="duotone" className="text-orange-500 shrink-0" />
+                          ) : null}
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {/* Notify Button - Only show when there are pending tasks */}
+                          {client.incompleteCount > 0 && (
+                            <TooltipProvider delayDuration={0}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn(
+                                      "h-8 w-8",
+                                      client.hasRecentReminder
+                                        ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                        : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                    )}
+                                    onClick={(e) => handleNotifyClick(e, client)}
+                                  >
+                                    <Bell size={16} weight="duotone" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <p>{client.hasRecentReminder ? "Reminder already sent" : "Send reminder to client"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <Badge className={phaseColors[client.phase] || phaseColors.onboarding}>
+                            {client.phase.replace("_", " ")}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 sm:px-6">
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                        {client.primaryContact && (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <User size={14} weight="duotone" className="shrink-0" />
+                              <span className="truncate">{client.primaryContact.name}</span>
+                            </div>
+                            {client.primaryContact.email && (
+                              <div className="flex items-center gap-2">
+                                <EnvelopeSimple size={14} weight="duotone" className="shrink-0" />
+                                <span className="truncate">{client.primaryContact.email}</span>
+                              </div>
+                            )}
+                            {client.primaryContact.phone && (
+                              <div className="hidden sm:flex items-center gap-2">
+                                <Phone size={14} weight="duotone" className="shrink-0" />
+                                <span>{client.primaryContact.phone}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {!client.primaryContact && (
+                          <span className="text-muted-foreground/60 italic">No primary contact</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )
           )}
         </div>
       </div>
@@ -196,7 +239,7 @@ export default function Clients() {
               disabled={sendNotification.isPending}
               className="gap-2"
             >
-              {sendNotification.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {sendNotification.isPending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
               Send Notification
             </AlertDialogAction>
           </AlertDialogFooter>
