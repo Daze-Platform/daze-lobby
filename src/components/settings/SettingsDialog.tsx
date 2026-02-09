@@ -25,8 +25,6 @@ import {
 } from "@phosphor-icons/react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { usePurgeAndReseed } from "@/hooks/usePurgeAndReseed";
-import { isTestEnvironment } from "@/lib/environment";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
