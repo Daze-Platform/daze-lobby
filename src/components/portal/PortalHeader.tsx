@@ -35,6 +35,8 @@ interface PortalHeaderProps {
   unreadNotificationCount?: number;
   // Back to dashboard for admin viewing
   onBackToDashboard?: () => void;
+  // Document count for badge on Documents tab
+  documentCount?: number;
 }
 
 // Generate initials from name or email
@@ -60,6 +62,7 @@ export function PortalHeader({
   onResetTour,
   unreadNotificationCount = 0,
   onBackToDashboard,
+  documentCount = 0,
 }: PortalHeaderProps) {
   // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
   const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
@@ -91,9 +94,14 @@ export function PortalHeader({
                   <ClipboardText size={16} weight="duotone" />
                   <span className="font-medium">Onboarding</span>
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="gap-2 px-4 h-8">
+                <TabsTrigger value="documents" className="gap-2 px-4 h-8 relative">
                   <FileText size={16} weight="duotone" />
                   <span className="font-medium">Documents</span>
+                  {documentCount > 0 && (
+                    <span className="ml-1 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full flex items-center justify-center">
+                      {documentCount > 99 ? "99+" : documentCount}
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </Tabs>

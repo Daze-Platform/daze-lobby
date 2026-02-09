@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
@@ -32,6 +34,20 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
   const displayName = clientName || "Grand Hyatt Demo";
   const isDemo = !clientName;
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
+
+  // Document count for badge
+  const { data: documentCount = 0 } = useQuery({
+    queryKey: ["documents-count", previewClientId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .eq("client_id", previewClientId!);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!previewClientId,
+  });
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isSigningLegal, setIsSigningLegal] = useState(false);
@@ -267,6 +283,7 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
         onActivityFeedOpen={() => setIsActivityFeedOpen(true)}
         activityCount={demoActivities.length}
         onResetTour={isDemo ? handleResetTour : undefined}
+        documentCount={documentCount}
       />
 
       {/* Main Content */}

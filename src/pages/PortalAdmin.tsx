@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useClient } from "@/contexts/ClientContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
@@ -38,6 +40,20 @@ export default function PortalAdmin() {
   
   // Unread notification count for badge
   const { unreadCount, markAsRead } = useUnreadNotificationCount(clientId);
+
+  // Document count for badge
+  const { data: documentCount = 0 } = useQuery({
+    queryKey: ["documents-count", clientId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .eq("client_id", clientId!);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!clientId,
+  });
   
   const { 
     tasks, 
@@ -227,6 +243,7 @@ export default function PortalAdmin() {
           setShowActivityFeed(true);
         }}
         unreadNotificationCount={unreadCount}
+        documentCount={documentCount}
       />
 
       {/* Main Content */}
