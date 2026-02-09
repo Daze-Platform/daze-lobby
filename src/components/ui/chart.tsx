@@ -2,6 +2,7 @@ import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
+import { sanitizeCssColor, sanitizeCssPropertyKey, escapeCssSelector } from "@/lib/cssUtils";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -37,7 +38,8 @@ const ChartContainer = React.forwardRef<
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  // Sanitize the chart ID to prevent CSS selector injection
+  const chartId = `chart-${escapeCssSelector(id || uniqueId.replace(/:/g, ""))}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -65,18 +67,25 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Sanitize the chart ID for use in CSS selector
+  const safeId = escapeCssSelector(id);
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${safeId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
+    // Sanitize the key and color value to prevent CSS injection
+    const safeKey = sanitizeCssPropertyKey(key);
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    const safeColor = sanitizeCssColor(color);
+    return safeColor !== 'transparent' ? `  --color-${safeKey}: ${safeColor};` : null;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,
@@ -86,7 +95,6 @@ ${colorConfig
     />
   );
 };
-
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
 const ChartTooltipContent = React.forwardRef<
