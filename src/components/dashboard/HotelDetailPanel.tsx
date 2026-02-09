@@ -22,8 +22,10 @@ import {
   Upload,
   FileSignature,
   Palette,
+  Settings2,
 } from "lucide-react";
 import { DocumentUploadSection } from "./DocumentUploadSection";
+import { PortalManagementPanel } from "./portal-management";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/hooks/useClients";
 
@@ -300,7 +302,7 @@ function ActivityItem({ activity }: { activity: MockActivity }) {
 }
 
 export function HotelDetailPanel({ hotel, open, onOpenChange }: HotelDetailPanelProps) {
-  const [activeTab, setActiveTab] = useState("documents");
+  const [activeTab, setActiveTab] = useState("portal");
 
   if (!hotel) return null;
 
@@ -337,7 +339,11 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: HotelDetailPanel
         </SheetHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="w-full grid grid-cols-4 h-10">
+          <TabsList className="w-full grid grid-cols-5 h-10">
+            <TabsTrigger value="portal" className="gap-1.5 text-xs">
+              <Settings2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Portal</span>
+            </TabsTrigger>
             <TabsTrigger value="contacts" className="gap-1.5 text-xs">
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Contacts</span>
@@ -355,6 +361,14 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: HotelDetailPanel
               <span className="hidden sm:inline">Docs</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="portal" className="mt-4">
+            <PortalManagementPanel
+              clientId={hotel.id}
+              currentLogoUrl={hotel.logo_url}
+              currentBrandPalette={hotel.brand_palette as string[] | null}
+            />
+          </TabsContent>
 
           <TabsContent value="contacts" className="mt-4 space-y-2">
             {mockContacts.map((contact) => (
