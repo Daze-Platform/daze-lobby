@@ -55,8 +55,6 @@ const getAgreementSections = (d: PilotAgreementData) => {
     : "1. _______________\n2. _______________\n3. _______________\n4. _______________";
 
   const hwCheck = d.hardware_option === "daze_provided";
-  const tablets = d.num_tablets != null ? String(d.num_tablets) : "__________";
-  const mounts = blank(d.mounts_stands, "____________");
 
   const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
   const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
