@@ -32,6 +32,24 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
   const [searchParams] = useSearchParams();
   const previewClientId = searchParams.get("clientId");
   const displayName = clientName || "Grand Hyatt Demo";
+
+  // Resolve clientId from clientName for dedicated routes
+  const { data: resolvedClient } = useQuery({
+    queryKey: ["client-by-name", clientName],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id")
+        .ilike("name", `%${clientName}%`)
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!clientName,
+    staleTime: Infinity,
+  });
+
+  const effectiveClientId = resolvedClient?.id || previewClientId;
   const isDemo = !clientName;
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
 
