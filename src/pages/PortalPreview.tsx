@@ -55,16 +55,16 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
 
   // Document count for badge
   const { data: documentCount = 0 } = useQuery({
-    queryKey: ["documents-count", previewClientId],
+    queryKey: ["documents-count", effectiveClientId],
     queryFn: async () => {
       const { count, error } = await supabase
         .from("documents")
         .select("*", { count: "exact", head: true })
-        .eq("client_id", previewClientId!);
+        .eq("client_id", effectiveClientId!);
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!previewClientId,
+    enabled: !!effectiveClientId,
   });
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
