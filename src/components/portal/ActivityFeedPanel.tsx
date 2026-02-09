@@ -30,7 +30,7 @@ interface ActivityFeedPanelProps {
 }
 
 // Map action types to icons and colors
-function getActionConfig(action: string): { icon: React.ElementType; color: string; bgColor: string } {
+export function getActionConfig(action: string): { icon: React.ElementType; color: string; bgColor: string } {
   const configs: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
     legal_signed: { icon: FileSignature, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     task_completed: { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
@@ -47,6 +47,9 @@ function getActionConfig(action: string): { icon: React.ElementType; color: stri
     pos_sent_to_it: { icon: Send, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     // Blocker notification from admin
     blocker_notification: { icon: Bell, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    // Admin document actions
+    document_uploaded: { icon: Upload, color: "text-primary", bgColor: "bg-primary/10" },
+    document_deleted: { icon: FileText, color: "text-destructive", bgColor: "bg-destructive/10" },
   };
   
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
