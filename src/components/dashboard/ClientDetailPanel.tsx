@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Users, 
   Cpu, 
@@ -23,9 +26,11 @@ import {
   FileSignature,
   Palette,
   Settings2,
+  Plus,
 } from "lucide-react";
 import { DocumentUploadSection } from "./DocumentUploadSection";
 import { PortalManagementPanel } from "./portal-management";
+import { NewDeviceModal } from "@/components/modals/NewDeviceModal";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/hooks/useClients";
 
@@ -43,15 +48,6 @@ interface MockContact {
   email: string;
   phone: string;
   is_primary: boolean;
-}
-
-interface MockDevice {
-  id: string;
-  device_type: string;
-  serial_number: string;
-  status: "online" | "offline" | "maintenance";
-  last_check_in: string;
-  is_daze_owned: boolean;
 }
 
 interface MockActivity {
@@ -90,40 +86,6 @@ const mockContacts: MockContact[] = [
   },
 ];
 
-const mockDevices: MockDevice[] = [
-  {
-    id: "1",
-    device_type: "iPad Pro 12.9\"",
-    serial_number: "DZ-2024-001",
-    status: "online",
-    last_check_in: "5 minutes ago",
-    is_daze_owned: true,
-  },
-  {
-    id: "2",
-    device_type: "iPad Air",
-    serial_number: "DZ-2024-002",
-    status: "online",
-    last_check_in: "12 minutes ago",
-    is_daze_owned: true,
-  },
-  {
-    id: "3",
-    device_type: "Surface Go 3",
-    serial_number: "PROP-SG-001",
-    status: "offline",
-    last_check_in: "2 days ago",
-    is_daze_owned: false,
-  },
-  {
-    id: "4",
-    device_type: "iPad Mini",
-    serial_number: "DZ-2024-003",
-    status: "maintenance",
-    last_check_in: "1 hour ago",
-    is_daze_owned: true,
-  },
-];
 
 const mockActivity: MockActivity[] = [
   {
@@ -206,7 +168,27 @@ function ContactCard({ contact }: { contact: MockContact }) {
   );
 }
 
-function DeviceCard({ device }: { device: MockDevice }) {
+interface DeviceRow {
+  id: string;
+  device_type: string;
+  serial_number: string;
+  status: "online" | "offline" | "maintenance";
+  last_check_in: string | null;
+  is_daze_owned: boolean;
+}
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return `${seconds} sec ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} days ago`;
+}
+
+function DeviceCard({ device }: { device: DeviceRow }) {
   const statusConfig = {
     online: { color: "bg-emerald-500", label: "Online" },
     offline: { color: "bg-destructive", label: "Offline" },
@@ -214,7 +196,7 @@ function DeviceCard({ device }: { device: MockDevice }) {
   };
   
   const config = statusConfig[device.status];
-  const DeviceIcon = device.device_type.toLowerCase().includes("surface") ? Monitor : Tablet;
+  const DeviceIcon = device.device_type.toLowerCase().includes("kiosk") ? Monitor : Tablet;
   
   return (
     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -243,9 +225,11 @@ function DeviceCard({ device }: { device: MockDevice }) {
             {device.is_daze_owned ? "Daze" : "Property"}
           </Badge>
         </div>
-        <p className="text-2xs text-muted-foreground/70 mt-1">
-          Last check-in: {device.last_check_in}
-        </p>
+        {device.last_check_in && (
+          <p className="text-2xs text-muted-foreground/70 mt-1">
+            Last check-in: {formatTimeAgo(new Date(device.last_check_in))}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -303,6 +287,21 @@ function ActivityItem({ activity }: { activity: MockActivity }) {
 
 export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPanelProps) {
   const [activeTab, setActiveTab] = useState("portal");
+  const [isNewDeviceOpen, setIsNewDeviceOpen] = useState(false);
+
+  const { data: clientDevices = [], isLoading: devicesLoading } = useQuery({
+    queryKey: ["client-devices", hotel?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("devices")
+        .select("*")
+        .eq("client_id", hotel!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as DeviceRow[];
+    },
+    enabled: !!hotel?.id && open,
+  });
 
   if (!hotel) return null;
 
@@ -377,10 +376,37 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
             ))}
           </TabsContent>
 
-          <TabsContent value="devices" className="mt-4 space-y-2">
-            {mockDevices.map((device) => (
-              <DeviceCard key={device.id} device={device} />
-            ))}
+          <TabsContent value="devices" className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">
+                {clientDevices.length} device{clientDevices.length !== 1 ? "s" : ""}
+              </span>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setIsNewDeviceOpen(true)}>
+                <Plus className="h-3.5 w-3.5" />
+                New Device
+              </Button>
+            </div>
+            {devicesLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Loading devices…</div>
+            ) : clientDevices.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <Cpu className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p>No devices assigned</p>
+                <p className="text-xs mt-1">Add hardware for this client</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {clientDevices.map((device) => (
+                  <DeviceCard key={device.id} device={device} />
+                ))}
+              </div>
+            )}
+            <NewDeviceModal
+              open={isNewDeviceOpen}
+              onOpenChange={setIsNewDeviceOpen}
+              clientId={hotel.id}
+              clientName={hotel.name}
+            />
           </TabsContent>
 
           <TabsContent value="activity" className="mt-4">
