@@ -1,85 +1,50 @@
 
 
-## Improve Pilot Agreement PDF Typography and Design
+## Route Generated Documents to the Documents Tab
 
-**Goal:** Transform the downloadable PDF from a flat, single-style text dump into a professionally typeset legal document with clear visual hierarchy using bold, italic, and structured formatting.
-
----
-
-### Current Problems
-
-- All body text renders at the same weight and style -- no distinction between headings, definitions, labels, and body copy
-- Sub-section headers (2.1, 4.1, 5.1, etc.) are not visually differentiated from body text
-- Legal definitions and key terms (e.g., "Agreement", "Client Data", "Pilot Term") are not emphasized
-- Fill-in field labels (Client Legal Name, DBA, etc.) blend into surrounding text
-- The intro paragraph and signature block lack polish
-- Bullet points have no indentation
-
-### Design Improvements
-
-**1. Section Title Hierarchy**
-- Main section titles (1. PILOT PURPOSE, 2. PILOT SCOPE) -- bold, 12pt, primary blue, uppercase, with a subtle line underneath
-- Sub-section titles (2.1 Covered Outlets, 4.1 Daze Responsibilities) -- bold, 10pt, dark text
-- Sub-sub labels (5.1 No Fees, 5.2 Subscription) -- bold italic, 9.5pt
-
-**2. Defined Terms in Bold**
-- First occurrence of defined terms like "Agreement", "Daze", "Client", "Client Data", "Hardware", "Aggregated Data", "Pilot Term", "MSA" rendered in **bold** when introduced with their definition in parentheses
-
-**3. Field Labels in Bold + Values in Normal**
-- Labels like "Client Legal Name:", "Start Date:", "POS System:" rendered bold, with the filled value in normal weight on the same line
-
-**4. Italic Usage**
-- Parenthetical clarifications and legal asides rendered in italic (e.g., "(recommended: 60-90 days)", "(Client remains merchant of record)")
-- Section references rendered in italic (e.g., "as specified in Section 13.2")
-
-**5. Bullet Point Indentation**
-- Bullet items indented 5mm from margin with hanging indent for multi-line items
-
-**6. Intro Block Polish**
-- "PILOT AGREEMENT" title stays 22pt bold centered
-- "Daze Technologies Corp." subtitle in italic below
-- Client info block rendered as a structured label-value table with light background fill
-
-**7. Signature Block Enhancement**
-- "IN WITNESS WHEREOF" line rendered in small caps style (uppercase, slightly smaller font)
-- Column headers (DAZE TECHNOLOGIES CORP. / CLIENT) bold with primary color
-- Field labels (Signature, Name, Title, Date) in italic muted text
+**What this solves:** Currently, the Pilot Agreement PDF is generated entirely in the browser and downloaded via `pdf.save()` -- it never gets stored in your backend. This means it doesn't appear in the Documents tab. Admin-uploaded documents (Pilot Agreement uploads, Security Docs) are already stored correctly and should appear in the Documents tab -- if they're not showing, it's a data/query issue we'll verify.
 
 ---
 
-### Technical Approach
+### Changes
 
-Replace the current flat `splitTextToSize` rendering with a custom rich-text renderer that processes inline markers within the section content. The approach:
+**1. Save Pilot Agreement PDF to Storage on Signing**
 
-1. **Refactor `getAgreementSections`** to return structured content arrays instead of plain strings. Each section becomes an array of "blocks" with types: `paragraph`, `label-value`, `bullet-list`, `subsection-title`, `checkbox-group`
+When a client signs the agreement, generate the PDF and upload it to storage, then insert a record into the `documents` table so it appears in the Documents tab automatically.
 
-2. **New render functions:**
-   - `renderSubsectionTitle(pdf, text, x, y)` -- bold 10pt dark
-   - `renderLabelValue(pdf, label, value, x, y)` -- bold label + normal value
-   - `renderBulletList(pdf, items, x, y)` -- indented bullets
-   - `renderCheckbox(pdf, checked, text, x, y)` -- checkbox character + text
-   - `renderItalicNote(pdf, text, x, y)` -- italic muted text
+- **File: `src/lib/generateAgreementPdf.ts`**
+  - Refactor `generateAgreementPdf` to return the PDF blob instead of calling `pdf.save()` directly
+  - Add a new export: `generateAgreementPdfBlob()` that returns `Blob` 
+  - Keep the existing `generateAgreementPdf()` function working for the manual download button by calling the blob function + triggering browser download
 
-3. **Structured section data format:**
+- **File: `src/hooks/useClientPortal.ts`**
+  - In `signLegalMutation`, after signing is complete, generate the PDF blob using `generateAgreementPdfBlob()`
+  - Upload the PDF to the `hotel-documents` storage bucket at path `{clientId}/pilot-agreement-signed.pdf`
+  - Insert a record into the `documents` table with:
+    - `display_name`: "Pilot Agreement (Signed)"
+    - `category`: "Contract"
+    - `mime_type`: "application/pdf"
+  - Invalidate the `["documents", clientId]` query key so the Documents tab updates immediately
+
+**2. Verify Admin Document Visibility**
+
+Admin-uploaded documents already use the same `documents` table and query key pattern. No code changes needed -- they should already appear. If there's an issue, it would be RLS-related (we'll verify the existing policies are correct).
+
+---
+
+### Flow After Implementation
+
 ```text
-{
-  title: "2. PILOT SCOPE",
-  blocks: [
-    { type: "subsection", text: "2.1 Covered Outlets" },
-    { type: "paragraph", text: "The Pilot will be conducted at..." },
-    { type: "bullet-list", items: ["Outlet 1", "Outlet 2"] },
-    { type: "subsection", text: "2.3 Hardware Selection" },
-    { type: "checkbox", checked: true, text: "No Daze Hardware Required" },
-    { type: "checkbox", checked: false, text: "Daze-Provided Hardware" },
-  ]
-}
+Client signs agreement
+  --> Signature image uploaded to "contracts" bucket (existing)
+  --> PDF generated in browser
+  --> PDF uploaded to "hotel-documents" bucket (NEW)
+  --> Record inserted into "documents" table (NEW)
+  --> Documents tab shows "Pilot Agreement (Signed)" with Preview/Download
 ```
-
-4. The main render loop iterates blocks and delegates to the appropriate renderer, maintaining `y` position tracking and page breaks.
-
----
 
 ### Files Modified
 
-- **`src/lib/generateAgreementPdf.ts`** -- Complete rewrite of section data structure and rendering logic. No other files change since this is purely the PDF output.
+- `src/lib/generateAgreementPdf.ts` -- Split into blob generation + download trigger
+- `src/hooks/useClientPortal.ts` -- Add PDF upload + document record creation in sign mutation
 
