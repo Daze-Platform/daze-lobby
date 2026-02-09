@@ -351,8 +351,6 @@ export function ReviewSignModal({
   const [outlet3, setOutlet3] = useState("");
   const [outlet4, setOutlet4] = useState("");
   const [hardwareOption, setHardwareOption] = useState<"none" | "daze_provided">("none");
-  const [numTablets, setNumTablets] = useState("");
-  const [mountsStands, setMountsStands] = useState("");
 
   // Section C: Pilot Term
   const [startDate, setStartDate] = useState<Date | undefined>();
