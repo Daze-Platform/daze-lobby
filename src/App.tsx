@@ -14,6 +14,7 @@ import Blockers from "./pages/Blockers";
 import Devices from "./pages/Devices";
 import Revenue from "./pages/Revenue";
 import Portal from "./pages/Portal";
+import PortalLogin from "./pages/PortalLogin";
 import PortalPreview from "./pages/PortalPreview";
 import Auth from "./pages/Auth";
 import PostAuth from "./pages/PostAuth";
@@ -94,6 +95,15 @@ const App = () => (
                     <Portal />
                   </PortalRoute>
                 }
+              />
+              {/* Client login - separate from admin /auth */}
+              <Route 
+                path="/portal/login" 
+                element={
+                  <AuthRedirect>
+                    <PortalLogin />
+                  </AuthRedirect>
+                } 
               />
               {/* Preview route - no auth required */}
               <Route path="/portal-preview" element={<PortalPreview />} />
