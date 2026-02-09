@@ -1,72 +1,106 @@
 
-# Simplify Device Setup Step
+# Persist and Display Uploaded Assets in Client Portal
 
-## Overview
-Transform the Device Setup step from a two-choice selection with quantity picker into a simple Yes/No toggle question asking whether the client is requesting devices from Daze.
+## Problem
+When clients upload logos, colors, or documents in the Brand Identity step, the data is saved to the database correctly. However, when they return to the portal later, **previously uploaded logos don't appear in the UI** - the upload boxes appear empty, making it seem like nothing was saved.
 
-## Changes
+The same issue affects other uploads across the onboarding steps (brand documents, venue logos, venue menus).
 
-### UI Simplification
+## Root Cause Analysis
 
-**Before:**
-- Two card options: "Use Daze Tablets" vs "Use Our Own Devices"
-- Quantity picker (1-20) when Daze tablets selected
-- Confirmation flow with detailed messaging
+The upload flow currently works like this:
+1. User uploads a file in `MultiLogoUpload`
+2. File is stored in local component state as a `File` object with a preview
+3. On save, the file is uploaded to Supabase Storage
+4. The resulting URL is saved to `onboarding_tasks.data.logos.{variant}`
 
-**After:**
-- Simple question: "Would you like Daze to provide tablets for your property?"
-- Clean Yes/No toggle using a Switch component
-- Streamlined confirmation with contextual messaging
+**However**, when the page reloads:
+1. `MultiLogoUpload` initializes with empty state (no Files)
+2. The saved `logoUrls` exist in `PropertyBrand.logoUrls` but aren't passed to `MultiLogoUpload`
+3. The upload boxes appear empty despite data being saved
 
-### File Changes
+## Solution
 
-**`src/components/portal/steps/DevicesStep.tsx`**
-- Replace the dual-card selection UI with a single toggle switch
-- Remove the tablet quantity picker and related state (`tabletCount`, `handleTabletCountChange`)
-- Simplify the `DeviceChoice` type to just `boolean | null` for requesting devices
-- Update the question text to: "Would you like Daze to provide tablets for your property?"
-- Simplify the confirmed state display
-- Remove unused imports (`Input`, `Minus`, `Plus`, `Monitor`)
-- Update badge text in the accordion trigger to show "Requesting Devices" or "No Devices Needed"
-- Update toast messages accordingly
+Update components to accept and display existing URLs from the database:
 
-### Data Structure
-The existing data structure remains backward-compatible:
-- `requesting_devices: true` (Yes) → stored as `use_daze_tablets: true` (no tablet_count)
-- `requesting_devices: false` (No) → stored as `use_daze_tablets: false`
+### 1. MultiLogoUpload Component
+**File:** `src/components/portal/MultiLogoUpload.tsx`
 
-This maintains compatibility with existing data while removing the quantity concept.
+- Add `existingUrls?: Record<string, string>` prop
+- Initialize state to show existing URLs as previews
+- Display saved logos with visual indicator that they're already uploaded
+- Allow re-uploading to replace existing logos
+
+### 2. PropertyBrandManager Component  
+**File:** `src/components/portal/PropertyBrandManager.tsx`
+
+- Pass `existingUrls={property.logoUrls}` to `MultiLogoUpload`
+- Ensure the component correctly merges saved URLs with new uploads
+
+### 3. VenueCard Component (if applicable)
+**File:** `src/components/portal/VenueCard.tsx`
+
+- Verify venue logos and menus display their saved URLs on reload
+- Add visual preview of uploaded files
 
 ---
 
 ## Technical Details
 
-### Component State Changes
+### MultiLogoUpload Changes
+
 ```text
 Before:
-- selectedChoice: "daze" | "own" | null
-- tabletCount: number
-- isConfirmed: boolean
+- interface MultiLogoUploadProps { onLogosChange: (logos: Record<string, File>) => void }
+- Initializes logos state with empty file slots
 
 After:
-- requestingDevices: boolean | null
-- isConfirmed: boolean
+- interface MultiLogoUploadProps { 
+    onLogosChange: (logos: Record<string, File>) => void;
+    existingUrls?: Record<string, string>;  // URLs already saved
+  }
+- Initialize state with existing URLs as previews
+- Show saved logos with "Uploaded" badge
+- New uploads replace existing ones
 ```
 
-### UI Layout
+### State Structure
 ```text
-+------------------------------------------+
-| Would you like Daze to provide tablets   |
-| for your property?                       |
-|                                          |
-| [Description text about what this means] |
-|                                          |
-|         No  [==O==]  Yes                 |
-|                                          |
-|      [ Confirm Selection ]               |
-+------------------------------------------+
+interface LogoVariant {
+  type: "dark" | "light" | "icon";
+  label: string;
+  description: string;
+  file?: File;           // New upload (takes priority)
+  preview?: string;      // Base64 preview of new file
+  existingUrl?: string;  // Previously saved URL from database
+}
 ```
 
-### Confirmed State Display
-- **Yes:** "Devices Requested" with a note that Daze will coordinate shipping
-- **No:** "No Devices Needed" with a note that installation instructions will be sent
+### Display Logic
+- If `file` exists: show base64 preview (new upload pending save)
+- Else if `existingUrl` exists: show the saved image URL
+- Else: show upload placeholder
+
+### PropertyBrandManager Integration
+```text
+<MultiLogoUpload
+  onLogosChange={(logos) => handleLogosChange(property.id, logos)}
+  existingUrls={property.logoUrls}  // Pass saved URLs
+/>
+```
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/portal/MultiLogoUpload.tsx` | Add `existingUrls` prop, initialize from saved data, display existing uploads |
+| `src/components/portal/PropertyBrandManager.tsx` | Pass `logoUrls` to `MultiLogoUpload` |
+
+## Outcome
+After these changes:
+- Clients will see their previously uploaded logos when they return to the portal
+- Clear visual feedback shows what's already uploaded vs. what needs to be done
+- The "Uploaded" indicator persists across sessions
+- Re-uploading a logo replaces the existing one
