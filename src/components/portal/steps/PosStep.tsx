@@ -381,20 +381,6 @@ export function PosStep({
                   </SelectContent>
                 </Select>
                 
-                {/* PMS Name Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="pms-name" className="text-xs sm:text-sm text-muted-foreground">
-                    What is the name of your Property Management System (PMS)?
-                  </Label>
-                  <Input
-                    id="pms-name"
-                    value={pmsName}
-                    onChange={(e) => setPmsName(e.target.value)}
-                    placeholder="e.g., Opera, Mews, Cloudbeds..."
-                    className="h-12 bg-background"
-                    maxLength={100}
-                  />
-                </div>
               </motion.div>
             ) : (
               /* Instructions Panel */
@@ -447,6 +433,21 @@ export function PosStep({
                   <pre className="bg-muted text-muted-foreground text-xs p-4 rounded-xl overflow-x-auto max-h-[160px] overflow-y-auto border">
                     <code>{instructions?.copyText}</code>
                   </pre>
+                </div>
+
+                {/* PMS Name Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="pms-name" className="text-xs sm:text-sm text-muted-foreground">
+                    What is the name of your Property Management System (PMS)?
+                  </Label>
+                  <Input
+                    id="pms-name"
+                    value={pmsName}
+                    onChange={(e) => setPmsName(e.target.value)}
+                    placeholder="e.g., Opera, Mews, Cloudbeds..."
+                    className="h-12 bg-background"
+                    maxLength={100}
+                  />
                 </div>
 
                 {/* Action buttons */}
