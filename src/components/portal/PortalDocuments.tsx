@@ -12,7 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Download, Loader2, FolderOpen, Eye, ExternalLink } from "lucide-react";
+import { 
+  FileText, 
+  DownloadSimple, 
+  Eye, 
+  FolderOpen, 
+  ArrowSquareOut,
+  CircleNotch
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -125,7 +132,7 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <CircleNotch size={32} weight="regular" className="animate-spin text-primary" />
       </div>
     );
   }
@@ -164,8 +171,8 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
                     <TableRow key={doc.id} className="cursor-default hover:bg-muted/30">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                          <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] bg-primary/10 flex items-center justify-center">
+                            <FileText size={20} weight="duotone" className="text-primary" />
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-sm sm:text-base truncate">
@@ -201,24 +208,24 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
                               size="sm"
                               onClick={() => handlePreview(doc.id, doc.file_path)}
                               disabled={previewingId === doc.id}
-                              className="min-h-[44px] sm:min-h-0"
+                              className="min-h-[44px] sm:min-h-0 gap-1.5"
                             >
                               {previewingId === doc.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin sm:mr-2" />
+                                <CircleNotch size={16} weight="regular" className="animate-spin" />
                               ) : (
-                                <Eye className="w-4 h-4 sm:mr-2" />
+                                <Eye size={16} weight="duotone" />
                               )}
                               <span className="hidden sm:inline">Preview</span>
-                              <ExternalLink className="w-3 h-3 hidden sm:inline ml-1 opacity-60" />
+                              <ArrowSquareOut size={12} weight="regular" className="hidden sm:inline opacity-60" />
                             </Button>
                           )}
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDownload(doc.file_path, doc.display_name)}
-                            className="min-h-[44px] sm:min-h-0"
+                            className="min-h-[44px] sm:min-h-0 gap-1.5"
                           >
-                            <Download className="w-4 h-4 sm:mr-2" />
+                            <DownloadSimple size={16} weight="duotone" />
                             <span className="hidden sm:inline">Download</span>
                           </Button>
                         </div>
@@ -230,8 +237,8 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
             </div>
           ) : (
             <div className="py-12 sm:py-16 text-center">
-              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
-                <FolderOpen className="w-7 h-7 sm:w-8 sm:h-8 text-muted-foreground" />
+              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-muted rounded-[10px] flex items-center justify-center mb-4">
+                <FolderOpen size={28} weight="duotone" className="text-muted-foreground" />
               </div>
               <h3 className="font-medium text-base sm:text-lg mb-2">No documents yet</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
