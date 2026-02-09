@@ -300,6 +300,8 @@ export function PosStep({
   const handleITVerified = () => {
     if (!selectedProvider) return;
 
+    setIsITVerified(true);
+
     onUpdate({
       provider: selectedProvider,
       status: "it_verified",
