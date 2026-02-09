@@ -25,18 +25,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   User, 
-  Shield, 
+  ShieldCheck, 
   Palette, 
   Bell, 
   Camera, 
   Key,
-  Loader2,
-  CheckCircle2,
-  AlertTriangle,
+  CircleNotch,
+  CheckCircle,
+  Warning,
   Database,
-  RefreshCw,
-  Trash2
-} from "lucide-react";
+  ArrowsClockwise,
+  Trash
+} from "@phosphor-icons/react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { usePurgeAndReseed } from "@/hooks/usePurgeAndReseed";
@@ -255,14 +255,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <CircleNotch size={32} weight="regular" className="animate-spin text-primary" />
             </div>
           ) : (
             <div className="space-y-6 py-2">
               {/* Account Section */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" />
+                  <User size={16} weight="duotone" className="text-primary" />
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Account</h3>
                 </div>
                 
@@ -280,7 +280,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         onClick={() => fileInputRef.current?.click()}
                         className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <Camera className="h-5 w-5 text-white" />
+                        <Camera size={20} weight="duotone" className="text-white" />
                       </button>
                       <input
                         ref={fileInputRef}
@@ -328,7 +328,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {/* Security Section */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-primary" />
+                  <ShieldCheck size={16} weight="duotone" className="text-primary" />
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Security</h3>
                 </div>
                 
@@ -340,7 +340,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       className="w-full justify-start gap-2"
                       onClick={() => setShowPasswordForm(true)}
                     >
-                      <Key className="h-4 w-4" />
+                      <Key size={16} weight="duotone" />
                       Update Password
                     </Button>
                   ) : (
@@ -400,7 +400,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {/* Appearance & Alerts Section */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-primary" />
+                  <Palette size={16} weight="duotone" className="text-primary" />
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Appearance & Alerts</h3>
                 </div>
                 
@@ -422,7 +422,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   {/* Email Alerts */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Bell size={14} weight="duotone" className="text-muted-foreground" />
                       <Label className="text-xs font-medium text-muted-foreground">Email Alerts</Label>
                     </div>
                     
@@ -477,7 +477,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   
                   <section className="space-y-4">
                     <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-warning" />
+                      <Database size={16} weight="duotone" className="text-warning" />
                       <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Data Management</h3>
                       <Badge variant="outline" className="text-2xs bg-warning/10 text-warning border-warning/20">
                         Test Only
@@ -497,12 +497,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       >
                         {isPurging ? (
                           <>
-                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <ArrowsClockwise size={16} weight="regular" className="animate-spin" />
                             Reseeding...
                           </>
                         ) : (
                           <>
-                            <Trash2 className="h-4 w-4" />
+                            <Trash size={16} weight="duotone" />
                             Purge & Reseed Data
                           </>
                         )}
@@ -520,12 +520,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <CircleNotch size={16} weight="regular" className="animate-spin" />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle size={16} weight="duotone" />
                     Save Changes
                   </>
                 )}
@@ -540,7 +540,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <Warning size={20} weight="duotone" className="text-destructive" />
               Confirm Purge & Reseed
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
