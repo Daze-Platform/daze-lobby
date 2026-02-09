@@ -1,22 +1,28 @@
 
 
-# Add Preview Button to Documents Table
+# Fix Document Preview Popup Blocker Issue
 
-## Overview
+## Problem
 
-Add a "Preview" button next to the existing "Download" button in the Documents table. This allows client users to view documents in-browser before downloading, improving the user experience.
+When clicking the "Preview" button, the document doesn't open in a new browser tab. This is caused by **browser popup blocking** - modern browsers require `window.open()` to be called synchronously within a user gesture (click event). The current implementation calls `window.open()` **after** an async `await` statement, which breaks the gesture context.
+
+**Current Flow (Blocked):**
+```text
+Click → await createSignedUrl() → window.open() ❌
+        ↑ gesture lost here
+```
 
 ---
 
-## Implementation Strategy
+## Solution
 
-### Previewable File Types
+Open the new window **immediately** on click (preserving the gesture context), then update its location after the signed URL is fetched.
 
-Based on the `mime_type` field in the documents table, we'll enable preview for:
-- **PDF files**: `application/pdf` - most common, excellent browser support
-- **Images**: `image/*` (PNG, JPEG, WebP, GIF)
-
-Non-previewable types (Word docs, Excel) will only show the Download button.
+**Fixed Flow:**
+```text
+Click → window.open('about:blank') → await createSignedUrl() → newWindow.location = url ✓
+        ↑ gesture preserved
+```
 
 ---
 
@@ -24,110 +30,77 @@ Non-previewable types (Word docs, Excel) will only show the Download button.
 
 ### 1. Update PortalDocuments.tsx
 
-**Add Preview Handler**
+**Current handlePreview (broken):**
 ```typescript
-const handlePreview = async (filePath: string, mimeType: string | null) => {
+const handlePreview = async (filePath: string) => {
   try {
     const { data, error } = await supabase.storage
       .from("hotel-documents")
-      .createSignedUrl(filePath, 300); // 5 min expiry for viewing
+      .createSignedUrl(filePath, 300);
 
     if (error) throw error;
-
-    // Open in new tab for in-browser viewing
-    window.open(data.signedUrl, "_blank");
+    window.open(data.signedUrl, "_blank"); // ❌ Blocked by browser
   } catch (error) {
-    console.error("Preview error:", error);
     toast.error("Failed to preview document");
   }
 };
 ```
 
-**Add Helper Function**
+**Fixed handlePreview:**
 ```typescript
-const isPreviewable = (mimeType: string | null): boolean => {
-  if (!mimeType) return false;
-  return (
-    mimeType === "application/pdf" ||
-    mimeType.startsWith("image/")
-  );
+const handlePreview = async (filePath: string) => {
+  // Open window IMMEDIATELY in user gesture context
+  const newWindow = window.open('about:blank', '_blank');
+  
+  if (!newWindow) {
+    toast.error("Please allow popups for this site to preview documents");
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.storage
+      .from("hotel-documents")
+      .createSignedUrl(filePath, 300);
+
+    if (error) throw error;
+    
+    // Navigate the already-opened window to the signed URL
+    newWindow.location.href = data.signedUrl;
+  } catch (error) {
+    console.error("Preview error:", error);
+    newWindow.close(); // Close the blank tab on error
+    toast.error("Failed to preview document");
+  }
 };
 ```
 
-**Update Table Header**
-- Change "Action" column header to "Actions" (plural)
-- Increase column width from `w-[100px]` to `w-[160px]`
+### 2. Update handleDownload with same fix
 
-**Update Action Cell**
+Apply the same pattern to ensure downloads also work reliably:
+
 ```typescript
-<TableCell className="text-right">
-  <div className="flex items-center justify-end gap-1">
-    {isPreviewable(doc.mime_type) && (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handlePreview(doc.file_path, doc.mime_type)}
-        className="min-h-[44px] sm:min-h-0"
-      >
-        <Eye className="w-4 h-4 sm:mr-2" />
-        <span className="hidden sm:inline">Preview</span>
-      </Button>
-    )}
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleDownload(doc.file_path, doc.display_name)}
-      className="min-h-[44px] sm:min-h-0"
-    >
-      <Download className="w-4 h-4 sm:mr-2" />
-      <span className="hidden sm:inline">Download</span>
-    </Button>
-  </div>
-</TableCell>
-```
+const handleDownload = async (filePath: string, displayName: string) => {
+  const newWindow = window.open('about:blank', '_blank');
+  
+  if (!newWindow) {
+    toast.error("Please allow popups for this site to download documents");
+    return;
+  }
 
-**Add Import**
-```typescript
-import { FileText, Download, Loader2, FolderOpen, Eye } from "lucide-react";
-```
+  try {
+    const { data, error } = await supabase.storage
+      .from("hotel-documents")
+      .createSignedUrl(filePath, 60);
 
----
-
-### 2. Update DemoPortalDocuments.tsx (for UI parity)
-
-Add the same Preview button to the demo component with simulated behavior:
-
-**Add mime_type to Demo Data**
-```typescript
-const DEMO_DOCUMENTS = [
-  {
-    id: "1",
-    display_name: "Pilot Agreement - Grand Hyatt",
-    category: "Legal",
-    mime_type: "application/pdf",
-    created_at: subDays(new Date(), 3).toISOString(),
-  },
-  // ... other documents with mime_type
-];
-```
-
-**Add Preview Handler**
-```typescript
-const handlePreview = (displayName: string) => {
-  toast.info(`Demo mode: "${displayName}" preview simulated`);
+    if (error) throw error;
+    newWindow.location.href = data.signedUrl;
+  } catch (error) {
+    console.error("Download error:", error);
+    newWindow.close();
+    toast.error("Failed to download document");
+  }
 };
 ```
-
-**Same UI changes as PortalDocuments**
-
----
-
-## Mobile Responsiveness
-
-The design maintains mobile-first principles:
-- On small screens: Only icons are shown (no text labels)
-- Buttons use `min-h-[44px]` for touch-friendly tap targets
-- Flex container with `gap-1` keeps buttons compact
 
 ---
 
@@ -135,24 +108,20 @@ The design maintains mobile-first principles:
 
 | File | Changes |
 |------|---------|
-| `src/components/portal/PortalDocuments.tsx` | Add Eye icon import, `handlePreview`, `isPreviewable`, update action cell UI |
-| `src/components/portal/DemoPortalDocuments.tsx` | Add Eye icon import, add `mime_type` to demo data, add simulated preview handler, update action cell UI |
+| `src/components/portal/PortalDocuments.tsx` | Update `handlePreview` and `handleDownload` to open window synchronously |
 
 ---
 
-## Visual Result
+## Technical Explanation
 
-**Desktop View:**
-```
-| Document                        | Category  | Uploaded     | Actions           |
-|---------------------------------|-----------|--------------|-------------------|
-| 📄 Pilot Agreement - Grand Hyatt | [Legal]   | Feb 5, 2026  | 👁 Preview  ⬇ Download |
-```
+**Why this works:**
 
-**Mobile View:**
-```
-| Document                        | Actions |
-|---------------------------------|---------|
-| 📄 Pilot Agreement - Grand Hyatt | 👁  ⬇   |
-```
+Browsers track whether code is running in a "user gesture" context. When you call `window.open()` directly inside a click handler, the browser allows it. But when you `await` something first, the JavaScript engine completes the original call stack and returns control to the browser - losing the gesture context.
+
+By calling `window.open('about:blank', '_blank')` **before** the await, we:
+1. Get a valid window reference while still in the gesture context
+2. Perform the async operation
+3. Update the already-opened window's location
+
+The user sees a brief blank tab that immediately navigates to the document.
 
