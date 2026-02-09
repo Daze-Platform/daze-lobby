@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { LegalStep, BrandStep, VenueStep, PosStep, DevicesStep } from "./steps";
-import type { Venue } from "./VenueCard";
+import { VenueProvider } from "@/contexts/VenueContext";
+import type { Venue } from "@/types/venue";
 import type { PropertyBrand } from "./PropertyBrandManager";
 
 interface OnboardingTask {
@@ -24,7 +25,7 @@ interface TaskAccordionProps {
   onLegalSign: (signatureDataUrl: string, legalEntityData: LegalEntityData) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
-  // Venue CRUD handlers
+  // Venue CRUD handlers (passed to VenueProvider)
   venues: Venue[];
   onAddVenue: () => Promise<Venue | undefined>;
   onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => Promise<void>;
@@ -152,77 +153,79 @@ export function TaskAccordion({
   };
 
   return (
-    <Accordion 
-      type="single" 
-      collapsible 
-      className="w-full space-y-2 sm:space-y-4"
-      value={accordionValue}
-      onValueChange={setAccordionValue}
+    <VenueProvider
+      venues={venues}
+      onAddVenue={onAddVenue}
+      onUpdateVenue={onUpdateVenue}
+      onRemoveVenue={onRemoveVenue}
+      onUploadMenu={onUploadMenu}
+      onUploadLogo={onUploadVenueLogo}
+      onCompleteStep={onCompleteVenueStep}
+      isAddingVenue={isAddingVenue}
+      isUpdatingVenue={isUpdatingVenue}
+      isDeletingVenue={isDeletingVenue}
     >
-      <BrandStep
-        isCompleted={getTaskData("brand")?.isCompleted || false}
-        isLocked={isTaskLocked("brand")}
-        data={getTaskData("brand")?.data}
-        onSave={handleBrandSave}
-        onLogoUpload={handleLogoUpload}
-        onDocumentUpload={handleBrandDocumentUpload}
-        isSaving={isUpdating}
-        onStepComplete={handleBrandComplete}
-        isJustCompleted={recentlyCompleted === "brand"}
-        isUnlocking={unlockingStep === "brand"}
-      />
-      
-      <VenueStep
-        isCompleted={getTaskData("venue")?.isCompleted || false}
-        isLocked={isTaskLocked("venue")}
-        data={getTaskData("venue")?.data}
-        venues={venues}
-        onAddVenue={onAddVenue}
-        onUpdateVenue={onUpdateVenue}
-        onRemoveVenue={onRemoveVenue}
-        onUploadMenu={onUploadMenu}
-        onUploadLogo={onUploadVenueLogo}
-        onCompleteStep={onCompleteVenueStep}
-        isAdding={isAddingVenue}
-        isUpdating={isUpdatingVenue}
-        isDeleting={isDeletingVenue}
-        onStepComplete={handleVenueComplete}
-        isJustCompleted={recentlyCompleted === "venue"}
-        isUnlocking={unlockingStep === "venue"}
-      />
-      
-      <PosStep
-        isCompleted={getTaskData("pos")?.isCompleted || false}
-        isLocked={isTaskLocked("pos")}
-        data={getTaskData("pos")?.data}
-        onUpdate={handlePosUpdate}
-        isSaving={isUpdating}
-        onStepComplete={handlePosComplete}
-        isJustCompleted={recentlyCompleted === "pos"}
-        isUnlocking={unlockingStep === "pos"}
-      />
-      
-      <DevicesStep
-        isCompleted={getTaskData("devices")?.isCompleted || false}
-        isLocked={isTaskLocked("devices")}
-        data={getTaskData("devices")?.data}
-        onUpdate={handleDevicesUpdate}
-        isSaving={isUpdating}
-        onStepComplete={handleDevicesComplete}
-        isJustCompleted={recentlyCompleted === "devices"}
-        isUnlocking={unlockingStep === "devices"}
-      />
-      
-      <LegalStep
-        isCompleted={getTaskData("legal")?.isCompleted || false}
-        isLocked={isTaskLocked("legal")}
-        data={getTaskData("legal")?.data}
-        onSign={handleLegalSign}
-        isSubmitting={isSigningLegal}
-        isJustCompleted={recentlyCompleted === "legal"}
-        isUnlocking={unlockingStep === "legal"}
-        hotelLegalEntity={hotelLegalEntity}
-      />
-    </Accordion>
+      <Accordion 
+        type="single" 
+        collapsible 
+        className="w-full space-y-2 sm:space-y-4"
+        value={accordionValue}
+        onValueChange={setAccordionValue}
+      >
+        <BrandStep
+          isCompleted={getTaskData("brand")?.isCompleted || false}
+          isLocked={isTaskLocked("brand")}
+          data={getTaskData("brand")?.data}
+          onSave={handleBrandSave}
+          onLogoUpload={handleLogoUpload}
+          onDocumentUpload={handleBrandDocumentUpload}
+          isSaving={isUpdating}
+          onStepComplete={handleBrandComplete}
+          isJustCompleted={recentlyCompleted === "brand"}
+          isUnlocking={unlockingStep === "brand"}
+        />
+        
+        <VenueStep
+          isCompleted={getTaskData("venue")?.isCompleted || false}
+          isLocked={isTaskLocked("venue")}
+          onStepComplete={handleVenueComplete}
+          isJustCompleted={recentlyCompleted === "venue"}
+          isUnlocking={unlockingStep === "venue"}
+        />
+        
+        <PosStep
+          isCompleted={getTaskData("pos")?.isCompleted || false}
+          isLocked={isTaskLocked("pos")}
+          data={getTaskData("pos")?.data}
+          onUpdate={handlePosUpdate}
+          isSaving={isUpdating}
+          onStepComplete={handlePosComplete}
+          isJustCompleted={recentlyCompleted === "pos"}
+          isUnlocking={unlockingStep === "pos"}
+        />
+        
+        <DevicesStep
+          isCompleted={getTaskData("devices")?.isCompleted || false}
+          isLocked={isTaskLocked("devices")}
+          data={getTaskData("devices")?.data}
+          onUpdate={handleDevicesUpdate}
+          isSaving={isUpdating}
+          onStepComplete={handleDevicesComplete}
+          isJustCompleted={recentlyCompleted === "devices"}
+          isUnlocking={unlockingStep === "devices"}
+        />
+        
+        <LegalStep
+          isCompleted={getTaskData("legal")?.isCompleted || false}
+          isLocked={isTaskLocked("legal")}
+          data={getTaskData("legal")?.data}
+          onSign={handleLegalSign}
+          isSubmitting={isSigningLegal}
+          isJustCompleted={recentlyCompleted === "legal"}
+          isUnlocking={unlockingStep === "legal"}
+          hotelLegalEntity={hotelLegalEntity}
+        />
+      </Accordion>
+    </VenueProvider>
   );
 }

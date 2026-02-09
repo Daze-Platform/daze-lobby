@@ -20,15 +20,9 @@ import { validateMenuFile, validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
 import { IconStack } from "@/components/ui/icon-container";
 
-export interface Venue {
-  id: string;
-  name: string;
-  menuFile?: File;
-  menuFileName?: string;
-  menuPdfUrl?: string;
-  logoFile?: File;
-  logoUrl?: string;
-}
+// Re-export Venue type from centralized types for backwards compatibility
+export type { Venue } from "@/types/venue";
+import type { Venue } from "@/types/venue";
 
 interface VenueCardProps {
   venue: Venue;

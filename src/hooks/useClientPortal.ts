@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { toast } from "sonner";
-import type { Venue } from "@/components/portal/VenueCard";
+import type { Venue, DbVenue } from "@/types/venue";
 import { sanitizeFilename } from "@/lib/fileValidation";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { dataUrlToBlob } from "@/lib/dataUrlToBlob";
@@ -17,16 +17,6 @@ interface OnboardingTask {
   is_completed: boolean;
   completed_at: string | null;
   data: Record<string, unknown>;
-}
-
-interface DbVenue {
-  id: string;
-  client_id: string;
-  name: string;
-  menu_pdf_url: string | null;
-  logo_url: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export function useClientPortal() {

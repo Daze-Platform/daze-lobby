@@ -18,7 +18,7 @@ import { Loader2, ArrowLeft, Building2, ClipboardList, FileText, Clock } from "l
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import dazeLogo from "@/assets/daze-logo.png";
-import type { Venue } from "@/components/portal/VenueCard";
+import type { Venue } from "@/types/venue";
 
 /**
  * PortalAdmin - Admin-only portal viewer with hotel switcher
