@@ -5,15 +5,16 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, AlertTriangle, Cpu, LucideIcon } from "lucide-react";
+import { Buildings, Warning, DeviceMobile, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { KanbanBoard } from "@/components/kanban";
 import { useClients } from "@/hooks/useClients";
 
 interface StatCard {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: PhosphorIcon;
   route: string;
+  borderColor: string;
 }
 
 export default function Dashboard() {
@@ -25,9 +26,9 @@ export default function Dashboard() {
   const stats = useMemo<StatCard[]>(() => {
     if (!clients) {
       return [
-        { label: "Total Clients", value: "0", icon: Building2, route: "/clients" },
-        { label: "Incomplete", value: "0", icon: AlertTriangle, route: "/blockers" },
-        { label: "Devices", value: "0", icon: Cpu, route: "/devices" },
+        { label: "Total Clients", value: "0", icon: Buildings, route: "/clients", borderColor: "border-t-primary" },
+        { label: "Incomplete", value: "0", icon: Warning, route: "/blockers", borderColor: "border-t-orange-500" },
+        { label: "Devices", value: "0", icon: DeviceMobile, route: "/devices", borderColor: "border-t-emerald-500" },
       ];
     }
 
@@ -37,9 +38,9 @@ export default function Dashboard() {
     const totalDazeDevices = clients.reduce((sum, c) => sum + c.dazeDeviceCount, 0);
 
     return [
-      { label: "Total Clients", value: totalClients.toString(), icon: Building2, route: "/clients" },
-      { label: "Incomplete", value: incompleteCount.toString(), icon: AlertTriangle, route: "/blockers" },
-      { label: "Devices", value: totalDazeDevices.toString(), icon: Cpu, route: "/devices" },
+      { label: "Total Clients", value: totalClients.toString(), icon: Buildings, route: "/clients", borderColor: "border-t-primary" },
+      { label: "Incomplete", value: incompleteCount.toString(), icon: Warning, route: "/blockers", borderColor: "border-t-orange-500" },
+      { label: "Devices", value: totalDazeDevices.toString(), icon: DeviceMobile, route: "/devices", borderColor: "border-t-emerald-500" },
     ];
   }, [clients]);
 
@@ -51,13 +52,13 @@ export default function Dashboard() {
           {stats.map((stat, index) => (
             <Card 
               key={stat.label} 
-              className="hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer animate-fade-in-up transition-all duration-300"
+              className={`hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer animate-fade-in-up transition-all duration-300 border-t-4 ${stat.borderColor}`}
               style={{ animationDelay: `${index * 80}ms` }}
               onClick={() => navigate(stat.route)}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 pt-3 sm:pt-4 px-4 sm:px-6">
                 <span className="label-micro text-[9px] sm:text-[10px]">{stat.label}</span>
-                <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <stat.icon size={16} weight="duotone" className="text-muted-foreground" />
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-3 sm:pb-4">
                 {isLoading ? (
