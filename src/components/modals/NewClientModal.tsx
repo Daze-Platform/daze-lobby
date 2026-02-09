@@ -54,7 +54,8 @@ const SUGGESTED_ROLES = ["General Manager", "F&B Director", "IT Director", "Cont
 
 interface Contact {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   role: string;
@@ -128,7 +129,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       if (tasksError) throw tasksError;
 
       // 3. Insert contacts if any
-      const validContacts = contacts.filter((c) => c.name.trim() || c.email.trim() || c.phone.trim());
+      const validContacts = contacts.filter((c) => c.firstName.trim() || c.lastName.trim() || c.email.trim() || c.phone.trim());
       
       if (validContacts.length > 0) {
         const { error: contactsError } = await supabase
@@ -136,7 +137,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
           .insert(
             validContacts.map((contact, index) => ({
               client_id: client.id,
-              name: contact.name.trim() || "Unnamed Contact",
+              name: `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim() || "Unnamed Contact",
               email: contact.email.trim() || null,
               phone: contact.phone.trim() || null,
               role: contact.role || null,
@@ -167,7 +168,8 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       ...prev,
       {
         id: crypto.randomUUID(),
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         phone: "",
         role: role || "",
@@ -375,13 +377,21 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                           <Input
-                            placeholder="Name"
-                            value={contact.name}
-                            onChange={(e) => updateContact(contact.id, "name", e.target.value)}
+                            placeholder="First name"
+                            value={contact.firstName}
+                            onChange={(e) => updateContact(contact.id, "firstName", e.target.value)}
                             className="h-8 text-sm"
                           />
+                          <Input
+                            placeholder="Last name"
+                            value={contact.lastName}
+                            onChange={(e) => updateContact(contact.id, "lastName", e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
                           <Input
                             placeholder="Email"
                             type="email"
