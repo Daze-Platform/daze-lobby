@@ -40,6 +40,20 @@ export default function PortalAdmin() {
   
   // Unread notification count for badge
   const { unreadCount, markAsRead } = useUnreadNotificationCount(clientId);
+
+  // Document count for badge
+  const { data: documentCount = 0 } = useQuery({
+    queryKey: ["documents-count", clientId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .eq("client_id", clientId!);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!clientId,
+  });
   
   const { 
     tasks, 
