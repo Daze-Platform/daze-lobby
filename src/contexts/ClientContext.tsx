@@ -61,6 +61,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
             onboarding_progress,
             brand_palette,
             logo_url,
+            client_code,
             legal_entity_name,
             billing_address,
             authorized_signer_name,
