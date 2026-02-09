@@ -90,17 +90,7 @@ const App = () => (
                   </RoleBasedRoute>
                 }
               />
-              {/* Dedicated client portal routes - must be before /portal */}
-              <Route path="/portal/springhill-orange-beach" element={
-                <DedicatedPortalRoute>
-                  <PortalPreview clientName="Springhill Suites Orange Beach" />
-                </DedicatedPortalRoute>
-              } />
-              <Route path="/portal/daze-beach-resort" element={
-                <DedicatedPortalRoute>
-                  <PortalPreview clientName="Daze Beach Resort" />
-                </DedicatedPortalRoute>
-              } />
+              {/* Admin Portal Viewer - Control Tower users only */}
               {/* Admin Portal Viewer - Control Tower users only */}
               <Route
                 path="/portal/admin"
