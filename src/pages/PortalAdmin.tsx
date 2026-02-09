@@ -223,7 +223,10 @@ export default function PortalAdmin() {
         isAdmin={true}
         isAdminViewing={true}
         userEmail={user?.email}
-        onSignOut={handleBackToDashboard}
+        userFullName={user?.fullName}
+        userAvatarUrl={user?.avatarUrl}
+        onSignOut={handleSignOut}
+        onBackToDashboard={handleBackToDashboard}
         onActivityFeedOpen={() => {
           markAsRead();
           setShowActivityFeed(true);

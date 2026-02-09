@@ -33,6 +33,8 @@ interface PortalHeaderProps {
   onResetTour?: () => void;
   // Notification badge for real portal
   unreadNotificationCount?: number;
+  // Back to dashboard for admin viewing
+  onBackToDashboard?: () => void;
 }
 
 // Generate initials from name or email
@@ -57,6 +59,7 @@ export function PortalHeader({
   activityCount = 0,
   onResetTour,
   unreadNotificationCount = 0,
+  onBackToDashboard,
 }: PortalHeaderProps) {
   // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
   const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
@@ -167,6 +170,12 @@ export function PortalHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdminViewing && !isPreview && onBackToDashboard && (
+                  <DropdownMenuItem onClick={onBackToDashboard} className="cursor-pointer">
+                    <ArrowLeft size={16} weight="regular" className="mr-2" />
+                    <span>Back to Dashboard</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
@@ -224,6 +233,12 @@ export function PortalHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdminViewing && !isPreview && onBackToDashboard && (
+                  <DropdownMenuItem onClick={onBackToDashboard} className="cursor-pointer">
+                    <ArrowLeft size={16} weight="regular" className="mr-2" />
+                    <span>Back to Dashboard</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
