@@ -1,33 +1,32 @@
 
-## Add "Back to Dashboard" to Admin Portal Profile Dropdown
+
+## Rename "Icon/Favicon" to "Additional Logos" in Brand Identity
 
 **What changes:**
-The admin portal's profile dropdown currently only shows the user's email and a "Sign Out" option. This update will add the user's full name, avatar, and a dedicated "Back to Dashboard" button -- matching the internal dashboard's profile styling.
+The third logo upload slot in the Brand Identity step (currently labeled "Icon/Favicon" with a "Square format, 512x512+" description) will be renamed to "Additional Logos" with updated copy. This allows clients to upload extra brand assets that admins can extract for guest-facing interfaces and marketing materials.
 
-**File to update:** `src/components/portal/PortalHeader.tsx`
+**File to update:** `src/components/portal/MultiLogoUpload.tsx`
 
-1. Add a "Back to Dashboard" menu item in the profile dropdown (both desktop and mobile), positioned above "Sign Out"
-2. Import `ArrowLeft` icon (already imported) and add `useNavigate` from react-router-dom
-3. The dropdown will show:
-   - User name and email (already present)
-   - Separator
-   - "Back to Dashboard" -- navigates to `/dashboard` (only shown when `isAdmin` or `isAdminViewing`)
-   - "Sign Out" -- calls the existing `onSignOut` handler
+1. Update the `createInitialLogos` function -- change the third entry:
+   - `label`: "Icon/Favicon" -> "Additional Logos"
+   - `description`: "Square format, 512x512+" -> "For marketing materials & guest interfaces"
 
-**File to update:** `src/pages/PortalAdmin.tsx`
+2. Update the icon used for the section:
+   - Replace the `Sparkles` icon import with `Images` (from lucide-react), which better represents "additional logos"
+   - Update the icon reference in the "Additional Logos" section header (line 181)
 
-4. Change `onSignOut` from `handleBackToDashboard` back to the actual `handleSignOut` function so the Sign Out button properly signs out instead of navigating
+3. Update the comment on line 173 from `{/* Icon/Favicon - Full width below */}` to `{/* Additional Logos - Full width below */}`
+
+No changes needed to the data model -- the upload type key remains `"icon"` internally to preserve backward compatibility with existing saved data and the `getLogoUrls` helper in `BrandStep.tsx`.
 
 ---
 
 **Technical Details**
 
-In `PortalHeader.tsx`:
-- Add `onBackToDashboard?: () => void` prop to the interface
-- Add a new `DropdownMenuItem` with `ArrowLeft` icon and "Back to Dashboard" text, shown conditionally when `isAdminViewing` is true
-- Add a `DropdownMenuSeparator` between "Back to Dashboard" and "Sign Out"
-- Apply to both the desktop and mobile dropdown menus
+In `MultiLogoUpload.tsx`:
+- Line 4: Replace `Sparkles` with `Images` in the lucide-react import
+- Line 26: Change label to `"Additional Logos"` and description to `"For marketing materials & guest interfaces"`
+- Line 173: Update comment text
+- Line 181: Replace `<Sparkles ...>` with `<Images ...>`
 
-In `PortalAdmin.tsx`:
-- Pass `onSignOut={handleSignOut}` (actual sign out) instead of `handleBackToDashboard`
-- Pass new `onBackToDashboard={handleBackToDashboard}` prop to `PortalHeader`
+The internal type key `"icon"` is intentionally kept unchanged to maintain compatibility with the storage keys (`logo_{propertyId}_icon`) and existing persisted data.
