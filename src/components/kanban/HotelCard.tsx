@@ -243,19 +243,12 @@ export function HotelCardOverlay({ hotel }: { hotel: Client }) {
               </div>
 
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                <div className={cn(
-                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
-                  hotel.hasBlocker 
-                    ? "bg-destructive/10 text-destructive" 
-                    : "bg-emerald-500/10 text-emerald-600"
-                )}>
-                  {hotel.hasBlocker ? (
+                {hotel.hasBlocker && (
+                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-destructive/10 text-destructive">
                     <AlertTriangle className="h-2.5 w-2.5" />
-                  ) : (
-                    <CheckCircle className="h-2.5 w-2.5" />
-                  )}
-                  <span>{hotel.hasBlocker ? "Blocked" : "Healthy"}</span>
-                </div>
+                    <span>Blocked</span>
+                  </div>
+                )}
 
                 {hotel.dazeDeviceCount > 0 && (
                   <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-muted-foreground bg-muted">
