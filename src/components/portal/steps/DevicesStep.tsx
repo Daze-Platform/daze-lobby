@@ -6,11 +6,11 @@ import {
   AccordionTrigger
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
-import { Tablet, Monitor, Check, Minus, Plus } from "lucide-react";
+import { Tablet, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { useClient } from "@/contexts/ClientContext";
@@ -19,14 +19,12 @@ interface DevicesStepProps {
   isCompleted: boolean;
   isLocked: boolean;
   data?: Record<string, unknown>;
-  onUpdate: (data: { use_daze_tablets: boolean; tablet_count?: number }) => void;
+  onUpdate: (data: { use_daze_tablets: boolean }) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
 }
-
-type DeviceChoice = "daze" | "own" | null;
 
 export function DevicesStep({
   isCompleted,
@@ -41,14 +39,13 @@ export function DevicesStep({
   const { clientId } = useClient();
   const logActivity = useLogActivity(clientId);
   
-  const savedChoice = data?.use_daze_tablets !== undefined 
-    ? (data.use_daze_tablets ? "daze" : "own") as DeviceChoice
+  // Initialize from saved data
+  const savedRequestingDevices = data?.use_daze_tablets !== undefined 
+    ? (data.use_daze_tablets as boolean)
     : null;
-  const savedTabletCount = (data?.tablet_count as number) || 2;
   
-  const [selectedChoice, setSelectedChoice] = useState<DeviceChoice>(savedChoice);
-  const [tabletCount, setTabletCount] = useState(savedTabletCount);
-  const [isConfirmed, setIsConfirmed] = useState(!!savedChoice);
+  const [requestingDevices, setRequestingDevices] = useState<boolean | null>(savedRequestingDevices);
+  const [isConfirmed, setIsConfirmed] = useState(savedRequestingDevices !== null);
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted
@@ -57,52 +54,37 @@ export function DevicesStep({
       ? "locked"
       : "pending";
 
-  const handleChoiceSelect = (choice: DeviceChoice) => {
-    setSelectedChoice(choice);
+  const handleToggleChange = (checked: boolean) => {
+    setRequestingDevices(checked);
     setIsConfirmed(false);
     
-    // Log activity
-    if (choice) {
-      logActivity.mutate({
-        action: "device_choice_selected",
-        details: {
-          choice: choice === "daze" ? "Daze Tablets" : "Own Devices",
-        },
-      });
-    }
-  };
-
-  const handleTabletCountChange = (delta: number) => {
-    setTabletCount(prev => Math.max(1, Math.min(20, prev + delta)));
+    logActivity.mutate({
+      action: "device_choice_selected",
+      details: {
+        requesting_devices: checked,
+      },
+    });
   };
 
   const handleConfirm = () => {
-    if (!selectedChoice) return;
+    if (requestingDevices === null) return;
     
-    const useDazeTablets = selectedChoice === "daze";
-    const updateData = useDazeTablets 
-      ? { use_daze_tablets: true, tablet_count: tabletCount }
-      : { use_daze_tablets: false };
-    
-    onUpdate(updateData);
+    onUpdate({ use_daze_tablets: requestingDevices });
     setIsConfirmed(true);
     
-    // Log activity
     logActivity.mutate({
       action: "device_setup_confirmed",
       details: {
-        use_daze_tablets: useDazeTablets,
-        tablet_count: useDazeTablets ? tabletCount : undefined,
+        requesting_devices: requestingDevices,
       },
     });
     
     toast.success(
-      useDazeTablets 
-        ? `${tabletCount} Daze tablet${tabletCount > 1 ? "s" : ""} requested!`
-        : "Using your own devices confirmed!"
+      requestingDevices 
+        ? "Device request submitted!"
+        : "No devices needed - confirmed!"
     );
     
-    // Trigger step completion
     if (onStepComplete) {
       onStepComplete();
     }
@@ -133,9 +115,9 @@ export function DevicesStep({
           <div className="text-left min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-xs sm:text-sm md:text-base truncate">Device Setup</p>
-              {isConfirmed && !isCompleted && selectedChoice && (
+              {isConfirmed && !isCompleted && requestingDevices !== null && (
                 <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-2xs font-medium bg-primary/10 text-primary">
-                  {selectedChoice === "daze" ? `${tabletCount} Tablets` : "Own Devices"}
+                  {requestingDevices ? "Requesting Devices" : "No Devices Needed"}
                 </span>
               )}
             </div>
@@ -146,7 +128,7 @@ export function DevicesStep({
         </div>
       </AccordionTrigger>
       <AccordionContent className="pb-3 sm:pb-4">
-        <div className="relative min-h-[260px] sm:min-h-[280px] pt-1 sm:pt-2">
+        <div className="relative min-h-[200px] sm:min-h-[220px] pt-1 sm:pt-2">
           <AnimatePresence mode="wait">
             {!isConfirmed ? (
               /* Selection UI */
@@ -156,147 +138,50 @@ export function DevicesStep({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                className="space-y-3 sm:space-y-4"
+                className="space-y-4 sm:space-y-5"
               >
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  How would you like to display the ordering system?
-                </p>
-                
-                {/* Device Choice Cards */}
-                <div className="grid gap-2 sm:gap-3">
-                  {/* Daze Tablets Option */}
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleChoiceSelect("daze")}
-                    className={cn(
-                      "relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left",
-                      "bg-card border-2 transition-all duration-200",
-                      "hover:shadow-soft-md hover:-translate-y-0.5",
-                      "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                      selectedChoice === "daze"
-                        ? "border-primary shadow-soft-md"
-                        : "border-transparent"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0",
-                      "bg-primary/10"
-                    )}>
+                {/* Question Card */}
+                <div className="p-4 sm:p-5 rounded-xl bg-card border">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
                       <Tablet className="w-5 h-5 sm:w-6 sm:h-6 text-primary" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-xs sm:text-sm">Use Daze Tablets</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                        We'll ship pre-configured tablets ready to deploy
+                      <p className="font-semibold text-sm sm:text-base">
+                        Would you like Daze to provide tablets for your property?
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        We can ship pre-configured tablets ready to deploy, or you can use your existing hardware.
                       </p>
                     </div>
-                    {/* Selection indicator */}
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5",
-                      selectedChoice === "daze"
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground/30"
+                  </div>
+                  
+                  {/* Toggle Switch */}
+                  <div className="flex items-center justify-center gap-4 mt-5 py-3">
+                    <span className={cn(
+                      "text-sm font-medium transition-colors",
+                      requestingDevices === false ? "text-foreground" : "text-muted-foreground"
                     )}>
-                      {selectedChoice === "daze" && (
-                        <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />
-                      )}
-                    </div>
-                  </motion.button>
-
-                  {/* Own Devices Option */}
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleChoiceSelect("own")}
-                    className={cn(
-                      "relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left",
-                      "bg-card border-2 transition-all duration-200",
-                      "hover:shadow-soft-md hover:-translate-y-0.5",
-                      "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                      selectedChoice === "own"
-                        ? "border-primary shadow-soft-md"
-                        : "border-transparent"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0",
-                      "bg-muted"
+                      No
+                    </span>
+                    <Switch
+                      checked={requestingDevices === true}
+                      onCheckedChange={handleToggleChange}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                    <span className={cn(
+                      "text-sm font-medium transition-colors",
+                      requestingDevices === true ? "text-foreground" : "text-muted-foreground"
                     )}>
-                      <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" strokeWidth={1.5} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-xs sm:text-sm">Use Our Own Devices</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                        We'll use existing tablets or kiosks at the property
-                      </p>
-                    </div>
-                    {/* Selection indicator */}
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5",
-                      selectedChoice === "own"
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground/30"
-                    )}>
-                      {selectedChoice === "own" && (
-                        <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />
-                      )}
-                    </div>
-                  </motion.button>
+                      Yes
+                    </span>
+                  </div>
                 </div>
-
-                {/* Tablet Count Input (only if Daze tablets selected) */}
-                <AnimatePresence>
-                  {selectedChoice === "daze" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-2 space-y-3">
-                        <label className="text-sm font-medium">
-                          How many tablets do you need?
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-10 w-10 rounded-full shrink-0"
-                            onClick={() => handleTabletCountChange(-1)}
-                            disabled={tabletCount <= 1}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={20}
-                            value={tabletCount}
-                            onChange={(e) => setTabletCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
-                            className="w-20 text-center text-lg font-semibold"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-10 w-10 rounded-full shrink-0"
-                            onClick={() => handleTabletCountChange(1)}
-                            disabled={tabletCount >= 20}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          <span className="text-sm text-muted-foreground">tablets</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
 
                 {/* Confirm Button */}
                 <Button
                   onClick={handleConfirm}
-                  disabled={!selectedChoice || isSaving}
+                  disabled={requestingDevices === null || isSaving}
                   className="w-full rounded-full min-h-[44px] bg-primary hover:bg-primary/90"
                 >
                   Confirm Selection
@@ -314,23 +199,19 @@ export function DevicesStep({
               >
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    {selectedChoice === "daze" ? (
-                      <Tablet className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                    ) : (
-                      <Monitor className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                    )}
+                    <Tablet className="w-5 h-5 text-primary" strokeWidth={1.5} />
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-sm">
-                      {selectedChoice === "daze" 
-                        ? `${tabletCount} Daze Tablet${tabletCount > 1 ? "s" : ""}`
-                        : "Using Your Own Devices"
+                      {requestingDevices 
+                        ? "Devices Requested"
+                        : "No Devices Needed"
                       }
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedChoice === "daze"
+                      {requestingDevices
                         ? "We'll coordinate shipping details with your team"
-                        : "Our team will send installation instructions"
+                        : "Our team will send installation instructions for your existing hardware"
                       }
                     </p>
                   </div>
