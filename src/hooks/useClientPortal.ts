@@ -208,7 +208,7 @@ export function useClientPortal() {
         const pdfEntity: PilotAgreementData = {
           property_name: legalEntityData?.property_name,
           legal_entity_name: legalEntityData?.legal_entity_name,
-          dba_name: legalEntityData?.dba_name,
+          dba_name: legalEntityData?.dba_name as string | undefined,
           billing_address: legalEntityData?.billing_address,
           authorized_signer_name: legalEntityData?.authorized_signer_name,
           authorized_signer_title: legalEntityData?.authorized_signer_title,
