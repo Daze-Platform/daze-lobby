@@ -350,6 +350,11 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
             <TabsTrigger value="devices" className="gap-1.5 text-xs">
               <Cpu className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Devices</span>
+              {clientDevices.length > 0 && (
+                <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-2xs font-semibold">
+                  {clientDevices.length}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="activity" className="gap-1.5 text-xs">
               <Activity className="h-3.5 w-3.5" />
