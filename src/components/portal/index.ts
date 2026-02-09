@@ -20,5 +20,5 @@ export { PortalHeader } from "./PortalHeader";
 export { PortalDocuments } from "./PortalDocuments";
 export type { DemoActivity } from "./DemoActivityFeedPanel";
 export type { PortalView } from "./PortalHeader";
-export type { Venue } from "./VenueCard";
+export type { Venue } from "@/types/venue";
 export type { PropertyBrand } from "./PropertyBrandManager";

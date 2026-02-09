@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, LogOut, ClipboardList, FileText, Clock } from "lucide-react";
 import { signOut, hasDashboardAccess } from "@/lib/auth";
 import { toast } from "sonner";
-import type { Venue } from "@/components/portal/VenueCard";
+import type { Venue } from "@/types/venue";
 
 /**
  * Portal - Client-only portal page

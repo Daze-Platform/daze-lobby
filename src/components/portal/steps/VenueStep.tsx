@@ -7,23 +7,11 @@ import { cn } from "@/lib/utils";
 import { VenueManager } from "../VenueManager";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
-import type { Venue } from "../VenueCard";
 
 interface VenueStepProps {
   isCompleted: boolean;
   isLocked: boolean;
   isActive?: boolean;
-  data?: Record<string, unknown>;
-  venues: Venue[];
-  onAddVenue: () => Promise<Venue | undefined>;
-  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => Promise<void>;
-  onRemoveVenue: (id: string) => Promise<void>;
-  onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
-  onUploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
-  onCompleteStep: () => Promise<void>;
-  isAdding?: boolean;
-  isUpdating?: boolean;
-  isDeleting?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
@@ -33,17 +21,6 @@ export function VenueStep({
   isCompleted, 
   isLocked,
   isActive = false,
-  data, 
-  venues,
-  onAddVenue,
-  onUpdateVenue,
-  onRemoveVenue,
-  onUploadMenu,
-  onUploadLogo,
-  onCompleteStep,
-  isAdding,
-  isUpdating,
-  isDeleting,
   onStepComplete,
   isJustCompleted,
   isUnlocking
@@ -57,11 +34,6 @@ export function VenueStep({
       : isActive 
         ? "active" 
         : "pending";
-
-  const handleCompleteStep = async () => {
-    await onCompleteStep();
-    onStepComplete?.();
-  };
 
   return (
     <AccordionItem 
@@ -89,18 +61,7 @@ export function VenueStep({
       </AccordionTrigger>
       <AccordionContent className="pb-3 sm:pb-4">
         <div className="pt-1 sm:pt-2">
-          <VenueManager
-            venues={venues}
-            onAddVenue={onAddVenue}
-            onUpdateVenue={onUpdateVenue}
-            onRemoveVenue={onRemoveVenue}
-            onUploadMenu={onUploadMenu}
-            onUploadLogo={onUploadLogo}
-            onCompleteStep={handleCompleteStep}
-            isAdding={isAdding}
-            isUpdating={isUpdating}
-            isDeleting={isDeleting}
-          />
+          <VenueManager onStepComplete={onStepComplete} />
         </div>
       </AccordionContent>
     </AccordionItem>

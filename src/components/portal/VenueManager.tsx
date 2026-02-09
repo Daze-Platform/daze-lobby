@@ -3,20 +3,8 @@ import { Button } from "@/components/ui/button";
 import { SaveButton } from "@/components/ui/save-button";
 import { Label } from "@/components/ui/label";
 import { Plus, MapPin } from "lucide-react";
-import { VenueCard, type Venue } from "./VenueCard";
-
-interface VenueManagerProps {
-  venues: Venue[];
-  onAddVenue: () => Promise<Venue | undefined>;
-  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => Promise<void>;
-  onRemoveVenue: (id: string) => Promise<void>;
-  onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
-  onUploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
-  onCompleteStep: () => Promise<void>;
-  isAdding?: boolean;
-  isUpdating?: boolean;
-  isDeleting?: boolean;
-}
+import { VenueCard } from "./VenueCard";
+import { useVenueContext } from "@/contexts/VenueContext";
 
 // Debounce helper
 function debounce<T extends (...args: Parameters<T>) => void>(
@@ -30,20 +18,27 @@ function debounce<T extends (...args: Parameters<T>) => void>(
   };
 }
 
-export function VenueManager({ 
-  venues, 
-  onAddVenue, 
-  onUpdateVenue, 
-  onRemoveVenue,
-  onUploadMenu,
-  onUploadLogo,
-  onCompleteStep,
-  isAdding,
-  isUpdating,
-  isDeleting,
-}: VenueManagerProps) {
+interface VenueManagerProps {
+  onStepComplete?: () => void;
+}
+
+export function VenueManager({ onStepComplete }: VenueManagerProps) {
+  const {
+    venues,
+    addVenue,
+    updateVenue,
+    removeVenue,
+    uploadMenu,
+    uploadLogo,
+    completeStep,
+    isAddingVenue,
+    isUpdatingVenue,
+    isDeletingVenue,
+    uploadingMenuIds,
+    uploadingLogoIds,
+  } = useVenueContext();
+
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
-  const [uploadingLogos, setUploadingLogos] = useState<Set<string>>(new Set());
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
   
   // Debounced update for venue names
@@ -51,7 +46,7 @@ export function VenueManager({
     () => debounce(async (id: string, name: string) => {
       setPendingUpdates(prev => new Set(prev).add(id));
       try {
-        await onUpdateVenue(id, { name });
+        await updateVenue(id, { name });
       } finally {
         setPendingUpdates(prev => {
           const next = new Set(prev);
@@ -60,11 +55,11 @@ export function VenueManager({
         });
       }
     }, 600),
-    [onUpdateVenue]
+    [updateVenue]
   );
 
   const handleAddVenue = async () => {
-    const newVenue = await onAddVenue();
+    const newVenue = await addVenue();
     if (newVenue) {
       setNewlyAddedId(newVenue.id);
       // Clear the focus indicator after a short delay
@@ -72,26 +67,21 @@ export function VenueManager({
     }
   };
 
-  const handleVenueNameChange = (venue: Venue, newName: string) => {
-    // Optimistically update locally, then debounce save
-    debouncedUpdate(venue.id, newName);
+  const handleVenueNameChange = (venueId: string, newName: string) => {
+    debouncedUpdate(venueId, newName);
   };
 
-  const handleMenuUpload = async (venue: Venue, file: File) => {
-    await onUploadMenu(venue.id, venue.name, file);
+  const handleMenuUpload = async (venueId: string, venueName: string, file: File) => {
+    await uploadMenu(venueId, venueName, file);
   };
 
-  const handleLogoUpload = async (venue: Venue, file: File) => {
-    setUploadingLogos(prev => new Set(prev).add(venue.id));
-    try {
-      await onUploadLogo(venue.id, venue.name, file);
-    } finally {
-      setUploadingLogos(prev => {
-        const next = new Set(prev);
-        next.delete(venue.id);
-        return next;
-      });
-    }
+  const handleLogoUpload = async (venueId: string, venueName: string, file: File) => {
+    await uploadLogo(venueId, venueName, file);
+  };
+
+  const handleCompleteStep = async () => {
+    await completeStep();
+    onStepComplete?.();
   };
 
   const hasValidVenues = venues.length > 0 && venues.some(v => v.name.trim());
@@ -115,13 +105,14 @@ export function VenueManager({
             <VenueCard
               key={venue.id}
               venue={venue}
-              onNameChange={(name) => handleVenueNameChange(venue, name)}
-              onMenuUpload={(file) => handleMenuUpload(venue, file)}
-              onLogoUpload={(file) => handleLogoUpload(venue, file)}
-              onRemove={() => onRemoveVenue(venue.id)}
+              onNameChange={(name) => handleVenueNameChange(venue.id, name)}
+              onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
+              onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
+              onRemove={() => removeVenue(venue.id)}
               isSaving={pendingUpdates.has(venue.id)}
-              isDeleting={isDeleting}
-              isUploadingLogo={uploadingLogos.has(venue.id)}
+              isDeleting={isDeletingVenue}
+              isUploading={uploadingMenuIds.has(venue.id)}
+              isUploadingLogo={uploadingLogoIds.has(venue.id)}
               autoFocus={venue.id === newlyAddedId}
             />
           ))}
@@ -141,17 +132,17 @@ export function VenueManager({
         type="button"
         variant="outline"
         onClick={handleAddVenue}
-        disabled={isAdding}
+        disabled={isAddingVenue}
         className="w-full gap-2 min-h-[44px]"
       >
         <Plus className="w-4 h-4" />
-        {isAdding ? "Adding..." : "Add Venue"}
+        {isAddingVenue ? "Adding..." : "Add Venue"}
       </Button>
 
       {venues.length > 0 && (
         <SaveButton
-          onClick={onCompleteStep}
-          disabled={!hasValidVenues || isUpdating}
+          onClick={handleCompleteStep}
+          disabled={!hasValidVenues || isUpdatingVenue}
           className="w-full min-h-[44px]"
           idleText="Complete Step"
           loadingText="Completing..."
