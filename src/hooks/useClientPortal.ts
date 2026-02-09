@@ -8,6 +8,8 @@ import type { Venue, DbVenue } from "@/types/venue";
 import { sanitizeFilename } from "@/lib/fileValidation";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { dataUrlToBlob } from "@/lib/dataUrlToBlob";
+import { generateAgreementPdfBlob } from "@/lib/generateAgreementPdf";
+import type { PilotAgreementData } from "@/types/pilotAgreement";
 
 interface OnboardingTask {
   id: string;
