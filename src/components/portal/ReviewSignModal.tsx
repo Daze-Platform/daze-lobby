@@ -427,7 +427,7 @@ export function ReviewSignModal({
     pos_version: posVersion,
     pos_api_key: posApiKey,
     pos_contact: posContact,
-  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, numTablets, mountsStands, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
+  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
 
   const agreementText = useMemo(() => createAgreementText(currentEntity), [currentEntity]);
 
