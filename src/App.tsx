@@ -128,8 +128,8 @@ const App = () => (
                   </PortalRoute>
                 }
               />
-              {/* Preview route - no auth required */}
-              <Route path="/portal-preview" element={<PortalPreview />} />
+              {/* Redirect old preview route */}
+              <Route path="/portal-preview" element={<Navigate to="/portal/daze-beach-resort" replace />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -122,7 +122,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
       items: [
         {
           title: "Client Portal",
-          href: "/portal-preview",
+          href: "/portal/daze-beach-resort",
           icon: Eye,
         },
       ],
