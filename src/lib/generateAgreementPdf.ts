@@ -34,7 +34,7 @@ const imageToBase64 = (imgSrc: string): Promise<string> =>
 
 const blank = (v?: string, fallback = "_______________") => v?.trim() || fallback;
 
-export async function generateAgreementPdf(options: GeneratePdfOptions): Promise<void> {
+export async function generateAgreementPdfBlob(options: GeneratePdfOptions): Promise<Blob> {
   const { entity, signatureDataUrl, signedAt, documentId } = options;
 
   const entityName = blank(entity.legal_entity_name, "[Client Legal Name]");
@@ -232,6 +232,19 @@ export async function generateAgreementPdf(options: GeneratePdfOptions): Promise
     pdf.text("Daze Technologies Corp. — Pilot Agreement", margin, footerY);
   }
 
+  return pdf.output("blob") as Blob;
+}
+
+export async function generateAgreementPdf(options: GeneratePdfOptions): Promise<void> {
+  const blob = await generateAgreementPdfBlob(options);
+  const entityName = blank(options.entity.legal_entity_name, "[Client Legal Name]");
+  const isSigned = !!options.signatureDataUrl;
   const fileName = `Daze_Pilot_Agreement_${entityName.replace(/[^a-zA-Z0-9]/g, "_")}${isSigned ? "_SIGNED" : "_DRAFT"}.pdf`;
-  pdf.save(fileName);
+  
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
 }

@@ -8,6 +8,8 @@ import type { Venue, DbVenue } from "@/types/venue";
 import { sanitizeFilename } from "@/lib/fileValidation";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { dataUrlToBlob } from "@/lib/dataUrlToBlob";
+import { generateAgreementPdfBlob } from "@/lib/generateAgreementPdf";
+import type { PilotAgreementData } from "@/types/pilotAgreement";
 
 interface OnboardingTask {
   id: string;
@@ -201,11 +203,68 @@ export function useClientPortal() {
 
       if (updateError) throw updateError;
 
+      // Generate signed PDF and upload to hotel-documents bucket
+      try {
+        const pdfEntity: PilotAgreementData = {
+          property_name: legalEntityData?.property_name,
+          legal_entity_name: legalEntityData?.legal_entity_name,
+          dba_name: legalEntityData?.dba_name as string | undefined,
+          billing_address: legalEntityData?.billing_address,
+          authorized_signer_name: legalEntityData?.authorized_signer_name,
+          authorized_signer_title: legalEntityData?.authorized_signer_title,
+          contact_email: legalEntityData?.contact_email as string | undefined,
+          covered_outlets: legalEntityData?.covered_outlets as string[] | undefined,
+          hardware_option: legalEntityData?.hardware_option as PilotAgreementData["hardware_option"],
+          start_date: legalEntityData?.start_date as string | undefined,
+          pilot_term_days: legalEntityData?.pilot_term_days as number | undefined,
+          pricing_model: legalEntityData?.pricing_model as PilotAgreementData["pricing_model"],
+          pricing_amount: legalEntityData?.pricing_amount as string | undefined,
+          pos_system: legalEntityData?.pos_system as string | undefined,
+          pos_version: legalEntityData?.pos_version as string | undefined,
+          pos_api_key: legalEntityData?.pos_api_key as string | undefined,
+          pos_contact: legalEntityData?.pos_contact as string | undefined,
+        };
+
+        const pdfBlob = await generateAgreementPdfBlob({
+          entity: pdfEntity,
+          signatureDataUrl,
+          signedAt,
+        });
+
+        const pdfFileName = `pilot-agreement-signed.pdf`;
+        const pdfPath = `${clientId}/${pdfFileName}`;
+
+        const { error: pdfUploadError } = await supabase.storage
+          .from("hotel-documents")
+          .upload(pdfPath, pdfBlob, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+
+        if (!pdfUploadError) {
+          // Insert document record so it appears in Documents tab
+          await supabase.from("documents").insert({
+            client_id: clientId,
+            display_name: "Pilot Agreement (Signed)",
+            file_name: pdfFileName,
+            file_path: pdfPath,
+            file_size: pdfBlob.size,
+            category: "Contract",
+            mime_type: "application/pdf",
+            uploaded_by_id: user.id,
+          });
+        }
+      } catch (pdfError) {
+        // Don't fail the signing if PDF upload fails — signature is already saved
+        console.warn("Failed to upload signed PDF to documents:", pdfError);
+      }
+
       return { signatureUrl, signedAt };
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["client"] });
+      queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       
       // Log activity
       logActivity.mutate({
