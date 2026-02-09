@@ -78,7 +78,7 @@ const getAgreementSections = (d: PilotAgreementData) => {
     },
     {
       title: "2. PILOT SCOPE",
-      content: `2.1 Covered Outlets\nThe Pilot will be conducted at the following F&B outlets and Serviceable areas:\n${outletLines}\n\n2.2 Products and Services\nAvailable products include:\n• Pool & Beach Mobile Ordering\n• Common Space Digital Ordering\n• Table Pay & Order\n• In-Room Dining\n\n2.3 Hardware Selection\n${hwCheck ? "[ ] No Daze Hardware Required\n[X] Daze-Provided Hardware" : "[X] No Daze Hardware Required\n[ ] Daze-Provided Hardware"}\n• Number of Tablets: ${tablets}\n• Mounts/Stands: ${mounts}\n\n2.4 Enabled Capabilities\n• Guest mobile ordering via smartphone or tablet.\n• Payment processing and facilitation.\n• Location-based delivery coordination.\n• Management reporting and analytics dashboard.\n• POS integration with Client's designated POS system(s).\n• QR Code Access Points.`
+      content: `2.1 Covered Outlets\nThe Pilot will be conducted at the following F&B outlets and Serviceable areas:\n${outletLines}\n\n2.2 Products and Services\nAvailable products include:\n• Pool & Beach Mobile Ordering\n• Common Space Digital Ordering\n• Table Pay & Order\n• In-Room Dining\n\n2.3 Hardware Selection\n${hwCheck ? "[ ] No Daze Hardware Required\n[X] Daze-Provided Hardware" : "[X] No Daze Hardware Required\n[ ] Daze-Provided Hardware"}\n\n2.4 Enabled Capabilities\n• Guest mobile ordering via smartphone or tablet.\n• Payment processing and facilitation.\n• Location-based delivery coordination.\n• Management reporting and analytics dashboard.\n• POS integration with Client's designated POS system(s).\n• QR Code Access Points.`
     },
     {
       title: "3. PILOT TERM",

@@ -153,8 +153,6 @@ Available products include:
 2.3 Hardware Selection
 ${hwNone} No Daze Hardware Required
 ${hwDaze} Daze-Provided Hardware
-• Number of Tablets: ${tablets}
-• Mounts/Stands: ${mounts}
 
 2.4 Enabled Capabilities
 During the Pilot Term, Daze shall provide the following capabilities:
