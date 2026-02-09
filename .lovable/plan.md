@@ -1,79 +1,61 @@
 
 
-# Add Sequential Client ID (CLT-001) to New Client Flow
+# Link Dedicated Portal Routes to Client IDs
 
-## Overview
-Add an auto-generated, human-readable sequential ID (e.g. `CLT-001`, `CLT-002`) to every client created through the admin "New Client" modal. This ID will be stored in a new `client_code` column on the `clients` table and displayed in the UI.
+## Problem
+Currently, each client portal route (e.g. `/portal/springhill-orange-beach`) is hardcoded in `App.tsx` with a `clientName` prop. The portal then does a fuzzy name search (`ilike`) to resolve the client ID. This is fragile and requires a code change every time a new client is added.
+
+## Solution
+Replace all hardcoded dedicated routes with a single dynamic route that uses a URL-friendly slug stored on each client record.
+
+### How it works
+
+1. **New `client_slug` column** on the `clients` table (e.g. `springhill-orange-beach`, `daze-beach-resort`)
+2. **Single dynamic route**: `/portal/:clientSlug` replaces all hardcoded `/portal/springhill-orange-beach`, `/portal/daze-beach-resort` routes
+3. **Exact lookup**: `PortalPreview` resolves the client by slug instead of fuzzy name matching
+4. **Admin creates slug**: The New Client modal auto-generates a slug from the client name (editable)
+
+### User flow
+- Admin creates "Springhill Suites Orange Beach" -- slug auto-generates as `springhill-suites-orange-beach`
+- The portal URL becomes `/portal/springhill-suites-orange-beach`
+- The client code (`CLT-001`) is already assigned automatically
 
 ## Technical Details
 
 ### 1. Database Migration
-Add a `client_code` column to the `clients` table:
-```sql
-ALTER TABLE public.clients
-  ADD COLUMN client_code text UNIQUE;
+- Add `client_slug text UNIQUE` column to `clients`
+- Create a trigger to auto-generate slug from `name` on insert (lowercase, hyphens, no special chars)
+- Backfill existing clients with slugs derived from their names
+
+### 2. Routing Changes (`src/App.tsx`)
+- Remove all hardcoded dedicated portal routes (`/portal/springhill-orange-beach`, `/portal/daze-beach-resort`)
+- Add a single dynamic route: `/portal/:clientSlug`
+- Keep `/portal/admin`, `/portal/login`, and `/portal` (authenticated client) routes above the dynamic catch
+
+```text
+Route priority (top to bottom):
+  /portal/admin    --> RoleBasedRoute (admin portal viewer)
+  /portal/login    --> AuthRedirect (client login)
+  /portal/:slug    --> DedicatedPortalRoute (dynamic client portal)
+  /portal          --> PortalRoute (authenticated client portal)
 ```
 
-Create a database function that auto-generates the next sequential code on insert:
-```sql
-CREATE OR REPLACE FUNCTION public.generate_client_code()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  next_num INTEGER;
-BEGIN
-  SELECT COALESCE(MAX(
-    CAST(SUBSTRING(client_code FROM 5) AS INTEGER)
-  ), 0) + 1
-  INTO next_num
-  FROM public.clients
-  WHERE client_code ~ '^CLT-\d+$';
+### 3. Update `PortalPreview.tsx`
+- Accept a `clientSlug` prop (from URL param) instead of `clientName`
+- Query: `supabase.from("clients").select("id, name, ...").eq("client_slug", slug).single()`
+- Use the resolved client name for display
 
-  NEW.client_code := 'CLT-' || LPAD(next_num::text, 3, '0');
-  RETURN NEW;
-END;
-$$;
+### 4. Update `DedicatedPortalRoute.tsx`
+- Remove the hardcoded `ADMIN_ALLOWED_PORTAL_PATHS` allowlist
+- Instead, allow all admin users to access any `/portal/:slug` route (they need this for previewing)
 
-CREATE TRIGGER set_client_code
-  BEFORE INSERT ON public.clients
-  FOR EACH ROW
-  WHEN (NEW.client_code IS NULL)
-  EXECUTE FUNCTION public.generate_client_code();
-```
+### 5. Update `NewClientModal.tsx`
+- Auto-generate a slug field from the client name as the admin types
+- Show the slug as a read-only preview (e.g. "Portal URL: /portal/springhill-suites-orange-beach")
 
-This ensures:
-- Codes are auto-assigned (CLT-001, CLT-002, ...) whenever a client is created without specifying one
-- The trigger only fires when `client_code` is NULL, allowing manual overrides if needed
-- Codes go beyond 999 naturally (CLT-1000, etc.)
+### 6. Sidebar Link
+- Update the "Client Portal" link in `DashboardSidebar.tsx` to point to a default demo client slug or keep as `/portal/daze-beach-resort`
 
-### 2. Backfill Existing Clients
-Run a one-time data update to assign codes to any existing clients (ordered by creation date):
-```sql
-WITH numbered AS (
-  SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) AS rn
-  FROM clients WHERE client_code IS NULL
-)
-UPDATE clients SET client_code = 'CLT-' || LPAD(rn::text, 3, '0')
-FROM numbered WHERE clients.id = numbered.id;
-```
-
-### 3. Frontend Changes
-
-**`src/components/modals/NewClientModal.tsx`**
-- No changes needed -- the trigger auto-generates the code on insert
-
-**`src/components/kanban/HotelCard.tsx`** (or wherever client cards are rendered)
-- Display the `client_code` badge alongside the client name (e.g. a small muted badge showing "CLT-001")
-
-**`src/types/client.ts`**
-- Add `client_code: string | null` to the `Client` interface (it will come from the DB row type automatically after migration, but ensure it's referenced)
-
-**`src/components/dashboard/ClientDetailPanel.tsx`**
-- Show the client code in the detail panel header
-
-### 4. Query Updates
-Any query selecting from `clients` that needs the code (Kanban board, client detail, admin client list) should include `client_code` in the select. The main queries in `useClients.ts` and `ClientContext.tsx` will be updated to include this field.
+### 7. Redirect for legacy URLs
+- Add redirects for old hardcoded paths (`/portal/springhill-orange-beach` to `/portal/springhill-suites-orange-beach`) if needed, or rely on the dynamic route handling them naturally if slugs match
 
