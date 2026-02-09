@@ -261,12 +261,12 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
         activeView={activeView}
         onViewChange={setActiveView}
         isPreview={true}
-        userEmail="demo@grandhydatt.com"
-        userFullName="Demo User"
+        userEmail={clientName ? "info@springhillob.com" : "demo@grandhydatt.com"}
+        userFullName={clientName || "Demo User"}
         onSignOut={handleSignOut}
         onActivityFeedOpen={() => setIsActivityFeedOpen(true)}
         activityCount={demoActivities.length}
-        onResetTour={handleResetTour}
+        onResetTour={isDemo ? handleResetTour : undefined}
       />
 
       {/* Main Content */}
