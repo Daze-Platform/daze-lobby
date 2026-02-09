@@ -283,6 +283,7 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
         onActivityFeedOpen={() => setIsActivityFeedOpen(true)}
         activityCount={demoActivities.length}
         onResetTour={isDemo ? handleResetTour : undefined}
+        documentCount={documentCount}
       />
 
       {/* Main Content */}
