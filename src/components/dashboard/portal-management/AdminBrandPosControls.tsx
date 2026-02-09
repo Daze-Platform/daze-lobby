@@ -225,58 +225,6 @@ export function AdminBrandPosControls({
         </CardContent>
       </Card>
 
-      {/* Primary Brand Color */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Palette className="h-4 w-4 text-primary" />
-            Primary Brand Color
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Set the primary color for the client's portal theme
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <button
-                type="button"
-                className="w-12 h-12 rounded-lg ring-2 ring-border hover:ring-primary transition-all overflow-hidden"
-                style={{ backgroundColor: primaryColor }}
-                onClick={() => document.getElementById(`color-picker-${clientId}`)?.click()}
-              />
-              <input
-                id={`color-picker-${clientId}`}
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-            </div>
-            <Input
-              value={primaryColor}
-              onChange={(e) => {
-                if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) {
-                  setPrimaryColor(e.target.value);
-                }
-              }}
-              className="w-28 font-mono uppercase text-sm"
-              placeholder="#3B82F6"
-            />
-            <Button
-              size="sm"
-              onClick={() => updateBrandMutation.mutate({ color: primaryColor })}
-              disabled={updateBrandMutation.isPending}
-            >
-              {updateBrandMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* POS Instructions */}
       <Card className="border-border/50">
