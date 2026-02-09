@@ -12,17 +12,19 @@ interface LogoVariant {
   description: string;
   file?: File;
   preview?: string;
+  existingUrl?: string;
 }
 
 interface MultiLogoUploadProps {
   onLogosChange: (logos: Record<string, File>) => void;
+  existingUrls?: Record<string, string>;
 }
 
-export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
-  const [logos, setLogos] = useState<LogoVariant[]>([
-    { type: "dark", label: "Dark Version", description: "For light backgrounds" },
-    { type: "light", label: "Light Version", description: "For dark backgrounds" },
-    { type: "icon", label: "Icon/Favicon", description: "Square format, 512x512+" },
+export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUploadProps) {
+  const [logos, setLogos] = useState<LogoVariant[]>(() => [
+    { type: "dark", label: "Dark Version", description: "For light backgrounds", existingUrl: existingUrls?.dark },
+    { type: "light", label: "Light Version", description: "For dark backgrounds", existingUrl: existingUrls?.light },
+    { type: "icon", label: "Icon/Favicon", description: "Square format, 512x512+", existingUrl: existingUrls?.icon },
   ]);
 
   const handleFileChange = (type: "dark" | "light" | "icon", file: File | undefined) => {
@@ -81,16 +83,19 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {primaryVariants.map((logo) => {
           const VariantIcon = getVariantIcon(logo.type);
+          const hasUpload = logo.file || logo.existingUrl;
+          const displayImage = logo.preview || logo.existingUrl;
+          
           return (
             <div key={logo.type} className="space-y-2">
               {/* Label above */}
               <div className="flex items-center gap-2">
                 <VariantIcon className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
                 <span className="text-sm font-medium">{logo.label}</span>
-                {logo.file && (
+                {hasUpload && (
                   <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
                     <Check className="w-3 h-3" strokeWidth={2} />
-                    Uploaded
+                    {logo.file ? "New upload" : "Saved"}
                   </span>
                 )}
               </div>
@@ -101,15 +106,15 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
                   "flex flex-col items-center justify-center cursor-pointer transition-all",
                   "w-full aspect-[3/2] rounded-xl border-2 border-dashed",
                   logo.type === "light" ? "bg-slate-800" : "bg-muted/50",
-                  logo.file 
+                  hasUpload 
                     ? "border-primary bg-primary/5" 
                     : "border-muted-foreground/30 hover:border-primary/60",
                   "group"
                 )}
               >
-                {logo.preview ? (
+                {displayImage ? (
                   <img
-                    src={logo.preview}
+                    src={displayImage}
                     alt={logo.label}
                     className="w-full h-full object-contain rounded-lg p-3"
                   />
@@ -154,15 +159,19 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
       </div>
 
       {/* Icon/Favicon - Full width below */}
-      {iconVariant && (
+      {iconVariant && (() => {
+        const hasIconUpload = iconVariant.file || iconVariant.existingUrl;
+        const displayIconImage = iconVariant.preview || iconVariant.existingUrl;
+        
+        return (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
             <span className="text-sm font-medium">{iconVariant.label}</span>
-            {iconVariant.file && (
+            {hasIconUpload && (
               <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
                 <Check className="w-3 h-3" strokeWidth={2} />
-                Uploaded
+                {iconVariant.file ? "New upload" : "Saved"}
               </span>
             )}
           </div>
@@ -172,7 +181,7 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
               "flex items-center gap-4 cursor-pointer transition-all",
               "w-full p-4 rounded-xl border-2 border-dashed",
               "bg-muted/50",
-              iconVariant.file 
+              hasIconUpload 
                 ? "border-primary bg-primary/5" 
                 : "border-muted-foreground/30 hover:border-primary/60",
               "group"
@@ -181,11 +190,11 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
             {/* Square preview area */}
             <div className={cn(
               "w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
-              iconVariant.preview ? "bg-transparent" : "bg-muted group-hover:bg-muted/80"
+              displayIconImage ? "bg-transparent" : "bg-muted group-hover:bg-muted/80"
             )}>
-              {iconVariant.preview ? (
+              {displayIconImage ? (
                 <img
-                  src={iconVariant.preview}
+                  src={displayIconImage}
                   alt={iconVariant.label}
                   className="w-full h-full object-contain rounded-lg"
                 />
@@ -214,7 +223,8 @@ export function MultiLogoUpload({ onLogosChange }: MultiLogoUploadProps) {
             />
           </label>
         </div>
-      )}
+        );
+      })()}
 
       <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
         <AlertCircle className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
