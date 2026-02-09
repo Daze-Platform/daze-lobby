@@ -34,7 +34,22 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const POS_PROVIDERS = ["Micros", "Toast", "NCR", "Lavu", "Other"] as const;
+const POS_PROVIDERS = [
+  "Toast",
+  "NCR Aloha",
+  "PAR Brink",
+  "Dinerware",
+  "Micros Simphony",
+  "Micros 3700",
+  "POSitouch",
+  "Squirrel Systems",
+  "XPIENT",
+  "Maitre'D",
+  "NCR Cloud Connect",
+  "Simphony FE",
+  "SimphonyCloud",
+  "Other"
+] as const;
 const SUGGESTED_ROLES = ["General Manager", "F&B Director", "IT Director", "Controller"] as const;
 
 interface Contact {
