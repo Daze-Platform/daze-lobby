@@ -2,17 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { 
-  LayoutDashboard, 
-  Users, 
-  AlertTriangle, 
-  Tablet, 
-  ChevronLeft,
-  ChevronRight,
+  House,
+  Buildings,
+  Warning,
+  DeviceMobile,
+  CaretLeft,
+  CaretRight,
   X,
   Eye,
   Plus,
-  type LucideIcon
-} from "lucide-react";
+  type Icon as PhosphorIcon
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -21,7 +21,7 @@ import { NewClientModal } from "@/components/modals/NewClientModal";
 interface NavItem {
   title: string;
   href: string;
-  icon: LucideIcon;
+  icon: PhosphorIcon;
   badge?: number;
   badgeVariant?: "default" | "destructive";
 }
@@ -84,7 +84,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         {
           title: "Dashboard",
           href: "/dashboard",
-          icon: LayoutDashboard,
+          icon: House,
         },
       ],
     },
@@ -94,13 +94,13 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         {
           title: "Clients",
           href: "/clients",
-          icon: Users,
+          icon: Buildings,
           badge: clientsCount ?? undefined,
         },
         {
           title: "Incomplete",
           href: "/blockers",
-          icon: AlertTriangle,
+          icon: Warning,
           badge: blockersCount ?? undefined,
           badgeVariant: "destructive",
         },
@@ -112,7 +112,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         {
           title: "Devices",
           href: "/devices",
-          icon: Tablet,
+          icon: DeviceMobile,
           badge: devicesCount ?? undefined,
         },
       ],
@@ -154,7 +154,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
             onClick={onClose}
             className="h-10 w-10"
           >
-            <X className="h-5 w-5" />
+            <X size={20} weight="regular" />
             <span className="sr-only">Close menu</span>
           </Button>
         </div>
@@ -172,9 +172,9 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           )}
         >
           {showCollapsed ? (
-            <ChevronRight className="h-3 w-3" />
+            <CaretRight size={12} weight="bold" />
           ) : (
-            <ChevronLeft className="h-3 w-3" />
+            <CaretLeft size={12} weight="bold" />
           )}
         </Button>
       )}
@@ -213,7 +213,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
                   )}
                   size="default"
                 >
-                  <Plus className={cn("shrink-0", showCollapsed ? "h-5 w-5" : "h-4 w-4")} strokeWidth={1.5} />
+                  <Plus size={showCollapsed ? 20 : 16} weight="regular" className="shrink-0" />
                   {!showCollapsed && <span>New Client</span>}
                 </Button>
               )}
@@ -235,20 +235,17 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
                     "before:w-[3px] before:h-5 before:rounded-full before:bg-primary"
                   )}
                 >
-                  {/* Icon with subtle background on hover */}
+                  {/* Duotone icon with glass effect */}
                   <div className={cn(
-                    "flex items-center justify-center shrink-0 transition-all",
+                    "relative flex items-center justify-center shrink-0 transition-all",
                     "group-hover/nav:-translate-y-0.5"
                   )}>
                     <item.icon 
-                      className={cn(
-                        "transition-colors",
-                        showCollapsed ? "h-5 w-5" : "h-4 w-4"
-                      )} 
-                      strokeWidth={1.5} 
+                      size={showCollapsed ? 20 : 18}
+                      weight="duotone"
+                      className="transition-colors text-current"
                     />
                   </div>
-                  
                   {!showCollapsed && (
                     <>
                       <span className="flex-1">{item.title}</span>
