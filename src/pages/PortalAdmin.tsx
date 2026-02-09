@@ -243,6 +243,7 @@ export default function PortalAdmin() {
           setShowActivityFeed(true);
         }}
         unreadNotificationCount={unreadCount}
+        documentCount={documentCount}
       />
 
       {/* Main Content */}
