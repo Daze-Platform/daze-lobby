@@ -154,6 +154,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       if (error) throw error;
       
       toast.success("Settings saved successfully");
+      onOpenChange(false);
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast.error("Failed to save settings");
