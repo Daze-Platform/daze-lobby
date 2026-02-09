@@ -367,6 +367,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: HotelDetailPanel
               clientId={hotel.id}
               currentLogoUrl={hotel.logo_url}
               currentBrandPalette={hotel.brand_palette as string[] | null}
+              onNavigateToDocsTab={() => setActiveTab("documents")}
             />
           </TabsContent>
 
