@@ -117,6 +117,8 @@ const App = () => (
               />
               {/* Preview route - no auth required */}
               <Route path="/portal-preview" element={<PortalPreview />} />
+              {/* Dedicated client portal route */}
+              <Route path="/portal/springhill-orange-beach" element={<PortalPreview clientName="Springhill Suites Orange Beach" />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
