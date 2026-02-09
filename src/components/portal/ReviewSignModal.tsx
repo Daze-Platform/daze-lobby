@@ -95,8 +95,6 @@ const createAgreementText = (d: PilotAgreementData) => {
 
   const hwNone = d.hardware_option !== "daze_provided" ? "[X]" : "[ ]";
   const hwDaze = d.hardware_option === "daze_provided" ? "[X]" : "[ ]";
-  const tablets = d.num_tablets != null ? String(d.num_tablets) : "__________";
-  const mounts = d.mounts_stands?.trim() || "____________";
 
   const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
   const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
