@@ -472,38 +472,5 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Purge Confirmation Dialog */}
-      <AlertDialog open={showPurgeConfirm} onOpenChange={setShowPurgeConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Warning size={20} weight="duotone" className="text-destructive" />
-              Confirm Purge & Reseed
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>This action will:</p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Delete ALL hotels and their associated data</li>
-                <li>Remove all contacts, devices, and alerts</li>
-                <li>Generate 10 new demo hotels across all phases</li>
-              </ul>
-              <p className="font-medium text-foreground pt-2">
-                This cannot be undone. Continue?
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handlePurgeAndReseed}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Yes, Purge & Reseed
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
