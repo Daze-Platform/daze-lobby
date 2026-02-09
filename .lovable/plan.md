@@ -1,38 +1,25 @@
 
 
+# Replace Hardcoded Mock Blockers with Live Data
+
 ## Problem
+The Blockers page (`src/pages/Blockers.tsx`) contains a hardcoded `mockBlockers` array with 3 fake entries (The Riverside Hotel, Mountain View Lodge, Lakefront Inn). These will always show regardless of database state.
 
-Currently, `DedicatedPortalRoute` redirects ALL admin/ops/support users away from every dedicated client portal route to `/portal/admin`. You want an exception: admins should be allowed to access `/portal/daze-beach-resort` (the Daze internal test portal) but still be blocked from other client routes like `/portal/springhill-orange-beach`.
+## Solution
+Replace the mock data with a real query to the `blocker_alerts` table, joining with `clients` and `onboarding_tasks` to get the actual blocker information.
 
-## Approach
+## Technical Details
 
-Add an **allowlist** of paths that admin users are permitted to access. The guard will check the current path against this list before redirecting.
+### 1. Update `src/pages/Blockers.tsx`
+- Remove the `mockBlockers` array and `MockBlocker` interface
+- Query `blocker_alerts` table joined with `clients` to get hotel name, blocker reason, and timestamps
+- Query `onboarding_tasks` to calculate completed task counts per client
+- Show an empty state when no blockers exist
+- Keep the existing card UI, notification dialog, and reminder functionality but wire them to real data
 
-## Technical Changes
+### 2. Use the `useSendBlockerNotification` hook
+- The codebase already has this hook -- wire it into the Send Reminder flow instead of the current `setTimeout` simulation
 
-### `src/components/layout/DedicatedPortalRoute.tsx`
-
-1. Define an allowlist of portal paths that admin users can access:
-   ```typescript
-   const ADMIN_ALLOWED_PORTAL_PATHS = ["/portal/daze-beach-resort"];
-   ```
-
-2. Update the admin redirect logic to check the current path against this list:
-   ```typescript
-   if (hasDashboardAccess(role)) {
-     const isAllowed = ADMIN_ALLOWED_PORTAL_PATHS.includes(location.pathname);
-     if (!isAllowed) {
-       return <Navigate to="/portal/admin" replace />;
-     }
-   }
-   ```
-
-This way:
-- Admin on `/portal/daze-beach-resort` --> allowed through, renders the portal
-- Admin on `/portal/springhill-orange-beach` --> redirected to `/portal/admin`
-- Client users --> unaffected, same behavior as before
-
-### Future extensibility
-
-To allow admins on additional routes later, simply add paths to the `ADMIN_ALLOWED_PORTAL_PATHS` array.
+### 3. Empty State
+- When no blockers exist, show a friendly "No active blockers" message so the page isn't blank
 
