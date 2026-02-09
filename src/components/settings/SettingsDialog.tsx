@@ -208,10 +208,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setTheme(checked ? "dark" : "light");
   };
 
-  const handlePurgeAndReseed = async () => {
-    setShowPurgeConfirm(false);
-    await purgeAndReseed();
-  };
 
   const formatRole = (role: string | null) => {
     if (role === "admin") return "Founder/Admin";
