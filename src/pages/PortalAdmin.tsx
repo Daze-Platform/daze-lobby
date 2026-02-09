@@ -1,48 +1,43 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useClient } from "@/contexts/ClientContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
-import { WelcomeTour } from "@/components/portal/WelcomeTour";
+import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
 import { ActivityFeedPanel } from "@/components/portal/ActivityFeedPanel";
 import { PortalHeader, type PortalView } from "@/components/portal/PortalHeader";
 import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { useUnreadNotificationCount } from "@/hooks/useUnreadNotificationCount";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, LogOut, ClipboardList, FileText, Clock } from "lucide-react";
-import { signOut, hasDashboardAccess } from "@/lib/auth";
+import { Loader2, ArrowLeft, Building2, ClipboardList, FileText, Clock } from "lucide-react";
+import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
+import dazeLogo from "@/assets/daze-logo.png";
 import type { Venue } from "@/components/portal/VenueCard";
 
 /**
- * Portal - Client-only portal page
+ * PortalAdmin - Admin-only portal viewer with hotel switcher
  * 
- * This page is exclusively for client users to view their onboarding progress.
- * Admin users are redirected to /portal/admin instead.
+ * This page is for Control Tower users (admin/ops_manager/support) to view
+ * and debug client portals. It shows the AdminHotelSwitcher prominently
+ * and displays the selected client's portal.
  */
-export default function Portal() {
-  const { user, role } = useAuthContext();
-  const { client, clientId } = useClient();
+export default function PortalAdmin() {
+  const { user } = useAuthContext();
+  const { client, clientId, selectedClientId } = useClient();
   const navigate = useNavigate();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const prevStatus = useRef<string | null>(null);
   
-  // Welcome tour for first-time users
-  const { showTour, completeTour } = useWelcomeTour(user?.id);
-  
   // Unread notification count for badge
   const { unreadCount, markAsRead } = useUnreadNotificationCount(clientId);
-  
-  // Redirect admins to their dedicated portal route
-  const isAdmin = hasDashboardAccess(role);
   
   const { 
     tasks, 
@@ -66,7 +61,7 @@ export default function Portal() {
     isDeletingVenue,
   } = useClientPortal();
 
-  // MEMOIZED: Format tasks for the accordion - MUST be before early returns
+  // MEMOIZED: Format tasks for the accordion
   const formattedTasks = useMemo(() => 
     tasks.length > 0 
       ? tasks.map(t => ({
@@ -85,24 +80,23 @@ export default function Portal() {
     [tasks]
   );
 
-  // SINGLE REACTIVE PATH: Confetti & toast celebration when status changes to live
+  // Confetti celebration when status changes to live
   useEffect(() => {
     if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
       setShowConfetti(true);
-      toast.success("🚀 Congratulations! Your property is now LIVE!");
+      toast.success("🚀 Congratulations! This property is now LIVE!");
     }
     prevStatus.current = status;
   }, [status]);
 
-  // Redirect admin users to /portal/admin
-  if (isAdmin) {
-    return <Navigate to="/portal/admin" replace />;
-  }
+  const handleBackToDashboard = () => {
+    navigate("/dashboard");
+  };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate("/portal/login");
+      navigate("/auth");
     } catch (error) {
       toast.error("Failed to sign out");
     }
@@ -159,6 +153,59 @@ export default function Portal() {
     await completeVenueStep();
   };
 
+  // Admin without selected client - show client picker
+  if (!selectedClientId) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <header className="glass-header">
+          <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden sm:block">
+                <AdminHotelSwitcher />
+              </div>
+              <span className="hidden md:inline text-sm text-muted-foreground truncate max-w-[150px]">
+                {user?.email}
+              </span>
+              <Button variant="ghost" size="sm" onClick={handleBackToDashboard} className="min-h-[44px] gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
+          <Card className="max-w-lg mx-auto shadow-soft-lg">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
+              </div>
+              <span className="label-micro">Control Tower</span>
+              <CardTitle className="text-lg sm:text-xl">Select a Client</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4 sm:space-y-6 px-4 sm:px-6">
+              <p className="text-sm text-muted-foreground">
+                Select a client from the dropdown to view their onboarding portal and debug their progress.
+              </p>
+              <AdminHotelSwitcher />
+              <Button 
+                variant="outline" 
+                onClick={handleBackToDashboard}
+                className="w-full gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
@@ -169,19 +216,14 @@ export default function Portal() {
 
   return (
     <div className="min-h-screen bg-muted/30 pb-24 sm:pb-20 md:pb-0">
-      {/* Welcome Tour for first-time users */}
-      {showTour && (
-        <WelcomeTour onComplete={completeTour} />
-      )}
-
-      {/* Portal Header with Navigation - Client view (no admin elements) */}
+      {/* Portal Header with Navigation - Admin view */}
       <PortalHeader
         activeView={activeView}
         onViewChange={setActiveView}
-        isAdmin={false}
-        isAdminViewing={false}
+        isAdmin={true}
+        isAdminViewing={true}
         userEmail={user?.email}
-        onSignOut={handleSignOut}
+        onSignOut={handleBackToDashboard}
         onActivityFeedOpen={() => {
           markAsRead();
           setShowActivityFeed(true);
@@ -195,12 +237,12 @@ export default function Portal() {
           <>
             {/* Welcome Section */}
             <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
-              <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
+              <span className="label-micro mb-1 sm:mb-2 block">Admin View</span>
               <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
                 {client?.name || "Partner"}
               </h1>
               <p className="text-xs sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
-                Complete the steps below to get your property ready for launch.
+                Viewing client onboarding progress as an administrator.
               </p>
             </div>
 
@@ -263,22 +305,25 @@ export default function Portal() {
           <PortalDocuments />
         )}
 
-        {/* No Client Assigned State (shouldn't reach here due to routing) */}
+        {/* No Client Selected State */}
         {!client && !isLoading && (
           <Card className="mt-8">
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">
-                No client has been assigned to your account yet. 
-                Please contact your Daze representative.
+                Select a client using the switcher above to view their portal.
               </p>
             </CardContent>
           </Card>
         )}
       </main>
 
-      {/* Mobile Bottom Navigation - Client only (no admin switcher) */}
+      {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
+          <div className="flex-1 flex justify-center max-w-[120px]">
+            <AdminHotelSwitcher />
+          </div>
+          
           <Button
             variant={activeView === "onboarding" ? "secondary" : "ghost"}
             size="sm"
@@ -321,10 +366,10 @@ export default function Portal() {
             variant="ghost"
             size="sm"
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
-            onClick={handleSignOut}
+            onClick={handleBackToDashboard}
           >
-            <LogOut className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px]">Sign Out</span>
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px]">Dashboard</span>
           </Button>
         </div>
       </nav>

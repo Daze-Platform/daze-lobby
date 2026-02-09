@@ -15,6 +15,7 @@ import Devices from "./pages/Devices";
 import Revenue from "./pages/Revenue";
 import Portal from "./pages/Portal";
 import PortalLogin from "./pages/PortalLogin";
+import PortalAdmin from "./pages/PortalAdmin";
 import PortalPreview from "./pages/PortalPreview";
 import Auth from "./pages/Auth";
 import PostAuth from "./pages/PostAuth";
@@ -94,6 +95,15 @@ const App = () => (
                   <PortalRoute>
                     <Portal />
                   </PortalRoute>
+                }
+              />
+              {/* Admin Portal Viewer - Control Tower users only */}
+              <Route
+                path="/portal/admin"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <PortalAdmin />
+                  </RoleBasedRoute>
                 }
               />
               {/* Client login - separate from admin /auth */}
