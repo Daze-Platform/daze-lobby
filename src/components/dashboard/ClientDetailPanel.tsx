@@ -86,40 +86,6 @@ const mockContacts: MockContact[] = [
   },
 ];
 
-const mockDevices: MockDevice[] = [
-  {
-    id: "1",
-    device_type: "iPad Pro 12.9\"",
-    serial_number: "DZ-2024-001",
-    status: "online",
-    last_check_in: "5 minutes ago",
-    is_daze_owned: true,
-  },
-  {
-    id: "2",
-    device_type: "iPad Air",
-    serial_number: "DZ-2024-002",
-    status: "online",
-    last_check_in: "12 minutes ago",
-    is_daze_owned: true,
-  },
-  {
-    id: "3",
-    device_type: "Surface Go 3",
-    serial_number: "PROP-SG-001",
-    status: "offline",
-    last_check_in: "2 days ago",
-    is_daze_owned: false,
-  },
-  {
-    id: "4",
-    device_type: "iPad Mini",
-    serial_number: "DZ-2024-003",
-    status: "maintenance",
-    last_check_in: "1 hour ago",
-    is_daze_owned: true,
-  },
-];
 
 const mockActivity: MockActivity[] = [
   {
