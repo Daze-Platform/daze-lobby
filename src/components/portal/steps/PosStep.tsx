@@ -46,19 +46,19 @@ type PosProvider =
   | null;
 
 const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo: string }[] = [
-  { id: "toast", name: "Toast", logo: "https://logo.clearbit.com/toasttab.com" },
-  { id: "ncr_aloha", name: "NCR Aloha", logo: "https://logo.clearbit.com/ncr.com" },
-  { id: "par_brink", name: "PAR Brink", logo: "https://logo.clearbit.com/partech.com" },
-  { id: "dinerware", name: "Dinerware", logo: "https://logo.clearbit.com/heartland.us" },
-  { id: "micros_simphony", name: "Micros Simphony", logo: "https://logo.clearbit.com/oracle.com" },
-  { id: "micros_3700", name: "Micros 3700", logo: "https://logo.clearbit.com/oracle.com" },
-  { id: "positouch", name: "POSitouch", logo: "https://logo.clearbit.com/positouch.com" },
-  { id: "squirrel_systems", name: "Squirrel Systems", logo: "https://logo.clearbit.com/squirrelsystems.com" },
-  { id: "xpient", name: "XPIENT", logo: "https://logo.clearbit.com/heartland.us" },
-  { id: "maitred", name: "Maitre'D", logo: "https://logo.clearbit.com/posera.com" },
-  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "https://logo.clearbit.com/ncr.com" },
-  { id: "simphony_fe", name: "Simphony FE", logo: "https://logo.clearbit.com/oracle.com" },
-  { id: "simphonycloud", name: "SimphonyCloud", logo: "https://logo.clearbit.com/oracle.com" },
+  { id: "toast", name: "Toast", logo: "/pos-logos/toast.svg" },
+  { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.svg" },
+  { id: "par_brink", name: "PAR Brink", logo: "" },
+  { id: "dinerware", name: "Dinerware", logo: "" },
+  { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "positouch", name: "POSitouch", logo: "" },
+  { id: "squirrel_systems", name: "Squirrel Systems", logo: "" },
+  { id: "xpient", name: "XPIENT", logo: "" },
+  { id: "maitred", name: "Maitre'D", logo: "" },
+  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "/pos-logos/ncr-aloha.svg" },
+  { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "simphonycloud", name: "SimphonyCloud", logo: "/pos-logos/oracle-micros.svg" },
   { id: "other", name: "Other", logo: "" },
 ];
 
