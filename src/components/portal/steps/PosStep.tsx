@@ -23,6 +23,7 @@ import {
   Copy, 
   Check,
   Store,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
