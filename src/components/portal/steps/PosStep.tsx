@@ -288,6 +288,11 @@ export function PosStep({
     toast.success("Marked as Pending IT Verification", {
       description: "We'll follow up when credentials are received",
     });
+
+    // Collapse and advance to the next step (Device Setup)
+    if (onStepComplete) {
+      onStepComplete();
+    }
   };
 
   const providerInfo = selectedProvider ? PROVIDERS.find(p => p.id === selectedProvider) : null;
