@@ -132,6 +132,11 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
+                {hotel.client_code && (
+                  <span className="text-[9px] sm:text-[10px] font-mono text-muted-foreground bg-muted px-1 sm:px-1.5 py-0.5 rounded shrink-0">
+                    {hotel.client_code}
+                  </span>
+                )}
                 <span className="font-semibold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">
                   {hotel.name}
                 </span>
