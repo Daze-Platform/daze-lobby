@@ -308,7 +308,7 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {activeView === "documents" ? (
           <ClientProvider>
-            <PortalDocuments clientIdOverride={previewClientId} />
+            <PortalDocuments clientIdOverride={effectiveClientId} />
           </ClientProvider>
         ) : (
           <>
