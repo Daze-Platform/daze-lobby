@@ -98,10 +98,11 @@ export default function PostAuth() {
           <Button
             variant="secondary"
             onClick={async () => {
+              const loginPath = isPortalOrigin ? "/portal/login" : "/auth";
               try {
                 await signOut();
               } finally {
-                navigate("/auth", { replace: true });
+                navigate(loginPath, { replace: true });
               }
             }}
           >
