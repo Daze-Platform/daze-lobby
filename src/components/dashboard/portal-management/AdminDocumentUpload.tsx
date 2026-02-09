@@ -32,6 +32,7 @@ export function AdminDocumentUpload({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const logActivity = useLogActivity(clientId);
 
   const categoryMap = {
     pilot_agreement: "Contract",
