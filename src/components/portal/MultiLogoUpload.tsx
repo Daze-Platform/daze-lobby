@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Check, Image, AlertCircle, Moon, Sun, Sparkles } from "lucide-react";
+import { Upload, Check, Image, AlertCircle, Moon, Sun, Images } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ interface MultiLogoUploadProps {
 const createInitialLogos = (existingUrls?: Record<string, string>): LogoVariant[] => [
   { type: "dark", label: "Dark Version", description: "For light backgrounds", existingUrl: existingUrls?.dark },
   { type: "light", label: "Light Version", description: "For dark backgrounds", existingUrl: existingUrls?.light },
-  { type: "icon", label: "Icon/Favicon", description: "Square format, 512x512+", existingUrl: existingUrls?.icon },
+  { type: "icon", label: "Additional Logos", description: "For marketing materials & guest interfaces", existingUrl: existingUrls?.icon },
 ];
 
 export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUploadProps) {
@@ -79,7 +79,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
     switch (type) {
       case "dark": return Moon;
       case "light": return Sun;
-      case "icon": return Sparkles;
+      case "icon": return Images;
       default: return Image;
     }
   };
@@ -170,7 +170,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
         })}
       </div>
 
-      {/* Icon/Favicon - Full width below */}
+      {/* Additional Logos - Full width below */}
       {iconVariant && (() => {
         const hasIconUpload = iconVariant.file || iconVariant.existingUrl;
         const displayIconImage = iconVariant.preview || iconVariant.existingUrl;
@@ -178,7 +178,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
         return (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <Images className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
             <span className="text-sm font-medium">{iconVariant.label}</span>
             {hasIconUpload && (
               <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
