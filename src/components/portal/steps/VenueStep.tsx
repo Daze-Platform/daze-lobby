@@ -16,9 +16,10 @@ interface VenueStepProps {
   data?: Record<string, unknown>;
   venues: Venue[];
   onAddVenue: () => Promise<Venue | undefined>;
-  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string }) => Promise<void>;
+  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => Promise<void>;
   onRemoveVenue: (id: string) => Promise<void>;
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onUploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   onCompleteStep: () => Promise<void>;
   isAdding?: boolean;
   isUpdating?: boolean;
@@ -38,6 +39,7 @@ export function VenueStep({
   onUpdateVenue,
   onRemoveVenue,
   onUploadMenu,
+  onUploadLogo,
   onCompleteStep,
   isAdding,
   isUpdating,
@@ -93,6 +95,7 @@ export function VenueStep({
             onUpdateVenue={onUpdateVenue}
             onRemoveVenue={onRemoveVenue}
             onUploadMenu={onUploadMenu}
+            onUploadLogo={onUploadLogo}
             onCompleteStep={handleCompleteStep}
             isAdding={isAdding}
             isUpdating={isUpdating}

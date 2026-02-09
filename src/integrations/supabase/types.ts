@@ -515,6 +515,7 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
+          logo_url: string | null
           menu_pdf_url: string | null
           name: string
           updated_at: string
@@ -523,6 +524,7 @@ export type Database = {
           client_id: string
           created_at?: string
           id?: string
+          logo_url?: string | null
           menu_pdf_url?: string | null
           name: string
           updated_at?: string
@@ -531,6 +533,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           id?: string
+          logo_url?: string | null
           menu_pdf_url?: string | null
           name?: string
           updated_at?: string

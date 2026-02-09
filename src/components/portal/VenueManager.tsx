@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SaveButton } from "@/components/ui/save-button";
 import { Label } from "@/components/ui/label";
@@ -8,9 +8,10 @@ import { VenueCard, type Venue } from "./VenueCard";
 interface VenueManagerProps {
   venues: Venue[];
   onAddVenue: () => Promise<Venue | undefined>;
-  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string }) => Promise<void>;
+  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => Promise<void>;
   onRemoveVenue: (id: string) => Promise<void>;
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onUploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   onCompleteStep: () => Promise<void>;
   isAdding?: boolean;
   isUpdating?: boolean;
@@ -35,12 +36,14 @@ export function VenueManager({
   onUpdateVenue, 
   onRemoveVenue,
   onUploadMenu,
+  onUploadLogo,
   onCompleteStep,
   isAdding,
   isUpdating,
   isDeleting,
 }: VenueManagerProps) {
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
+  const [uploadingLogos, setUploadingLogos] = useState<Set<string>>(new Set());
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
   
   // Debounced update for venue names
@@ -78,6 +81,19 @@ export function VenueManager({
     await onUploadMenu(venue.id, venue.name, file);
   };
 
+  const handleLogoUpload = async (venue: Venue, file: File) => {
+    setUploadingLogos(prev => new Set(prev).add(venue.id));
+    try {
+      await onUploadLogo(venue.id, venue.name, file);
+    } finally {
+      setUploadingLogos(prev => {
+        const next = new Set(prev);
+        next.delete(venue.id);
+        return next;
+      });
+    }
+  };
+
   const hasValidVenues = venues.length > 0 && venues.some(v => v.name.trim());
 
   return (
@@ -101,9 +117,11 @@ export function VenueManager({
               venue={venue}
               onNameChange={(name) => handleVenueNameChange(venue, name)}
               onMenuUpload={(file) => handleMenuUpload(venue, file)}
+              onLogoUpload={(file) => handleLogoUpload(venue, file)}
               onRemove={() => onRemoveVenue(venue.id)}
               isSaving={pendingUpdates.has(venue.id)}
               isDeleting={isDeleting}
+              isUploadingLogo={uploadingLogos.has(venue.id)}
               autoFocus={venue.id === newlyAddedId}
             />
           ))}

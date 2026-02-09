@@ -24,6 +24,7 @@ interface DbVenue {
   client_id: string;
   name: string;
   menu_pdf_url: string | null;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -378,6 +379,64 @@ export function useClientPortal() {
     },
   });
 
+  // Upload venue logo - ISOLATED PATH: venues/{client_id}/{venue_name}/logo.{ext}
+  const uploadVenueLogoMutation = useMutation({
+    mutationFn: async ({ 
+      venueId,
+      venueName,
+      file 
+    }: { 
+      venueId: string;
+      venueName: string;
+      file: File;
+    }) => {
+      if (!clientId) throw new Error("No client found");
+
+      // Sanitize venue name for path
+      const safeVenueName = venueName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const fileExt = file.name.split(".").pop() || "png";
+      // MULTI-TENANT PATH: venues/{client_id}/{venue_name}/logo.{ext}
+      const filePath = `${clientId}/${safeVenueName}/logo_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("onboarding-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("onboarding-assets")
+        .getPublicUrl(filePath);
+
+      // Update venue with logo URL
+      const { error: updateError } = await supabase
+        .from("venues")
+        .update({ logo_url: urlData?.publicUrl })
+        .eq("id", venueId);
+
+      if (updateError) throw updateError;
+
+      return { path: filePath, url: urlData?.publicUrl };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["venues"] });
+      
+      // Log activity
+      logActivity.mutate({
+        action: "venue_logo_uploaded",
+        details: {
+          venue_name: variables.venueName,
+        },
+      });
+      
+      toast.success("Venue logo uploaded!");
+    },
+    onError: (error) => {
+      toast.error("Failed to upload logo: " + error.message);
+    },
+  });
+
   // Upload file (generic) - maintains client isolation
   const uploadFileMutation = useMutation({
     mutationFn: async ({ 
@@ -452,14 +511,15 @@ export function useClientPortal() {
     },
   });
 
-  // Update single venue (name or menu_pdf_url)
+  // Update single venue (name, menu_pdf_url, or logo_url)
   const updateVenueMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string; logoUrl?: string } }) => {
       if (!clientId) throw new Error("No client found");
       
       const updateData: Record<string, unknown> = {};
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.menuPdfUrl !== undefined) updateData.menu_pdf_url = updates.menuPdfUrl;
+      if (updates.logoUrl !== undefined) updateData.logo_url = updates.logoUrl;
       
       const { error } = await supabase
         .from("venues")
@@ -625,6 +685,7 @@ export function useClientPortal() {
       id: v.id,
       name: v.name,
       menuPdfUrl: v.menu_pdf_url || undefined,
+      logoUrl: v.logo_url || undefined,
     })),
     [venuesData]
   );
@@ -645,6 +706,7 @@ export function useClientPortal() {
     updateTask: updateTaskMutation.mutate,
     uploadLogo: uploadLogoMutation.mutate,
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
+    uploadVenueLogo: uploadVenueLogoMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
     // Individual venue CRUD
     addVenue: addVenueMutation.mutateAsync,
