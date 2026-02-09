@@ -25,7 +25,39 @@ import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { useClient } from "@/contexts/ClientContext";
 
-type PosProvider = "toast" | "micros" | "ncr" | "lavu" | null;
+type PosProvider = 
+  | "toast" 
+  | "ncr_aloha" 
+  | "par_brink" 
+  | "dinerware" 
+  | "micros_simphony" 
+  | "micros_3700" 
+  | "positouch" 
+  | "squirrel_systems" 
+  | "xpient" 
+  | "maitred" 
+  | "ncr_cloud_connect" 
+  | "simphony_fe" 
+  | "simphonycloud" 
+  | "other"
+  | null;
+
+const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo?: string }[] = [
+  { id: "toast", name: "Toast", logo: "/pos-logos/toast.svg" },
+  { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.svg" },
+  { id: "par_brink", name: "PAR Brink" },
+  { id: "dinerware", name: "Dinerware" },
+  { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "positouch", name: "POSitouch" },
+  { id: "squirrel_systems", name: "Squirrel Systems" },
+  { id: "xpient", name: "XPIENT" },
+  { id: "maitred", name: "Maitre'D" },
+  { id: "ncr_cloud_connect", name: "NCR Cloud Connect" },
+  { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "simphonycloud", name: "SimphonyCloud", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "other", name: "Other" },
+];
 
 interface PosStepProps {
   isCompleted: boolean;
@@ -39,34 +71,36 @@ interface PosStepProps {
   isUnlocking?: boolean;
 }
 
-const PROVIDERS = [
-  {
-    id: "toast" as const,
-    name: "Toast",
-    logo: "/pos-logos/toast.svg",
-  },
-  {
-    id: "micros" as const,
-    name: "Oracle MICROS",
-    logo: "/pos-logos/oracle-micros.svg",
-  },
-  {
-    id: "ncr" as const,
-    name: "NCR Aloha",
-    logo: "/pos-logos/ncr-aloha.svg",
-  },
-  {
-    id: "lavu" as const,
-    name: "Lavu",
-    logo: "/pos-logos/lavu.svg",
-  },
-];
+const DEFAULT_INSTRUCTIONS = {
+  headline: "Next Steps for Integration",
+  steps: [
+    "1. Contact your POS vendor's support team",
+    "2. Request API access for third-party integration",
+    "3. Obtain the necessary credentials (API key, store ID, etc.)",
+    "4. Share the credentials securely with Daze support",
+  ],
+  copyText: `POS INTEGRATION REQUEST
 
-const PROVIDER_INSTRUCTIONS: Record<Exclude<PosProvider, null>, {
+Hi,
+
+We are integrating with Daze for our F&B ordering system and need API access configured.
+
+Required Items:
+• API credentials for third-party integration
+• Store/Location ID
+• Menu API access
+• Order API access
+
+Please provide credentials at your earliest convenience.
+
+Thank you!`,
+};
+
+const PROVIDER_INSTRUCTIONS: Partial<Record<Exclude<PosProvider, null>, {
   headline: string;
   steps: string[];
   copyText: string;
-}> = {
+}>> = {
   toast: {
     headline: "Next Steps for Toast",
     steps: [
@@ -91,8 +125,8 @@ Please provide credentials at your earliest convenience.
 
 Thank you!`,
   },
-  micros: {
-    headline: "Next Steps for Oracle MICROS",
+  micros_simphony: {
+    headline: "Next Steps for Micros Simphony",
     steps: [
       "1. Access Oracle Hospitality Integration Platform (OHIP)",
       "2. Navigate to Simphony Web Services (SWS) configuration",
@@ -119,7 +153,7 @@ Credentials needed:
 
 Submit credentials via secure channel.`,
   },
-  ncr: {
+  ncr_aloha: {
     headline: "Next Steps for NCR Aloha",
     steps: [
       "1. Log into Aloha Configuration Center (CFC)",
@@ -144,33 +178,6 @@ Credentials needed:
 • CFC API Key
 • Integration Username & Password
 • Aloha Takeout Endpoint URL
-
-Submit credentials via secure channel.`,
-  },
-  lavu: {
-    headline: "Next Steps for Lavu",
-    steps: [
-      "1. Log into the Lavu Control Panel as Admin",
-      "2. Navigate to Settings > API Access",
-      "3. Generate a new API Key for Daze",
-      "4. Copy the API Key and Location ID",
-    ],
-    copyText: `LAVU POS INTEGRATION REQUEST
-
-IT Team,
-
-Please configure Lavu API access for Daze integration:
-
-Required Configuration:
-• Login to Lavu Control Panel (admin access)
-• Navigate to Settings > Integrations > API
-• Generate new API Key (label: "Daze Integration")
-• Note the Location ID
-
-Credentials needed:
-• Lavu API Key
-• Location ID
-• Account Email
 
 Submit credentials via secure channel.`,
   },
@@ -277,7 +284,12 @@ export function PosStep({
   };
 
   const providerInfo = selectedProvider ? PROVIDERS.find(p => p.id === selectedProvider) : null;
-  const instructions = selectedProvider ? PROVIDER_INSTRUCTIONS[selectedProvider] : null;
+  const instructions = selectedProvider 
+    ? (PROVIDER_INSTRUCTIONS[selectedProvider] || { 
+        ...DEFAULT_INSTRUCTIONS, 
+        headline: `Next Steps for ${providerInfo?.name || "Integration"}` 
+      }) 
+    : null;
 
   return (
     <AccordionItem
@@ -393,7 +405,7 @@ export function PosStep({
 
                 {/* Code block preview */}
                 <div className="relative">
-                  <pre className="bg-slate-900 text-slate-100 text-xs p-4 rounded-xl overflow-x-auto max-h-[160px] overflow-y-auto">
+                  <pre className="bg-muted text-muted-foreground text-xs p-4 rounded-xl overflow-x-auto max-h-[160px] overflow-y-auto border">
                     <code>{instructions?.copyText}</code>
                   </pre>
                 </div>
