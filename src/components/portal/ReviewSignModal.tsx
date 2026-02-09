@@ -9,14 +9,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SignaturePad, SignaturePadRef } from "./SignaturePad";
-import { Check, Loader2, Shield, Calendar, Download, Building2, MapPin, User, Briefcase, Hotel } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Check, Loader2, Shield, Calendar as CalendarIcon, Download, Building2, MapPin, User, Briefcase, Hotel, ChevronDown, Mail, Store, Cpu, DollarSign, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { IconContainer } from "@/components/ui/icon-container";
 import { generateAgreementPdf } from "@/lib/generateAgreementPdf";
+import type { PilotAgreementData } from "@/types/pilotAgreement";
 
 interface AddressData {
   street?: string;
@@ -25,18 +33,9 @@ interface AddressData {
   zip?: string;
 }
 
-interface LegalEntityData {
-  property_name?: string;
-  legal_entity_name?: string;
-  billing_address?: string;
-  authorized_signer_name?: string;
-  authorized_signer_title?: string;
-}
-
 // Helper to parse address string into structured data
 const parseAddress = (address?: string): AddressData => {
   if (!address) return {};
-  // Try to parse "street, city, state ZIP" format
   const parts = address.split(',').map(p => p.trim());
   if (parts.length >= 3) {
     const stateZip = parts[2].split(' ').filter(Boolean);
@@ -73,145 +72,254 @@ interface ReviewSignModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   documentTitle: string;
-  onSign: (signatureDataUrl: string, legalEntityData: LegalEntityData) => void;
+  onSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
   isSubmitting?: boolean;
-  // Existing signature data (for signed state)
   existingSignatureUrl?: string;
   signedAt?: string;
-  // Pre-filled data from database
-  initialLegalEntity?: LegalEntityData;
+  initialLegalEntity?: PilotAgreementData;
 }
 
-// Template for dynamic text injection
-const createAgreementText = (entity: LegalEntityData) => {
-  const entityName = entity.legal_entity_name?.trim() || "[Legal Entity Name]";
-  const address = entity.billing_address?.trim() || "[Registered Address]";
-  const signerName = entity.authorized_signer_name?.trim() || "[Authorized Signer]";
-  const signerTitle = entity.authorized_signer_title?.trim() || "[Title]";
+// Full 13-section agreement text with dynamic injection
+const createAgreementText = (d: PilotAgreementData) => {
+  const name = d.legal_entity_name?.trim() || "[Client Legal Name]";
+  const dba = d.dba_name?.trim() || "[DBA]";
+  const addr = d.billing_address?.trim() || "[Address]";
+  const contact = d.authorized_signer_name?.trim() || "[Primary Contact]";
+  const title = d.authorized_signer_title?.trim() || "[Title]";
+  const email = d.contact_email?.trim() || "[Email]";
+
+  const outlets = (d.covered_outlets || []).filter(o => o.trim());
+  const outletLines = outlets.length > 0
+    ? outlets.map((o, i) => `${i + 1}. ${o}`).join("\n")
+    : "1. _______________\n2. _______________\n3. _______________\n4. _______________";
+
+  const hwNone = d.hardware_option !== "daze_provided" ? "[X]" : "[ ]";
+  const hwDaze = d.hardware_option === "daze_provided" ? "[X]" : "[ ]";
+  const tablets = d.num_tablets != null ? String(d.num_tablets) : "__________";
+  const mounts = d.mounts_stands?.trim() || "____________";
+
+  const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
+  const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
+
+  const pNone = d.pricing_model === "none" ? "[X]" : "[ ]";
+  const pSub = d.pricing_model === "subscription" ? "[X]" : "[ ]";
+  const pDaze = d.pricing_model === "daze_rev_share" ? "[X]" : "[ ]";
+  const pClient = d.pricing_model === "client_rev_share" ? "[X]" : "[ ]";
+  const pAmt = d.pricing_amount?.trim() || "________";
+
+  const posSystem = d.pos_system?.trim() || "_______________";
+  const posVersion = d.pos_version?.trim() || "_______________";
+  const posApiKey = d.pos_api_key?.trim() || "_______________";
+  const posContact = d.pos_contact?.trim() || "_______________";
 
   return `PILOT AGREEMENT
 
-This Pilot Agreement ("Agreement") is entered into as of the date of electronic signature below by and between Daze Technologies, Inc. ("Daze") and ${entityName}, located at ${address} ("Partner"), represented by ${signerName}, ${signerTitle}.
+Daze Technologies Corp.
 
-1. PURPOSE
-This Pilot Agreement establishes the terms and conditions under which the Partner will participate in the Daze platform pilot program.
+This Pilot Agreement ("Agreement") is entered into between Daze Technologies Corp., a Delaware corporation with its principal place of business in Florida ("Daze"), and:
 
-2. PILOT PERIOD
-The pilot period shall commence upon execution of this Agreement and continue for a period of ninety (90) days, unless terminated earlier in accordance with Section 8.
+Client Legal Name: ${name}
+DBA (Doing Business as): ${dba}
+Address: ${addr}
+Primary Contact: ${contact}
+Title: ${title}
+Email: ${email}
 
-3. SERVICES PROVIDED
-During the pilot period, Daze shall provide:
-a) Access to the Daze ordering platform
-b) Hardware installation and setup
-c) Staff training and onboarding support
-d) 24/7 technical support
-e) Analytics and reporting dashboard
+("Client") for the purpose of deploying and evaluating the Daze platform in a live operational environment. This Agreement reflects the parties' shared intent to proceed with a structured pilot as a step toward a long-term commercial relationship governed by Daze's Master Services Agreement ("MSA").
 
-4. PARTNER OBLIGATIONS
-${entityName} agrees to:
-a) Provide accurate brand assets and menu information
-b) Designate ${signerName} as the primary point of contact
-c) Ensure staff participation in training sessions
-d) Maintain operational hours as specified
-e) Provide timely feedback on platform performance
+1. PILOT PURPOSE
 
-5. FEES AND PAYMENT
-During the pilot period, ${entityName} shall pay a reduced pilot fee as specified in the attached Schedule A. Standard pricing shall apply following the pilot period if Partner elects to continue.
+The purpose of this pilot is to deploy the Daze platform within select Client locations to:
+• Validate operational workflows and staff adoption.
+• Improve guest ordering convenience and overall experience.
+• Measure service efficiency, labor impact, and operational benefits.
+• Evaluate revenue performance, guest adoption rates, and return on investment.
 
-6. CONFIDENTIALITY
-Both parties agree to maintain the confidentiality of proprietary information shared during the pilot program.
+The pilot is intended as a pre-commercial implementation to demonstrate operational readiness and mutual fit, not as a proof-of-concept or technology validation exercise.
 
-7. DATA USAGE
-${entityName} grants Daze the right to collect and analyze anonymized operational data for the purpose of improving the platform and services.
+2. PILOT SCOPE
 
-8. TERMINATION
-Either party may terminate this Agreement with thirty (30) days written notice. Upon termination, Daze shall remove all installed hardware within fourteen (14) business days.
+2.1 Covered Outlets
+The Pilot will be conducted at the following F&B outlets and Serviceable areas:
+${outletLines}
 
-9. LIMITATION OF LIABILITY
-Neither party shall be liable for indirect, incidental, or consequential damages arising from this Agreement.
+2.2 Products and Services
+The Pilot may include one or more Daze products, which shall be deployed and rolled out according to a written implementation schedule agreed by both parties ("Implementation Schedule"). Rollout of additional products beyond the initial scope requires written approval from both parties and may trigger revised pilot terms.
 
-10. GOVERNING LAW
-This Agreement shall be governed by the laws of the State of Delaware.
+Available products include:
+• Pool & Beach Mobile Ordering
+• Common Space Digital Ordering
+• Table Pay & Order
+• In-Room Dining
 
-By signing below, ${signerName} on behalf of ${entityName} acknowledges and agrees to the terms set forth in this Pilot Agreement.`;
+2.3 Hardware Selection
+${hwNone} No Daze Hardware Required
+${hwDaze} Daze-Provided Hardware
+• Number of Tablets: ${tablets}
+• Mounts/Stands: ${mounts}
+
+2.4 Enabled Capabilities
+During the Pilot Term, Daze shall provide the following capabilities:
+• Guest mobile ordering via smartphone or tablet.
+• Payment processing and facilitation (Client remains merchant of record).
+• Location-based delivery coordination.
+• Management reporting and analytics dashboard.
+• POS integration with Client's designated point-of-sale system(s).
+• QR Code Access Points: Design and provision of branded QR code signage.
+
+3. PILOT TERM
+
+Start Date: ${startDate}
+Pilot Term: ${termDays} days (recommended: 60-90 days)
+
+The Pilot Term may be extended by mutual written agreement of both parties.
+
+4. RESPONSIBILITIES
+
+4.1 Daze Responsibilities
+Daze shall:
+• Configure and deploy the platform for Covered Outlets.
+• Provide onboard training for Client staff.
+• Provide operational support during business hours.
+• Monitor platform performance and provide reporting.
+• Integrate with Client's designated POS system(s).
+
+4.2 Client Responsibilities
+Client shall:
+• Provide operational access to Covered Outlets, including Wi-Fi and power access.
+• Ensure staff participation in training and day-to-day platform operation.
+• Designate a primary point of contact with authority to make operational decisions.
+• Provide timely feedback on platform performance and guest experience.
+• Maintain PCI DSS compliance for its payment processing systems.
+• Provide API credentials and technical documentation for POS integration.
+
+4.3 Hardware & Physical Materials
+If selected in Section 2.3, Daze shall provide Client with hardware and physical materials ("Hardware"). All such Hardware remains the sole property of Daze and is subject to bailment terms including standard of care, restrictions, recovery & reimbursement, and QR Code IP provisions.
+
+5. PILOT FEES
+
+${pNone} 5.1 No Fees — No fees apply during the Pilot Term.
+
+${pSub} 5.2 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform during the Pilot Term.
+
+${pDaze} 5.3 Daze Revenue Share Fee — Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform.
+
+${pClient} 5.4 Client Revenue Share Fee — Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order.
+
+5.5 Payment Terms
+Any pilot fees will be invoiced by Daze and are due Net 7 from the invoice date, unless otherwise agreed in writing.
+
+6. SETTLEMENT, TIPS, AND CHARGEBACKS
+
+6.1 Settlement — Net food and beverage proceeds, less applicable platform fees, are remitted to Client on a Net 7 settlement basis.
+6.2 Tips and Gratuities — All customer tips are pass-through funds, excluded from platform fee calculations.
+6.3 Payment Disputes and Chargebacks — Client remains solely responsible for all refunds, returns, chargebacks, and payment disputes.
+
+7. PILOT SUCCESS CHECKPOINT & CONTINUITY CLAUSE
+
+During the Pilot Term, the parties agree to conduct a good-faith review of pilot performance (the "Pilot Success Checkpoint"), typically scheduled 14–21 days prior to the end of the Pilot Term.
+
+8. DATA, SECURITY, AND CONFIDENTIALITY
+
+8.1 Data Ownership — Daze retains all rights to the Daze platform; Client retains all rights to Client Data.
+8.2 Data License — Client grants Daze a non-exclusive, perpetual license to use Client Data solely in aggregated and de-identified form.
+8.3 Security Standards — Platform architecture is aligned with SOC 2 Trust Services Criteria.
+8.4 Encryption — AES-256 at rest and TLS 1.2+ in transit.
+8.5 Privacy — Daze shall not sell, rent, or share guest PII with third parties.
+8.6 PCI DSS — No raw credit card data is stored on Daze-managed servers.
+8.7 Incident Response — Daze will notify Client within 48 hours of a confirmed breach.
+8.8 Confidentiality — Both parties agree to maintain confidentiality for 3 years from disclosure.
+
+9. TERMINATION
+
+Either party may terminate this Agreement upon fourteen (14) days' written notice.
+
+10. INDEMNIFICATION
+
+Client shall indemnify and hold harmless Daze from claims arising from Client's use of the Services, products sold, guest complaints, PCI breaches, negligence, or IP infringement.
+
+11. LIMITATION OF LIABILITY
+
+NEITHER PARTY'S LIABILITY SHALL EXCEED FEES PAID UNDER THIS AGREEMENT. NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES.
+
+12. SERVICE LEVEL AGREEMENT
+
+Daze targets 99.5% platform uptime during Client's operating hours (excluding scheduled maintenance).
+
+13. MISCELLANEOUS
+
+13.1 Subcontractors — Daze may use third-party subcontractors (including AWS, payment processors, analytics providers).
+
+13.2 POS Integration
+POS System: ${posSystem}
+Version: ${posVersion}
+API Key: ${posApiKey}
+Who to Contact: ${posContact}
+
+13.3 Governing Law — State of Florida.
+13.4 Dispute Resolution — Good faith negotiation, then courts in Miami-Dade County, Florida.
+13.5 Entire Agreement
+13.6 Amendment — Written instrument signed by both parties.
+13.7 Assignment
+13.8 Force Majeure
+13.9 Severability
+13.10 Counterparts`;
 };
 
 // Highlight injected values in the text
-const HighlightedText = ({ text, entity }: { text: string; entity: LegalEntityData }) => {
-  const entityName = entity.legal_entity_name?.trim();
-  const address = entity.billing_address?.trim();
-  const signerName = entity.authorized_signer_name?.trim();
-  const signerTitle = entity.authorized_signer_title?.trim();
+const HighlightedText = ({ text, entity }: { text: string; entity: PilotAgreementData }) => {
+  const values = [
+    entity.legal_entity_name?.trim(),
+    entity.dba_name?.trim(),
+    entity.billing_address?.trim(),
+    entity.authorized_signer_name?.trim(),
+    entity.authorized_signer_title?.trim(),
+    entity.contact_email?.trim(),
+  ].filter(Boolean) as string[];
 
-  // Create regex patterns for each filled value
-  const patterns: { value: string; isPlaceholder: boolean }[] = [];
-  
-  if (entityName) patterns.push({ value: entityName, isPlaceholder: false });
-  if (address) patterns.push({ value: address, isPlaceholder: false });
-  if (signerName) patterns.push({ value: signerName, isPlaceholder: false });
-  if (signerTitle) patterns.push({ value: signerTitle, isPlaceholder: false });
+  if (values.length === 0) return <>{text}</>;
 
-  // Also highlight placeholders
-  const placeholders = [
-    "[Legal Entity Name]",
-    "[Registered Address]",
-    "[Authorized Signer]",
-    "[Title]"
-  ];
-
-  if (!entityName && !address && !signerName && !signerTitle) {
-    // No values filled yet - just show text with placeholder styling
-    let result = text;
-    placeholders.forEach(ph => {
-      result = result.split(ph).join(`|||PLACEHOLDER:${ph}|||`);
-    });
-
-    return (
-      <>
-        {result.split("|||").map((part, i) => {
-          if (part.startsWith("PLACEHOLDER:")) {
-            const placeholder = part.replace("PLACEHOLDER:", "");
-            return (
-              <span key={i} className="text-muted-foreground italic bg-muted/50 px-1 rounded">
-                {placeholder}
-              </span>
-            );
-          }
-          return <span key={i}>{part}</span>;
-        })}
-      </>
-    );
-  }
-
-  // Split by all dynamic values and highlight them
-  const allValues = patterns.map(p => p.value).filter(Boolean);
-  
-  if (allValues.length === 0) {
-    return <>{text}</>;
-  }
-
-  // Create a regex that matches any of the values
-  const escapedValues = allValues.map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const escapedValues = values.map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const regex = new RegExp(`(${escapedValues.join('|')})`, 'g');
-  
   const parts = text.split(regex);
-  
+
   return (
     <>
       {parts.map((part, i) => {
-        const isHighlighted = allValues.includes(part);
-        if (isHighlighted) {
-          return (
-            <span key={i} className="text-primary font-semibold">
-              {part}
-            </span>
-          );
+        if (values.includes(part)) {
+          return <span key={i} className="text-primary font-semibold">{part}</span>;
         }
         return <span key={i}>{part}</span>;
       })}
     </>
   );
 };
+
+// Collapsible form section component
+function FormSection({ title, icon: Icon, children, defaultOpen = false }: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border border-border/50 bg-secondary/30 overflow-hidden">
+      <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-secondary/60 transition-colors">
+        <div className="flex items-center gap-2">
+          <Icon className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <span className="text-xs font-semibold">{title}</span>
+        </div>
+        <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-3 pb-3 pt-1 space-y-2.5">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
 export function ReviewSignModal({
   open,
@@ -225,22 +333,43 @@ export function ReviewSignModal({
 }: ReviewSignModalProps) {
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [hasSignature, setHasSignature] = useState(false);
-  
-  // Form state
+
+  // Section A: Client Identity
   const [propertyName, setPropertyName] = useState("");
   const [legalEntityName, setLegalEntityName] = useState("");
   const [authorizedSignerName, setAuthorizedSignerName] = useState("");
   const [authorizedSignerTitle, setAuthorizedSignerTitle] = useState("");
-  
-  // Structured address state
+  const [contactEmail, setContactEmail] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
   const [addressCity, setAddressCity] = useState("");
   const [addressState, setAddressState] = useState("");
   const [addressZip, setAddressZip] = useState("");
 
+  // Section B: Pilot Scope
+  const [outlet1, setOutlet1] = useState("");
+  const [outlet2, setOutlet2] = useState("");
+  const [outlet3, setOutlet3] = useState("");
+  const [outlet4, setOutlet4] = useState("");
+  const [hardwareOption, setHardwareOption] = useState<"none" | "daze_provided">("none");
+  const [numTablets, setNumTablets] = useState("");
+  const [mountsStands, setMountsStands] = useState("");
+
+  // Section C: Pilot Term
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [pilotTermDays, setPilotTermDays] = useState("90");
+
+  // Section D: Pricing
+  const [pricingModel, setPricingModel] = useState<"none" | "subscription" | "daze_rev_share" | "client_rev_share">("none");
+  const [pricingAmount, setPricingAmount] = useState("");
+
+  // Section E: POS
+  const [posSystem, setPosSystem] = useState("");
+  const [posVersion, setPosVersion] = useState("");
+  const [posApiKey, setPosApiKey] = useState("");
+  const [posContact, setPosContact] = useState("");
+
   const isSigned = !!existingSignatureUrl;
 
-  // Computed billing address from structured fields
   const billingAddress = formatAddress({
     street: addressStreet,
     city: addressCity,
@@ -248,37 +377,72 @@ export function ReviewSignModal({
     zip: addressZip,
   });
 
-  // Pre-fill from saved data when modal opens
+  // Pre-fill from saved data
   useEffect(() => {
     if (open && initialLegalEntity) {
-      setPropertyName(initialLegalEntity.property_name || "");
-      setLegalEntityName(initialLegalEntity.legal_entity_name || "");
-      setAuthorizedSignerName(initialLegalEntity.authorized_signer_name || "");
-      setAuthorizedSignerTitle(initialLegalEntity.authorized_signer_title || "");
-      
-      // Parse structured address
-      const parsed = parseAddress(initialLegalEntity.billing_address);
+      const d = initialLegalEntity;
+      setPropertyName(d.property_name || "");
+      setLegalEntityName(d.legal_entity_name || "");
+      setAuthorizedSignerName(d.authorized_signer_name || "");
+      setAuthorizedSignerTitle(d.authorized_signer_title || "");
+      setContactEmail(d.contact_email || "");
+
+      const parsed = parseAddress(d.billing_address);
       setAddressStreet(parsed.street || "");
       setAddressCity(parsed.city || "");
       setAddressState(parsed.state || "");
       setAddressZip(parsed.zip || "");
+
+      const outlets = d.covered_outlets || [];
+      setOutlet1(outlets[0] || "");
+      setOutlet2(outlets[1] || "");
+      setOutlet3(outlets[2] || "");
+      setOutlet4(outlets[3] || "");
+      setHardwareOption(d.hardware_option || "none");
+      setNumTablets(d.num_tablets != null ? String(d.num_tablets) : "");
+      setMountsStands(d.mounts_stands || "");
+
+      if (d.start_date) {
+        try { setStartDate(new Date(d.start_date)); } catch { setStartDate(undefined); }
+      }
+      setPilotTermDays(d.pilot_term_days != null ? String(d.pilot_term_days) : "90");
+
+      setPricingModel(d.pricing_model || "none");
+      setPricingAmount(d.pricing_amount || "");
+
+      setPosSystem(d.pos_system || "");
+      setPosVersion(d.pos_version || "");
+      setPosApiKey(d.pos_api_key || "");
+      setPosContact(d.pos_contact || "");
     }
   }, [open, initialLegalEntity]);
 
-  // Current entity data for real-time injection
-  const currentEntity: LegalEntityData = useMemo(() => ({
+  const currentEntity: PilotAgreementData = useMemo(() => ({
     property_name: propertyName,
     legal_entity_name: legalEntityName,
+    dba_name: propertyName, // DBA maps to property name
     billing_address: billingAddress,
     authorized_signer_name: authorizedSignerName,
     authorized_signer_title: authorizedSignerTitle,
-  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle]);
+    contact_email: contactEmail,
+    covered_outlets: [outlet1, outlet2, outlet3, outlet4].filter(o => o.trim()),
+    hardware_option: hardwareOption,
+    num_tablets: numTablets ? parseInt(numTablets, 10) : undefined,
+    mounts_stands: mountsStands,
+    start_date: startDate?.toISOString(),
+    pilot_term_days: pilotTermDays ? parseInt(pilotTermDays, 10) : undefined,
+    pricing_model: pricingModel,
+    pricing_amount: pricingAmount,
+    pos_system: posSystem,
+    pos_version: posVersion,
+    pos_api_key: posApiKey,
+    pos_contact: posContact,
+  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, numTablets, mountsStands, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
 
-  // Generate agreement text with injected values
   const agreementText = useMemo(() => createAgreementText(currentEntity), [currentEntity]);
 
-  // Form validation - all fields required
-  const isFormValid = 
+  // Section A required, B-E optional
+  const isFormValid =
     propertyName.trim().length > 0 &&
     legalEntityName.trim().length > 0 &&
     addressStreet.trim().length > 0 &&
@@ -288,20 +452,12 @@ export function ReviewSignModal({
     authorizedSignerName.trim().length > 0 &&
     authorizedSignerTitle.trim().length > 0;
 
-  const handleSignatureChange = (hasSig: boolean) => {
-    setHasSignature(hasSig);
-  };
+  const handleSignatureChange = (hasSig: boolean) => setHasSignature(hasSig);
 
   const handleConfirmSign = () => {
     const dataUrl = signaturePadRef.current?.getDataUrl();
     if (dataUrl && isFormValid) {
-      onSign(dataUrl, {
-        property_name: propertyName.trim(),
-        legal_entity_name: legalEntityName.trim(),
-        billing_address: billingAddress.trim(),
-        authorized_signer_name: authorizedSignerName.trim(),
-        authorized_signer_title: authorizedSignerTitle.trim(),
-      });
+      onSign(dataUrl, currentEntity);
     }
   };
 
@@ -312,18 +468,13 @@ export function ReviewSignModal({
 
   const handleDownload = async () => {
     await generateAgreementPdf({
-      entity: isSigned && initialLegalEntity ? initialLegalEntity : {
-        legal_entity_name: legalEntityName.trim() || undefined,
-        billing_address: billingAddress.trim() || undefined,
-        authorized_signer_name: authorizedSignerName.trim() || undefined,
-        authorized_signer_title: authorizedSignerTitle.trim() || undefined,
-      },
+      entity: isSigned && initialLegalEntity ? initialLegalEntity : currentEntity,
       signatureDataUrl: existingSignatureUrl,
       signedAt: signedAt,
     });
   };
 
-  const formattedSignedDate = signedAt 
+  const formattedSignedDate = signedAt
     ? format(new Date(signedAt), "MMMM d, yyyy 'at' h:mm a")
     : null;
 
@@ -341,7 +492,7 @@ export function ReviewSignModal({
             )}
           </DialogTitle>
           <DialogDescription className="text-[10px] sm:text-sm">
-            {isSigned 
+            {isSigned
               ? "This agreement has been digitally signed"
               : "Complete entity info below. Details appear in the contract."
             }
@@ -352,127 +503,182 @@ export function ReviewSignModal({
           {/* Left Panel: Form + Agreement Text */}
           <div className="border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 overflow-hidden">
             <ScrollArea className="flex-1">
-              <div className="p-3 sm:p-5 space-y-3 sm:space-y-6">
+              <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
                 {/* Entity Information Form */}
                 {!isSigned && (
-                  <div className="space-y-2.5 sm:space-y-4 p-2.5 sm:p-4 rounded-xl bg-secondary/40 border border-border/50">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <IconContainer icon={Building2} size="sm" variant="primary" />
-                      <div>
-                        <h3 className="font-semibold text-xs sm:text-sm">Entity Information</h3>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          Complete all fields.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2.5 sm:gap-4">
-                      {/* Legal Entity Name */}
-                      <div className="space-y-1">
-                        <Label htmlFor="modal-entity-name" className="text-[10px] sm:text-xs flex items-center gap-1.5">
-                          <Building2 className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                          Legal Entity <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                          id="modal-entity-name"
-                          placeholder="e.g., Hospitality Group, LLC"
-                          value={legalEntityName}
-                          onChange={(e) => setLegalEntityName(e.target.value)}
-                          className="h-8 sm:h-9 text-xs sm:text-sm"
-                        />
-                      </div>
-
-                      {/* Property Name */}
-                      <div className="space-y-1">
-                        <Label htmlFor="modal-property-name" className="text-[10px] sm:text-xs flex items-center gap-1.5">
-                          <Hotel className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                          Property Name <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                          id="modal-property-name"
-                          placeholder="e.g., The Beach Resort"
-                          value={propertyName}
-                          onChange={(e) => setPropertyName(e.target.value)}
-                          className="h-8 sm:h-9 text-xs sm:text-sm"
-                        />
-                      </div>
-
-                      {/* Structured Address */}
-                      <div className="space-y-2">
-                        <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
-                          <MapPin className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                          Address <span className="text-destructive">*</span>
-                        </Label>
-                        <div className="grid gap-2 sm:gap-2.5">
-                          {/* Street Address */}
-                          <Input
-                            id="modal-address-street"
-                            placeholder="Street address"
-                            value={addressStreet}
-                            onChange={(e) => setAddressStreet(e.target.value)}
-                            className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                          {/* City */}
-                          <Input
-                            id="modal-address-city"
-                            placeholder="City"
-                            value={addressCity}
-                            onChange={(e) => setAddressCity(e.target.value)}
-                            className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                          {/* State & ZIP row */}
+                  <div className="space-y-2.5 sm:space-y-3">
+                    {/* Section A: Client Identity (always open) */}
+                    <FormSection title="A — Client Identity" icon={Building2} defaultOpen>
+                      <div className="grid gap-2.5">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                            <Building2 className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                            Legal Entity Name <span className="text-destructive">*</span>
+                          </Label>
+                          <Input placeholder="e.g., Hospitality Group, LLC" value={legalEntityName} onChange={e => setLegalEntityName(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                            <Hotel className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                            DBA / Property Name <span className="text-destructive">*</span>
+                          </Label>
+                          <Input placeholder="e.g., The Beach Resort" value={propertyName} onChange={e => setPropertyName(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                            Address <span className="text-destructive">*</span>
+                          </Label>
+                          <Input placeholder="Street address" value={addressStreet} onChange={e => setAddressStreet(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                          <Input placeholder="City" value={addressCity} onChange={e => setAddressCity(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
                           <div className="grid grid-cols-2 gap-2">
-                            <Input
-                              id="modal-address-state"
-                              placeholder="State"
-                              value={addressState}
-                              onChange={(e) => setAddressState(e.target.value)}
-                              className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
-                            <Input
-                              id="modal-address-zip"
-                              placeholder="ZIP code"
-                              value={addressZip}
-                              onChange={(e) => setAddressZip(e.target.value)}
-                              className="h-8 sm:h-9 text-xs sm:text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
+                            <Input placeholder="State" value={addressState} onChange={e => setAddressState(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                            <Input placeholder="ZIP code" value={addressZip} onChange={e => setAddressZip(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
                           </div>
                         </div>
-                      </div>
-
-                      {/* Signer fields - Stack on mobile */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                        {/* Authorized Signer Name */}
-                        <div className="space-y-1">
-                          <Label htmlFor="modal-signer-name" className="text-[10px] sm:text-xs flex items-center gap-1.5">
-                            <User className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                            Signer Name <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            id="modal-signer-name"
-                            placeholder="Full name"
-                            value={authorizedSignerName}
-                            onChange={(e) => setAuthorizedSignerName(e.target.value)}
-                            className="h-8 sm:h-9 text-xs sm:text-sm"
-                          />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                              <User className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                              Primary Contact <span className="text-destructive">*</span>
+                            </Label>
+                            <Input placeholder="Full name" value={authorizedSignerName} onChange={e => setAuthorizedSignerName(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                              <Briefcase className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                              Title <span className="text-destructive">*</span>
+                            </Label>
+                            <Input placeholder="e.g., GM" value={authorizedSignerTitle} onChange={e => setAuthorizedSignerTitle(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                          </div>
                         </div>
-
-                        {/* Signer Title */}
                         <div className="space-y-1">
-                          <Label htmlFor="modal-signer-title" className="text-[10px] sm:text-xs flex items-center gap-1.5">
-                            <Briefcase className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                            Title <span className="text-destructive">*</span>
+                          <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
+                            <Mail className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
+                            Email
                           </Label>
-                          <Input
-                            id="modal-signer-title"
-                            placeholder="e.g., GM"
-                            value={authorizedSignerTitle}
-                            onChange={(e) => setAuthorizedSignerTitle(e.target.value)}
-                            className="h-8 sm:h-9 text-xs sm:text-sm"
-                          />
+                          <Input type="email" placeholder="contact@example.com" value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
                         </div>
                       </div>
-                    </div>
+                    </FormSection>
+
+                    {/* Section B: Pilot Scope */}
+                    <FormSection title="B — Pilot Scope" icon={Store}>
+                      <div className="space-y-2.5">
+                        <Label className="text-[10px] sm:text-xs text-muted-foreground">Covered Outlets (F&B Outlet & Service Area)</Label>
+                        {[
+                          { val: outlet1, set: setOutlet1 },
+                          { val: outlet2, set: setOutlet2 },
+                          { val: outlet3, set: setOutlet3 },
+                          { val: outlet4, set: setOutlet4 },
+                        ].map((o, i) => (
+                          <Input key={i} placeholder={`Outlet ${i + 1}`} value={o.val} onChange={e => o.set(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                        ))}
+                        <div className="pt-2 space-y-2">
+                          <Label className="text-[10px] sm:text-xs text-muted-foreground">Hardware Selection</Label>
+                          <RadioGroup value={hardwareOption} onValueChange={v => setHardwareOption(v as "none" | "daze_provided")} className="gap-2">
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="none" id="hw-none" />
+                              <Label htmlFor="hw-none" className="text-xs font-normal cursor-pointer">No Daze Hardware Required</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="daze_provided" id="hw-daze" />
+                              <Label htmlFor="hw-daze" className="text-xs font-normal cursor-pointer">Daze-Provided Hardware</Label>
+                            </div>
+                          </RadioGroup>
+                          {hardwareOption === "daze_provided" && (
+                            <div className="grid grid-cols-2 gap-2 pl-6">
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground">Tablets</Label>
+                                <Input type="number" min="0" placeholder="0" value={numTablets} onChange={e => setNumTablets(e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground">Mounts/Stands</Label>
+                                <Input placeholder="e.g., Wall mount x2" value={mountsStands} onChange={e => setMountsStands(e.target.value)} className="h-8 text-xs" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </FormSection>
+
+                    {/* Section C: Pilot Term */}
+                    <FormSection title="C — Pilot Term" icon={Clock}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] sm:text-xs text-muted-foreground">Start Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className={cn("w-full h-8 sm:h-9 justify-start text-xs sm:text-sm font-normal", !startDate && "text-muted-foreground")}>
+                                <CalendarIcon className="w-3.5 h-3.5 mr-2" />
+                                {startDate ? format(startDate, "PPP") : "Pick a date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="p-3 pointer-events-auto" />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] sm:text-xs text-muted-foreground">Pilot Term (days)</Label>
+                          <Input type="number" min="1" placeholder="90" value={pilotTermDays} onChange={e => setPilotTermDays(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                        </div>
+                      </div>
+                    </FormSection>
+
+                    {/* Section D: Pricing */}
+                    <FormSection title="D — Pricing" icon={DollarSign}>
+                      <RadioGroup value={pricingModel} onValueChange={v => setPricingModel(v as typeof pricingModel)} className="gap-2">
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="none" id="pr-none" />
+                          <Label htmlFor="pr-none" className="text-xs font-normal cursor-pointer">No Fees</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="subscription" id="pr-sub" />
+                          <Label htmlFor="pr-sub" className="text-xs font-normal cursor-pointer">Subscription Fee ($)</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="daze_rev_share" id="pr-daze" />
+                          <Label htmlFor="pr-daze" className="text-xs font-normal cursor-pointer">Daze Revenue Share (%)</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="client_rev_share" id="pr-client" />
+                          <Label htmlFor="pr-client" className="text-xs font-normal cursor-pointer">Client Revenue Share (%)</Label>
+                        </div>
+                      </RadioGroup>
+                      {pricingModel !== "none" && (
+                        <div className="space-y-1 pt-1">
+                          <Label className="text-[10px] text-muted-foreground">
+                            {pricingModel === "subscription" ? "Amount ($)" : "Percentage (%)"}
+                          </Label>
+                          <Input placeholder={pricingModel === "subscription" ? "e.g., 500" : "e.g., 15"} value={pricingAmount} onChange={e => setPricingAmount(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                      )}
+                    </FormSection>
+
+                    {/* Section E: POS Integration */}
+                    <FormSection title="E — POS Integration" icon={Cpu}>
+                      <div className="grid gap-2.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">POS System</Label>
+                            <Input placeholder="e.g., Toast" value={posSystem} onChange={e => setPosSystem(e.target.value)} className="h-8 text-xs" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Version</Label>
+                            <Input placeholder="e.g., v3.2" value={posVersion} onChange={e => setPosVersion(e.target.value)} className="h-8 text-xs" />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground">API Key</Label>
+                          <Input placeholder="API key for integration" value={posApiKey} onChange={e => setPosApiKey(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground">Who to Contact</Label>
+                          <Input placeholder="IT contact name" value={posContact} onChange={e => setPosContact(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                      </div>
+                    </FormSection>
                   </div>
                 )}
 
@@ -512,7 +718,6 @@ export function ReviewSignModal({
             </div>
             <div className="flex-1 p-3 sm:p-6 flex flex-col min-h-0 overflow-auto">
               {isSigned ? (
-                /* ========== SIGNED STATE ========== */
                 <div className="space-y-6">
                   <div className="text-center space-y-2">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/10 text-success mb-2">
@@ -524,7 +729,6 @@ export function ReviewSignModal({
                     </p>
                   </div>
 
-                  {/* Entity Summary */}
                   {initialLegalEntity && (
                     <div className="p-4 bg-muted/30 rounded-lg space-y-2 text-sm">
                       {initialLegalEntity.property_name && (
@@ -536,19 +740,18 @@ export function ReviewSignModal({
                     </div>
                   )}
 
-                  {/* Signature Image Display */}
                   <div className="border rounded-lg p-4 bg-white dark:bg-background">
                     <p className="text-xs text-muted-foreground mb-2">Signature:</p>
                     <div className="border-b-2 border-muted pb-2">
-                      <img 
-                        src={existingSignatureUrl} 
+                      <img
+                        src={existingSignatureUrl}
                         alt="Digital Signature"
                         className="h-[100px] w-auto mx-auto object-contain"
                       />
                     </div>
                     {formattedSignedDate && (
                       <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3" strokeWidth={1.5} />
+                        <CalendarIcon className="w-3 h-3" strokeWidth={1.5} />
                         <span>Digitally Signed on {formattedSignedDate}</span>
                       </div>
                     )}
@@ -556,19 +759,18 @@ export function ReviewSignModal({
 
                   <div className="bg-muted/50 rounded-lg p-4 text-center">
                     <p className="text-xs text-muted-foreground">
-                      This signature is securely stored and timestamped. 
+                      This signature is securely stored and timestamped.
                       The document cannot be modified after signing.
                     </p>
                   </div>
                 </div>
               ) : (
-                /* ========== SIGNING STATE ========== */
                 <>
                   <div className="flex-1 flex flex-col min-h-0">
                     {!isFormValid && (
                       <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
                         <p className="text-xs text-warning font-medium">
-                          Complete all entity information fields to enable signing.
+                          Complete all required fields in Section A to enable signing.
                         </p>
                       </div>
                     )}
@@ -579,9 +781,9 @@ export function ReviewSignModal({
                       "transition-opacity",
                       !isFormValid && "opacity-50 pointer-events-none"
                     )}>
-                      <SignaturePad 
+                      <SignaturePad
                         ref={signaturePadRef}
-                        onSignatureChange={handleSignatureChange} 
+                        onSignatureChange={handleSignatureChange}
                       />
                     </div>
                   </div>
