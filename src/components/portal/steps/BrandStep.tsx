@@ -6,13 +6,10 @@ import {
 } from "@/components/ui/accordion";
 import { SaveButton } from "@/components/ui/save-button";
 import { cn } from "@/lib/utils";
-import { ColorPaletteManager } from "../ColorPaletteManager";
-import { MultiLogoUpload } from "../MultiLogoUpload";
-import { BrandDocumentUpload } from "../BrandDocumentUpload";
+import { PropertyBrandManager, type PropertyBrand } from "../PropertyBrandManager";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { useLogActivity } from "@/hooks/useLogActivity";
-import { OrDivider } from "@/components/ui/or-divider";
 import { useClient } from "@/contexts/ClientContext";
 
 interface BrandStepProps {
@@ -20,14 +17,13 @@ interface BrandStepProps {
   isLocked: boolean;
   isActive?: boolean;
   data?: Record<string, unknown>;
-  onSave: (data: { brand_palette: string[]; logos: Record<string, File> }) => void;
-  onLogoUpload: (file: File, variant: string) => void;
-  onDocumentUpload?: (file: File, fieldName: string) => void;
+  onSave: (data: { properties: PropertyBrand[] }) => void;
+  onLogoUpload: (propertyId: string, file: File, variant: string) => void;
+  onDocumentUpload?: (propertyId: string, file: File) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
-  paletteDocumentUrl?: string | null;
 }
 
 export function BrandStep({ 
@@ -42,11 +38,9 @@ export function BrandStep({
   onStepComplete,
   isJustCompleted,
   isUnlocking,
-  paletteDocumentUrl
 }: BrandStepProps) {
   const { clientId } = useClient();
   const logActivity = useLogActivity(clientId);
-  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted 
@@ -56,46 +50,73 @@ export function BrandStep({
       : isActive 
         ? "active" 
         : "pending";
-  const [colors, setColors] = useState<string[]>(
-    (data?.brand_palette as string[]) || ["#3B82F6"]
-  );
-  const [logos, setLogos] = useState<Record<string, File>>({});
+
+  // Initialize properties from saved data or empty
+  const [properties, setProperties] = useState<PropertyBrand[]>(() => {
+    const savedProperties = data?.properties as PropertyBrand[] | undefined;
+    if (savedProperties && Array.isArray(savedProperties) && savedProperties.length > 0) {
+      return savedProperties;
+    }
+    // Legacy support: convert old format
+    const legacyColors = data?.brand_palette as string[] | undefined;
+    const legacyLogos = data?.logos as Record<string, string> | undefined;
+    if (legacyColors || legacyLogos) {
+      return [{
+        id: "property-default",
+        name: "Main Property",
+        logos: {},
+        logoUrls: legacyLogos,
+        colors: legacyColors || ["#3B82F6"],
+        isExpanded: true,
+      }];
+    }
+    return [];
+  });
 
   // Sync with external data when it changes
   useEffect(() => {
-    if (data?.brand_palette && Array.isArray(data.brand_palette)) {
-      setColors(data.brand_palette as string[]);
+    const savedProperties = data?.properties as PropertyBrand[] | undefined;
+    if (savedProperties && Array.isArray(savedProperties)) {
+      setProperties(savedProperties);
     }
-  }, [data?.brand_palette]);
+  }, [data?.properties]);
 
-  const handleLogosChange = (newLogos: Record<string, File>) => {
-    setLogos(newLogos);
-    // Upload each logo immediately
-    Object.entries(newLogos).forEach(([variant, file]) => {
-      onLogoUpload(file, variant);
-    });
+  const handlePropertiesChange = (updated: PropertyBrand[]) => {
+    setProperties(updated);
   };
 
-  const handleDocumentUpload = (file: File) => {
+  const handleLogoUpload = (propertyId: string, file: File, variant: string) => {
+    onLogoUpload(propertyId, file, variant);
+  };
+
+  const handleDocumentUpload = (propertyId: string, file: File) => {
     if (onDocumentUpload) {
-      setIsUploadingDocument(true);
-      onDocumentUpload(file, "palette_document");
-      // Reset uploading state after a delay (real upload happens via parent)
-      setTimeout(() => setIsUploadingDocument(false), 1500);
+      onDocumentUpload(propertyId, file);
     }
   };
 
   const handleSave = async () => {
-    await onSave({ brand_palette: colors, logos });
+    await onSave({ properties });
     
     // Log activity
     logActivity.mutate({
       action: "brand_updated",
       details: {
-        color_count: colors.length,
+        property_count: properties.length,
+        properties: properties.map(p => ({
+          name: p.name,
+          color_count: p.colors.length,
+          has_logos: Object.keys(p.logos).length > 0,
+        })),
       },
     });
   };
+
+  const hasAtLeastOneProperty = properties.length > 0;
+  const allPropertiesHaveBranding = properties.every(p => 
+    (Object.keys(p.logos).length > 0 || Object.keys(p.logoUrls || {}).length > 0) || 
+    p.colors.length > 0
+  );
 
   return (
     <AccordionItem 
@@ -117,49 +138,27 @@ export function BrandStep({
           />
           <div className="text-left min-w-0">
             <p className="font-semibold text-xs sm:text-sm md:text-base truncate">Brand Identity</p>
-            <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">Upload logos and define your color palette</p>
+            <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">
+              Add properties and configure branding for each
+            </p>
           </div>
         </div>
       </AccordionTrigger>
       <AccordionContent className="pb-3 sm:pb-4">
         <div className="space-y-4 sm:space-y-6 pt-1 sm:pt-2">
-          {/* Multi Logo Upload */}
-          <MultiLogoUpload onLogosChange={handleLogosChange} />
-
-          {/* Brand Colors Section */}
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium">Brand Colors</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload your brand guidelines document or manually define your color palette below.
-              </p>
-            </div>
-
-            {/* Option 1: Document Upload */}
-            <BrandDocumentUpload
-              onUpload={handleDocumentUpload}
-              existingUrl={paletteDocumentUrl}
-              isUploading={isUploadingDocument}
-              label="Upload Brand Guidelines"
-              description="PDF, PNG, or image with your official color palette"
-            />
-
-            {/* OR Divider */}
-            <OrDivider />
-
-            {/* Option 2: Manual Color Picker */}
-            <ColorPaletteManager 
-              colors={colors} 
-              onChange={setColors} 
-              maxColors={5}
-            />
-          </div>
+          <PropertyBrandManager
+            properties={properties}
+            onChange={handlePropertiesChange}
+            onLogoUpload={handleLogoUpload}
+            onDocumentUpload={handleDocumentUpload}
+          />
 
           <SaveButton 
             onClick={handleSave}
             onSuccess={onStepComplete}
             className="w-full min-h-[44px]"
-            idleText="Save Brand Settings"
+            idleText={hasAtLeastOneProperty ? "Save Brand Settings" : "Add a property first"}
+            disabled={!hasAtLeastOneProperty}
           />
         </div>
       </AccordionContent>

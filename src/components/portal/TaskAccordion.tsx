@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { LegalStep, BrandStep, VenueStep, PosStep, DevicesStep } from "./steps";
 import type { Venue } from "./VenueCard";
+import type { PropertyBrand } from "./PropertyBrandManager";
 
 interface OnboardingTask {
   key: string;
@@ -106,16 +107,16 @@ export function TaskAccordion({
     }, 1000);
   }, []);
 
-  const handleBrandSave = async (data: { brand_palette: string[]; logos: Record<string, File> }) => {
-    onTaskUpdate("brand", { brand_palette: data.brand_palette });
+  const handleBrandSave = async (data: { properties: PropertyBrand[] }) => {
+    onTaskUpdate("brand", { properties: data.properties });
   };
 
-  const handleLogoUpload = (file: File, variant: string) => {
-    onFileUpload("brand", file, `logo_${variant}`);
+  const handleLogoUpload = (propertyId: string, file: File, variant: string) => {
+    onFileUpload("brand", file, `logo_${propertyId}_${variant}`);
   };
 
-  const handleBrandDocumentUpload = (file: File, fieldName: string) => {
-    onFileUpload("brand", file, fieldName);
+  const handleBrandDocumentUpload = (propertyId: string, file: File) => {
+    onFileUpload("brand", file, `palette_document_${propertyId}`);
   };
 
   const handleLegalSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
@@ -167,7 +168,6 @@ export function TaskAccordion({
         onStepComplete={handleBrandComplete}
         isJustCompleted={recentlyCompleted === "brand"}
         isUnlocking={unlockingStep === "brand"}
-        paletteDocumentUrl={(getTaskData("brand")?.data?.palette_document_url as string) || null}
       />
       
       <VenueStep
