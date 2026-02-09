@@ -35,6 +35,8 @@ interface PortalHeaderProps {
   unreadNotificationCount?: number;
   // Back to dashboard for admin viewing
   onBackToDashboard?: () => void;
+  // Document count for badge on Documents tab
+  documentCount?: number;
 }
 
 // Generate initials from name or email
