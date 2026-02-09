@@ -102,7 +102,7 @@ export function useClientPortal() {
       legalEntityData,
     }: { 
       signatureDataUrl: string;
-      legalEntityData?: {
+      legalEntityData?: Record<string, unknown> & {
         property_name?: string;
         legal_entity_name?: string;
         billing_address?: string;
