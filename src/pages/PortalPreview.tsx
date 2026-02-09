@@ -17,6 +17,7 @@ import { ClipboardList, FileText, Clock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { ClientProvider } from "@/contexts/ClientContext";
 
 /**
