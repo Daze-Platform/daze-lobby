@@ -36,7 +36,7 @@ export function AdminBrandPosControls({
     
     setPosInstructions(currentPosInstructions || "");
     setLogoPreview(currentLogoUrl || null);
-  }, [currentBrandPalette, currentPosInstructions, currentLogoUrl]);
+  }, [currentPosInstructions, currentLogoUrl]);
 
   
 
