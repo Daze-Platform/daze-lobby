@@ -168,7 +168,27 @@ function ContactCard({ contact }: { contact: MockContact }) {
   );
 }
 
-function DeviceCard({ device }: { device: MockDevice }) {
+interface DeviceRow {
+  id: string;
+  device_type: string;
+  serial_number: string;
+  status: "online" | "offline" | "maintenance";
+  last_check_in: string | null;
+  is_daze_owned: boolean;
+}
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return `${seconds} sec ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} days ago`;
+}
+
+function DeviceCard({ device }: { device: DeviceRow }) {
   const statusConfig = {
     online: { color: "bg-emerald-500", label: "Online" },
     offline: { color: "bg-destructive", label: "Offline" },
