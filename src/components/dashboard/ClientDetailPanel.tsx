@@ -50,15 +50,6 @@ interface MockContact {
   is_primary: boolean;
 }
 
-interface MockDevice {
-  id: string;
-  device_type: string;
-  serial_number: string;
-  status: "online" | "offline" | "maintenance";
-  last_check_in: string;
-  is_daze_owned: boolean;
-}
-
 interface MockActivity {
   id: string;
   action: string;
