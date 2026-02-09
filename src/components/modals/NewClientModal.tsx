@@ -377,13 +377,21 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                           <Input
-                            placeholder="Name"
-                            value={contact.name}
-                            onChange={(e) => updateContact(contact.id, "name", e.target.value)}
+                            placeholder="First name"
+                            value={contact.firstName}
+                            onChange={(e) => updateContact(contact.id, "firstName", e.target.value)}
                             className="h-8 text-sm"
                           />
+                          <Input
+                            placeholder="Last name"
+                            value={contact.lastName}
+                            onChange={(e) => updateContact(contact.id, "lastName", e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
                           <Input
                             placeholder="Email"
                             type="email"
