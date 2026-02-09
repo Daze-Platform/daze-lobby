@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   Copy, 
   Check,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
@@ -45,19 +46,19 @@ type PosProvider =
   | null;
 
 const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo?: string }[] = [
-  { id: "toast", name: "Toast", logo: "/pos-logos/toast.svg" },
-  { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.svg" },
-  { id: "par_brink", name: "PAR Brink" },
-  { id: "dinerware", name: "Dinerware" },
-  { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/oracle-micros.svg" },
-  { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "toast", name: "Toast", logo: "https://logo.clearbit.com/toasttab.com" },
+  { id: "ncr_aloha", name: "NCR Aloha", logo: "https://logo.clearbit.com/ncr.com" },
+  { id: "par_brink", name: "PAR Brink", logo: "https://logo.clearbit.com/partech.com" },
+  { id: "dinerware", name: "Dinerware", logo: "https://logo.clearbit.com/heartland.us" },
+  { id: "micros_simphony", name: "Micros Simphony", logo: "https://logo.clearbit.com/oracle.com" },
+  { id: "micros_3700", name: "Micros 3700", logo: "https://logo.clearbit.com/oracle.com" },
   { id: "positouch", name: "POSitouch" },
-  { id: "squirrel_systems", name: "Squirrel Systems" },
-  { id: "xpient", name: "XPIENT" },
-  { id: "maitred", name: "Maitre'D" },
-  { id: "ncr_cloud_connect", name: "NCR Cloud Connect" },
-  { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/oracle-micros.svg" },
-  { id: "simphonycloud", name: "SimphonyCloud", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "squirrel_systems", name: "Squirrel Systems", logo: "https://logo.clearbit.com/squirrelsystems.com" },
+  { id: "xpient", name: "XPIENT", logo: "https://logo.clearbit.com/heartland.us" },
+  { id: "maitred", name: "Maitre'D", logo: "https://logo.clearbit.com/posera.com" },
+  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "https://logo.clearbit.com/ncr.com" },
+  { id: "simphony_fe", name: "Simphony FE", logo: "https://logo.clearbit.com/oracle.com" },
+  { id: "simphonycloud", name: "SimphonyCloud", logo: "https://logo.clearbit.com/oracle.com" },
   { id: "other", name: "Other" },
 ];
 
@@ -357,12 +358,20 @@ export function PosStep({
                     {PROVIDERS.map((provider) => (
                       <SelectItem key={provider.id} value={provider.id}>
                         <div className="flex items-center gap-3">
-                          {provider.logo && (
-                            <img 
-                              src={provider.logo} 
-                              alt={`${provider.name} logo`}
-                              className="w-6 h-6 object-contain rounded"
-                            />
+                          {provider.logo ? (
+                            <div className="w-6 h-6 rounded-sm bg-white border border-border/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <img 
+                                src={provider.logo} 
+                                alt={`${provider.name} logo`}
+                                className="w-5 h-5 object-contain"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
+                              />
+                              <Store className="w-3.5 h-3.5 text-muted-foreground hidden" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-sm bg-muted/50 border border-border/50 flex items-center justify-center flex-shrink-0">
+                              <Store className="w-3.5 h-3.5 text-muted-foreground" />
+                            </div>
                           )}
                           <span className="font-medium">{provider.name}</span>
                         </div>
@@ -407,12 +416,18 @@ export function PosStep({
 
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                  {providerInfo && (
-                    <img 
-                      src={providerInfo.logo} 
-                      alt={`${providerInfo.name} logo`}
-                      className="w-10 h-10 object-contain rounded-lg"
-                    />
+                  {providerInfo?.logo ? (
+                    <div className="w-12 h-12 rounded-lg bg-white border border-border/50 flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0">
+                      <img 
+                        src={providerInfo.logo} 
+                        alt={`${providerInfo.name} logo`}
+                        className="w-10 h-10 object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center flex-shrink-0">
+                      <Store className="w-6 h-6 text-muted-foreground" />
+                    </div>
                   )}
                   <h3 className="font-semibold text-lg">{instructions?.headline}</h3>
                 </div>
