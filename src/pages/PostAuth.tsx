@@ -62,7 +62,8 @@ export default function PostAuth() {
     if (loading) return;
 
     if (!isAuthenticated) {
-      navigate("/auth", { replace: true, state: { from: location } });
+      const loginPath = isPortalOrigin ? "/portal/login" : "/auth";
+      navigate(loginPath, { replace: true, state: { from: location } });
       return;
     }
 
