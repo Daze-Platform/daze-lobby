@@ -11,6 +11,7 @@ interface Client {
   onboarding_progress: number | null;
   brand_palette: string[] | null;
   logo_url: string | null;
+  client_code: string | null;
   // Legal entity fields
   legal_entity_name: string | null;
   billing_address: string | null;
@@ -60,6 +61,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
             onboarding_progress,
             brand_palette,
             logo_url,
+            client_code,
             legal_entity_name,
             billing_address,
             authorized_signer_name,
@@ -84,7 +86,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
+        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .order("name", { ascending: true });
 
       if (error) throw error;
@@ -104,7 +106,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
       
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
+        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .eq("id", selectedClientId)
         .single();
 

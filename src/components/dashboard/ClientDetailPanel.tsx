@@ -324,6 +324,11 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
             <div className="flex-1 min-w-0">
               <SheetTitle className="text-lg truncate">{hotel.name}</SheetTitle>
               <SheetDescription className="flex items-center gap-2 mt-1">
+                {hotel.client_code && (
+                  <Badge variant="outline" className="text-2xs font-mono">
+                    {hotel.client_code}
+                  </Badge>
+                )}
                 <Badge variant="secondary" className="text-2xs capitalize">
                   {hotel.phase.replace("_", " ")}
                 </Badge>
