@@ -1,160 +1,135 @@
 
 
-# URL Routing Refinement: Separate Admin Portal View from Client Portal
+# Add Google OAuth to Partner Portal Login (`/portal/login`)
 
-## Problem Statement
+## Overview
 
-Currently, both admin users and client users access the portal at the same URL (`/portal`). While the code correctly shows different interfaces based on role (admins see the hotel switcher, clients see only their property), sharing the same URL creates potential confusion:
+Add Google Sign-In capability to the Partner Portal login page, allowing clients to authenticate using their Google accounts in addition to email/password.
 
-1. **URL semantics**: An admin viewing at `/portal` could be confusing since it's the same URL clients use
-2. **Accidental exposure risk**: If routing logic ever fails, clients could theoretically see admin UI elements
-3. **Deep linking complexity**: When sharing URLs or debugging, there's no clear distinction in the URL path
+## Current State
 
-## Proposed Solution
+- **`/portal/login`** uses `ClientLoginForm.tsx` which only supports email/password authentication
+- **`/auth`** uses `LoginForm.tsx` which already has working Google OAuth via `lovable.auth.signInWithOAuth("google")`
+- The Lovable Cloud auth integration (`@lovable.dev/cloud-auth-js`) is already configured and provides managed Google OAuth
 
-Introduce a dedicated admin route (`/portal/admin`) for Control Tower users to view client portals, while keeping `/portal` exclusively for actual clients.
+## Implementation Approach
 
-## Route Structure After Changes
+Follow the existing pattern from `LoginForm.tsx` to add Google OAuth to `ClientLoginForm.tsx`:
+
+### Changes to `ClientLoginForm.tsx`
+
+1. **Add Google loading state**
+   ```tsx
+   const [googleLoading, setGoogleLoading] = useState(false);
+   ```
+
+2. **Import the Lovable auth module**
+   ```tsx
+   import { lovable } from "@/integrations/lovable";
+   ```
+
+3. **Add Google sign-in handler**
+   ```tsx
+   const handleGoogleSignIn = async () => {
+     setGoogleLoading(true);
+     setError(null);
+     try {
+       const { error } = await lovable.auth.signInWithOAuth("google", {
+         redirect_uri: window.location.origin,
+       });
+       if (error) {
+         setError(error.message || "Failed to sign in with Google");
+         toast({ title: "Google Sign In Failed", ... });
+       }
+     } catch (err) { ... }
+     finally { setGoogleLoading(false); }
+   };
+   ```
+
+4. **Add UI elements**
+   - "Or continue with" divider after the email/password form
+   - Google sign-in button with proper styling (accent-colored for Partner Portal branding)
+
+### UI Layout After Changes
 
 ```text
-/portal           → Client-only portal (clean, no switcher)
-/portal/admin     → Admin portal viewer (with hotel switcher)
-/portal/login     → Client login page (no change)
-/portal-preview   → Public demo (no change)
+┌─────────────────────────────────────────┐
+│            [Daze Logo]                  │
+│          Partner Portal                 │
+│          Welcome back                   │
+│    Access your onboarding portal        │
+│                                         │
+│  Email: [_________________________]     │
+│  Password: [___________________] 👁     │
+│                                         │
+│  [████ Sign In to Portal ████]          │
+│                                         │
+│  ─────── Or continue with ───────       │
+│                                         │
+│  [🟡 Sign in with Google]               │  <-- NEW
+│                                         │
+│  📧 Need help? Contact support          │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## Technical Implementation
+## Files to Modify
 
-### 1. Create Admin Portal Viewer Route
-
-**New File:** `src/pages/PortalAdmin.tsx`
-
-A dedicated page for admins to view client portals with the hotel switcher. This component will:
-- Require admin/ops_manager/support role
-- Show the `AdminHotelSwitcher` prominently
-- Display the selected client's portal in the same UI as current
-- Redirect non-admin users to `/portal`
-
-### 2. Update `/portal` Route to be Client-Only
-
-**Modify:** `src/pages/Portal.tsx`
-
-- Remove the admin-specific UI elements (AdminHotelSwitcher, "ADMIN" badge)
-- If an admin accidentally navigates here, redirect them to `/portal/admin`
-- Clean, focused experience for clients only
-
-### 3. Update Routing in App.tsx
-
-**Modify:** `src/App.tsx`
-
-```text
-/portal       → PortalRoute (clients only) → Portal
-/portal/admin → RoleBasedRoute (admin roles) → PortalAdmin
-```
-
-### 4. Update PortalRoute Guard
-
-**Modify:** `src/components/layout/PortalRoute.tsx`
-
-- Add logic to redirect admin users from `/portal` to `/portal/admin`
-- Keep existing client access validation
+| File | Changes |
+|------|---------|
+| `src/components/auth/ClientLoginForm.tsx` | Add Google OAuth button, handler, and loading state |
 
 ---
 
-## File Changes Summary
+## Technical Details
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/pages/PortalAdmin.tsx` | Create | Admin-only portal viewer with hotel switcher |
-| `src/pages/Portal.tsx` | Modify | Remove admin UI, make client-only |
-| `src/components/layout/PortalRoute.tsx` | Modify | Redirect admins to `/portal/admin` |
-| `src/App.tsx` | Modify | Add `/portal/admin` route |
-| `src/components/portal/PortalHeader.tsx` | Modify | Remove admin-specific props for client view |
-| `src/pages/PostAuth.tsx` | Modify | Update admin redirect to `/portal/admin` if they were intended for portal |
+### Google Button Styling
+- Use `variant="outline"` with accent border for Partner Portal branding
+- Match the rounded-xl style of other form elements
+- Disabled when either email/password or Google sign-in is loading
 
----
-
-## Detailed Component Changes
-
-### PortalAdmin.tsx (New File)
-
+### Authentication Flow
 ```text
-Structure:
-- Uses all existing admin logic from Portal.tsx
-- Always shows AdminHotelSwitcher
-- Shows "Control Tower Portal View" branding
-- Reuses existing TaskAccordion, ProgressRing, etc.
-- Has "Back to Dashboard" link
+User clicks "Sign in with Google"
+    ↓
+lovable.auth.signInWithOAuth("google") is called
+    ↓
+User is redirected to Google consent screen
+    ↓
+After consent, redirected back to origin
+    ↓
+Session is established via Lovable Cloud
+    ↓
+useAuth hook detects session
+    ↓
+Redirect to /post-auth
+    ↓
+PostAuth routes client to /portal
 ```
 
-### Portal.tsx Changes
-
-```text
-Before:
-- Checks isAdmin and shows AdminHotelSwitcher
-- Shows "ADMIN" badge when isAdminViewing
-
-After:
-- Redirect if isAdmin → /portal/admin
-- No AdminHotelSwitcher
-- No admin badge
-- Clean client-only experience
-```
-
-### PortalRoute.tsx Changes
-
-```text
-Before:
-if (!isClient(role) && !isAdmin) → redirect to /
-
-After:
-if (isAdmin) → redirect to /portal/admin
-if (!isClient(role)) → redirect to /
-```
+### Error Handling
+- Display errors in the same Alert component used for email/password errors
+- Show toast notifications for failed attempts
+- Reset loading state in `finally` block to prevent stuck spinners
 
 ---
 
 ## Security Considerations
 
-1. **No new RLS changes needed** - Data access is already controlled via existing policies
-2. **Route guards remain strict** - Admin route requires admin roles, client route requires client role
-3. **Clean separation** - Each interface has its own dedicated URL path
+1. **Role assignment**: New Google users will need to have the `client` role assigned in `user_roles` table before they can access the portal (same as email/password users)
+2. **No self-signup**: Clients are still invited by admins - Google OAuth just provides an alternative authentication method for existing accounts
+3. **Managed credentials**: Uses Lovable Cloud's managed Google OAuth (no API keys needed)
 
 ---
 
-## User Experience Flow
+## Testing Checklist
 
-**For Clients:**
-```text
-Login at /portal/login
-    ↓
-PostAuth redirects to /portal
-    ↓
-See clean portal (their property only)
-```
-
-**For Admins:**
-```text
-Login at /auth
-    ↓
-PostAuth redirects to /dashboard
-    ↓
-Click "View Portal" for a client (from dashboard)
-    ↓
-Navigate to /portal/admin
-    ↓
-Use switcher to select client and debug
-```
-
----
-
-## Alternative Considered
-
-**Keep single `/portal` route, just hide UI better**: This was rejected because:
-- URL-based separation is cleaner and more maintainable
-- Easier to audit access patterns in logs
-- Prevents any accidental UI exposure through timing issues
-- Aligns with the "Control Tower vs. Client Portal" architectural split principle
+After implementation, verify:
+- [ ] Google button appears on `/portal/login`
+- [ ] Clicking Google button initiates OAuth flow
+- [ ] After successful Google auth, user lands on `/portal` (if client role)
+- [ ] Error states display correctly if OAuth fails
+- [ ] Loading states work correctly (button disabled, spinner shown)
+- [ ] Both Google and email/password can be used on the same page without conflicts
 
