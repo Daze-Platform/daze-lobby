@@ -170,7 +170,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
         })}
       </div>
 
-      {/* Icon/Favicon - Full width below */}
+      {/* Additional Logos - Full width below */}
       {iconVariant && (() => {
         const hasIconUpload = iconVariant.file || iconVariant.existingUrl;
         const displayIconImage = iconVariant.preview || iconVariant.existingUrl;
