@@ -33,7 +33,7 @@ export function AdminBrandPosControls({
 
   // Sync state when props change
   useEffect(() => {
-    setPrimaryColor(currentBrandPalette?.[0] || "#3B82F6");
+    
     setPosInstructions(currentPosInstructions || "");
     setLogoPreview(currentLogoUrl || null);
   }, [currentBrandPalette, currentPosInstructions, currentLogoUrl]);
