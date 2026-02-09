@@ -32,21 +32,39 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
   const [searchParams] = useSearchParams();
   const previewClientId = searchParams.get("clientId");
   const displayName = clientName || "Grand Hyatt Demo";
+
+  // Resolve clientId from clientName for dedicated routes
+  const { data: resolvedClient } = useQuery({
+    queryKey: ["client-by-name", clientName],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id")
+        .ilike("name", `%${clientName}%`)
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!clientName,
+    staleTime: Infinity,
+  });
+
+  const effectiveClientId = resolvedClient?.id || previewClientId;
   const isDemo = !clientName;
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
 
   // Document count for badge
   const { data: documentCount = 0 } = useQuery({
-    queryKey: ["documents-count", previewClientId],
+    queryKey: ["documents-count", effectiveClientId],
     queryFn: async () => {
       const { count, error } = await supabase
         .from("documents")
         .select("*", { count: "exact", head: true })
-        .eq("client_id", previewClientId!);
+        .eq("client_id", effectiveClientId!);
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!previewClientId,
+    enabled: !!effectiveClientId,
   });
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -290,7 +308,7 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {activeView === "documents" ? (
           <ClientProvider>
-            <PortalDocuments clientIdOverride={previewClientId} />
+            <PortalDocuments clientIdOverride={effectiveClientId} />
           </ClientProvider>
         ) : (
           <>
