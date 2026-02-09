@@ -21,10 +21,16 @@ import { ClientProvider } from "@/contexts/ClientContext";
  * Preview/Demo version of the Client Portal V2
  * This is for testing the UI without authentication
  */
-export default function PortalPreview() {
+interface PortalPreviewProps {
+  clientName?: string;
+}
+
+export default function PortalPreview({ clientName }: PortalPreviewProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const previewClientId = searchParams.get("clientId");
+  const displayName = clientName || "Grand Hyatt Demo";
+  const isDemo = !clientName;
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -255,12 +261,12 @@ export default function PortalPreview() {
         activeView={activeView}
         onViewChange={setActiveView}
         isPreview={true}
-        userEmail="demo@grandhydatt.com"
-        userFullName="Demo User"
+        userEmail={clientName ? "info@springhillob.com" : "demo@grandhydatt.com"}
+        userFullName={clientName || "Demo User"}
         onSignOut={handleSignOut}
         onActivityFeedOpen={() => setIsActivityFeedOpen(true)}
         activityCount={demoActivities.length}
-        onResetTour={handleResetTour}
+        onResetTour={isDemo ? handleResetTour : undefined}
       />
 
       {/* Main Content */}
@@ -275,10 +281,12 @@ export default function PortalPreview() {
             <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
               <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
               <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
-                Grand Hyatt Demo
+                {displayName}
               </h1>
               <p className="text-xs sm:text-base lg:text-lg text-muted-foreground">
-                Complete the steps below to get your hotel ready for launch.
+                {clientName
+                  ? `Welcome to the Daze onboarding portal for ${clientName}`
+                  : "Complete the steps below to get your hotel ready for launch."}
               </p>
             </div>
 
@@ -302,6 +310,7 @@ export default function PortalPreview() {
                   />
                   
                   {/* Demo Status Toggle - Horizontal scroll on mobile */}
+                  {isDemo && (
                   <div className="w-full pt-3 sm:pt-6 border-t border-border/20">
                     <p className="label-micro mb-2 sm:mb-3 text-center">Demo: Toggle Status</p>
                     <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
@@ -318,6 +327,7 @@ export default function PortalPreview() {
                       ))}
                     </div>
                   </div>
+                  )}
                 </CardContent>
               </Card>
 
