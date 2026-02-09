@@ -53,29 +53,49 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
   };
 
   const handlePreview = async (filePath: string) => {
+    // Open window IMMEDIATELY in user gesture context to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+    
+    if (!newWindow) {
+      toast.error("Please allow popups for this site to preview documents");
+      return;
+    }
+
     try {
       const { data, error } = await supabase.storage
         .from("hotel-documents")
         .createSignedUrl(filePath, 300); // 5 min expiry for viewing
 
       if (error) throw error;
-      window.open(data.signedUrl, "_blank");
+      
+      // Navigate the already-opened window to the signed URL
+      newWindow.location.href = data.signedUrl;
     } catch (error) {
       console.error("Preview error:", error);
+      newWindow.close(); // Close the blank tab on error
       toast.error("Failed to preview document");
     }
   };
 
   const handleDownload = async (filePath: string, displayName: string) => {
+    // Open window IMMEDIATELY in user gesture context to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+    
+    if (!newWindow) {
+      toast.error("Please allow popups for this site to download documents");
+      return;
+    }
+
     try {
       const { data, error } = await supabase.storage
         .from("hotel-documents")
         .createSignedUrl(filePath, 60);
 
       if (error) throw error;
-      window.open(data.signedUrl, "_blank");
+      newWindow.location.href = data.signedUrl;
     } catch (error) {
       console.error("Download error:", error);
+      newWindow.close(); // Close the blank tab on error
       toast.error("Failed to download document");
     }
   };
