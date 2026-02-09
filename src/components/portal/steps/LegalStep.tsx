@@ -12,26 +12,18 @@ import { StepCompletionEffect } from "../StepCompletionEffect";
 import { IconContainer } from "@/components/ui/icon-container";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { format } from "date-fns";
-
-interface LegalEntityData {
-  property_name?: string;
-  legal_entity_name?: string;
-  billing_address?: string;
-  authorized_signer_name?: string;
-  authorized_signer_title?: string;
-}
+import type { PilotAgreementData } from "@/types/pilotAgreement";
 
 interface LegalStepProps {
   isCompleted: boolean;
   isLocked: boolean;
   isActive?: boolean;
   data?: Record<string, unknown>;
-  onSign: (signatureDataUrl: string, legalEntityData: LegalEntityData) => void;
+  onSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
   isSubmitting?: boolean;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
-  // Pre-populated from hotel record
-  hotelLegalEntity?: LegalEntityData;
+  hotelLegalEntity?: PilotAgreementData;
 }
 
 export function LegalStep({ 
@@ -46,7 +38,6 @@ export function LegalStep({
   hotelLegalEntity
 }: LegalStepProps) {
 
-  // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted 
     ? "complete" 
     : isLocked 
@@ -56,22 +47,19 @@ export function LegalStep({
         : "pending";
   const [showPilotModal, setShowPilotModal] = useState(false);
 
-  // Check if already signed
   const pilotSigned = !!data?.pilot_signed;
   const signatureUrl = data?.signature_url as string | undefined;
   const signedAt = data?.signed_at as string | undefined;
 
-  // Format signed date for display
   const signedDateDisplay = signedAt 
     ? format(new Date(signedAt), "MMM d, yyyy")
     : null;
 
-  const handleSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
-    onSign(signatureDataUrl, legalEntityData);
+  const handleSign = (signatureDataUrl: string, agreementData: PilotAgreementData) => {
+    onSign(signatureDataUrl, agreementData);
     setShowPilotModal(false);
   };
 
-  // Entity summary for display
   const entityName = hotelLegalEntity?.legal_entity_name;
 
   return (
@@ -147,7 +135,6 @@ export function LegalStep({
               )}
             </div>
 
-            {/* Entity summary if saved */}
             {entityName && !pilotSigned && (
               <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-xl border-0">
                 <Building2 className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />

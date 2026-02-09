@@ -102,7 +102,7 @@ export function useClientPortal() {
       legalEntityData,
     }: { 
       signatureDataUrl: string;
-      legalEntityData?: {
+      legalEntityData?: Record<string, unknown> & {
         property_name?: string;
         legal_entity_name?: string;
         billing_address?: string;
@@ -160,22 +160,41 @@ export function useClientPortal() {
       const signatureUrl = urlData?.signedUrl;
       const signedAt = new Date().toISOString();
 
-      // Update the legal task with signature data
+      // Update the legal task with signature data + all agreement fields
+      const taskData: Record<string, unknown> = {
+        pilot_signed: true,
+        signature_url: signatureUrl,
+        signed_at: signedAt,
+        signature_path: filePath,
+        // Core fields (backward compat)
+        property_name: legalEntityData?.property_name,
+        signer_name: legalEntityData?.authorized_signer_name,
+        signer_title: legalEntityData?.authorized_signer_title,
+        legal_entity: legalEntityData?.legal_entity_name,
+        // Extended pilot agreement fields
+        contact_email: legalEntityData?.contact_email,
+        covered_outlets: legalEntityData?.covered_outlets,
+        hardware_option: legalEntityData?.hardware_option,
+        num_tablets: legalEntityData?.num_tablets,
+        mounts_stands: legalEntityData?.mounts_stands,
+        start_date: legalEntityData?.start_date,
+        pilot_term_days: legalEntityData?.pilot_term_days,
+        pricing_model: legalEntityData?.pricing_model,
+        pricing_amount: legalEntityData?.pricing_amount,
+        pos_system: legalEntityData?.pos_system,
+        pos_version: legalEntityData?.pos_version,
+        pos_api_key: legalEntityData?.pos_api_key,
+        pos_contact: legalEntityData?.pos_contact,
+        dba_name: legalEntityData?.dba_name,
+        billing_address: legalEntityData?.billing_address,
+      };
+
       const { error: updateError } = await supabase
         .from("onboarding_tasks")
         .update({
           is_completed: true,
           completed_at: signedAt,
-          data: {
-            pilot_signed: true,
-            signature_url: signatureUrl,
-            signed_at: signedAt,
-            signature_path: filePath,
-            property_name: legalEntityData?.property_name,
-            signer_name: legalEntityData?.authorized_signer_name,
-            signer_title: legalEntityData?.authorized_signer_title,
-            legal_entity: legalEntityData?.legal_entity_name,
-          },
+          data: taskData,
         } as never)
         .eq("client_id", clientId)
         .eq("task_key", "legal");

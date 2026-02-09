@@ -4,6 +4,7 @@ import { LegalStep, BrandStep, VenueStep, PosStep, DevicesStep } from "./steps";
 import { VenueProvider } from "@/contexts/VenueContext";
 import type { Venue } from "@/types/venue";
 import type { PropertyBrand } from "./PropertyBrandManager";
+import type { PilotAgreementData } from "@/types/pilotAgreement";
 
 interface OnboardingTask {
   key: string;
@@ -12,17 +13,9 @@ interface OnboardingTask {
   data?: Record<string, unknown>;
 }
 
-interface LegalEntityData {
-  property_name?: string;
-  legal_entity_name?: string;
-  billing_address?: string;
-  authorized_signer_name?: string;
-  authorized_signer_title?: string;
-}
-
 interface TaskAccordionProps {
   tasks: OnboardingTask[];
-  onLegalSign: (signatureDataUrl: string, legalEntityData: LegalEntityData) => void;
+  onLegalSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
   // Venue CRUD handlers (passed to VenueProvider)
@@ -38,7 +31,7 @@ interface TaskAccordionProps {
   isDeletingVenue?: boolean;
   isSigningLegal?: boolean;
   isUpdating?: boolean;
-  hotelLegalEntity?: LegalEntityData;
+  hotelLegalEntity?: PilotAgreementData;
 }
 
 const TASK_ORDER = ["brand", "venue", "pos", "devices", "legal"];
@@ -122,7 +115,7 @@ export function TaskAccordion({
     onFileUpload("brand", file, `palette_document_${propertyId}`);
   };
 
-  const handleLegalSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: PilotAgreementData) => {
     onLegalSign(signatureDataUrl, legalEntityData);
     // Trigger step completion after a brief delay for the save to process
     setTimeout(() => handleStepComplete("legal"), 100);

@@ -102,13 +102,8 @@ export default function PortalAdmin() {
     }
   };
 
-  const handleLegalSign = (signatureDataUrl: string, legalEntityData: {
-    legal_entity_name?: string;
-    billing_address?: string;
-    authorized_signer_name?: string;
-    authorized_signer_title?: string;
-  }) => {
-    signLegal({ signatureDataUrl, legalEntityData });
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: Record<string, unknown>) => {
+    signLegal({ signatureDataUrl, legalEntityData: legalEntityData as { legal_entity_name?: string; billing_address?: string; authorized_signer_name?: string; authorized_signer_title?: string; } });
   };
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
