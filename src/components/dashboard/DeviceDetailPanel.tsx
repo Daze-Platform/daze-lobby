@@ -25,29 +25,14 @@ import {
   Activity,
   Settings,
   AlertTriangle,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-
-export interface Device {
-  id: string;
-  serial: string;
-  type: "Tablet" | "Kiosk" | "Handheld" | "Printer";
-  hotel: string;
-  venue?: string;
-  status: "online" | "offline" | "maintenance";
-  installDate: string;
-  // Extended properties for detail panel
-  model?: string;
-  name?: string;
-  ipAddress?: string;
-  batteryLevel?: number;
-  signalStrength?: number;
-  lastHeartbeat?: string;
-}
+import type { DeviceWithClient } from "@/hooks/useDevices";
 
 interface DeviceDetailPanelProps {
-  device: Device | null;
+  device: DeviceWithClient | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -117,14 +102,14 @@ function StatCard({
   );
 }
 
-function ConfigItem({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) {
+function ConfigItem({ icon: Icon, label, value, badge }: { icon: typeof Building2; label: string; value?: string; badge?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-border/30 last:border-0">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
         <span className="text-xs">{label}</span>
       </div>
-      <span className="text-xs font-medium text-foreground truncate max-w-[180px]">{value}</span>
+      {badge || <span className="text-xs font-medium text-foreground truncate max-w-[180px]">{value ?? "—"}</span>}
     </div>
   );
 }
@@ -135,17 +120,17 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
 
   if (!device) return null;
 
-  const DeviceIcon = deviceIcons[device.type] || Tablet;
+  const DeviceIcon = deviceIcons[device.device_type] || Tablet;
   const config = statusConfig[device.status];
   const StatusIcon = config.icon;
 
-  // Mock extended data
   const batteryLevel = device.batteryLevel ?? 87;
   const signalStrength = device.signalStrength ?? 92;
-  const lastHeartbeat = device.lastHeartbeat ?? "2 min ago";
-  const deviceName = device.name ?? `${device.type} - ${device.venue || "Lobby"}`;
-  const model = device.model ?? (device.type === "Tablet" ? "iPad Pro 12.9\" (6th Gen)" : "Custom Kiosk Unit");
-  const ipAddress = device.ipAddress ?? "192.168.1." + Math.floor(Math.random() * 254 + 1);
+  const lastHeartbeat = device.lastHeartbeat ?? "—";
+  const deviceName = device.venue ? `${device.device_type} - ${device.venue}` : device.device_type;
+  const model = device.model ?? (device.device_type === "Tablet" ? "iPad Pro 12.9\" (6th Gen)" : "Custom Unit");
+  const ipAddress = device.ipAddress ?? "—";
+  const isUnassigned = !device.clientName;
 
   const handlePing = async () => {
     setIsPinging(true);
@@ -153,7 +138,7 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
     setIsPinging(false);
     toast({
       title: "Device Responded",
-      description: `${device.serial} is reachable (latency: 23ms)`,
+      description: `${device.serial_number} is reachable (latency: 23ms)`,
     });
   };
 
@@ -163,7 +148,7 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
     setIsSyncing(false);
     toast({
       title: "Sync Requested",
-      description: `Remote sync initiated for ${device.serial}`,
+      description: `Remote sync initiated for ${device.serial_number}`,
     });
   };
 
@@ -178,7 +163,6 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
       >
         <SheetHeader className="pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">
-            {/* Device Icon with Status Ring */}
             <div className="relative">
               <div className={cn(
                 "w-14 h-14 rounded-2xl flex items-center justify-center",
@@ -187,7 +171,6 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
               )}>
                 <DeviceIcon className="h-7 w-7 text-primary" strokeWidth={1.5} />
               </div>
-              {/* Status Pulse Indicator */}
               <div className={cn(
                 "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-background",
                 config.bgColor
@@ -196,7 +179,7 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <SheetTitle className="text-base truncate">{device.serial}</SheetTitle>
+              <SheetTitle className="text-base truncate">{device.serial_number}</SheetTitle>
               <SheetDescription className="flex items-center gap-2 mt-1">
                 <Badge 
                   variant="outline" 
@@ -214,7 +197,7 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
                   )} />
                   {config.label}
                 </Badge>
-                <span className="text-2xs text-muted-foreground">{device.type}</span>
+                <span className="text-2xs text-muted-foreground">{device.device_type}</span>
               </SheetDescription>
             </div>
           </div>
@@ -228,26 +211,10 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
               Health Stats
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              <StatCard 
-                icon={Battery} 
-                label="Battery" 
-                value={batteryLevel} 
-                unit="%"
-                status={batteryStatus}
-              />
-              <StatCard 
-                icon={Signal} 
-                label="Signal" 
-                value={signalStrength} 
-                unit="%"
-                status={signalStatus}
-              />
+              <StatCard icon={Battery} label="Battery" value={batteryLevel} unit="%" status={batteryStatus} />
+              <StatCard icon={Signal} label="Signal" value={signalStrength} unit="%" status={signalStatus} />
               <div className="col-span-2">
-                <StatCard 
-                  icon={Clock} 
-                  label="Last Heartbeat" 
-                  value={lastHeartbeat}
-                />
+                <StatCard icon={Clock} label="Last Heartbeat" value={lastHeartbeat} />
               </div>
             </div>
           </div>
@@ -261,7 +228,18 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
             <div className="rounded-xl bg-muted/20 border border-border/30 px-4">
               <ConfigItem icon={Monitor} label="Device Name" value={deviceName} />
               <ConfigItem icon={Tablet} label="Model" value={model} />
-              <ConfigItem icon={Building2} label="Assigned Venue" value={device.venue || "Main Lobby"} />
+              <ConfigItem 
+                icon={Building2} 
+                label="Assigned Client" 
+                badge={isUnassigned ? (
+                  <Badge variant="secondary" className="text-2xs px-2 py-0.5 bg-muted text-muted-foreground">
+                    <Package className="h-3 w-3 mr-1" strokeWidth={1.5} />
+                    Unassigned
+                  </Badge>
+                ) : undefined}
+                value={device.clientName ?? undefined}
+              />
+              {device.venue && <ConfigItem icon={Building2} label="Venue" value={device.venue} />}
               <ConfigItem icon={Globe} label="IP Address" value={ipAddress} />
             </div>
           </div>
@@ -273,30 +251,12 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
               Control Center
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant="outline" 
-                className="h-11 gap-2"
-                onClick={handlePing}
-                disabled={isPinging || device.status === "offline"}
-              >
-                {isPinging ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1.5} />
-                ) : (
-                  <Radio className="h-4 w-4" strokeWidth={1.5} />
-                )}
+              <Button variant="outline" className="h-11 gap-2" onClick={handlePing} disabled={isPinging || device.status === "offline"}>
+                {isPinging ? <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <Radio className="h-4 w-4" strokeWidth={1.5} />}
                 {isPinging ? "Pinging..." : "Ping Device"}
               </Button>
-              <Button 
-                variant="outline" 
-                className="h-11 gap-2"
-                onClick={handleSync}
-                disabled={isSyncing || device.status === "offline"}
-              >
-                {isSyncing ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1.5} />
-                ) : (
-                  <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
-                )}
+              <Button variant="outline" className="h-11 gap-2" onClick={handleSync} disabled={isSyncing || device.status === "offline"}>
+                {isSyncing ? <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <RefreshCw className="h-4 w-4" strokeWidth={1.5} />}
                 {isSyncing ? "Syncing..." : "Remote Sync"}
               </Button>
             </div>

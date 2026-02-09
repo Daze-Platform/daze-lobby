@@ -3,6 +3,13 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   DeviceTablet, 
   WifiHigh, 
@@ -16,112 +23,14 @@ import {
   Warning,
   BatteryLow,
   MapPin,
+  Package,
   type Icon as PhosphorIcon
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { DeviceDetailPanel, type Device } from "@/components/dashboard/DeviceDetailPanel";
-
-const mockDevices: Device[] = [
-  { 
-    id: "1", 
-    serial: "DZ-2024-001", 
-    type: "Tablet", 
-    hotel: "Royal Plaza Hotel", 
-    venue: "Pool Deck",
-    status: "online", 
-    installDate: "2024-10-15",
-    batteryLevel: 92,
-    signalStrength: 98,
-    lastHeartbeat: "1 min ago",
-    model: "iPad Pro 12.9\" (6th Gen)",
-    ipAddress: "192.168.1.101",
-  },
-  { 
-    id: "2", 
-    serial: "DZ-2024-002", 
-    type: "Tablet", 
-    hotel: "Royal Plaza Hotel", 
-    venue: "Lobby Bar",
-    status: "online", 
-    installDate: "2024-10-15",
-    batteryLevel: 78,
-    signalStrength: 85,
-    lastHeartbeat: "3 min ago",
-  },
-  { 
-    id: "3", 
-    serial: "DZ-2024-003", 
-    type: "Kiosk", 
-    hotel: "Royal Plaza Hotel", 
-    venue: "Main Entrance",
-    status: "online", 
-    installDate: "2024-10-20",
-    batteryLevel: 100,
-    signalStrength: 95,
-    lastHeartbeat: "30 sec ago",
-  },
-  { 
-    id: "4", 
-    serial: "DZ-2024-004", 
-    type: "Tablet", 
-    hotel: "Grand Metropolitan", 
-    venue: "Rooftop Lounge",
-    status: "online", 
-    installDate: "2024-09-01",
-    batteryLevel: 45,
-    signalStrength: 72,
-    lastHeartbeat: "5 min ago",
-  },
-  { 
-    id: "5", 
-    serial: "DZ-2024-005", 
-    type: "Tablet", 
-    hotel: "Grand Metropolitan", 
-    venue: "Restaurant",
-    status: "offline", 
-    installDate: "2024-09-01",
-    batteryLevel: 12,
-    signalStrength: 0,
-    lastHeartbeat: "3 hours ago",
-  },
-  { 
-    id: "6", 
-    serial: "DZ-2024-006", 
-    type: "Handheld", 
-    hotel: "Grand Metropolitan", 
-    venue: "Room Service",
-    status: "maintenance", 
-    installDate: "2024-09-05",
-    batteryLevel: 67,
-    signalStrength: 88,
-    lastHeartbeat: "10 min ago",
-  },
-  { 
-    id: "7", 
-    serial: "DZ-2024-007", 
-    type: "Kiosk", 
-    hotel: "Grand Metropolitan", 
-    venue: "Spa Reception",
-    status: "online", 
-    installDate: "2024-09-10",
-    batteryLevel: 100,
-    signalStrength: 99,
-    lastHeartbeat: "45 sec ago",
-  },
-  { 
-    id: "8", 
-    serial: "DZ-2024-008", 
-    type: "Printer", 
-    hotel: "The Landmark Hotel", 
-    venue: "Kitchen",
-    status: "online", 
-    installDate: "2024-11-01",
-    batteryLevel: 100,
-    signalStrength: 91,
-    lastHeartbeat: "2 min ago",
-  },
-];
+import { DeviceDetailPanel } from "@/components/dashboard/DeviceDetailPanel";
+import { useDevices, useClientList, type DeviceWithClient } from "@/hooks/useDevices";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const deviceIcons: Record<string, PhosphorIcon> = {
   Tablet: DeviceTablet,
@@ -163,14 +72,15 @@ function DeviceCard({
   device, 
   onClick 
 }: { 
-  device: Device; 
+  device: DeviceWithClient; 
   onClick: () => void;
 }) {
-  const DeviceIcon = deviceIcons[device.type] || DeviceTablet;
+  const DeviceIcon = deviceIcons[device.device_type] || DeviceTablet;
   const config = statusConfig[device.status];
   const StatusIcon = config.icon;
   const batteryLevel = device.batteryLevel ?? 100;
   const isLowBattery = batteryLevel < 30;
+  const isUnassigned = !device.clientName;
 
   return (
     <div 
@@ -223,25 +133,36 @@ function DeviceCard({
 
         {/* Device Info */}
         <div className="flex-1 min-w-0 pt-0.5">
-          <p className="font-semibold text-sm text-foreground truncate">{device.serial}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{device.type}</p>
+          <p className="font-semibold text-sm text-foreground truncate">{device.serial_number}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{device.device_type}</p>
         </div>
       </div>
 
       {/* Details Row */}
       <div className="mt-4 pt-3 border-t border-border/30 space-y-1.5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin size={12} weight="duotone" className="shrink-0" />
-          <span className="truncate">{device.venue || "Unassigned"}</span>
+        {device.venue && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin size={12} weight="duotone" className="shrink-0" />
+            <span className="truncate">{device.venue}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-xs">
+          <Buildings size={12} weight="duotone" className="shrink-0 text-muted-foreground" />
+          {isUnassigned ? (
+            <Badge variant="secondary" className="text-2xs px-1.5 py-0 h-4 bg-muted text-muted-foreground">
+              <Package size={10} className="mr-1" />
+              In Stock / Unassigned
+            </Badge>
+          ) : (
+            <span className="truncate text-muted-foreground">{device.clientName}</span>
+          )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Buildings size={12} weight="duotone" className="shrink-0" />
-          <span className="truncate">{device.hotel}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Calendar size={12} weight="duotone" className="shrink-0" />
-          <span>Installed {format(new Date(device.installDate), "MMM d, yyyy")}</span>
-        </div>
+        {device.install_date && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar size={12} weight="duotone" className="shrink-0" />
+            <span>Installed {format(new Date(device.install_date), "MMM d, yyyy")}</span>
+          </div>
+        )}
       </div>
 
       {/* Battery & Signal Footer */}
@@ -298,38 +219,47 @@ function DeviceCard({
 export default function Devices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const [clientFilter, setClientFilter] = useState<string>("all");
+  const [selectedDevice, setSelectedDevice] = useState<DeviceWithClient | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const filteredDevices = useMemo(() => {
-    let devices = mockDevices;
+  const { data: devices = [], isLoading } = useDevices();
+  const { data: clients = [] } = useClientList();
 
-    // Apply text search
+  const filteredDevices = useMemo(() => {
+    let result = devices;
+
+    // Text search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      devices = devices.filter(d => 
-        d.serial.toLowerCase().includes(query) ||
-        d.hotel.toLowerCase().includes(query) ||
+      result = result.filter(d => 
+        d.serial_number.toLowerCase().includes(query) ||
+        (d.clientName?.toLowerCase().includes(query)) ||
         d.venue?.toLowerCase().includes(query) ||
-        d.type.toLowerCase().includes(query)
+        d.device_type.toLowerCase().includes(query)
       );
     }
 
-    // Apply quick filters
-    if (activeFilter === "offline") {
-      devices = devices.filter(d => d.status === "offline");
-    } else if (activeFilter === "low-battery") {
-      devices = devices.filter(d => (d.batteryLevel ?? 100) < 30);
+    // Client filter
+    if (clientFilter !== "all") {
+      result = result.filter(d => d.client_id === clientFilter);
     }
 
-    return devices;
-  }, [searchQuery, activeFilter]);
+    // Quick filters
+    if (activeFilter === "offline") {
+      result = result.filter(d => d.status === "offline");
+    } else if (activeFilter === "low-battery") {
+      result = result.filter(d => (d.batteryLevel ?? 100) < 30);
+    }
 
-  const onlineCount = mockDevices.filter(d => d.status === "online").length;
-  const offlineCount = mockDevices.filter(d => d.status === "offline").length;
-  const lowBatteryCount = mockDevices.filter(d => (d.batteryLevel ?? 100) < 30).length;
+    return result;
+  }, [searchQuery, activeFilter, clientFilter, devices]);
 
-  const handleDeviceClick = (device: Device) => {
+  const onlineCount = devices.filter(d => d.status === "online").length;
+  const offlineCount = devices.filter(d => d.status === "offline").length;
+  const lowBatteryCount = devices.filter(d => (d.batteryLevel ?? 100) < 30).length;
+
+  const handleDeviceClick = (device: DeviceWithClient) => {
     setSelectedDevice(device);
     setIsPanelOpen(true);
   };
@@ -346,7 +276,7 @@ export default function Devices() {
           <div className="flex gap-2 flex-wrap">
             <Badge variant="secondary" className="gap-1.5">
               <DeviceTablet size={14} weight="duotone" />
-              {mockDevices.length} Total
+              {devices.length} Total
             </Badge>
             <Badge className="gap-1.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20">
               <WifiHigh size={14} weight="duotone" />
@@ -364,12 +294,26 @@ export default function Devices() {
           <div className="relative flex-1">
             <MagnifyingGlass size={16} weight="regular" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by device name, venue, or hotel..."
+              placeholder="Search by serial, client, or venue..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-10 bg-background/50 border-border/50 focus:bg-background"
             />
           </div>
+
+          {/* Client Filter */}
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger className="w-full sm:w-[180px] h-10">
+              <Buildings size={14} weight="duotone" className="mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All Clients" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Clients</SelectItem>
+              {clients.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Quick Filter Chips */}
           <div className="flex gap-2">
@@ -431,7 +375,13 @@ export default function Devices() {
         </div>
 
         {/* Device Grid */}
-        {filteredDevices.length > 0 ? (
+        {isLoading ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-[220px] rounded-2xl" />
+            ))}
+          </div>
+        ) : filteredDevices.length > 0 ? (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredDevices.map((device) => (
               <DeviceCard 
