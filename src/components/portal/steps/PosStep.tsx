@@ -23,6 +23,7 @@ import {
   Copy, 
   Check,
   Store,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLogActivity } from "@/hooks/useLogActivity";
@@ -208,6 +209,7 @@ export function PosStep({
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
   const [isPendingIT, setIsPendingIT] = useState(savedStatus === "pending_it");
+  const [isITVerified, setIsITVerified] = useState(savedStatus === "it_verified");
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted
@@ -295,6 +297,27 @@ export function PosStep({
     }
   };
 
+  const handleITVerified = () => {
+    if (!selectedProvider) return;
+
+    setIsITVerified(true);
+
+    onUpdate({
+      provider: selectedProvider,
+      status: "it_verified",
+      pms_name: pmsName.trim() || undefined,
+    });
+
+    logActivity.mutate({
+      action: "pos_it_verified",
+      details: { provider: selectedProvider },
+    });
+
+    toast.success("IT Verification confirmed!", {
+      description: "POS integration credentials received",
+    });
+  };
+
   const providerInfo = selectedProvider ? PROVIDERS.find(p => p.id === selectedProvider) : null;
   const instructions = selectedProvider 
     ? (PROVIDER_INSTRUCTIONS[selectedProvider] || { 
@@ -324,9 +347,14 @@ export function PosStep({
           <div className="text-left min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-xs sm:text-sm md:text-base truncate">POS Integration</p>
-              {isPendingIT && !isCompleted && (
+              {isPendingIT && !isITVerified && (
                 <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-2xs font-medium bg-primary/10 text-primary">
                   Pending IT
+                </span>
+              )}
+              {isITVerified && (
+                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-2xs font-medium bg-emerald-500/10 text-emerald-600">
+                  IT Verified
                 </span>
               )}
             </div>
@@ -490,15 +518,39 @@ export function PosStep({
                 </div>
 
                 {/* Pending IT state */}
-                {isPendingIT && (
+                {isPendingIT && !isITVerified && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20"
+                    className="space-y-3"
                   >
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-sm text-primary font-medium">
-                      Pending IT Verification
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-sm text-primary font-medium">
+                        Pending IT Verification
+                      </span>
+                    </div>
+                    <Button
+                      onClick={handleITVerified}
+                      disabled={isSaving}
+                      className="w-full rounded-full min-h-[44px] gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      IT Verification Completed
+                    </Button>
+                  </motion.div>
+                )}
+
+                {/* IT Verified state */}
+                {isITVerified && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span className="text-sm text-emerald-600 font-medium">
+                      IT Verification Confirmed
                     </span>
                   </motion.div>
                 )}
