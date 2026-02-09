@@ -50,6 +50,7 @@ export default function Portal() {
     updateTask, 
     uploadFile,
     uploadVenueMenu,
+    uploadVenueLogo,
     addVenue,
     updateVenue,
     deleteVenue,
@@ -119,18 +120,19 @@ export default function Portal() {
   // Venue CRUD handlers
   const handleAddVenue = async (): Promise<Venue | undefined> => {
     const result = await addVenue({ name: "" });
-    // addVenue returns a DbVenue with menu_pdf_url
+    // addVenue returns a DbVenue with menu_pdf_url and logo_url
     if (result) {
       return {
         id: result.id,
         name: result.name,
         menuPdfUrl: (result as { menu_pdf_url?: string | null }).menu_pdf_url || undefined,
+        logoUrl: (result as { logo_url?: string | null }).logo_url || undefined,
       };
     }
     return undefined;
   };
 
-  const handleUpdateVenue = async (id: string, updates: { name?: string; menuPdfUrl?: string }) => {
+  const handleUpdateVenue = async (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => {
     await updateVenue({ id, updates });
   };
 
@@ -140,6 +142,10 @@ export default function Portal() {
 
   const handleUploadMenu = async (venueId: string, venueName: string, file: File) => {
     await uploadVenueMenu({ venueId, venueName, file });
+  };
+
+  const handleUploadVenueLogo = async (venueId: string, venueName: string, file: File) => {
+    await uploadVenueLogo({ venueId, venueName, file });
   };
 
   const handleCompleteVenueStep = async () => {
@@ -275,6 +281,7 @@ export default function Portal() {
                     onUpdateVenue={handleUpdateVenue}
                     onRemoveVenue={handleRemoveVenue}
                     onUploadMenu={handleUploadMenu}
+                    onUploadVenueLogo={handleUploadVenueLogo}
                     onCompleteVenueStep={handleCompleteVenueStep}
                     isAddingVenue={isAddingVenue}
                     isUpdatingVenue={isUpdatingVenue}

@@ -221,6 +221,16 @@ export default function PortalPreview() {
     toast.success(`Menu uploaded for ${venueName}. (Demo mode)`);
   };
 
+  const handleUploadVenueLogo = async (venueId: string, venueName: string, file: File) => {
+    // Create a local object URL for demo preview
+    const logoUrl = URL.createObjectURL(file);
+    setVenues(prev => prev.map(v =>
+      v.id === venueId ? { ...v, logoUrl } : v
+    ));
+    logDemoActivity("venue_logo_uploaded", { venue_name: venueName, file_name: file.name });
+    toast.success(`Logo uploaded for ${venueName || "venue"}. (Demo mode)`);
+  };
+
   const handleCompleteVenueStep = async () => {
     if (venues.length > 0 && venues.some(v => v.name.trim())) {
       setTasks(prev => prev.map(task =>
@@ -331,6 +341,7 @@ export default function PortalPreview() {
                     onUpdateVenue={handleUpdateVenue}
                     onRemoveVenue={handleRemoveVenue}
                     onUploadMenu={handleUploadMenu}
+                    onUploadVenueLogo={handleUploadVenueLogo}
                     onCompleteVenueStep={handleCompleteVenueStep}
                     isSigningLegal={isSigningLegal}
                     hotelLegalEntity={hotelLegalEntity}
