@@ -81,11 +81,6 @@ export function DashboardHeader({ onMenuToggle, showMenuButton }: DashboardHeade
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {isTest && (
-            <Badge className="hidden sm:flex bg-warning/10 text-warning border-warning/20 text-2xs font-bold uppercase tracking-wide">
-              Test Data
-            </Badge>
-          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2 hover:bg-muted/50 min-h-[44px] px-2 sm:px-3">
