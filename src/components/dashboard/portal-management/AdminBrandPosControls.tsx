@@ -26,7 +26,7 @@ export function AdminBrandPosControls({
   const queryClient = useQueryClient();
   const logoInputRef = useRef<HTMLInputElement>(null);
   
-  const [primaryColor, setPrimaryColor] = useState(currentBrandPalette?.[0] || "#3B82F6");
+  
   const [posInstructions, setPosInstructions] = useState(currentPosInstructions || "");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(currentLogoUrl || null);
