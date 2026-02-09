@@ -45,21 +45,21 @@ type PosProvider =
   | "other"
   | null;
 
-const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo?: string }[] = [
+const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo: string }[] = [
   { id: "toast", name: "Toast", logo: "https://logo.clearbit.com/toasttab.com" },
   { id: "ncr_aloha", name: "NCR Aloha", logo: "https://logo.clearbit.com/ncr.com" },
   { id: "par_brink", name: "PAR Brink", logo: "https://logo.clearbit.com/partech.com" },
   { id: "dinerware", name: "Dinerware", logo: "https://logo.clearbit.com/heartland.us" },
   { id: "micros_simphony", name: "Micros Simphony", logo: "https://logo.clearbit.com/oracle.com" },
   { id: "micros_3700", name: "Micros 3700", logo: "https://logo.clearbit.com/oracle.com" },
-  { id: "positouch", name: "POSitouch" },
+  { id: "positouch", name: "POSitouch", logo: "https://logo.clearbit.com/positouch.com" },
   { id: "squirrel_systems", name: "Squirrel Systems", logo: "https://logo.clearbit.com/squirrelsystems.com" },
   { id: "xpient", name: "XPIENT", logo: "https://logo.clearbit.com/heartland.us" },
   { id: "maitred", name: "Maitre'D", logo: "https://logo.clearbit.com/posera.com" },
   { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "https://logo.clearbit.com/ncr.com" },
   { id: "simphony_fe", name: "Simphony FE", logo: "https://logo.clearbit.com/oracle.com" },
   { id: "simphonycloud", name: "SimphonyCloud", logo: "https://logo.clearbit.com/oracle.com" },
-  { id: "other", name: "Other" },
+  { id: "other", name: "Other", logo: "" },
 ];
 
 interface PosStepProps {
@@ -364,7 +364,13 @@ export function PosStep({
                                 src={provider.logo} 
                                 alt={`${provider.name} logo`}
                                 className="w-5 h-5 object-contain"
-                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
+                                loading="eager"
+                                onError={(e) => { 
+                                  const img = e.currentTarget;
+                                  img.style.display = 'none'; 
+                                  const fallback = img.nextElementSibling as HTMLElement | null;
+                                  if (fallback) fallback.classList.remove('hidden'); 
+                                }}
                               />
                               <Store className="w-3.5 h-3.5 text-muted-foreground hidden" />
                             </div>
