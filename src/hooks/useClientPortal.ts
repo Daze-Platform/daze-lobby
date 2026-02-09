@@ -264,6 +264,7 @@ export function useClientPortal() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["client"] });
+      queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       
       // Log activity
       logActivity.mutate({
