@@ -8,7 +8,6 @@ import { WelcomeTour } from "@/components/portal/WelcomeTour";
 import { DemoActivityFeedPanel, type DemoActivity } from "@/components/portal";
 import { PortalHeader, type PortalView } from "@/components/portal/PortalHeader";
 import { PortalDocuments } from "@/components/portal/PortalDocuments";
-import { DemoPortalDocuments } from "@/components/portal/DemoPortalDocuments";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -267,13 +266,9 @@ export default function PortalPreview() {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {activeView === "documents" ? (
-          previewClientId ? (
-            <ClientProvider>
-              <PortalDocuments clientIdOverride={previewClientId} />
-            </ClientProvider>
-          ) : (
-            <DemoPortalDocuments />
-          )
+          <ClientProvider>
+            <PortalDocuments clientIdOverride={previewClientId} />
+          </ClientProvider>
         ) : (
           <>
             {/* Welcome Section - Hero entrance */}

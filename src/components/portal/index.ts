@@ -15,7 +15,6 @@ export { StepCompletionEffect } from "./StepCompletionEffect";
 export { WelcomeTour } from "./WelcomeTour";
 export { ActivityFeedPanel } from "./ActivityFeedPanel";
 export { DemoActivityFeedPanel } from "./DemoActivityFeedPanel";
-export { DemoPortalDocuments } from "./DemoPortalDocuments";
 export { PortalHeader } from "./PortalHeader";
 export { PortalDocuments } from "./PortalDocuments";
 export type { DemoActivity } from "./DemoActivityFeedPanel";
