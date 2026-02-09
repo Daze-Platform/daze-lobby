@@ -1,16 +1,18 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrDivider } from "@/components/ui/or-divider";
-import { Loader2, AlertCircle, Eye, EyeOff, Mail } from "lucide-react";
-import { signIn } from "@/lib/auth";
+import { Loader2, AlertCircle, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
+import { signIn, signUp } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { validatePassword } from "@/lib/passwordValidation";
+import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 import dazeLogo from "@/assets/daze-logo.png";
 
 const withTimeout = async <T,>(
@@ -24,7 +26,6 @@ const withTimeout = async <T,>(
       reject(new Error(message));
     }, ms);
   });
-
   return (await Promise.race([promise, timeout])) as T;
 };
 
@@ -35,17 +36,30 @@ const isBackendConfigured = () => {
 };
 
 export function ClientLoginForm() {
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
+
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shouldShake, setShouldShake] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const navigationAttemptedRef = useRef(false);
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading } = useAuthContext();
+
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const showStrengthIndicator = mode === "signup" && password.length > 0;
+
+  const postAuthPath = returnTo
+    ? `/post-auth?returnTo=${encodeURIComponent(returnTo)}`
+    : "/post-auth";
 
   // Check for existing session on mount
   useEffect(() => {
@@ -57,18 +71,16 @@ export function ClientLoginForm() {
           "Session check timed out"
         );
         const session = (sessionResult as any)?.data?.session ?? null;
-
         if (session && !navigationAttemptedRef.current) {
           navigationAttemptedRef.current = true;
-          navigate("/post-auth", { replace: true });
+          navigate(postAuthPath, { replace: true });
         }
       } catch (err) {
         console.error("[ClientLoginForm] Error checking session:", err);
       }
     };
-
     checkExistingSession();
-  }, [navigate]);
+  }, [navigate, postAuthPath]);
 
   // Trigger shake animation on error
   useEffect(() => {
@@ -83,22 +95,22 @@ export function ClientLoginForm() {
   useEffect(() => {
     if (isAuthenticated && !authLoading && !navigationAttemptedRef.current) {
       navigationAttemptedRef.current = true;
-      navigate("/post-auth", { replace: true });
+      navigate(postAuthPath, { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate, postAuthPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (loading) return;
 
     if (!isBackendConfigured()) {
       setError("App is misconfigured (missing backend settings).");
-      toast({
-        title: "Configuration Error",
-        description: "Sign-in is temporarily unavailable. Please refresh or contact support.",
-        variant: "destructive",
-      });
+      return;
+    }
+
+    // Signup-specific validation
+    if (mode === "signup" && !passwordValidation.isAcceptable) {
+      setError("Please choose a stronger password");
       return;
     }
 
@@ -106,54 +118,37 @@ export function ClientLoginForm() {
     setError(null);
 
     try {
-      const preSessionResult = await withTimeout(
-        supabase.auth.getSession(),
-        8000,
-        "Session check timed out"
-      );
-      const preSession = (preSessionResult as any)?.data?.session ?? null;
+      if (mode === "signup") {
+        await withTimeout(signUp(email, password, fullName), 15000, "Sign up timed out. Please try again.");
+        setSignupSuccess(true);
+      } else {
+        // Login flow
+        const preSessionResult = await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out");
+        const preSession = (preSessionResult as any)?.data?.session ?? null;
+        if (preSession && !navigationAttemptedRef.current) {
+          navigationAttemptedRef.current = true;
+          navigate(postAuthPath, { replace: true });
+          return;
+        }
 
-      if (preSession && !navigationAttemptedRef.current) {
-        navigationAttemptedRef.current = true;
-        navigate("/post-auth", { replace: true });
-        return;
+        const result = await withTimeout(signIn(email, password), 15000, "Sign in timed out. Please try again.");
+        const session =
+          (result as any)?.session ??
+          ((await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out")) as any)?.data?.session ??
+          null;
+
+        if (session && !navigationAttemptedRef.current) {
+          navigationAttemptedRef.current = true;
+          navigate(postAuthPath, { replace: true });
+          return;
+        }
+
+        setError("Authentication succeeded but session not established. Please try again.");
       }
-
-      const result = await withTimeout(
-        signIn(email, password),
-        15000,
-        "Sign in timed out. Please try again."
-      );
-
-      const session =
-        (result as any)?.session ??
-        ((await withTimeout(
-          supabase.auth.getSession(),
-          8000,
-          "Session check timed out"
-        )) as any)?.data?.session ??
-        null;
-
-      if (session && !navigationAttemptedRef.current) {
-        navigationAttemptedRef.current = true;
-        navigate("/post-auth", { replace: true });
-        return;
-      }
-
-      setError("Authentication succeeded but session not established. Please try again.");
-      toast({
-        title: "Authentication Issue",
-        description: "Please try signing in again.",
-        variant: "destructive",
-      });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to sign in";
       setError(errorMessage);
-      toast({
-        title: "Sign In Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: mode === "signup" ? "Sign Up Failed" : "Sign In Failed", description: errorMessage, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -161,63 +156,69 @@ export function ClientLoginForm() {
 
   const handleGoogleSignIn = async () => {
     if (googleLoading || loading) return;
-
     setGoogleLoading(true);
     setError(null);
-
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
-
       if (error) {
-        const errorMessage = error.message || "Failed to sign in with Google";
-        setError(errorMessage);
-        toast({
-          title: "Google Sign In Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        setError(error.message || "Failed to sign in with Google");
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Google";
-      setError(errorMessage);
-      toast({
-        title: "Google Sign In Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setError(err instanceof Error ? err.message : "Failed to sign in with Google");
     } finally {
       setGoogleLoading(false);
     }
   };
 
+  // Signup success screen
+  if (signupSuccess) {
+    return (
+      <div className="w-full bg-background rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 md:p-8 animate-fade-in-up shadow-lg">
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="h-16 w-16 rounded-full flex items-center justify-center bg-primary/10">
+              <CheckCircle className="h-8 w-8 text-primary" />
+            </div>
+          </div>
+          <h1 className="font-display text-xl font-semibold text-foreground">Check your email</h1>
+          <p className="text-muted-foreground text-sm mt-2 mb-6">
+            We've sent you a verification link. Please check your email to confirm your account.
+          </p>
+          <Button
+            onClick={() => { setSignupSuccess(false); setMode("login"); }}
+            className="w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            Back to Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-background rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 md:p-8 animate-fade-in-up shadow-lg">
-      {/* Header - Partner Portal branding */}
+      {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
         <div className="flex flex-col items-center justify-center mb-3 sm:mb-4">
-          <img 
-            src={dazeLogo} 
-            alt="Daze" 
-            className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 object-contain mb-2 sm:mb-3" 
-          />
+          <img src={dazeLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 object-contain mb-2 sm:mb-3" />
           <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Partner Portal
           </span>
         </div>
         <h1 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-          Welcome back
+          {mode === "signup" ? "Create your account" : "Welcome back"}
         </h1>
         <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          Access your onboarding portal
+          {mode === "signup" ? "Sign up to access your onboarding portal" : "Access your onboarding portal"}
         </p>
       </div>
 
       {/* Form */}
-      <form 
+      <form
         ref={formRef}
-        onSubmit={handleSubmit} 
+        onSubmit={handleSubmit}
         className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
       >
         {error && (
@@ -226,7 +227,24 @@ export function ClientLoginForm() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        
+
+        {/* Full Name - signup only */}
+        {mode === "signup" && (
+          <div className="space-y-2">
+            <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+            <Input
+              id="fullName"
+              type="text"
+              placeholder="Jane Smith"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              disabled={loading}
+              className="rounded-xl"
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -240,7 +258,7 @@ export function ClientLoginForm() {
             className={`rounded-xl ${error ? 'ring-destructive/50' : ''}`}
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="password" className="text-sm font-medium">Password</Label>
           <div className="relative">
@@ -260,22 +278,21 @@ export function ClientLoginForm() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               tabIndex={-1}
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          {showStrengthIndicator && (
+            <PasswordStrengthIndicator validation={passwordValidation} show={true} />
+          )}
         </div>
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full rounded-xl min-h-[44px] bg-accent text-accent-foreground hover:bg-accent/90"
           disabled={loading || googleLoading}
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Sign In to Portal
+          {mode === "signup" ? "Create Account" : "Sign In to Portal"}
         </Button>
 
         <OrDivider className="my-4" />
@@ -292,36 +309,40 @@ export function ClientLoginForm() {
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
           )}
-          Sign in with Google
+          {mode === "signup" ? "Sign up with Google" : "Sign in with Google"}
         </Button>
 
-        {/* Help link instead of sign-up */}
+        {/* Mode toggle */}
         <div className="text-center pt-2">
-          <a
-            href="mailto:support@daze.com"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Mail className="h-4 w-4" />
-            Need help? Contact support
-          </a>
+          {mode === "login" ? (
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("signup"); setError(null); }}
+                className="font-medium text-accent hover:text-accent/80 transition-colors"
+              >
+                Sign up
+              </button>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setError(null); }}
+                className="font-medium text-accent hover:text-accent/80 transition-colors"
+              >
+                Sign in
+              </button>
+            </p>
+          )}
         </div>
       </form>
     </div>

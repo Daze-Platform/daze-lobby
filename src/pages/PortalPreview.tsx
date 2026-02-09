@@ -17,6 +17,7 @@ import { ClipboardList, FileText, Clock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { ClientProvider } from "@/contexts/ClientContext";
 
 /**
@@ -107,8 +108,9 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
     ]);
   };
   
-  // Welcome tour - using "preview" as the user ID for demo
-  const { showTour, completeTour, resetTour } = useWelcomeTour("preview-user");
+  // Welcome tour - use real user ID when authenticated, fallback for demo
+  const { user } = useAuthContext();
+  const { showTour, completeTour, resetTour } = useWelcomeTour(user?.id || "preview-user");
   
   // Demo legal entity state
   const [hotelLegalEntity, setHotelLegalEntity] = useState({

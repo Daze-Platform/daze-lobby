@@ -19,12 +19,22 @@ export default function PostAuth() {
   const location = useLocation();
   const [showRoleMissing, setShowRoleMissing] = useState(false);
 
+  // Read returnTo from query params (validated to /portal/ paths only)
+  const returnTo = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const raw = params.get("returnTo");
+    if (raw && raw.startsWith("/portal/")) return raw;
+    return null;
+  }, [location.search]);
+
   const targetPath = useMemo(() => {
     if (!isAuthenticated) return "/auth";
+    // If there's a valid returnTo, use it regardless of role
+    if (returnTo) return returnTo;
     if (isClient(role)) return "/portal";
     if (hasDashboardAccess(role)) return "/dashboard";
     return null;
-  }, [isAuthenticated, role]);
+  }, [isAuthenticated, role, returnTo]);
 
   // Give hydration a brief moment after sign-in to avoid flashing an error.
   useEffect(() => {
