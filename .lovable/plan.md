@@ -1,169 +1,82 @@
 
-# Architectural Split: Control Tower vs. Client Portal
+# Fix Portal Header Admin Switcher - Duplicate Badge Issue
 
-## Executive Summary
+## Problem Identified
 
-This plan implements a clear separation between the internal "Control Tower" (admin/ops/support) and the "Client Portal" (hotel clients), with a dedicated branded login experience for clients.
+The "Pilot Live" badge appears twice in the header:
+1. **Inside the dropdown trigger** - The SelectValue displays content from SelectItem, which includes the phase badge
+2. **Outside the dropdown** - A separate Badge component shows the same phase information
 
----
+This creates a cluttered, unprofessional appearance where badges overlap and duplicate information.
 
-## Current State Analysis
+## Root Cause
 
-After reviewing the codebase, the following is already in place:
+In `AdminHotelSwitcher.tsx`:
+- Lines 66-79: Each `SelectItem` renders the client name + percentage + phase badge
+- When selected, the `SelectValue` inherits this full content including the badge
+- Lines 92-98: A separate standalone Badge is rendered showing the same phase
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Role-based routing | Implemented | `RoleBasedRoute` and `PortalRoute` exist |
-| User roles table | Implemented | Separate `user_roles` table with `app_role` enum |
-| Client assignment | Implemented | `user_clients` table links users to clients |
-| Dashboard layout | Implemented | `DashboardLayout` with sidebar + header |
-| PostAuth resolver | Implemented | Routes to `/portal` or `/dashboard` based on role |
-| Client context | Implemented | Multi-tenancy via `ClientContext` |
+## Solution
 
-**What's Missing:**
-1. A dedicated Client Login page at `/portal/login` with branded aesthetic
-2. A reusable `PortalLayout` wrapper component for the client-facing experience
-3. Route blocking to prevent clients from accessing `/dashboard`, `/clients`, `/devices`, etc.
-4. Automatic client branding (logo/colors) based on URL slug (future enhancement)
+Redesign the AdminHotelSwitcher for a cleaner, more professional layout:
 
----
+### Option A: Simplified Trigger, Rich Dropdown (Recommended)
 
-## Implementation Plan
+**Trigger displays:**
+- Hotel icon + Client name only (no badge in trigger)
 
-### Phase 1: Dedicated Client Login Page
+**Dropdown items display:**
+- Client name + progress % + phase badge (rich detail for selection)
 
-**New File:** `src/pages/PortalLogin.tsx`
+**External summary displays:**
+- Phase badge + Progress bar + percentage (after the dropdown)
 
-Create a client-facing login page with the "A brighter day awaits" Daze aesthetic:
-- Uses the existing `SketchyArtPanel` artwork
-- Simplified form (email + password only, no sign-up link)
-- Redirects to `/portal` on success
-- Different messaging: "Access your onboarding portal" instead of "Control Tower"
-- Separate from admin login at `/auth`
+### Changes to AdminHotelSwitcher.tsx
 
-**Route Addition in `App.tsx`:**
-```text
-/portal/login → PortalLogin (public, AuthRedirect wrapper)
-```
+1. **Simplify SelectTrigger content** - Only show icon + client name
+2. **Keep SelectItem content rich** - Name + progress + badge for easy selection
+3. **Keep external progress indicator** - But ensure no duplication with trigger
 
-### Phase 2: Portal Layout Component
-
-**New File:** `src/components/layout/PortalLayout.tsx`
-
-Create a minimalist layout wrapper for client portal pages:
-- Header with Daze logo (or client logo if available)
-- No sidebar navigation (unlike DashboardLayout)
-- Clean, focused onboarding experience
-- Mobile-first responsive design
-- Consumes `ClientContext` for branding
-
-### Phase 3: Enhanced Route Protection
-
-**Update:** `src/components/layout/PortalRoute.tsx`
-
-Strengthen data isolation:
-- Block access if trying to navigate to admin routes
-- Verify `client_id` matches on all data fetches (already enforced via RLS)
-
-**Update:** `src/components/layout/RoleBasedRoute.tsx`
-
-Ensure client role users are redirected to `/portal` if they try to access dashboard routes.
-
-### Phase 4: Update Auth Flow
-
-**Update:** `src/pages/Auth.tsx`
-
-- Add query parameter detection for `?portal=1` to show client-focused messaging
-- Update login form to conditionally show "Control Tower" vs "Partner Portal" branding
-
-**Update:** `src/components/auth/LoginForm.tsx`
-
-- Accept optional `isPortalLogin` prop
-- Change copy from "Control Tower" to "Onboarding Portal" when in portal mode
-- Hide "Sign up" link for portal login (clients are invited, not self-registered)
-
----
-
-## File Changes Summary
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/pages/PortalLogin.tsx` | Create | Dedicated client login page |
-| `src/components/layout/PortalLayout.tsx` | Create | Minimalist client layout wrapper |
-| `src/components/auth/ClientLoginForm.tsx` | Create | Client-focused login form |
-| `src/App.tsx` | Modify | Add `/portal/login` route |
-| `src/pages/Portal.tsx` | Modify | Wrap with `PortalLayout` |
-| `src/components/layout/RoleBasedRoute.tsx` | Modify | Strengthen client blocking |
-
----
-
-## Technical Details
-
-### Client Login Form Component
+## Technical Changes
 
 ```text
-Interface:
-- Simpler than admin login (no sign-up, no Google OAuth initially)
-- Different messaging: "Welcome back, Partner"
-- Subtitle: "Access your onboarding portal"
-- Same auth logic, different UX
+Before (lines 58-62):
+<SelectTrigger className="w-[160px] lg:w-[200px] ...">
+  <div className="flex items-center gap-2 min-w-0">
+    <Building2 ... />
+    <SelectValue placeholder="Select client..." />  // Shows full item content
+  </div>
+</SelectTrigger>
 
-Key differences from LoginForm:
-- No "Don't have an account? Sign up" link
-- "Need help?" → mailto:support@daze.com
-- Uses same signIn() function and auth flow
-- Redirects to /portal instead of /post-auth (or via post-auth)
+After:
+<SelectTrigger className="w-[140px] lg:w-[180px] ...">
+  <div className="flex items-center gap-2 min-w-0">
+    <Building2 ... />
+    <span className="truncate">{selectedClient?.name || "Select..."}</span>
+  </div>
+</SelectTrigger>
 ```
 
-### Route Structure After Changes
+This prevents the SelectValue from inheriting the full SelectItem content (which includes the badge).
+
+## Visual Layout After Fix
 
 ```text
-/auth                    → Admin login (Control Tower)
-/portal/login           → Client login (Partner Portal)
-/post-auth              → Role-based redirect resolver
-
-/dashboard              → Admin/Ops/Support only
-/clients                → Admin/Ops/Support only
-/blockers               → Admin/Ops/Support only
-/devices                → Admin/Ops/Support only
-
-/portal                 → Client role (or admin viewing)
-/portal-preview         → Public demo preview
+[🏨 Royal Plaza ▼] | Pilot Live | ↗ ████ 100% | (clock) | email | Sign Out
+     ^                    ^              ^
+   Dropdown          Phase badge    Progress bar
+   (name only)      (single instance) (no duplication)
 ```
 
-### Portal Layout Structure
+## Files to Modify
 
-```text
-PortalLayout
-├── PortalHeader (already exists, minor updates)
-│   ├── Logo (client logo or Daze logo)
-│   ├── Navigation tabs (Onboarding | Documents)
-│   └── User actions (Activity | Sign Out)
-├── Main content area
-│   └── {children}
-└── Mobile bottom navigation (already in Portal.tsx)
-```
+| File | Change |
+|------|--------|
+| `src/components/portal/AdminHotelSwitcher.tsx` | Simplify trigger, use custom value display instead of SelectValue |
 
----
+## Additional Refinements
 
-## Security Considerations
-
-1. **RLS Already Enforces Data Isolation**
-   - All tables use `client_id` scoping via RLS policies
-   - `can_access_client()` function validates access
-
-2. **Route-Level Protection**
-   - `RoleBasedRoute` blocks dashboard access for clients
-   - `PortalRoute` blocks portal access for non-clients/non-admins
-
-3. **No New Database Changes Required**
-   - Existing `user_roles` and `user_clients` tables are sufficient
-
----
-
-## Future Enhancements (Not in This Plan)
-
-- Property slug-based URLs (e.g., `/portal/grand-hotel`)
-- Dynamic branding from client's `brand_palette` and `logo_url`
-- Client-specific custom domains
-- Invitation-based sign-up flow for new client users
+1. Reduce trigger width since we're showing less content
+2. Add better spacing between elements
+3. Ensure the progress bar and badge have consistent alignment
+4. Adjust responsive breakpoints for cleaner collapse on smaller screens
