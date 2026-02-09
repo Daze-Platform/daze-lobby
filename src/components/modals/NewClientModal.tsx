@@ -137,7 +137,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
           .insert(
             validContacts.map((contact, index) => ({
               client_id: client.id,
-              name: contact.name.trim() || "Unnamed Contact",
+              name: `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim() || "Unnamed Contact",
               email: contact.email.trim() || null,
               phone: contact.phone.trim() || null,
               role: contact.role || null,
