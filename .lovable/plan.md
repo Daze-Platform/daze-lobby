@@ -1,75 +1,123 @@
 
-
-# Add Google OAuth to Partner Portal Login (`/portal/login`)
+# Add User Profile Menu to Client Portal Header
 
 ## Overview
 
-Add Google Sign-In capability to the Partner Portal login page, allowing clients to authenticate using their Google accounts in addition to email/password.
+Add a professional user profile dropdown menu to the top-right of the Portal header, allowing clients to see their identity and sign out. This follows the same pattern already used in the admin `DashboardHeader` component.
 
 ## Current State
 
-- **`/portal/login`** uses `ClientLoginForm.tsx` which only supports email/password authentication
-- **`/auth`** uses `LoginForm.tsx` which already has working Google OAuth via `lovable.auth.signInWithOAuth("google")`
-- The Lovable Cloud auth integration (`@lovable.dev/cloud-auth-js`) is already configured and provides managed Google OAuth
+- **Portal Header**: Currently shows email as plain text + Sign Out button
+- **Dashboard Header**: Already has a fully functional profile dropdown with Avatar, name, email, role badge, and sign out
+- **User Data**: `UserWithRole` type includes `fullName` but is missing `avatarUrl`
+- **Profiles Table**: Has `avatar_url` column that is not being fetched in auth flow
 
-## Implementation Approach
+## Implementation Plan
 
-Follow the existing pattern from `LoginForm.tsx` to add Google OAuth to `ClientLoginForm.tsx`:
+### 1. Extend User Type to Include Avatar URL
 
-### Changes to `ClientLoginForm.tsx`
+Update the `UserWithRole` interface and `getCurrentUser()` function to fetch and expose the user's avatar URL.
 
-1. **Add Google loading state**
-   ```tsx
-   const [googleLoading, setGoogleLoading] = useState(false);
-   ```
+**File**: `src/lib/auth.ts`
 
-2. **Import the Lovable auth module**
-   ```tsx
-   import { lovable } from "@/integrations/lovable";
-   ```
+```typescript
+export interface UserWithRole {
+  id: string;
+  email: string;
+  fullName: string | null;
+  avatarUrl: string | null;  // NEW
+  role: AppRole | null;
+}
+```
 
-3. **Add Google sign-in handler**
-   ```tsx
-   const handleGoogleSignIn = async () => {
-     setGoogleLoading(true);
-     setError(null);
-     try {
-       const { error } = await lovable.auth.signInWithOAuth("google", {
-         redirect_uri: window.location.origin,
-       });
-       if (error) {
-         setError(error.message || "Failed to sign in with Google");
-         toast({ title: "Google Sign In Failed", ... });
-       }
-     } catch (err) { ... }
-     finally { setGoogleLoading(false); }
-   };
-   ```
+Update `getCurrentUser()` to select `avatar_url` alongside `full_name`:
 
-4. **Add UI elements**
-   - "Or continue with" divider after the email/password form
-   - Google sign-in button with proper styling (accent-colored for Partner Portal branding)
+```typescript
+const { data: profileData } = await supabase
+  .from("profiles")
+  .select("full_name, avatar_url")  // Add avatar_url
+  .eq("user_id", user.id)
+  .maybeSingle();
 
-### UI Layout After Changes
+return {
+  id: user.id,
+  email: user.email || "",
+  fullName: profileData?.full_name || null,
+  avatarUrl: profileData?.avatar_url || null,  // NEW
+  role: roleData?.role as AppRole | null,
+};
+```
+
+### 2. Update Portal Header with Profile Dropdown
+
+Replace the plain email text and Sign Out button with a proper profile dropdown menu.
+
+**File**: `src/components/portal/PortalHeader.tsx`
+
+Add new props:
+- `userFullName?: string` - User's display name
+- `userAvatarUrl?: string | null` - User's profile picture URL
+
+New UI structure for the right section:
 
 ```text
-┌─────────────────────────────────────────┐
-│            [Daze Logo]                  │
-│          Partner Portal                 │
-│          Welcome back                   │
-│    Access your onboarding portal        │
-│                                         │
-│  Email: [_________________________]     │
-│  Password: [___________________] 👁     │
-│                                         │
-│  [████ Sign In to Portal ████]          │
-│                                         │
-│  ─────── Or continue with ───────       │
-│                                         │
-│  [🟡 Sign in with Google]               │  <-- NEW
-│                                         │
-│  📧 Need help? Contact support          │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  [Logo] PREVIEW   |  Onboarding  Documents  |  [Avatar▼]       │
+└─────────────────────────────────────────────────────────────────┘
+                                                      │
+                                                      ▼
+                                              ┌──────────────────┐
+                                              │ John Smith       │
+                                              │ john@hotel.com   │
+                                              │ ─────────────────│
+                                              │ 🚪 Sign Out      │
+                                              └──────────────────┘
+```
+
+**Components to import**:
+- `Avatar`, `AvatarImage`, `AvatarFallback` from `@/components/ui/avatar`
+- `DropdownMenu`, `DropdownMenuContent`, `DropdownMenuItem`, etc. from `@/components/ui/dropdown-menu`
+
+**Avatar Fallback Logic**:
+```typescript
+// Generate initials from name or email
+const getInitials = (name?: string, email?: string) => {
+  if (name) {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  }
+  return email?.charAt(0).toUpperCase() || "U";
+};
+```
+
+### 3. Update Portal Page to Pass New Props
+
+**File**: `src/pages/Portal.tsx`
+
+Pass the new user data props to PortalHeader:
+
+```typescript
+<PortalHeader
+  // ... existing props
+  userEmail={user?.email}
+  userFullName={user?.fullName || undefined}
+  userAvatarUrl={user?.avatarUrl}
+  onSignOut={handleSignOut}
+/>
+```
+
+### 4. Update Portal Preview for Consistency
+
+**File**: `src/pages/PortalPreview.tsx`
+
+Pass demo user data to maintain UI parity:
+
+```typescript
+<PortalHeader
+  // ... existing props
+  userEmail="demo@grandhydatt.com"
+  userFullName="Demo User"
+  userAvatarUrl={undefined}
+/>
 ```
 
 ---
@@ -78,58 +126,35 @@ Follow the existing pattern from `LoginForm.tsx` to add Google OAuth to `ClientL
 
 | File | Changes |
 |------|---------|
-| `src/components/auth/ClientLoginForm.tsx` | Add Google OAuth button, handler, and loading state |
+| `src/lib/auth.ts` | Add `avatarUrl` to `UserWithRole` type and fetch it in `getCurrentUser()` |
+| `src/components/portal/PortalHeader.tsx` | Replace email text with Avatar dropdown menu |
+| `src/pages/Portal.tsx` | Pass `userFullName` and `userAvatarUrl` props to header |
+| `src/pages/PortalPreview.tsx` | Pass demo user props for UI parity |
 
 ---
 
-## Technical Details
+## UI Design Details
 
-### Google Button Styling
-- Use `variant="outline"` with accent border for Partner Portal branding
-- Match the rounded-xl style of other form elements
-- Disabled when either email/password or Google sign-in is loading
+### Profile Dropdown Trigger
+- Circular Avatar (32x32px) with hover effect
+- Shows profile picture or initials fallback
+- Subtle border matching design system
 
-### Authentication Flow
-```text
-User clicks "Sign in with Google"
-    ↓
-lovable.auth.signInWithOAuth("google") is called
-    ↓
-User is redirected to Google consent screen
-    ↓
-After consent, redirected back to origin
-    ↓
-Session is established via Lovable Cloud
-    ↓
-useAuth hook detects session
-    ↓
-Redirect to /post-auth
-    ↓
-PostAuth routes client to /portal
-```
+### Dropdown Content
+- User's full name (bold)
+- User's email (muted)
+- Separator line
+- "Sign Out" action with logout icon
 
-### Error Handling
-- Display errors in the same Alert component used for email/password errors
-- Show toast notifications for failed attempts
-- Reset loading state in `finally` block to prevent stuck spinners
+### Mobile Behavior
+- Avatar trigger visible on all screen sizes
+- Dropdown menu adapts to screen width
 
 ---
 
-## Security Considerations
+## Technical Notes
 
-1. **Role assignment**: New Google users will need to have the `client` role assigned in `user_roles` table before they can access the portal (same as email/password users)
-2. **No self-signup**: Clients are still invited by admins - Google OAuth just provides an alternative authentication method for existing accounts
-3. **Managed credentials**: Uses Lovable Cloud's managed Google OAuth (no API keys needed)
-
----
-
-## Testing Checklist
-
-After implementation, verify:
-- [ ] Google button appears on `/portal/login`
-- [ ] Clicking Google button initiates OAuth flow
-- [ ] After successful Google auth, user lands on `/portal` (if client role)
-- [ ] Error states display correctly if OAuth fails
-- [ ] Loading states work correctly (button disabled, spinner shown)
-- [ ] Both Google and email/password can be used on the same page without conflicts
-
+- **Design Consistency**: Follows the existing `DashboardHeader` pattern exactly
+- **Avatar Storage**: Uses existing `onboarding-assets` bucket for profile pictures
+- **Fallback Strategy**: Shows initials when no avatar is uploaded
+- **Accessibility**: Dropdown uses Radix primitives with proper focus management
