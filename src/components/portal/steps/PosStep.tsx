@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { StepCompletionEffect } from "../StepCompletionEffect";
@@ -64,7 +66,7 @@ interface PosStepProps {
   isLocked: boolean;
   isActive?: boolean;
   data?: Record<string, unknown>;
-  onUpdate: (data: { provider: string; status: string }) => void;
+  onUpdate: (data: { provider: string; status: string; pms_name?: string }) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
@@ -198,8 +200,10 @@ export function PosStep({
   
   const savedProvider = data?.provider as PosProvider | undefined;
   const savedStatus = data?.status as string | undefined;
+  const savedPmsName = data?.pms_name as string | undefined;
   
   const [selectedProvider, setSelectedProvider] = useState<PosProvider>(savedProvider || null);
+  const [pmsName, setPmsName] = useState(savedPmsName || "");
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
   const [isPendingIT, setIsPendingIT] = useState(savedStatus === "pending_it");
@@ -267,7 +271,8 @@ export function PosStep({
     setIsPendingIT(true);
     onUpdate({ 
       provider: selectedProvider, 
-      status: "pending_it" 
+      status: "pending_it",
+      pms_name: pmsName.trim() || undefined,
     });
     
     // Log activity
@@ -275,6 +280,7 @@ export function PosStep({
       action: "pos_sent_to_it",
       details: {
         provider: selectedProvider,
+        pms_name: pmsName.trim() || undefined,
       },
     });
     
@@ -351,17 +357,34 @@ export function PosStep({
                     {PROVIDERS.map((provider) => (
                       <SelectItem key={provider.id} value={provider.id}>
                         <div className="flex items-center gap-3">
-                          <img 
-                            src={provider.logo} 
-                            alt={`${provider.name} logo`}
-                            className="w-6 h-6 object-contain rounded"
-                          />
+                          {provider.logo && (
+                            <img 
+                              src={provider.logo} 
+                              alt={`${provider.name} logo`}
+                              className="w-6 h-6 object-contain rounded"
+                            />
+                          )}
                           <span className="font-medium">{provider.name}</span>
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {/* PMS Name Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="pms-name" className="text-xs sm:text-sm text-muted-foreground">
+                    What is the name of your Property Management System (PMS)?
+                  </Label>
+                  <Input
+                    id="pms-name"
+                    value={pmsName}
+                    onChange={(e) => setPmsName(e.target.value)}
+                    placeholder="e.g., Opera, Mews, Cloudbeds..."
+                    className="h-12 bg-background"
+                    maxLength={100}
+                  />
+                </div>
               </motion.div>
             ) : (
               /* Instructions Panel */
