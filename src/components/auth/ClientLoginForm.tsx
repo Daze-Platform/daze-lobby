@@ -58,8 +58,8 @@ export function ClientLoginForm() {
   const showStrengthIndicator = mode === "signup" && password.length > 0;
 
   const postAuthPath = returnTo
-    ? `/post-auth?returnTo=${encodeURIComponent(returnTo)}`
-    : "/post-auth";
+    ? `/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
+    : "/post-auth?origin=portal";
 
   // Check for existing session on mount
   useEffect(() => {
