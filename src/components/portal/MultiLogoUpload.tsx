@@ -23,7 +23,7 @@ interface MultiLogoUploadProps {
 const createInitialLogos = (existingUrls?: Record<string, string>): LogoVariant[] => [
   { type: "dark", label: "Dark Version", description: "For light backgrounds", existingUrl: existingUrls?.dark },
   { type: "light", label: "Light Version", description: "For dark backgrounds", existingUrl: existingUrls?.light },
-  { type: "icon", label: "Icon/Favicon", description: "Square format, 512x512+", existingUrl: existingUrls?.icon },
+  { type: "icon", label: "Additional Logos", description: "For marketing materials & guest interfaces", existingUrl: existingUrls?.icon },
 ];
 
 export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUploadProps) {
