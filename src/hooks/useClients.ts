@@ -92,14 +92,13 @@ export function useClients() {
         const lastUpdate = new Date(client.updated_at);
         const isStale = now.getTime() - lastUpdate.getTime() > staleThreshold;
         const blockerCount = blockersByClient.get(client.id) || 0;
-        const pendingCount = pendingTasksByClient.get(client.id) || 0;
 
         return {
           ...client,
           hasBlocker: blockerClientIds.has(client.id) || isStale,
           primaryContact: contactsByClient.get(client.id) || null,
           dazeDeviceCount: dazeDevicesByClient.get(client.id) || 0,
-          incompleteCount: blockerCount + pendingCount,
+          incompleteCount: blockerCount,
           hasRecentReminder: clientsWithReminders.has(client.id),
         } as Client;
       });
