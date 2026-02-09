@@ -89,14 +89,8 @@ const App = () => (
                   </RoleBasedRoute>
                 }
               />
-              <Route
-                path="/portal"
-                element={
-                  <PortalRoute>
-                    <Portal />
-                  </PortalRoute>
-                }
-              />
+              {/* Dedicated client portal routes - must be before /portal */}
+              <Route path="/portal/springhill-orange-beach" element={<PortalPreview clientName="Springhill Suites Orange Beach" />} />
               {/* Admin Portal Viewer - Control Tower users only */}
               <Route
                 path="/portal/admin"
@@ -115,10 +109,17 @@ const App = () => (
                   </AuthRedirect>
                 } 
               />
+              {/* Client portal - after specific /portal/* routes */}
+              <Route
+                path="/portal"
+                element={
+                  <PortalRoute>
+                    <Portal />
+                  </PortalRoute>
+                }
+              />
               {/* Preview route - no auth required */}
               <Route path="/portal-preview" element={<PortalPreview />} />
-              {/* Dedicated client portal route */}
-              <Route path="/portal/springhill-orange-beach" element={<PortalPreview clientName="Springhill Suites Orange Beach" />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
