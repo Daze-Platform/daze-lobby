@@ -296,6 +296,25 @@ export function PosStep({
     }
   };
 
+  const handleITVerified = () => {
+    if (!selectedProvider) return;
+
+    onUpdate({
+      provider: selectedProvider,
+      status: "it_verified",
+      pms_name: pmsName.trim() || undefined,
+    });
+
+    logActivity.mutate({
+      action: "pos_it_verified",
+      details: { provider: selectedProvider },
+    });
+
+    toast.success("IT Verification confirmed!", {
+      description: "POS integration credentials received",
+    });
+  };
+
   const providerInfo = selectedProvider ? PROVIDERS.find(p => p.id === selectedProvider) : null;
   const instructions = selectedProvider 
     ? (PROVIDER_INSTRUCTIONS[selectedProvider] || { 
