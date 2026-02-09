@@ -310,6 +310,7 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
                   />
                   
                   {/* Demo Status Toggle - Horizontal scroll on mobile */}
+                  {isDemo && (
                   <div className="w-full pt-3 sm:pt-6 border-t border-border/20">
                     <p className="label-micro mb-2 sm:mb-3 text-center">Demo: Toggle Status</p>
                     <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
@@ -326,6 +327,7 @@ export default function PortalPreview({ clientName }: PortalPreviewProps) {
                       ))}
                     </div>
                   </div>
+                  )}
                 </CardContent>
               </Card>
 
