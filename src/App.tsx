@@ -109,6 +109,12 @@ const App = () => (
                   </AuthRedirect>
                 } 
               />
+              {/* Dynamic client portal by slug */}
+              <Route path="/portal/:clientSlug" element={
+                <DedicatedPortalRoute>
+                  <PortalPreview />
+                </DedicatedPortalRoute>
+              } />
               {/* Client portal - after specific /portal/* routes */}
               <Route
                 path="/portal"

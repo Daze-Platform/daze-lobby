@@ -280,6 +280,12 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                   />
                 </div>
 
+                {generatedSlug && (
+                  <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-3 py-1.5 rounded-md">
+                    Portal URL: /portal/{generatedSlug}
+                  </p>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="posProvider" className="text-sm font-medium">
                     POS Provider <span className="text-destructive">*</span>
