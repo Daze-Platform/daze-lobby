@@ -55,10 +55,12 @@ export function AdminHotelSwitcher() {
         value={selectedClientId || ""}
         onValueChange={(value) => setSelectedClientId(value || null)}
       >
-        <SelectTrigger className="w-[160px] lg:w-[200px] h-9 bg-background/80 border-border/60">
+        <SelectTrigger className="w-[140px] lg:w-[180px] h-9 bg-background/80 border-border/60">
           <div className="flex items-center gap-2 min-w-0">
             <Building2 className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
-            <SelectValue placeholder="Select client..." className="truncate" />
+            <span className="truncate text-sm">
+              {selectedClient?.name || "Select client..."}
+            </span>
           </div>
         </SelectTrigger>
         <SelectContent align="end" className="w-[300px]">
