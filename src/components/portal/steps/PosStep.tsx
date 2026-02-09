@@ -347,9 +347,14 @@ export function PosStep({
           <div className="text-left min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-xs sm:text-sm md:text-base truncate">POS Integration</p>
-              {isPendingIT && !isCompleted && (
+              {isPendingIT && !isITVerified && (
                 <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-2xs font-medium bg-primary/10 text-primary">
                   Pending IT
+                </span>
+              )}
+              {isITVerified && (
+                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-2xs font-medium bg-emerald-500/10 text-emerald-600">
+                  IT Verified
                 </span>
               )}
             </div>
