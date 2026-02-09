@@ -90,6 +90,7 @@ export function AdminDocumentUpload({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
+      logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title } });
       toast.success(`${title} uploaded successfully`);
     },
     onError: (error: Error) => {
