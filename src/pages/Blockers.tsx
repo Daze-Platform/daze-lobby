@@ -23,11 +23,12 @@ import {
   ArrowSquareOut, 
   Bell, 
   CircleNotch,
-  CircleDashed
+  CheckCircle,
 } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { useActiveBlockers, type ActiveBlocker } from "@/hooks/useActiveBlockers";
+import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
 
 // Task step mapping
 const TASK_STEPS: Record<string, { letter: string; name: string }> = {
@@ -38,67 +39,27 @@ const TASK_STEPS: Record<string, { letter: string; name: string }> = {
   devices: { letter: "E", name: "Device Setup" },
 };
 
-interface MockBlocker {
-  id: string;
-  hotelName: string;
-  reason: string;
-  incompleteTask: keyof typeof TASK_STEPS;
-  completedTasks: number;
-  type: "automatic" | "manual";
-  createdAt: Date;
-}
-
-const mockBlockers: MockBlocker[] = [
-  { 
-    id: "1", 
-    hotelName: "The Riverside Hotel", 
-    reason: "Pilot Agreement not signed - awaiting legal signature",
-    incompleteTask: "legal",
-    completedTasks: 0,
-    type: "automatic",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-  },
-  { 
-    id: "2", 
-    hotelName: "Mountain View Lodge", 
-    reason: "Brand identity incomplete - missing logo upload",
-    incompleteTask: "brand",
-    completedTasks: 1,
-    type: "automatic",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-  },
-  { 
-    id: "3", 
-    hotelName: "Lakefront Inn", 
-    reason: "POS integration pending - provider not selected",
-    incompleteTask: "pos",
-    completedTasks: 3,
-    type: "automatic",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-];
-
 export default function Blockers() {
   const navigate = useNavigate();
-  const [notifyBlocker, setNotifyBlocker] = useState<MockBlocker | null>(null);
-  const [isSending, setIsSending] = useState(false);
+  const { data: blockers = [], isLoading } = useActiveBlockers();
+  const sendNotification = useSendBlockerNotification();
+  const [notifyBlocker, setNotifyBlocker] = useState<ActiveBlocker | null>(null);
 
   const handleSendReminder = () => {
     if (!notifyBlocker) return;
-    
-    setIsSending(true);
-    // Simulate sending - in real implementation this would use useSendBlockerNotification
-    setTimeout(() => {
-      toast.success(`Reminder sent to ${notifyBlocker.hotelName}`);
-      setIsSending(false);
-      setNotifyBlocker(null);
-    }, 800);
+    sendNotification.mutate(
+      {
+        clientId: notifyBlocker.clientId,
+        blockerReason: notifyBlocker.reason,
+      },
+      { onSettled: () => setNotifyBlocker(null) },
+    );
   };
 
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        {/* Responsive header */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Active Blockers</h1>
@@ -106,14 +67,40 @@ export default function Blockers() {
           </div>
           <Badge variant="destructive" className="gap-1.5 self-start sm:self-auto">
             <Warning size={14} weight="duotone" />
-            {mockBlockers.length} Active
+            {blockers.length} Active
           </Badge>
         </div>
 
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-16">
+            <CircleNotch size={32} weight="bold" className="animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && blockers.length === 0 && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <CheckCircle size={48} weight="duotone" className="text-emerald-500" />
+              <h2 className="text-lg font-semibold text-foreground">No active blockers</h2>
+              <p className="text-sm text-muted-foreground max-w-md">
+                All clients are progressing smoothly through onboarding. Blockers will appear here when a client has incomplete tasks preventing phase transitions.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Blocker Cards */}
         <div className="grid gap-3 sm:gap-4">
-          {mockBlockers.map((blocker) => {
-            const taskInfo = TASK_STEPS[blocker.incompleteTask];
-            const progressPercent = (blocker.completedTasks / 5) * 100;
+          {blockers.map((blocker) => {
+            const taskInfo = blocker.incompleteTaskKey
+              ? TASK_STEPS[blocker.incompleteTaskKey] ?? null
+              : null;
+            const progressPercent =
+              blocker.totalTasks > 0
+                ? (blocker.completedTasks / blocker.totalTasks) * 100
+                : 0;
 
             return (
               <Card 
@@ -124,23 +111,24 @@ export default function Blockers() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                       <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
-                      <span className="truncate">{blocker.hotelName}</span>
+                      <span className="truncate">{blocker.clientName}</span>
                     </CardTitle>
                     
-                    {/* Task Step Badge */}
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className={cn(
-                          "w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold",
-                          "bg-destructive/10 text-destructive border border-destructive/20"
-                        )}
-                      >
-                        {taskInfo.letter}
+                    {taskInfo && (
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className={cn(
+                            "w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold",
+                            "bg-destructive/10 text-destructive border border-destructive/20"
+                          )}
+                        >
+                          {taskInfo.letter}
+                        </div>
+                        <Badge variant="outline" className="text-[10px] sm:text-xs">
+                          {taskInfo.name}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="text-[10px] sm:text-xs">
-                        {taskInfo.name}
-                      </Badge>
-                    </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="px-4 sm:px-6">
@@ -155,20 +143,19 @@ export default function Blockers() {
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
                         <span>Onboarding Progress</span>
-                        <span className="font-medium">{blocker.completedTasks}/5 tasks</span>
+                        <span className="font-medium">{blocker.completedTasks}/{blocker.totalTasks} tasks</span>
                       </div>
                       <Progress value={progressPercent} className="h-1.5 sm:h-2" />
                     </div>
 
-                    {/* Footer - stack on mobile */}
+                    {/* Footer */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
                       <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
                         <Clock size={14} weight="duotone" />
-                        Created {formatDistanceToNow(blocker.createdAt, { addSuffix: true })}
+                        Created {formatDistanceToNow(new Date(blocker.createdAt), { addSuffix: true })}
                       </div>
                       
                       <div className="flex items-center gap-2 w-full sm:w-auto">
-                        {/* Send Reminder Button */}
                         <TooltipProvider delayDuration={0}>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -214,7 +201,7 @@ export default function Blockers() {
       <AlertDialog open={!!notifyBlocker} onOpenChange={(open) => !open && setNotifyBlocker(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Send reminder to {notifyBlocker?.hotelName}?</AlertDialogTitle>
+            <AlertDialogTitle>Send reminder to {notifyBlocker?.clientName}?</AlertDialogTitle>
             <AlertDialogDescription>
               This will send a notification to the client's activity feed about: <span className="font-medium text-foreground">{notifyBlocker?.reason}</span>
             </AlertDialogDescription>
@@ -223,10 +210,10 @@ export default function Blockers() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSendReminder}
-              disabled={isSending}
+              disabled={sendNotification.isPending}
               className="gap-2"
             >
-              {isSending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
+              {sendNotification.isPending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
               Send Reminder
             </AlertDialogAction>
           </AlertDialogFooter>
