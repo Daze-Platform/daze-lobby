@@ -149,6 +149,7 @@ export type Database = {
           billing_address: string | null
           brand_palette: Json | null
           client_code: string | null
+          client_slug: string | null
           contract_value: number | null
           created_at: string
           id: string
@@ -171,6 +172,7 @@ export type Database = {
           billing_address?: string | null
           brand_palette?: Json | null
           client_code?: string | null
+          client_slug?: string | null
           contract_value?: number | null
           created_at?: string
           id?: string
@@ -193,6 +195,7 @@ export type Database = {
           billing_address?: string | null
           brand_palette?: Json | null
           client_code?: string | null
+          client_slug?: string | null
           contract_value?: number | null
           created_at?: string
           id?: string
@@ -564,6 +567,7 @@ export type Database = {
         Args: { _hotel_id: string; _user_id: string }
         Returns: boolean
       }
+      generate_slug: { Args: { input_text: string }; Returns: string }
       get_user_client_id: { Args: { _user_id: string }; Returns: string }
       get_user_hotel_id: { Args: { _user_id: string }; Returns: string }
       has_dashboard_access: { Args: { _user_id: string }; Returns: boolean }
