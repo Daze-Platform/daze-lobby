@@ -16,8 +16,8 @@ export function BrandDocumentUpload({
   onUpload,
   existingUrl,
   isUploading = false,
-  label = "Color Palette Document",
-  description = "Upload your brand guidelines or color palette document (PDF, PNG, JPG)",
+  label = "Upload Brand Guidelines",
+  description = "PDF, PNG, or image with your official color palette",
   accept = ".pdf,.png,.jpg,.jpeg,.webp"
 }: BrandDocumentUploadProps) {
   const [dragActive, setDragActive] = useState(false);

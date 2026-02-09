@@ -12,6 +12,7 @@ import { BrandDocumentUpload } from "../BrandDocumentUpload";
 import { StepCompletionEffect } from "../StepCompletionEffect";
 import { StepBadge, type StepBadgeStatus } from "@/components/ui/step-badge";
 import { useLogActivity } from "@/hooks/useLogActivity";
+import { OrDivider } from "@/components/ui/or-divider";
 import { useClient } from "@/contexts/ClientContext";
 
 interface BrandStepProps {
@@ -125,19 +126,34 @@ export function BrandStep({
           {/* Multi Logo Upload */}
           <MultiLogoUpload onLogosChange={handleLogosChange} />
 
-          {/* Color Palette Document Upload */}
-          <BrandDocumentUpload
-            onUpload={handleDocumentUpload}
-            existingUrl={paletteDocumentUrl}
-            isUploading={isUploadingDocument}
-          />
+          {/* Brand Colors Section */}
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium">Brand Colors</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload your brand guidelines document or manually define your color palette below.
+              </p>
+            </div>
 
-          {/* Color Palette Manager */}
-          <ColorPaletteManager 
-            colors={colors} 
-            onChange={setColors} 
-            maxColors={5}
-          />
+            {/* Option 1: Document Upload */}
+            <BrandDocumentUpload
+              onUpload={handleDocumentUpload}
+              existingUrl={paletteDocumentUrl}
+              isUploading={isUploadingDocument}
+              label="Upload Brand Guidelines"
+              description="PDF, PNG, or image with your official color palette"
+            />
+
+            {/* OR Divider */}
+            <OrDivider />
+
+            {/* Option 2: Manual Color Picker */}
+            <ColorPaletteManager 
+              colors={colors} 
+              onChange={setColors} 
+              maxColors={5}
+            />
+          </div>
 
           <SaveButton 
             onClick={handleSave}
