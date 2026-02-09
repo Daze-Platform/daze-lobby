@@ -265,6 +265,21 @@ function ActivityItem({ activity }: { activity: MockActivity }) {
 
 export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPanelProps) {
   const [activeTab, setActiveTab] = useState("portal");
+  const [isNewDeviceOpen, setIsNewDeviceOpen] = useState(false);
+
+  const { data: clientDevices = [], isLoading: devicesLoading } = useQuery({
+    queryKey: ["client-devices", hotel?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("devices")
+        .select("*")
+        .eq("client_id", hotel!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as DeviceRow[];
+    },
+    enabled: !!hotel?.id && open,
+  });
 
   if (!hotel) return null;
 
