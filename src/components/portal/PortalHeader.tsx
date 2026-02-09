@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Clock, ClipboardList, FileText, ArrowLeft, RotateCcw } from "lucide-react";
+import { SignOut, Clock, ClipboardText, FileText, ArrowLeft, ArrowClockwise } from "@phosphor-icons/react";
 import { AdminClientSwitcher } from "./AdminClientSwitcher";
 import dazeLogo from "@/assets/daze-logo.png";
 
@@ -85,11 +85,11 @@ export function PortalHeader({
             <Tabs value={activeView} onValueChange={(v) => onViewChange(v as PortalView)}>
               <TabsList className="bg-muted/50 h-10">
                 <TabsTrigger value="onboarding" className="gap-2 px-4 h-8">
-                  <ClipboardList className="w-4 h-4" strokeWidth={1.5} />
+                  <ClipboardText size={16} weight="duotone" />
                   <span className="font-medium">Onboarding</span>
                 </TabsTrigger>
                 <TabsTrigger value="documents" className="gap-2 px-4 h-8">
-                  <FileText className="w-4 h-4" strokeWidth={1.5} />
+                  <FileText size={16} weight="duotone" />
                   <span className="font-medium">Documents</span>
                 </TabsTrigger>
               </TabsList>
@@ -114,7 +114,7 @@ export function PortalHeader({
                 className="gap-2 text-muted-foreground h-9 px-3"
                 onClick={onResetTour}
               >
-                <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
+                <ArrowClockwise size={16} weight="regular" />
                 <span className="hidden lg:inline">Reset Tour</span>
               </Button>
             )}
@@ -129,7 +129,7 @@ export function PortalHeader({
                     onClick={onActivityFeedOpen}
                     className="h-9 w-9 rounded-full relative shrink-0"
                   >
-                    <Clock className="w-4 h-4" strokeWidth={1.5} />
+                    <Clock size={16} weight="duotone" />
                     {badgeCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center animate-pulse">
                         {badgeCount > 9 ? "9+" : badgeCount}
@@ -170,12 +170,12 @@ export function PortalHeader({
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
-                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <ArrowLeft size={16} weight="regular" className="mr-2" />
                       <span>Back to Login</span>
                     </>
                   ) : (
                     <>
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <SignOut size={16} weight="duotone" className="mr-2" />
                       <span>Sign Out</span>
                     </>
                   )}
@@ -192,7 +192,7 @@ export function PortalHeader({
               onClick={onActivityFeedOpen}
               className="h-9 w-9 rounded-full relative"
             >
-              <Clock className="w-4 h-4" strokeWidth={1.5} />
+              <Clock size={16} weight="duotone" />
               {badgeCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                   {badgeCount > 9 ? "9+" : badgeCount}
@@ -227,12 +227,12 @@ export function PortalHeader({
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
-                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <ArrowLeft size={16} weight="regular" className="mr-2" />
                       <span>Back to Login</span>
                     </>
                   ) : (
                     <>
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <SignOut size={16} weight="duotone" className="mr-2" />
                       <span>Sign Out</span>
                     </>
                   )}

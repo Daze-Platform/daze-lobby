@@ -4,19 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
-  Tablet, 
-  Wifi, 
-  WifiOff, 
+  DeviceTablet, 
+  WifiHigh, 
+  WifiSlash, 
   Monitor, 
-  Smartphone, 
+  DeviceMobile, 
   Printer, 
-  Building2, 
+  Buildings, 
   Calendar, 
-  Search,
-  AlertTriangle,
+  MagnifyingGlass,
+  Warning,
   BatteryLow,
   MapPin,
-} from "lucide-react";
+  type Icon as PhosphorIcon
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DeviceDetailPanel, type Device } from "@/components/dashboard/DeviceDetailPanel";
@@ -122,10 +123,10 @@ const mockDevices: Device[] = [
   },
 ];
 
-const deviceIcons: Record<string, typeof Tablet> = {
-  Tablet: Tablet,
+const deviceIcons: Record<string, PhosphorIcon> = {
+  Tablet: DeviceTablet,
   Kiosk: Monitor,
-  Handheld: Smartphone,
+  Handheld: DeviceMobile,
   Printer: Printer,
 };
 
@@ -136,7 +137,7 @@ const statusConfig = {
     borderColor: "border-emerald-500/20",
     pulseColor: "bg-emerald-500",
     label: "Active",
-    icon: Wifi,
+    icon: WifiHigh,
   },
   offline: { 
     color: "text-rose-500", 
@@ -144,7 +145,7 @@ const statusConfig = {
     borderColor: "border-rose-500/20",
     pulseColor: "bg-rose-500",
     label: "Offline",
-    icon: WifiOff,
+    icon: WifiSlash,
   },
   maintenance: { 
     color: "text-amber-500", 
@@ -152,7 +153,7 @@ const statusConfig = {
     borderColor: "border-amber-500/20",
     pulseColor: "bg-amber-500",
     label: "Update Pending",
-    icon: AlertTriangle,
+    icon: Warning,
   },
 };
 
@@ -165,7 +166,7 @@ function DeviceCard({
   device: Device; 
   onClick: () => void;
 }) {
-  const DeviceIcon = deviceIcons[device.type] || Tablet;
+  const DeviceIcon = deviceIcons[device.type] || DeviceTablet;
   const config = statusConfig[device.status];
   const StatusIcon = config.icon;
   const batteryLevel = device.batteryLevel ?? 100;
@@ -211,11 +212,11 @@ function DeviceCard({
           "bg-gradient-to-br from-primary/15 to-primary/5",
           "ring-1 ring-primary/10 group-hover:ring-primary/20 transition-all"
         )}>
-          <DeviceIcon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+          <DeviceIcon size={24} weight="duotone" className="text-primary" />
           {/* Battery Warning Badge */}
           {isLowBattery && (
             <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center ring-2 ring-background">
-              <BatteryLow className="h-2.5 w-2.5 text-amber-500" strokeWidth={2} />
+              <BatteryLow size={10} weight="bold" className="text-amber-500" />
             </div>
           )}
         </div>
@@ -230,15 +231,15 @@ function DeviceCard({
       {/* Details Row */}
       <div className="mt-4 pt-3 border-t border-border/30 space-y-1.5">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3 shrink-0" strokeWidth={1.5} />
+          <MapPin size={12} weight="duotone" className="shrink-0" />
           <span className="truncate">{device.venue || "Unassigned"}</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Building2 className="h-3 w-3 shrink-0" strokeWidth={1.5} />
+          <Buildings size={12} weight="duotone" className="shrink-0" />
           <span className="truncate">{device.hotel}</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3 shrink-0" strokeWidth={1.5} />
+          <Calendar size={12} weight="duotone" className="shrink-0" />
           <span>Installed {format(new Date(device.installDate), "MMM d, yyyy")}</span>
         </div>
       </div>
@@ -344,11 +345,11 @@ export default function Devices() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <Badge variant="secondary" className="gap-1.5">
-              <Tablet className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <DeviceTablet size={14} weight="duotone" />
               {mockDevices.length} Total
             </Badge>
             <Badge className="gap-1.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20">
-              <Wifi className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <WifiHigh size={14} weight="duotone" />
               {onlineCount} Online
             </Badge>
           </div>
@@ -361,7 +362,7 @@ export default function Devices() {
         )}>
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+            <MagnifyingGlass size={16} weight="regular" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by device name, venue, or hotel..."
               value={searchQuery}
@@ -389,7 +390,7 @@ export default function Devices() {
                 activeFilter === "offline" && "bg-rose-500 hover:bg-rose-600"
               )}
             >
-              <WifiOff className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <WifiSlash size={14} weight="duotone" />
               Offline
               {offlineCount > 0 && (
                 <Badge 
@@ -442,8 +443,8 @@ export default function Devices() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-              <Tablet className="h-8 w-8 text-muted-foreground/50" strokeWidth={1.5} />
+            <div className="w-16 h-16 rounded-[10px] bg-muted/50 flex items-center justify-center mb-4">
+              <DeviceTablet size={32} weight="duotone" className="text-muted-foreground/50" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">No devices found</p>
             <p className="text-xs text-muted-foreground/70 mt-1">
