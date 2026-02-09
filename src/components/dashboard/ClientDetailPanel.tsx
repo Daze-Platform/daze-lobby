@@ -225,9 +225,11 @@ function DeviceCard({ device }: { device: DeviceRow }) {
             {device.is_daze_owned ? "Daze" : "Property"}
           </Badge>
         </div>
-        <p className="text-2xs text-muted-foreground/70 mt-1">
-          Last check-in: {device.last_check_in}
-        </p>
+        {device.last_check_in && (
+          <p className="text-2xs text-muted-foreground/70 mt-1">
+            Last check-in: {formatTimeAgo(new Date(device.last_check_in))}
+          </p>
+        )}
       </div>
     </div>
   );
