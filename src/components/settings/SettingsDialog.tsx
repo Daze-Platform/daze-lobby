@@ -451,48 +451,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </section>
 
-              {/* Data Management (Test Only) */}
-              {isTest && isAdmin && (
-                <>
-                  <Separator className="bg-border/50" />
-                  
-                  <section className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Database size={16} weight="duotone" className="text-warning" />
-                      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Data Management</h3>
-                      <Badge variant="outline" className="text-2xs bg-warning/10 text-warning border-warning/20">
-                        Test Only
-                      </Badge>
-                    </div>
-                    
-                    <div className="rounded-xl bg-warning/5 border border-warning/20 p-4">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Reset the database with fresh demo data.
-                      </p>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="w-full gap-2"
-                        onClick={() => setShowPurgeConfirm(true)}
-                        disabled={isPurging}
-                      >
-                        {isPurging ? (
-                          <>
-                            <ArrowsClockwise size={16} weight="regular" className="animate-spin" />
-                            Reseeding...
-                          </>
-                        ) : (
-                          <>
-                            <Trash size={16} weight="duotone" />
-                            Purge & Reseed Data
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </section>
-                </>
-              )}
-
               {/* Save Button */}
               <Button 
                 className="w-full gap-2" 
