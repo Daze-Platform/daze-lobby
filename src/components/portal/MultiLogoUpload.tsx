@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Check, Image, AlertCircle, Moon, Sun, Sparkles } from "lucide-react";
+import { Upload, Check, Image, AlertCircle, Moon, Sun, Images } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
