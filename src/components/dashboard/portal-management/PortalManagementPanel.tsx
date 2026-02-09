@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Palette, MapPin, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Palette, MapPin, Loader2, ExternalLink } from "lucide-react";
 import { AdminDocumentUpload } from "./AdminDocumentUpload";
 import { AdminBrandPosControls } from "./AdminBrandPosControls";
 import { AdminVenuePresets } from "./AdminVenuePresets";
@@ -10,6 +11,7 @@ interface PortalManagementPanelProps {
   clientId: string;
   currentLogoUrl?: string | null;
   currentBrandPalette?: string[] | null;
+  onNavigateToDocsTab?: () => void;
 }
 
 interface Document {
@@ -24,6 +26,7 @@ export function PortalManagementPanel({
   clientId,
   currentLogoUrl,
   currentBrandPalette,
+  onNavigateToDocsTab,
 }: PortalManagementPanelProps) {
   // Fetch existing documents to check for pilot agreement and security docs
   const { data: documents, isLoading: isLoadingDocs } = useQuery({
@@ -113,6 +116,18 @@ export function PortalManagementPanel({
             description="Upload security compliance documents"
             existingDocument={securityDocs}
           />
+          
+          {onNavigateToDocsTab && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={onNavigateToDocsTab}
+            >
+              <ExternalLink className="h-3.5 w-3.5 mr-2" />
+              View All Documents in Docs Tab
+            </Button>
+          )}
         </TabsContent>
 
         <TabsContent value="brand-pos" className="mt-4">
