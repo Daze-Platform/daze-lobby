@@ -181,6 +181,8 @@ export default function Portal() {
         isAdmin={false}
         isAdminViewing={false}
         userEmail={user?.email}
+        userFullName={user?.fullName || undefined}
+        userAvatarUrl={user?.avatarUrl}
         onSignOut={handleSignOut}
         onActivityFeedOpen={() => {
           markAsRead();

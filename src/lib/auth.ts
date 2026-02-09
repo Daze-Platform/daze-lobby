@@ -6,6 +6,7 @@ export interface UserWithRole {
   id: string;
   email: string;
   fullName: string | null;
+  avatarUrl: string | null;
   role: AppRole | null;
 }
 
@@ -55,7 +56,7 @@ export async function getCurrentUser(): Promise<UserWithRole | null> {
   // Get user's profile
   const { data: profileData } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, avatar_url")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -63,6 +64,7 @@ export async function getCurrentUser(): Promise<UserWithRole | null> {
     id: user.id,
     email: user.email || "",
     fullName: profileData?.full_name || null,
+    avatarUrl: profileData?.avatar_url || null,
     role: roleData?.role as AppRole | null,
   };
 }
