@@ -39,97 +39,140 @@ export function PortalHeader({
 }: PortalHeaderProps) {
   // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
   const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
+  
   return (
     <header className="glass-header entrance-header">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-4">
-          <img src={dazeLogo} alt="Daze" className="h-8 sm:h-10 w-auto" />
-          {isPreview && (
-            <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
-              Preview
-            </Badge>
-          )}
-          {isAdminViewing && !isPreview && (
-            <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs">
-              Admin
-            </Badge>
-          )}
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="h-16 sm:h-[72px] flex items-center justify-between gap-4">
+          {/* Left: Logo + Mode Badge */}
+          <div className="flex items-center gap-3 shrink-0">
+            <img src={dazeLogo} alt="Daze" className="h-8 sm:h-9 w-auto" />
+            {isPreview && (
+              <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs px-2 py-0.5">
+                Preview
+              </Badge>
+            )}
+            {isAdminViewing && !isPreview && (
+              <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs px-2 py-0.5">
+                Admin
+              </Badge>
+            )}
+          </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-3 lg:gap-4">
-          {/* View Tabs */}
-          <Tabs value={activeView} onValueChange={(v) => onViewChange(v as PortalView)}>
-            <TabsList className="bg-muted/50">
-              <TabsTrigger value="onboarding" className="gap-2">
-                <ClipboardList className="w-4 h-4" />
-                Onboarding
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="gap-2">
-                <FileText className="w-4 h-4" />
-                Documents
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Center: Navigation Tabs */}
+          <div className="hidden md:flex items-center justify-center flex-1 min-w-0">
+            <Tabs value={activeView} onValueChange={(v) => onViewChange(v as PortalView)}>
+              <TabsList className="bg-muted/50 h-10">
+                <TabsTrigger value="onboarding" className="gap-2 px-4 h-8">
+                  <ClipboardList className="w-4 h-4" strokeWidth={1.5} />
+                  <span className="font-medium">Onboarding</span>
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="gap-2 px-4 h-8">
+                  <FileText className="w-4 h-4" strokeWidth={1.5} />
+                  <span className="font-medium">Documents</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
-          {isAdmin && !isPreview && <AdminHotelSwitcher />}
-          
-          {/* Reset Tour Button - Preview only */}
-          {isPreview && onResetTour && (
+          {/* Right: Actions */}
+          <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
+            {/* Admin Hotel Switcher */}
+            {isAdmin && !isPreview && <AdminHotelSwitcher />}
+            
+            {/* Divider when admin switcher is shown */}
+            {isAdmin && !isPreview && (
+              <div className="h-6 w-px bg-border/50" />
+            )}
+            
+            {/* Reset Tour Button - Preview only */}
+            {isPreview && onResetTour && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 text-muted-foreground h-9 px-3"
+                onClick={onResetTour}
+              >
+                <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
+                <span className="hidden lg:inline">Reset Tour</span>
+              </Button>
+            )}
+            
+            {/* Activity Feed Button */}
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onActivityFeedOpen}
+                    className="h-9 w-9 rounded-full relative shrink-0"
+                  >
+                    <Clock className="w-4 h-4" strokeWidth={1.5} />
+                    {badgeCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center animate-pulse">
+                        {badgeCount > 9 ? "9+" : badgeCount}
+                      </span>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Activity Feed</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* User Email */}
+            {!isPreview && userEmail && (
+              <span className="text-sm text-muted-foreground truncate max-w-[180px] hidden lg:block">
+                {userEmail}
+              </span>
+            )}
+            
+            {/* Sign Out / Back Button */}
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-2 text-muted-foreground min-h-[44px]"
-              onClick={onResetTour}
+              onClick={onSignOut} 
+              className="gap-2 h-9 px-3 text-muted-foreground hover:text-foreground"
             >
-              <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
-              Reset Tour
+              {isPreview ? (
+                <>
+                  <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Back</span>
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </>
+              )}
             </Button>
-          )}
-          
-          {/* Activity Feed Button */}
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onActivityFeedOpen}
-                  className="h-9 w-9 rounded-full relative"
-                >
-                  <Clock className="w-4 h-4" strokeWidth={1.5} />
-                  {badgeCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center animate-pulse">
-                      {badgeCount > 9 ? "9+" : badgeCount}
-                    </span>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Activity Feed</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          {!isPreview && userEmail && (
-            <span className="text-sm text-muted-foreground truncate max-w-[200px]">
-              {userEmail}
-            </span>
-          )}
-          
-          <Button variant="ghost" size="sm" onClick={onSignOut} className="gap-2 min-h-[44px]">
-            {isPreview ? (
-              <>
+          </div>
+
+          {/* Mobile Menu Button - could be expanded later */}
+          <div className="flex md:hidden items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onActivityFeedOpen}
+              className="h-9 w-9 rounded-full relative"
+            >
+              <Clock className="w-4 h-4" strokeWidth={1.5} />
+              {badgeCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                  {badgeCount > 9 ? "9+" : badgeCount}
+                </span>
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onSignOut} className="h-9 w-9">
+              {isPreview ? (
                 <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                Back to Login
-              </>
-            ) : (
-              <>
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </>
-            )}
-          </Button>
+              ) : (
+                <LogOut className="w-4 h-4" strokeWidth={1.5} />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </header>
