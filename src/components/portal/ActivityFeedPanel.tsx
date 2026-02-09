@@ -7,6 +7,7 @@ import {
   CheckCircle2, 
   Upload, 
   FileSignature, 
+  FileText,
   Palette, 
   Building2,
   AlertTriangle,
