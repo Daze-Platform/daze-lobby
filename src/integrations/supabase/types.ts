@@ -148,6 +148,7 @@ export type Database = {
           authorized_signer_title: string | null
           billing_address: string | null
           brand_palette: Json | null
+          client_code: string | null
           contract_value: number | null
           created_at: string
           id: string
@@ -169,6 +170,7 @@ export type Database = {
           authorized_signer_title?: string | null
           billing_address?: string | null
           brand_palette?: Json | null
+          client_code?: string | null
           contract_value?: number | null
           created_at?: string
           id?: string
@@ -190,6 +192,7 @@ export type Database = {
           authorized_signer_title?: string | null
           billing_address?: string | null
           brand_palette?: Json | null
+          client_code?: string | null
           contract_value?: number | null
           created_at?: string
           id?: string
