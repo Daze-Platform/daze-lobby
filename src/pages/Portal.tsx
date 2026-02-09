@@ -200,6 +200,7 @@ export default function Portal() {
           setShowActivityFeed(true);
         }}
         unreadNotificationCount={unreadCount}
+        documentCount={documentCount}
       />
 
       {/* Main Content */}
