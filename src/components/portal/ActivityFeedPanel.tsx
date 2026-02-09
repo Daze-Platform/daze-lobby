@@ -56,7 +56,7 @@ export function getActionConfig(action: string): { icon: React.ElementType; colo
 }
 
 // Format the action into a readable sentence
-function formatAction(log: ActivityLog): { userName: string; actionText: string } {
+export function formatAction(log: ActivityLog): { userName: string; actionText: string } {
   const userName = log.profile?.full_name || "Someone";
   const details = log.details as Record<string, unknown> | null;
   
