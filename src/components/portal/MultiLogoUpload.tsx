@@ -79,7 +79,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
     switch (type) {
       case "dark": return Moon;
       case "light": return Sun;
-      case "icon": return Sparkles;
+      case "icon": return Images;
       default: return Image;
     }
   };
