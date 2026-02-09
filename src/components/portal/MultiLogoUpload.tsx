@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Check, Image, AlertCircle, Moon, Sun, Sparkles } from "lucide-react";
@@ -20,12 +20,24 @@ interface MultiLogoUploadProps {
   existingUrls?: Record<string, string>;
 }
 
+const createInitialLogos = (existingUrls?: Record<string, string>): LogoVariant[] => [
+  { type: "dark", label: "Dark Version", description: "For light backgrounds", existingUrl: existingUrls?.dark },
+  { type: "light", label: "Light Version", description: "For dark backgrounds", existingUrl: existingUrls?.light },
+  { type: "icon", label: "Icon/Favicon", description: "Square format, 512x512+", existingUrl: existingUrls?.icon },
+];
+
 export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUploadProps) {
-  const [logos, setLogos] = useState<LogoVariant[]>(() => [
-    { type: "dark", label: "Dark Version", description: "For light backgrounds", existingUrl: existingUrls?.dark },
-    { type: "light", label: "Light Version", description: "For dark backgrounds", existingUrl: existingUrls?.light },
-    { type: "icon", label: "Icon/Favicon", description: "Square format, 512x512+", existingUrl: existingUrls?.icon },
-  ]);
+  const [logos, setLogos] = useState<LogoVariant[]>(() => createInitialLogos(existingUrls));
+
+  // Sync existingUrls when they change (e.g., after data loads from DB)
+  useEffect(() => {
+    if (existingUrls) {
+      setLogos(prev => prev.map(logo => ({
+        ...logo,
+        existingUrl: existingUrls[logo.type] || logo.existingUrl,
+      })));
+    }
+  }, [existingUrls]);
 
   const handleFileChange = (type: "dark" | "light" | "icon", file: File | undefined) => {
     if (!file) return;

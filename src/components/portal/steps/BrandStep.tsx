@@ -51,11 +51,53 @@ export function BrandStep({
         ? "active" 
         : "pending";
 
+  // Helper to extract palette document URL for a property from task data
+  const getPaletteDocumentUrl = (propertyId: string, taskData?: Record<string, unknown>): string | null => {
+    if (!taskData) return null;
+    const fieldKey = `palette_document_${propertyId}`;
+    const filePath = taskData[fieldKey] as string | undefined;
+    if (!filePath) return null;
+    // The file path is stored, we need to construct the public URL
+    // Files are stored in onboarding-assets bucket
+    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/onboarding-assets/${filePath}`;
+  };
+
+  // Helper to extract logo URLs for a property from task data
+  const getLogoUrls = (propertyId: string, taskData?: Record<string, unknown>): Record<string, string> => {
+    if (!taskData) return {};
+    const logos = (taskData.logos || {}) as Record<string, string>;
+    const result: Record<string, string> = {};
+    
+    // Logo keys are stored as: logo_{propertyId}_{variant} -> URL
+    // or for legacy single-property: {variant} -> URL
+    for (const [key, url] of Object.entries(logos)) {
+      // Check for property-specific logo pattern: logo_{propertyId}_{variant}
+      const propertyPrefix = `logo_${propertyId}_`;
+      if (key.startsWith(propertyPrefix)) {
+        const variant = key.substring(propertyPrefix.length); // Extract: dark, light, icon
+        result[variant] = url;
+      } else if (!key.startsWith("logo_") && ["dark", "light", "icon"].includes(key)) {
+        // Legacy format: direct variant names for single-property setup
+        result[key] = url;
+      }
+    }
+    
+    return result;
+  };
+
   // Initialize properties from saved data or empty
   const [properties, setProperties] = useState<PropertyBrand[]>(() => {
     const savedProperties = data?.properties as PropertyBrand[] | undefined;
     if (savedProperties && Array.isArray(savedProperties) && savedProperties.length > 0) {
-      return savedProperties;
+      // Hydrate with palette document URLs and logo URLs from task data
+      return savedProperties.map(prop => {
+        const extractedLogoUrls = getLogoUrls(prop.id, data);
+        return {
+          ...prop,
+          logoUrls: { ...(prop.logoUrls || {}), ...extractedLogoUrls },
+          paletteDocumentUrl: prop.paletteDocumentUrl || getPaletteDocumentUrl(prop.id, data),
+        };
+      });
     }
     // Legacy support: convert old format
     const legacyColors = data?.brand_palette as string[] | undefined;
@@ -67,6 +109,7 @@ export function BrandStep({
         logos: {},
         logoUrls: legacyLogos,
         colors: legacyColors || ["#3B82F6"],
+        paletteDocumentUrl: getPaletteDocumentUrl("property-default", data),
         isExpanded: true,
       }];
     }
@@ -77,9 +120,17 @@ export function BrandStep({
   useEffect(() => {
     const savedProperties = data?.properties as PropertyBrand[] | undefined;
     if (savedProperties && Array.isArray(savedProperties)) {
-      setProperties(savedProperties);
+      // Hydrate with palette document URLs and logo URLs from task data
+      setProperties(savedProperties.map(prop => {
+        const extractedLogoUrls = getLogoUrls(prop.id, data);
+        return {
+          ...prop,
+          logoUrls: { ...(prop.logoUrls || {}), ...extractedLogoUrls },
+          paletteDocumentUrl: prop.paletteDocumentUrl || getPaletteDocumentUrl(prop.id, data),
+        };
+      }));
     }
-  }, [data?.properties]);
+  }, [data?.properties, data]);
 
   const handlePropertiesChange = (updated: PropertyBrand[]) => {
     setProperties(updated);
