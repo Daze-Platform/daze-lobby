@@ -511,15 +511,39 @@ export function PosStep({
                 </div>
 
                 {/* Pending IT state */}
-                {isPendingIT && (
+                {isPendingIT && !isITVerified && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20"
+                    className="space-y-3"
                   >
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-sm text-primary font-medium">
-                      Pending IT Verification
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-sm text-primary font-medium">
+                        Pending IT Verification
+                      </span>
+                    </div>
+                    <Button
+                      onClick={handleITVerified}
+                      disabled={isSaving}
+                      className="w-full rounded-full min-h-[44px] gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      IT Verification Completed
+                    </Button>
+                  </motion.div>
+                )}
+
+                {/* IT Verified state */}
+                {isITVerified && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span className="text-sm text-emerald-600 font-medium">
+                      IT Verification Confirmed
                     </span>
                   </motion.div>
                 )}
