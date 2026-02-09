@@ -1,30 +1,30 @@
 
 
-# Fix Inconsistent "Incomplete" Stat
+# Fix Logo Upload RLS Error
 
 ## Problem
-The "Incomplete" stat card on the dashboard aggregates two different data sources (active blockers + pending onboarding tasks), but clicking it navigates to the Blockers page which only shows `blocker_alerts` records. This creates a mismatch: the card says 5, but the Blockers page says 0.
-
-## Root Cause
-In `src/hooks/useClients.ts`, `incompleteCount` is calculated as:
-```
-incompleteCount = blockerCount + pendingCount
-```
-Where `pendingCount` includes all incomplete onboarding tasks (which is normal work, not a problem requiring attention).
+The storage INSERT policy on `onboarding-assets` requires the first folder in the file path to match `auth.uid()`. The admin logo upload in `AdminBrandPosControls.tsx` uses the path `brands/{clientId}/{fileName}`, where the first folder is `"brands"` -- not the user's UID -- causing the RLS violation.
 
 ## Solution
-Change `incompleteCount` to only count **active blockers** -- the items that actually appear on the Blockers page. Pending onboarding tasks are normal workflow items, not actionable "incomplete" items for the control tower.
+Update the storage RLS INSERT policy on `onboarding-assets` to also allow admin/ops_manager users to upload to any path.
 
-## Changes
+### Database Migration (SQL)
+```sql
+DROP POLICY "Authenticated users can upload onboarding assets" ON storage.objects;
 
-### `src/hooks/useClients.ts`
-- Change the `incompleteCount` calculation from `blockerCount + pendingCount` to just `blockerCount`
-- Remove the pending tasks query and related code since it is no longer used for this stat
-- Keep `pendingTasksByClient` map only if used elsewhere; otherwise remove to reduce unnecessary database calls
+CREATE POLICY "Authenticated users can upload onboarding assets"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'onboarding-assets'
+  AND (
+    (auth.uid())::text = (storage.foldername(name))[1]
+    OR has_dashboard_access(auth.uid())
+  )
+);
+```
 
-### `src/pages/Dashboard.tsx`
-- No changes needed -- it already reads `incompleteCount` from the client data
+This adds `OR has_dashboard_access(auth.uid())` so admins and ops managers can upload to any folder path (like `brands/{clientId}/...`), while regular client users still must upload under their own UID folder.
 
-## Result
-The "Incomplete" stat will show 0 (matching the Blockers page), and will only increase when actual `blocker_alerts` records exist.
+### No Code Changes Needed
+The upload code in `AdminBrandPosControls.tsx` is correct -- only the storage policy needs updating.
 
