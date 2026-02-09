@@ -22,10 +22,6 @@ import {
   Key,
   CircleNotch,
   CheckCircle,
-  Warning,
-  Database,
-  ArrowsClockwise,
-  Trash
 } from "@phosphor-icons/react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
