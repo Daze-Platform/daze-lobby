@@ -209,6 +209,7 @@ export function PosStep({
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
   const [isPendingIT, setIsPendingIT] = useState(savedStatus === "pending_it");
+  const [isITVerified, setIsITVerified] = useState(savedStatus === "it_verified");
 
   // Derive badge status
   const badgeStatus: StepBadgeStatus = isCompleted
