@@ -1,149 +1,192 @@
 
 
-# Client Status Approval Workflow
+# Brand Palette Picker Enhancement
 
 ## Overview
 
-Implement a proper review-and-approval workflow where clients cannot change their own status. When a client completes all onboarding tasks, they transition to "Reviewing" status. The Daze admin team then reviews their submissions and can approve them through the Control Tower, which moves them to "Live".
+Improve the brand color palette interface by adding a visual "OR" separator between the document upload option and the manual color picker, making it clear that users only need to complete one of the two options.
 
-## Current State Analysis
+## Current State
 
-| Component | Current Behavior |
-|-----------|-----------------|
-| `PortalPreview.tsx` | Has "Demo: Toggle Status" buttons for testing - **appropriate for demo** |
-| `Portal.tsx` | No toggle buttons - status is read-only from database - **already correct** |
-| `useClientPortal.ts` | Auto-transitions to `pilot_live` when all tasks complete - **needs change** |
-| `KanbanBoard.tsx` | Admins can drag cards between phases - **already works for approval** |
+The `BrandStep.tsx` component currently shows:
+1. Multi Logo Upload
+2. Brand Document Upload (palette document)
+3. Color Palette Manager (manual picker)
+
+The document upload and color picker are shown sequentially without any indication that they are alternative options.
 
 ## Proposed Changes
 
-### 1. Modify Auto-Transition Logic
+### 1. Create an "OR" Divider Component
 
-**File:** `src/hooks/useClientPortal.ts`
+**New File:** `src/components/ui/or-divider.tsx`
 
-Change the auto-transition when all tasks complete from `pilot_live` to `reviewing`:
+A reusable divider with "OR" text centered between two horizontal lines:
 
-```typescript
-// Line 546-556: Change target phase
-const updateClientPhaseMutation = useMutation({
-  mutationFn: async () => {
-    const { error } = await supabase
-      .from("clients")
-      .update({
-        phase: "reviewing" as const,  // Changed from "pilot_live"
-        phase_started_at: new Date().toISOString(),
-      })
-      .eq("id", clientId);
-    // ...
-  },
-  // Update activity log to reflect "reviewing"
-});
+```tsx
+import { Separator } from "@/components/ui/separator";
+
+interface OrDividerProps {
+  className?: string;
+}
+
+export function OrDivider({ className }: OrDividerProps) {
+  return (
+    <div className={cn("flex items-center gap-4", className)}>
+      <Separator className="flex-1" />
+      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        or
+      </span>
+      <Separator className="flex-1" />
+    </div>
+  );
+}
 ```
 
-### 2. Add "Reviewing" Column to Kanban Board
+### 2. Improve Color Palette Manager
 
-**File:** `src/components/kanban/KanbanBoard.tsx`
+**File:** `src/components/portal/ColorPaletteManager.tsx`
 
-The `lifecycle_phase` enum already includes `reviewing`, but it's not shown as a column. Update COLUMNS array to include it:
+Enhancements:
+- Add clearer visual hierarchy with a card-like container
+- Improve the color input UX with better touch targets
+- Add hex code validation for manual input
+- Show a more prominent empty state when no colors are added
+- Add subtle animations when adding/removing colors
 
-```typescript
-const COLUMNS = [
-  { phase: "onboarding", title: "Onboarding", subtitle: "Setup & data collection" },
-  { phase: "reviewing", title: "In Review", subtitle: "Pending approval" },  // Add this
-  { phase: "pilot_live", title: "Pilot Live", subtitle: "Testing & adoption" },
-  { phase: "contracted", title: "Contracted", subtitle: "Revenue generation" },
-];
+Key improvements:
+```tsx
+// Better color swatch with improved touch target
+<div className="flex items-center gap-3 p-3 border rounded-xl bg-card shadow-sm">
+  <button
+    type="button"
+    className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer ring-2 ring-border hover:ring-primary transition-all"
+    onClick={() => /* open color picker */}
+  >
+    <div className="absolute inset-0" style={{ backgroundColor: color }} />
+    <input type="color" className="absolute inset-0 opacity-0 cursor-pointer" />
+  </button>
+  {/* ... */}
+</div>
+
+// Better hex input with validation
+<Input
+  value={color}
+  onChange={(e) => {
+    const value = e.target.value;
+    // Only update if valid hex or partial hex
+    if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+      updateColor(index, value);
+    }
+  }}
+  placeholder="#3B82F6"
+  className="w-24 h-7 text-xs font-mono uppercase"
+/>
 ```
 
-### 3. Update Portal Preview Demo Toggle (Optional Clarification)
+### 3. Update BrandStep Layout
 
-**File:** `src/pages/PortalPreview.tsx`
+**File:** `src/components/portal/steps/BrandStep.tsx`
 
-The demo toggle is intentional for testing. Add clearer labeling that this is admin/demo functionality only. The real Portal.tsx already has no toggle buttons.
+Add the OR divider between document upload and color picker:
 
-### 4. Update ProgressRing Message for "Reviewing"
+```tsx
+<div className="space-y-4 sm:space-y-6 pt-1 sm:pt-2">
+  {/* Multi Logo Upload */}
+  <MultiLogoUpload onLogosChange={handleLogosChange} />
 
-**File:** `src/components/portal/ProgressRing.tsx`
+  {/* Color Palette Section with OR separator */}
+  <div className="space-y-4">
+    <p className="text-sm font-medium">Brand Colors</p>
+    <p className="text-xs text-muted-foreground">
+      Upload your brand guidelines document or manually define your color palette below.
+    </p>
+    
+    {/* Option 1: Document Upload */}
+    <BrandDocumentUpload
+      onUpload={handleDocumentUpload}
+      existingUrl={paletteDocumentUrl}
+      isUploading={isUploadingDocument}
+      label="Upload Brand Guidelines"
+      description="PDF, PNG, or image with your official color palette"
+    />
 
-Already shows "In Review" when `isReviewing` is true (line 187) - no changes needed.
+    {/* OR Divider */}
+    <OrDivider />
 
-### 5. Update StatusBadge
+    {/* Option 2: Manual Color Picker */}
+    <ColorPaletteManager 
+      colors={colors} 
+      onChange={setColors} 
+      maxColors={5}
+    />
+  </div>
 
-**File:** `src/components/portal/StatusBadge.tsx`
+  <SaveButton ... />
+</div>
+```
 
-Already configured for `reviewing` status with "In Review" label - no changes needed.
+### 4. Update BrandDocumentUpload Copy
 
-## Workflow After Implementation
+**File:** `src/components/portal/BrandDocumentUpload.tsx`
+
+Update default label and description to better reflect its role as an option:
+- Label: "Upload Brand Guidelines" → more descriptive
+- Description: Clarify this is for existing brand assets
+
+## Files to Create/Modify
+
+| File | Action |
+|------|--------|
+| `src/components/ui/or-divider.tsx` | Create - Reusable OR separator component |
+| `src/components/portal/ColorPaletteManager.tsx` | Modify - Improve UX with better touch targets, validation |
+| `src/components/portal/steps/BrandStep.tsx` | Modify - Add OR divider, reorganize layout |
+| `src/components/portal/BrandDocumentUpload.tsx` | Modify - Update default copy (optional) |
+
+## Visual Mockup
 
 ```text
-                    CLIENT ACTIONS                          ADMIN ACTIONS
-                          │                                       │
-                          ▼                                       │
-    ┌─────────────────────────────────────┐                      │
-    │           ONBOARDING                │                      │
-    │     (Client completes tasks)        │                      │
-    └─────────────────────────────────────┘                      │
-                          │                                       │
-                          │ All 5 tasks complete                  │
-                          │ (automatic transition)                │
-                          ▼                                       │
-    ┌─────────────────────────────────────┐                      │
-    │           REVIEWING                 │                      │
-    │     "In Review" badge shown         │◄─────────────────────┤
-    │     Client waits for approval       │                      │
-    └─────────────────────────────────────┘                      │
-                          │                                       │
-                          │              Admin reviews & approves │
-                          │              (drag card on Kanban)    │
-                          ▼                                       ▼
-    ┌─────────────────────────────────────────────────────────────┐
-    │                      PILOT LIVE                              │
-    │         "Live" badge with emerald glow + confetti            │
-    └─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  Brand Colors                                           │
+│  Upload your brand guidelines or manually define below. │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  📄 Upload Brand Guidelines                      │   │
+│  │     PDF, PNG, or image with your color palette   │   │
+│  │                                                  │   │
+│  │       [Click to upload] or drag and drop         │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ─────────────────── OR ───────────────────            │
+│                                                         │
+│  🎨 Brand Color Palette (2/5)                          │
+│                                                         │
+│  ┌────────┐  ┌────────┐  ┌─ ─ ─ ─ ┐                    │
+│  │ ████   │  │ ████   │  │ + Add  │                    │
+│  │Primary │  │Second. │  └─ ─ ─ ─ ┘                    │
+│  │#3B82F6 │  │#F97316 │                                │
+│  └────────┘  └────────┘                                │
+│                                                         │
+│  Palette Preview                                        │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │ ████████████████████ │ ████████████████████████  │  │
+│  └──────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Files to Modify
+## Color Palette Manager Improvements
 
-| File | Changes |
-|------|---------|
-| `src/hooks/useClientPortal.ts` | Change auto-transition target from `pilot_live` to `reviewing` |
-| `src/components/kanban/KanbanBoard.tsx` | Add "Reviewing" column between Onboarding and Pilot Live |
-| `src/components/kanban/KanbanColumn.tsx` | Styling already exists for `reviewing` phase |
+1. **Larger touch targets**: Color swatches increase to 48px × 48px (from 40px)
+2. **Better visual feedback**: Ring animation on hover/focus
+3. **Hex validation**: Only accepts valid hex color formats
+4. **Cleaner layout**: Card-style containers with subtle shadows
+5. **Empty state**: When no colors, show a friendly prompt to add first color
+6. **Responsive**: Wraps nicely on mobile screens
 
-## Client Portal Experience
+## UX Benefits
 
-1. Client sees status badge showing "Onboarding" while completing tasks
-2. Progress ring shows percentage and "Ready for Takeoff" message
-3. When all tasks are complete:
-   - Status automatically changes to "In Review"
-   - Progress ring shows "In Review" text
-   - Badge shows "In Review" with outline style
-4. Client cannot change status themselves - they wait for admin approval
-5. When admin approves (drags card to Pilot Live):
-   - Status changes to "Live"
-   - Confetti celebration triggers
-   - Badge shows emerald "Live" with glow animation
-   - Progress ring shows rocket icon and "Launched" text
-
-## Admin Control Tower Experience
-
-1. New column "In Review" appears between "Onboarding" and "Pilot Live"
-2. When a client completes all tasks, their card automatically moves to "In Review"
-3. Admin reviews submitted documents, logos, agreements in HotelDetailPanel
-4. Admin drags card from "In Review" to "Pilot Live" to approve
-5. Client portal immediately reflects the status change via real-time sync
-
-## Technical Details
-
-### Database Schema
-The `lifecycle_phase` enum already includes `reviewing`:
-```sql
-lifecycle_phase: "onboarding" | "reviewing" | "pilot_live" | "contracted"
-```
-
-### Real-time Sync
-Status changes sync automatically because:
-- Admin drag-and-drop calls `useUpdateClientPhase` which updates `clients.phase`
-- Client portal's `useClientPortal` derives `status` from `client.phase` via memoized computation
-- React Query cache invalidation triggers re-render with new status
+1. **Clear alternative options**: Users immediately understand they can choose either method
+2. **Reduced cognitive load**: "OR" separator eliminates confusion about requirements
+3. **Improved accessibility**: Larger touch targets for color selection
+4. **Professional appearance**: Matches the Series C SaaS aesthetic with soft shadows and clean typography
 
