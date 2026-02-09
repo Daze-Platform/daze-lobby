@@ -359,26 +359,21 @@ export function PosStep({
                       <SelectItem key={provider.id} value={provider.id}>
                         <div className="flex items-center gap-3">
                           {provider.logo ? (
-                            <div className="w-6 h-6 rounded-sm bg-white border border-border/50 flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img 
-                                src={provider.logo} 
-                                alt={`${provider.name} logo`}
-                                className="w-5 h-5 object-contain"
-                                loading="eager"
-                                onError={(e) => { 
-                                  const img = e.currentTarget;
-                                  img.style.display = 'none'; 
-                                  const fallback = img.nextElementSibling as HTMLElement | null;
-                                  if (fallback) fallback.classList.remove('hidden'); 
-                                }}
-                              />
-                              <Store className="w-3.5 h-3.5 text-muted-foreground hidden" />
-                            </div>
-                          ) : (
-                            <div className="w-6 h-6 rounded-sm bg-muted/50 border border-border/50 flex items-center justify-center flex-shrink-0">
-                              <Store className="w-3.5 h-3.5 text-muted-foreground" />
-                            </div>
-                          )}
+                            <img 
+                              src={provider.logo} 
+                              alt={provider.name} 
+                              className="w-6 h-6 object-contain rounded-sm"
+                              onError={(e) => {
+                                const img = e.currentTarget;
+                                img.style.display = 'none';
+                                const fallback = img.nextElementSibling as HTMLElement | null;
+                                if (fallback) fallback.style.display = 'block';
+                              }} 
+                            />
+                          ) : null}
+                          <Store 
+                            className={`w-6 h-6 text-muted-foreground ${provider.logo ? 'hidden' : 'block'}`} 
+                          />
                           <span className="font-medium">{provider.name}</span>
                         </div>
                       </SelectItem>
