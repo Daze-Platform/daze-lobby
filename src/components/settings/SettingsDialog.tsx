@@ -52,8 +52,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
-  const { purgeAndReseed, isPurging } = usePurgeAndReseed();
   
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
