@@ -150,6 +150,7 @@ export function AdminDocumentUpload({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
+      logActivity.mutate({ action: "document_deleted", details: { type: documentType, title } });
       toast.success("Document removed");
     },
     onError: () => {
