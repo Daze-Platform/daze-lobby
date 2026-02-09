@@ -18,7 +18,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    --primary: 217 91% 60%;
+    --primary: 205 90% 60%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 214 32% 96%;
@@ -37,7 +37,7 @@
     --success-foreground: 210 40% 98%;
     
     /* Daze brand colors */
-    --daze-ocean: 199 89% 48%;
+    --daze-ocean: 205 90% 60%;
     --daze-sunset: 25 95% 53%;
     --daze-emerald: 160 84% 39%;
     
@@ -49,7 +49,7 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    --ring: 205 90% 60%;
 
     --radius: 0.75rem;
 
@@ -59,12 +59,12 @@
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 215 16% 27%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 205 90% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 214 32% 96%;
     --sidebar-accent-foreground: 215 25% 15%;
     --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 205 90% 60%;
   }
 
   .dark {
@@ -77,7 +77,7 @@
     --popover: 222 47% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 65%;
+    --primary: 205 85% 65%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217 33% 17%;
@@ -100,19 +100,19 @@
 
     --border: 217 33% 20%;
     --input: 217 33% 20%;
-    --ring: 217 91% 65%;
+    --ring: 205 85% 65%;
 
     --shadow-color: 222 47% 3%;
     --shadow-colored: 222 50% 10%;
 
     --sidebar-background: 222 47% 7%;
     --sidebar-foreground: 215 20% 75%;
-    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary: 205 85% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 15%;
-    --sidebar-ring: 217 91% 65%;
+    --sidebar-ring: 205 85% 65%;
   }
 }
 

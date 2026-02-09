@@ -232,7 +232,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
                   activeClassName={cn(
                     "bg-primary/10 text-primary",
                     "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-                    "before:w-[3px] before:h-5 before:rounded-full before:bg-primary"
+                    "before:w-[4px] before:h-6 before:rounded-full before:bg-orange-500"
                   )}
                 >
                   {/* Duotone icon with glass effect */}
