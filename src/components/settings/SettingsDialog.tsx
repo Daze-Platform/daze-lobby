@@ -5,16 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,15 +22,9 @@ import {
   Key,
   CircleNotch,
   CheckCircle,
-  Warning,
-  Database,
-  ArrowsClockwise,
-  Trash
 } from "@phosphor-icons/react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { usePurgeAndReseed } from "@/hooks/usePurgeAndReseed";
-import { isTestEnvironment } from "@/lib/environment";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -68,8 +52,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
-  const { purgeAndReseed, isPurging } = usePurgeAndReseed();
   
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
@@ -87,8 +69,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     confirm: "",
   });
 
-  const isAdmin = role === "admin";
-  const isTest = isTestEnvironment();
 
   // Fetch profile data
   useEffect(() => {
@@ -228,10 +208,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setTheme(checked ? "dark" : "light");
   };
 
-  const handlePurgeAndReseed = async () => {
-    setShowPurgeConfirm(false);
-    await purgeAndReseed();
-  };
 
   const formatRole = (role: string | null) => {
     if (role === "admin") return "Founder/Admin";
@@ -247,7 +223,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   return (
-    <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-0 shadow-soft-2xl">
           <DialogHeader className="pb-2">
@@ -471,48 +446,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </section>
 
-              {/* Data Management (Test Only) */}
-              {isTest && isAdmin && (
-                <>
-                  <Separator className="bg-border/50" />
-                  
-                  <section className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Database size={16} weight="duotone" className="text-warning" />
-                      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Data Management</h3>
-                      <Badge variant="outline" className="text-2xs bg-warning/10 text-warning border-warning/20">
-                        Test Only
-                      </Badge>
-                    </div>
-                    
-                    <div className="rounded-xl bg-warning/5 border border-warning/20 p-4">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Reset the database with fresh demo data.
-                      </p>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="w-full gap-2"
-                        onClick={() => setShowPurgeConfirm(true)}
-                        disabled={isPurging}
-                      >
-                        {isPurging ? (
-                          <>
-                            <ArrowsClockwise size={16} weight="regular" className="animate-spin" />
-                            Reseeding...
-                          </>
-                        ) : (
-                          <>
-                            <Trash size={16} weight="duotone" />
-                            Purge & Reseed Data
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </section>
-                </>
-              )}
-
               {/* Save Button */}
               <Button 
                 className="w-full gap-2" 
@@ -535,38 +468,5 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Purge Confirmation Dialog */}
-      <AlertDialog open={showPurgeConfirm} onOpenChange={setShowPurgeConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Warning size={20} weight="duotone" className="text-destructive" />
-              Confirm Purge & Reseed
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>This action will:</p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Delete ALL hotels and their associated data</li>
-                <li>Remove all contacts, devices, and alerts</li>
-                <li>Generate 10 new demo hotels across all phases</li>
-              </ul>
-              <p className="font-medium text-foreground pt-2">
-                This cannot be undone. Continue?
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handlePurgeAndReseed}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Yes, Purge & Reseed
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
