@@ -271,6 +271,7 @@ export function PropertyBrandManager({
                       {/* Logo Upload */}
                       <MultiLogoUpload
                         onLogosChange={(logos) => handleLogosChange(property.id, logos)}
+                        existingUrls={property.logoUrls}
                       />
 
                       {/* Brand Colors */}
