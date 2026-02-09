@@ -62,6 +62,7 @@ export function PortalHeader({
   onResetTour,
   unreadNotificationCount = 0,
   onBackToDashboard,
+  documentCount = 0,
 }: PortalHeaderProps) {
   // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
   const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
