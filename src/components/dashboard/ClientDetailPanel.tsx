@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, 
   Cpu, 
@@ -21,18 +22,20 @@ import {
   Phone,
   Tablet,
   Monitor,
-  CheckCircle2,
-  Upload,
-  FileSignature,
-  Palette,
   Settings2,
   Plus,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { DocumentUploadSection } from "./DocumentUploadSection";
 import { PortalManagementPanel } from "./portal-management";
 import { NewDeviceModal } from "@/components/modals/NewDeviceModal";
+import { useActivityLogs, type ActivityLog } from "@/hooks/useActivityLogs";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/hooks/useClients";
+import type { Tables } from "@/integrations/supabase/types";
+
+// Import the shared action config from ActivityFeedPanel
+import { getActionConfig, formatAction } from "@/components/portal/ActivityFeedPanel";
 
 interface ClientDetailPanelProps {
   hotel: Client | null;
@@ -40,100 +43,10 @@ interface ClientDetailPanelProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mock data types
-interface MockContact {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  is_primary: boolean;
-}
-
-interface MockActivity {
-  id: string;
-  action: string;
-  user_name: string;
-  description: string;
-  created_at: string;
-}
-
-// Mock data
-const mockContacts: MockContact[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    role: "General Manager",
-    email: "sarah.johnson@grandhotel.com",
-    phone: "+1 (555) 123-4567",
-    is_primary: true,
-  },
-  {
-    id: "2",
-    name: "Mike Chen",
-    role: "IT Director",
-    email: "mike.chen@grandhotel.com",
-    phone: "+1 (555) 234-5678",
-    is_primary: false,
-  },
-  {
-    id: "3",
-    name: "Lisa Rodriguez",
-    role: "F&B Manager",
-    email: "lisa.r@grandhotel.com",
-    phone: "+1 (555) 345-6789",
-    is_primary: false,
-  },
-];
-
-
-const mockActivity: MockActivity[] = [
-  {
-    id: "1",
-    action: "legal_signed",
-    user_name: "Sarah Johnson",
-    description: "signed the Pilot Agreement",
-    created_at: "2 hours ago",
-  },
-  {
-    id: "2",
-    action: "logo_uploaded",
-    user_name: "Mike Chen",
-    description: "uploaded hotel logo",
-    created_at: "5 hours ago",
-  },
-  {
-    id: "3",
-    action: "brand_updated",
-    user_name: "Sarah Johnson",
-    description: "updated brand colors",
-    created_at: "1 day ago",
-  },
-  {
-    id: "4",
-    action: "task_completed",
-    user_name: "Lisa Rodriguez",
-    description: "completed venue setup",
-    created_at: "1 day ago",
-  },
-  {
-    id: "5",
-    action: "menu_uploaded",
-    user_name: "Lisa Rodriguez",
-    description: "uploaded menu for Lobby Bar",
-    created_at: "2 days ago",
-  },
-  {
-    id: "6",
-    action: "task_completed",
-    user_name: "Mike Chen",
-    description: "completed POS integration",
-    created_at: "3 days ago",
-  },
-];
+type ClientContact = Tables<"client_contacts">;
 
 // Helper components
-function ContactCard({ contact }: { contact: MockContact }) {
+function ContactCard({ contact }: { contact: ClientContact }) {
   const initials = contact.name.split(" ").map(n => n[0]).join("").toUpperCase();
   
   return (
@@ -152,16 +65,22 @@ function ContactCard({ contact }: { contact: MockContact }) {
             </Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{contact.role}</p>
+        {contact.role && (
+          <p className="text-xs text-muted-foreground mt-0.5">{contact.role}</p>
+        )}
         <div className="flex flex-col gap-1 mt-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Mail className="h-3 w-3" />
-            <span className="truncate">{contact.email}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Phone className="h-3 w-3" />
-            <span>{contact.phone}</span>
-          </div>
+          {contact.email && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Mail className="h-3 w-3" />
+              <span className="truncate">{contact.email}</span>
+            </div>
+          )}
+          {contact.phone && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Phone className="h-3 w-3" />
+              <span>{contact.phone}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -235,30 +154,26 @@ function DeviceCard({ device }: { device: DeviceRow }) {
   );
 }
 
-function ActivityItem({ activity }: { activity: MockActivity }) {
-  const actionConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
-    legal_signed: { icon: FileSignature, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    task_completed: { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    brand_updated: { icon: Palette, color: "text-primary", bgColor: "bg-primary/10" },
-    logo_uploaded: { icon: Upload, color: "text-primary", bgColor: "bg-primary/10" },
-    menu_uploaded: { icon: Upload, color: "text-violet-500", bgColor: "bg-violet-500/10" },
-  };
-  
-  const config = actionConfig[activity.action] || { 
-    icon: Activity, 
-    color: "text-muted-foreground", 
-    bgColor: "bg-muted" 
-  };
+function RealActivityItem({ log }: { log: ActivityLog }) {
+  const config = getActionConfig(log.action);
+  const { userName, actionText } = formatAction(log);
   const Icon = config.icon;
-  const initials = activity.user_name.split(" ").map(n => n[0]).join("").toUpperCase();
+  const initials = userName
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+
+  const timeAgo = formatDistanceToNow(new Date(log.created_at), { addSuffix: true });
 
   return (
     <div className="relative flex gap-3 pb-4 last:pb-0">
-      {/* Timeline connector */}
       <div className="absolute left-[18px] top-10 bottom-0 w-px bg-border/50 last:hidden" />
       
       <div className="relative flex-shrink-0">
         <Avatar className="h-9 w-9 ring-2 ring-background">
+          <AvatarImage src={log.profile?.avatar_url || undefined} />
           <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
             {initials}
           </AvatarFallback>
@@ -273,12 +188,12 @@ function ActivityItem({ activity }: { activity: MockActivity }) {
 
       <div className="flex-1 min-w-0 pt-1">
         <p className="text-sm leading-snug">
-          <span className="font-semibold text-foreground">{activity.user_name}</span>
+          <span className="font-semibold text-foreground">{userName}</span>
           {" "}
-          <span className="text-muted-foreground">{activity.description}</span>
+          <span className="text-muted-foreground">{actionText}</span>
         </p>
         <p className="text-2xs text-muted-foreground/70 mt-1">
-          {activity.created_at}
+          {timeAgo}
         </p>
       </div>
     </div>
@@ -302,6 +217,24 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
     },
     enabled: !!hotel?.id && open,
   });
+
+  const { data: contacts = [], isLoading: contactsLoading } = useQuery({
+    queryKey: ["client-contacts", hotel?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_contacts")
+        .select("*")
+        .eq("client_id", hotel!.id)
+        .order("is_primary", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!hotel?.id && open,
+  });
+
+  const { data: activityLogs = [], isLoading: activityLoading } = useActivityLogs(
+    hotel?.id && open ? hotel.id : null
+  );
 
   if (!hotel) return null;
 
@@ -381,9 +314,29 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
           </TabsContent>
 
           <TabsContent value="contacts" className="mt-4 space-y-2">
-            {mockContacts.map((contact) => (
-              <ContactCard key={contact.id} contact={contact} />
-            ))}
+            {contactsLoading ? (
+              <div className="space-y-3">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="flex gap-3 p-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : contacts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p>No contacts yet</p>
+                <p className="text-xs mt-1">Add contacts for this client</p>
+              </div>
+            ) : (
+              contacts.map((contact) => (
+                <ContactCard key={contact.id} contact={contact} />
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="devices" className="mt-4 space-y-3">
@@ -420,11 +373,31 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
           </TabsContent>
 
           <TabsContent value="activity" className="mt-4">
-            <div className="space-y-0">
-              {mockActivity.map((activity) => (
-                <ActivityItem key={activity.id} activity={activity} />
-              ))}
-            </div>
+            {activityLoading ? (
+              <div className="space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex gap-3 animate-pulse">
+                    <div className="w-9 h-9 rounded-full bg-muted" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded w-3/4" />
+                      <div className="h-3 bg-muted rounded w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activityLogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p>No activity yet</p>
+                <p className="text-xs mt-1">Actions will appear here as your team works</p>
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {activityLogs.map((log) => (
+                  <RealActivityItem key={log.id} log={log} />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="documents" className="mt-4">

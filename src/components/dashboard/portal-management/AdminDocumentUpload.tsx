@@ -7,6 +7,7 @@ import { Upload, FileText, Check, Loader2, Trash2, Download } from "lucide-react
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useLogActivity } from "@/hooks/useLogActivity";
 
 interface AdminDocumentUploadProps {
   clientId: string;
@@ -31,6 +32,7 @@ export function AdminDocumentUpload({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const logActivity = useLogActivity(clientId);
 
   const categoryMap = {
     pilot_agreement: "Contract",
@@ -88,6 +90,7 @@ export function AdminDocumentUpload({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
+      logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title } });
       toast.success(`${title} uploaded successfully`);
     },
     onError: (error: Error) => {
@@ -147,6 +150,7 @@ export function AdminDocumentUpload({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
+      logActivity.mutate({ action: "document_deleted", details: { type: documentType, title } });
       toast.success("Document removed");
     },
     onError: () => {
