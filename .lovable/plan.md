@@ -1,33 +1,69 @@
 
 
-## Wire Admin-Uploaded Documents to Dedicated Client Routes
+## Authenticated Dedicated Client Route with Signup + Welcome Tour
 
-**What's happening now:** When admins upload documents for a client from the Control Tower, they're correctly stored in the database with the right `client_id`. The real client portal (`/portal`) already displays them. However, the dedicated route (`/portal/springhill-orange-beach`) doesn't know which `client_id` to use -- it only reads from a `?clientId=` URL query param, so the Documents tab shows empty.
-
-**What needs to change:** The `PortalPreview` component needs to resolve the `clientId` automatically for dedicated client routes, so documents (and their badge count) load without requiring a query param.
+**What this solves:** Currently `/portal/springhill-orange-beach` loads without any authentication, meaning anyone can access it. The General Manager needs to sign up, get redirected back to their dedicated portal URL after login, and see the Welcome Tour on their first visit.
 
 ---
 
-### Changes
+### Changes Overview
 
-**File: `src/pages/PortalPreview.tsx`**
+**1. Add a Client Signup/Login Page with `returnTo` support**
 
-1. Add a lookup query that fetches the client record by name when `clientName` is provided (e.g., "Springhill Suites Orange Beach" matches the DB record)
-2. Use the resolved `clientId` from that query (falling back to `previewClientId` from query params for generic preview usage)
-3. Pass the resolved `clientId` into both the document count query and the `PortalDocuments` component
+- **File: `src/pages/PortalLogin.tsx`** -- Accept a `returnTo` query param and pass it to the login form
+- **File: `src/components/auth/ClientLoginForm.tsx`** -- Major updates:
+  - Add a signup mode toggle (currently login-only with "contact support" link)
+  - Read `returnTo` from URL search params
+  - On successful auth, navigate to `/post-auth?returnTo=<encoded_path>` instead of plain `/post-auth`
+  - Include full name field, password strength indicator in signup mode
+  - Change the "Need help?" link to a "Don't have an account? Sign up" toggle
 
-This is a small, targeted change -- roughly 10-15 lines added. No new files, no schema changes.
+**2. Update PostAuth to respect `returnTo`**
 
-### Technical Detail
+- **File: `src/pages/PostAuth.tsx`**
+  - Read `returnTo` from query params
+  - If present and user is authenticated with a valid role, redirect to `returnTo` instead of the default role-based destination
+  - Validate `returnTo` starts with `/portal/` to prevent open redirect attacks
+
+**3. Add auth guard to the dedicated client route**
+
+- **File: `src/App.tsx`**
+  - Wrap `/portal/springhill-orange-beach` in a new lightweight auth guard that redirects unauthenticated users to `/portal/login?returnTo=/portal/springhill-orange-beach`
+  - This is simpler than `PortalRoute` (no client assignment check needed -- the route itself defines the client)
+
+- **New File: `src/components/layout/DedicatedPortalRoute.tsx`**
+  - Lightweight auth wrapper: if not authenticated, redirect to `/portal/login?returnTo=<current_path>`
+  - If authenticated, render children
+  - No role restriction (any authenticated user can view their dedicated portal)
+
+**4. Welcome Tour uses real user ID when authenticated**
+
+- **File: `src/pages/PortalPreview.tsx`**
+  - Import `useAuthContext` to get the current user session
+  - Pass `user.id` (when authenticated) to `useWelcomeTour()` instead of the hardcoded `"preview-user"`
+  - This ensures the tour shows once per real user and persists correctly in localStorage
+
+---
+
+### Auth Flow
 
 ```text
-PortalPreview receives clientName="Springhill Suites Orange Beach"
-  --> Query: SELECT id FROM clients WHERE name ILIKE '%Springhill Suites Orange Beach%' LIMIT 1
-  --> resolvedClientId = query result or previewClientId fallback
-  --> Document count query uses resolvedClientId
-  --> PortalDocuments receives clientIdOverride={resolvedClientId}
+User visits /portal/springhill-orange-beach
+  --> Not authenticated?
+      --> Redirect to /portal/login?returnTo=/portal/springhill-orange-beach
+      --> GM signs up (new signup form) or signs in
+      --> Navigate to /post-auth?returnTo=/portal/springhill-orange-beach
+      --> PostAuth resolves role, redirects to /portal/springhill-orange-beach
+  --> Authenticated?
+      --> Render PortalPreview with Welcome Tour (first time only, keyed to user ID)
 ```
 
 ### Files Modified
 
-- `src/pages/PortalPreview.tsx` -- Add client lookup query by name, use resolved ID for documents
+- `src/components/layout/DedicatedPortalRoute.tsx` -- New file, lightweight auth guard with returnTo
+- `src/App.tsx` -- Wrap dedicated route with DedicatedPortalRoute
+- `src/components/auth/ClientLoginForm.tsx` -- Add signup mode, returnTo support
+- `src/pages/PortalLogin.tsx` -- Pass returnTo through
+- `src/pages/PostAuth.tsx` -- Read returnTo query param for redirect
+- `src/pages/PortalPreview.tsx` -- Use real user ID for Welcome Tour
+
