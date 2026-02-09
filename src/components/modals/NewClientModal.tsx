@@ -74,6 +74,13 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [propertyName, setPropertyName] = useState("");
   const [posProvider, setPosProvider] = useState("");
+
+  // Auto-generate slug from property name
+  const generatedSlug = propertyName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [customRoleInput, setCustomRoleInput] = useState("");
 
