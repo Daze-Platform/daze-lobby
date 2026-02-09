@@ -354,10 +354,37 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
             ))}
           </TabsContent>
 
-          <TabsContent value="devices" className="mt-4 space-y-2">
-            {mockDevices.map((device) => (
-              <DeviceCard key={device.id} device={device} />
-            ))}
+          <TabsContent value="devices" className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">
+                {clientDevices.length} device{clientDevices.length !== 1 ? "s" : ""}
+              </span>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setIsNewDeviceOpen(true)}>
+                <Plus className="h-3.5 w-3.5" />
+                New Device
+              </Button>
+            </div>
+            {devicesLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Loading devices…</div>
+            ) : clientDevices.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <Cpu className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p>No devices assigned</p>
+                <p className="text-xs mt-1">Add hardware for this client</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {clientDevices.map((device) => (
+                  <DeviceCard key={device.id} device={device} />
+                ))}
+              </div>
+            )}
+            <NewDeviceModal
+              open={isNewDeviceOpen}
+              onOpenChange={setIsNewDeviceOpen}
+              clientId={hotel.id}
+              clientName={hotel.name}
+            />
           </TabsContent>
 
           <TabsContent value="activity" className="mt-4">
