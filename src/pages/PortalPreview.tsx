@@ -256,6 +256,8 @@ export default function PortalPreview() {
         activeView={activeView}
         onViewChange={setActiveView}
         isPreview={true}
+        userEmail="demo@grandhydatt.com"
+        userFullName="Demo User"
         onSignOut={handleSignOut}
         onActivityFeedOpen={() => setIsActivityFeedOpen(true)}
         activityCount={demoActivities.length}

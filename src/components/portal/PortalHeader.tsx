@@ -2,6 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LogOut, Clock, ClipboardList, FileText, ArrowLeft, RotateCcw } from "lucide-react";
 import { AdminHotelSwitcher } from "./AdminHotelSwitcher";
 import dazeLogo from "@/assets/daze-logo.png";
@@ -14,6 +23,8 @@ interface PortalHeaderProps {
   isAdmin?: boolean;
   isAdminViewing?: boolean;
   userEmail?: string;
+  userFullName?: string;
+  userAvatarUrl?: string | null;
   onSignOut: () => void;
   onActivityFeedOpen: () => void;
   // Preview mode props
@@ -24,12 +35,22 @@ interface PortalHeaderProps {
   unreadNotificationCount?: number;
 }
 
+// Generate initials from name or email
+function getInitials(name?: string, email?: string): string {
+  if (name) {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  }
+  return email?.charAt(0).toUpperCase() || "U";
+}
+
 export function PortalHeader({
   activeView,
   onViewChange,
   isAdmin = false,
   isAdminViewing = false,
   userEmail,
+  userFullName,
+  userAvatarUrl,
   onSignOut,
   onActivityFeedOpen,
   isPreview = false,
@@ -122,32 +143,45 @@ export function PortalHeader({
               </Tooltip>
             </TooltipProvider>
             
-            {/* User Email */}
-            {!isPreview && userEmail && (
-              <span className="text-sm text-muted-foreground truncate max-w-[180px] hidden lg:block">
-                {userEmail}
-              </span>
-            )}
-            
-            {/* Sign Out / Back Button */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onSignOut} 
-              className="gap-2 h-9 px-3 text-muted-foreground hover:text-foreground"
-            >
-              {isPreview ? (
-                <>
-                  <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                  <span className="hidden sm:inline">Back</span>
-                </>
-              ) : (
-                <>
-                  <LogOut className="w-4 h-4" strokeWidth={1.5} />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </>
-              )}
-            </Button>
+            {/* User Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-primary/20 transition-all">
+                  <Avatar className="h-8 w-8 border border-border/50">
+                    {userAvatarUrl && <AvatarImage src={userAvatarUrl} alt={userFullName || userEmail || "User"} />}
+                    <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                      {getInitials(userFullName, userEmail)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    {userFullName && (
+                      <p className="text-sm font-medium leading-none">{userFullName}</p>
+                    )}
+                    {userEmail && (
+                      <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
+                  {isPreview ? (
+                    <>
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <span>Back to Login</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile Menu Button - could be expanded later */}
@@ -165,13 +199,46 @@ export function PortalHeader({
                 </span>
               )}
             </Button>
-            <Button variant="ghost" size="icon" onClick={onSignOut} className="h-9 w-9">
-              {isPreview ? (
-                <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-              ) : (
-                <LogOut className="w-4 h-4" strokeWidth={1.5} />
-              )}
-            </Button>
+            
+            {/* Mobile Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full p-0">
+                  <Avatar className="h-8 w-8 border border-border/50">
+                    {userAvatarUrl && <AvatarImage src={userAvatarUrl} alt={userFullName || userEmail || "User"} />}
+                    <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                      {getInitials(userFullName, userEmail)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    {userFullName && (
+                      <p className="text-sm font-medium leading-none">{userFullName}</p>
+                    )}
+                    {userEmail && (
+                      <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
+                  {isPreview ? (
+                    <>
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <span>Back to Login</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
