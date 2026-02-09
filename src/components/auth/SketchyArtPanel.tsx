@@ -8,11 +8,11 @@ export function SketchyArtPanel() {
         alt="A brighter day awaits - Daze" 
         className="h-full w-full object-cover"
       />
-      {/* Cover the baked-in "Preview Client Portal" button at the bottom-right of the image */}
+      {/* Cover the baked-in "Preview Client Portal" button at the bottom of the image */}
       <div 
-        className="absolute bottom-0 right-0 w-[300px] h-[80px]"
+        className="absolute bottom-0 left-0 right-0 h-[60px] pointer-events-none"
         style={{ 
-          background: "radial-gradient(ellipse at 100% 100%, #d4842f 0%, #d4842f 60%, transparent 100%)"
+          background: "linear-gradient(to top, #c87a2d 0%, #c87a2d 40%, transparent 100%)"
         }}
       />
     </div>
