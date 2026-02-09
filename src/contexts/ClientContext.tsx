@@ -85,7 +85,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
+        .select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .order("name", { ascending: true });
 
       if (error) throw error;
