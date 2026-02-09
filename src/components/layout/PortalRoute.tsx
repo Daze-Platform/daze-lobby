@@ -10,10 +10,10 @@ interface PortalRouteProps {
 }
 
 /**
- * Protected route for the Client Portal with multi-tenancy enforcement:
+ * Protected route for the Client Portal (client users only):
  * 1. Must be authenticated
- * 2. Must be a client OR an admin (admin can view any client)
- * 3. Clients MUST have a client assigned - redirect to error page if not
+ * 2. Must be a client role (admins are redirected to /portal/admin)
+ * 3. Must have a client assigned - redirect to error page if not
  */
 export function PortalRoute({ children }: PortalRouteProps) {
   const { isAuthenticated, loading: authLoading, role } = useAuthContext();
@@ -32,35 +32,37 @@ export function PortalRoute({ children }: PortalRouteProps) {
 
   // Not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/portal/login" replace />;
   }
 
-  // Check role - must be client or admin
+  // Check role - redirect admins to their dedicated route
   if (!role) {
     return <Navigate to="/post-auth" replace />;
   }
 
-  if (!isClient(role) && !isAdmin) {
+  // Admins should use /portal/admin instead
+  if (isAdmin) {
+    return <Navigate to="/portal/admin" replace />;
+  }
+
+  // Must be a client role to access /portal
+  if (!isClient(role)) {
     return <Navigate to="/" replace />;
   }
 
-  // For clients only: check if client is assigned
-  if (isClient(role) && !isAdmin) {
-    // Still loading client
-    if (clientLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    // No client assigned - show error page
-    if (error === "no_client_assigned" || !clientId) {
-      return <NoHotelAssigned />;
-    }
+  // Client role - check if client is assigned
+  if (clientLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  // Admins can proceed without client (they'll select one in the portal)
+  // No client assigned - show error page
+  if (error === "no_client_assigned" || !clientId) {
+    return <NoHotelAssigned />;
+  }
+
   return <>{children}</>;
 }
