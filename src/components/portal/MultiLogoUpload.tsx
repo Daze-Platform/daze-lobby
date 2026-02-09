@@ -178,7 +178,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
         return (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <Images className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
             <span className="text-sm font-medium">{iconVariant.label}</span>
             {hasIconUpload && (
               <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
