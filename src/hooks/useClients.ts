@@ -69,20 +69,7 @@ export function useClients() {
         dazeDevicesByClient.set(d.client_id, current + 1);
       });
 
-      // Fetch incomplete onboarding tasks
-      const { data: pendingTasks, error: tasksError } = await supabase
-        .from("onboarding_tasks")
-        .select("client_id")
-        .eq("is_completed", false);
-
-      if (tasksError) throw tasksError;
-
-      // Count pending tasks per client
-      const pendingTasksByClient = new Map<string, number>();
-      pendingTasks?.forEach((t) => {
-        const current = pendingTasksByClient.get(t.client_id) || 0;
-        pendingTasksByClient.set(t.client_id, current + 1);
-      });
+      // Fetch blocker notifications to track which clients have been reminded
 
       // Fetch blocker notifications to track which clients have been reminded
       const { data: notifications, error: notificationsError } = await supabase
@@ -105,14 +92,13 @@ export function useClients() {
         const lastUpdate = new Date(client.updated_at);
         const isStale = now.getTime() - lastUpdate.getTime() > staleThreshold;
         const blockerCount = blockersByClient.get(client.id) || 0;
-        const pendingCount = pendingTasksByClient.get(client.id) || 0;
 
         return {
           ...client,
           hasBlocker: blockerClientIds.has(client.id) || isStale,
           primaryContact: contactsByClient.get(client.id) || null,
           dazeDeviceCount: dazeDevicesByClient.get(client.id) || 0,
-          incompleteCount: blockerCount + pendingCount,
+          incompleteCount: blockerCount,
           hasRecentReminder: clientsWithReminders.has(client.id),
         } as Client;
       });
