@@ -168,7 +168,8 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       ...prev,
       {
         id: crypto.randomUUID(),
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         phone: "",
         role: role || "",
