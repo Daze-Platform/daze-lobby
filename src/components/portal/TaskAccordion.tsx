@@ -115,7 +115,7 @@ export function TaskAccordion({
     onFileUpload("brand", file, `palette_document_${propertyId}`);
   };
 
-  const handleLegalSign = (signatureDataUrl: string, legalEntityData: LegalEntityData) => {
+  const handleLegalSign = (signatureDataUrl: string, legalEntityData: PilotAgreementData) => {
     onLegalSign(signatureDataUrl, legalEntityData);
     // Trigger step completion after a brief delay for the save to process
     setTimeout(() => handleStepComplete("legal"), 100);
