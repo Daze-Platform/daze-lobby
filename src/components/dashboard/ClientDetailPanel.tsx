@@ -196,7 +196,7 @@ function DeviceCard({ device }: { device: DeviceRow }) {
   };
   
   const config = statusConfig[device.status];
-  const DeviceIcon = device.device_type.toLowerCase().includes("surface") ? Monitor : Tablet;
+  const DeviceIcon = device.device_type.toLowerCase().includes("kiosk") ? Monitor : Tablet;
   
   return (
     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
