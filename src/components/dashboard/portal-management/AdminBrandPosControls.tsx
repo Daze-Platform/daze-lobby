@@ -38,47 +38,7 @@ export function AdminBrandPosControls({
     setLogoPreview(currentLogoUrl || null);
   }, [currentBrandPalette, currentPosInstructions, currentLogoUrl]);
 
-  const updateBrandMutation = useMutation({
-    mutationFn: async ({ color }: { color: string }) => {
-      // Update brand_palette on the client
-      const { error } = await supabase
-        .from("clients")
-        .update({
-          brand_palette: [color],
-        })
-        .eq("id", clientId);
-
-      if (error) throw error;
-
-      // Also update the onboarding task data if it exists
-      const { data: task } = await supabase
-        .from("onboarding_tasks")
-        .select("id, data")
-        .eq("client_id", clientId)
-        .eq("task_key", "brand")
-        .single();
-
-      if (task) {
-        const existingData = task.data as Record<string, unknown> || {};
-        await supabase
-          .from("onboarding_tasks")
-          .update({
-            data: {
-              ...existingData,
-              colors: [color],
-            },
-          })
-          .eq("id", task.id);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
-      toast.success("Brand color updated");
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update: ${error.message}`);
-    },
-  });
+  
 
   const uploadLogoMutation = useMutation({
     mutationFn: async (file: File) => {
