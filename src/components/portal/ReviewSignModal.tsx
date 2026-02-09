@@ -584,18 +584,6 @@ export function ReviewSignModal({
                               <Label htmlFor="hw-daze" className="text-xs font-normal cursor-pointer">Daze-Provided Hardware</Label>
                             </div>
                           </RadioGroup>
-                          {hardwareOption === "daze_provided" && (
-                            <div className="grid grid-cols-2 gap-2 pl-6">
-                              <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground">Tablets</Label>
-                                <Input type="number" min="0" placeholder="0" value={numTablets} onChange={e => setNumTablets(e.target.value)} className="h-8 text-xs" />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground">Mounts/Stands</Label>
-                                <Input placeholder="e.g., Wall mount x2" value={mountsStands} onChange={e => setMountsStands(e.target.value)} className="h-8 text-xs" />
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </FormSection>
