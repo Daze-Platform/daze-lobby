@@ -31,7 +31,7 @@ interface TaskAccordionProps {
   isDeletingVenue?: boolean;
   isSigningLegal?: boolean;
   isUpdating?: boolean;
-  hotelLegalEntity?: LegalEntityData;
+  hotelLegalEntity?: PilotAgreementData;
 }
 
 const TASK_ORDER = ["brand", "venue", "pos", "devices", "legal"];
