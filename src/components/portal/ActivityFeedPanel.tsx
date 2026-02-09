@@ -71,6 +71,8 @@ export function formatAction(log: ActivityLog): { userName: string; actionText: 
     blocker_created: `flagged a blocker: ${(details?.reason as string)?.substring(0, 30) || "issue detected"}`,
     blocker_force_cleared: "manually cleared a blocker",
     blocker_notification: `sent a notification: "${(details?.message as string) || (details?.blocker_reason as string) || "Action required"}"`,
+    document_uploaded: `uploaded ${(details?.title as string) || "a document"}`,
+    document_deleted: `removed ${(details?.title as string) || "a document"}`,
   };
   
   // Check for custom message in details
