@@ -11,6 +11,7 @@ interface Client {
   onboarding_progress: number | null;
   brand_palette: string[] | null;
   logo_url: string | null;
+  client_code: string | null;
   // Legal entity fields
   legal_entity_name: string | null;
   billing_address: string | null;
