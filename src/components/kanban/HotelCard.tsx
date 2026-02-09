@@ -2,7 +2,7 @@ import * as React from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle, CheckCircle, Cpu, GripVertical, Lock, DollarSign } from "lucide-react";
+import { AlertTriangle, Cpu, GripVertical, Lock, DollarSign } from "lucide-react";
 import type { Client } from "@/hooks/useClients";
 import { cn } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
