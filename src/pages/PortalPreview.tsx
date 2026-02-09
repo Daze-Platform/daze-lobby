@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
@@ -22,36 +22,33 @@ import { ClientProvider } from "@/contexts/ClientContext";
 
 /**
  * Preview/Demo version of the Client Portal V2
- * This is for testing the UI without authentication
+ * Supports dynamic slug-based routes (/portal/:clientSlug) and demo mode
  */
-interface PortalPreviewProps {
-  clientName?: string;
-}
-
-export default function PortalPreview({ clientName }: PortalPreviewProps) {
+export default function PortalPreview() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { clientSlug } = useParams<{ clientSlug: string }>();
   const previewClientId = searchParams.get("clientId");
-  const displayName = clientName || "Grand Hyatt Demo";
 
-  // Resolve clientId from clientName for dedicated routes
+  // Resolve client from slug
   const { data: resolvedClient } = useQuery({
-    queryKey: ["client-by-name", clientName],
+    queryKey: ["client-by-slug", clientSlug],
     queryFn: async () => {
       const { data } = await supabase
         .from("clients")
-        .select("id")
-        .ilike("name", `%${clientName}%`)
-        .limit(1)
-        .maybeSingle();
+        .select("id, name")
+        .eq("client_slug", clientSlug!)
+        .single();
       return data;
     },
-    enabled: !!clientName,
+    enabled: !!clientSlug,
     staleTime: Infinity,
   });
 
+  const clientName = resolvedClient?.name;
+  const displayName = clientName || "Grand Hyatt Demo";
   const effectiveClientId = resolvedClient?.id || previewClientId;
-  const isDemo = !clientName;
+  const isDemo = !clientSlug;
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
 
   // Document count for badge

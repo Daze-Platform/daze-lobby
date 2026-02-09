@@ -74,6 +74,13 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [propertyName, setPropertyName] = useState("");
   const [posProvider, setPosProvider] = useState("");
+
+  // Auto-generate slug from property name
+  const generatedSlug = propertyName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [customRoleInput, setCustomRoleInput] = useState("");
 
@@ -272,6 +279,12 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                     autoFocus
                   />
                 </div>
+
+                {generatedSlug && (
+                  <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-3 py-1.5 rounded-md">
+                    Portal URL: /portal/{generatedSlug}
+                  </p>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="posProvider" className="text-sm font-medium">
