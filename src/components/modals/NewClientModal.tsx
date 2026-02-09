@@ -54,7 +54,8 @@ const SUGGESTED_ROLES = ["General Manager", "F&B Director", "IT Director", "Cont
 
 interface Contact {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   role: string;
