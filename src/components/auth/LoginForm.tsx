@@ -174,9 +174,9 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         description: "Please try signing in again.",
         variant: "destructive",
       });
-    } catch (err: any) {
-      console.error("[LoginForm] Login error:", err?.message || err);
-      const errorMessage = err?.message || "Failed to sign in";
+    } catch (err: unknown) {
+      console.error("[LoginForm] Login error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in";
       setError(errorMessage);
       toast({
         title: "Sign In Failed",
@@ -206,8 +206,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
           variant: "destructive",
         });
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to sign in with Google";
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Google";
       setError(errorMessage);
       toast({
         title: "Google Sign In Failed",

@@ -7,7 +7,7 @@ import { ProgressRing } from "@/components/portal/ProgressRing";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { TaskAccordion } from "@/components/portal/TaskAccordion";
 import { ConfettiCelebration } from "@/components/portal/ConfettiCelebration";
-import { AdminHotelSwitcher } from "@/components/portal/AdminHotelSwitcher";
+import { AdminClientSwitcher } from "@/components/portal/AdminClientSwitcher";
 import { ActivityFeedPanel } from "@/components/portal/ActivityFeedPanel";
 import { PortalHeader, type PortalView } from "@/components/portal/PortalHeader";
 import { PortalDocuments } from "@/components/portal/PortalDocuments";
@@ -164,7 +164,7 @@ export default function PortalAdmin() {
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="hidden sm:block">
-                <AdminHotelSwitcher />
+                <AdminClientSwitcher />
               </div>
               <span className="hidden md:inline text-sm text-muted-foreground truncate max-w-[150px]">
                 {user?.email}
@@ -190,7 +190,7 @@ export default function PortalAdmin() {
               <p className="text-sm text-muted-foreground">
                 Select a client from the dropdown to view their onboarding portal and debug their progress.
               </p>
-              <AdminHotelSwitcher />
+              <AdminClientSwitcher />
               <Button 
                 variant="outline" 
                 onClick={handleBackToDashboard}
@@ -321,7 +321,7 @@ export default function PortalAdmin() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           <div className="flex-1 flex justify-center max-w-[120px]">
-            <AdminHotelSwitcher />
+            <AdminClientSwitcher />
           </div>
           
           <Button

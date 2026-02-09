@@ -8,7 +8,9 @@ export { MultiLogoUpload } from "./MultiLogoUpload";
 export { PropertyBrandManager } from "./PropertyBrandManager";
 export { VenueCard } from "./VenueCard";
 export { VenueManager } from "./VenueManager";
-export { AdminHotelSwitcher } from "./AdminHotelSwitcher";
+export { AdminClientSwitcher } from "./AdminClientSwitcher";
+// Backwards compatibility alias
+export { AdminClientSwitcher as AdminHotelSwitcher } from "./AdminClientSwitcher";
 export { StepCompletionEffect } from "./StepCompletionEffect";
 export { WelcomeTour } from "./WelcomeTour";
 export { ActivityFeedPanel } from "./ActivityFeedPanel";

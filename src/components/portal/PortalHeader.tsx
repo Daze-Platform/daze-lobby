@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Clock, ClipboardList, FileText, ArrowLeft, RotateCcw } from "lucide-react";
-import { AdminHotelSwitcher } from "./AdminHotelSwitcher";
+import { AdminClientSwitcher } from "./AdminClientSwitcher";
 import dazeLogo from "@/assets/daze-logo.png";
 
 export type PortalView = "onboarding" | "documents";
@@ -99,7 +99,7 @@ export function PortalHeader({
           {/* Right: Actions */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
             {/* Admin Hotel Switcher */}
-            {isAdmin && !isPreview && <AdminHotelSwitcher />}
+            {isAdmin && !isPreview && <AdminClientSwitcher />}
             
             {/* Divider when admin switcher is shown */}
             {isAdmin && !isPreview && (

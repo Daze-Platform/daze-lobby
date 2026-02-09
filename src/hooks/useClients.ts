@@ -189,7 +189,4 @@ export function useUpdateClientPhase() {
   });
 }
 
-// Backwards compatibility - keep Hotel type alias
-export type Hotel = Client;
-export const useHotels = useClients;
-export const useUpdateHotelPhase = useUpdateClientPhase;
+// Note: Client type is now available from @/types

@@ -37,8 +37,8 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
       if (error) {
         setError(error.message || "Failed to sign in with Google");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign in with Google");
     } finally {
       setGoogleLoading(false);
     }
@@ -58,8 +58,8 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
     try {
       await signUp(email, password, fullName);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to sign up");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign up");
     } finally {
       setLoading(false);
     }
