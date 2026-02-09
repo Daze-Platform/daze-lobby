@@ -69,8 +69,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     confirm: "",
   });
 
-  const isAdmin = role === "admin";
-  const isTest = isTestEnvironment();
 
   // Fetch profile data
   useEffect(() => {
