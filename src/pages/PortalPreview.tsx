@@ -245,7 +245,7 @@ export default function PortalPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-24 sm:pb-20 md:pb-0">
+    <div className="min-h-screen bg-ambient dark:bg-ambient-dark pb-24 sm:pb-20 md:pb-0">
       {/* Welcome Tour */}
       {showTour && (
         <WelcomeTour onComplete={completeTour} />
