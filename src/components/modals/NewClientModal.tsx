@@ -129,7 +129,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       if (tasksError) throw tasksError;
 
       // 3. Insert contacts if any
-      const validContacts = contacts.filter((c) => c.name.trim() || c.email.trim() || c.phone.trim());
+      const validContacts = contacts.filter((c) => c.firstName.trim() || c.lastName.trim() || c.email.trim() || c.phone.trim());
       
       if (validContacts.length > 0) {
         const { error: contactsError } = await supabase
