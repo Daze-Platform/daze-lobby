@@ -21,10 +21,16 @@ import { ClientProvider } from "@/contexts/ClientContext";
  * Preview/Demo version of the Client Portal V2
  * This is for testing the UI without authentication
  */
-export default function PortalPreview() {
+interface PortalPreviewProps {
+  clientName?: string;
+}
+
+export default function PortalPreview({ clientName }: PortalPreviewProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const previewClientId = searchParams.get("clientId");
+  const displayName = clientName || "Grand Hyatt Demo";
+  const isDemo = !clientName;
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const [status, setStatus] = useState<"onboarding" | "reviewing" | "live">("onboarding");
   const [venues, setVenues] = useState<Venue[]>([]);
