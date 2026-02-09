@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Eye } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 
@@ -28,29 +28,42 @@ const DEMO_DOCUMENTS = [
     id: "1",
     display_name: "Pilot Agreement - Grand Hyatt",
     category: "Legal",
+    mime_type: "application/pdf",
     created_at: subDays(new Date(), 3).toISOString(),
   },
   {
     id: "2",
     display_name: "Brand Guidelines 2024",
     category: "Brand",
+    mime_type: "application/pdf",
     created_at: subDays(new Date(), 7).toISOString(),
   },
   {
     id: "3",
     display_name: "POS Integration Specs",
     category: "Guidelines",
+    mime_type: "application/pdf",
     created_at: subDays(new Date(), 14).toISOString(),
   },
   {
     id: "4",
     display_name: "Service Contract v2.1",
     category: "Contract",
+    mime_type: "application/pdf",
     created_at: subDays(new Date(), 21).toISOString(),
   },
 ];
 
 export function DemoPortalDocuments() {
+  const isPreviewable = (mimeType: string | null): boolean => {
+    if (!mimeType) return false;
+    return mimeType === "application/pdf" || mimeType.startsWith("image/");
+  };
+
+  const handlePreview = (displayName: string) => {
+    toast.info(`Demo mode: "${displayName}" preview simulated`);
+  };
+
   const handleDownload = (displayName: string) => {
     toast.info(`Demo mode: "${displayName}" download simulated`);
   };
@@ -84,7 +97,7 @@ export function DemoPortalDocuments() {
                   <TableHead className="min-w-[200px]">Document</TableHead>
                   <TableHead className="hidden sm:table-cell">Category</TableHead>
                   <TableHead className="hidden md:table-cell">Uploaded</TableHead>
-                  <TableHead className="w-[100px] text-right">Action</TableHead>
+                  <TableHead className="w-[160px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,15 +135,28 @@ export function DemoPortalDocuments() {
                       {format(new Date(doc.created_at), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(doc.display_name)}
-                        className="min-h-[44px] sm:min-h-0"
-                      >
-                        <Download className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Download</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {isPreviewable(doc.mime_type) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePreview(doc.display_name)}
+                            className="min-h-[44px] sm:min-h-0"
+                          >
+                            <Eye className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Preview</span>
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(doc.display_name)}
+                          className="min-h-[44px] sm:min-h-0"
+                        >
+                          <Download className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Download</span>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Download, Loader2, FolderOpen } from "lucide-react";
+import { FileText, Download, Loader2, FolderOpen, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -47,6 +47,25 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
     enabled: !!resolvedClientId,
   });
 
+  const isPreviewable = (mimeType: string | null): boolean => {
+    if (!mimeType) return false;
+    return mimeType === "application/pdf" || mimeType.startsWith("image/");
+  };
+
+  const handlePreview = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("hotel-documents")
+        .createSignedUrl(filePath, 300); // 5 min expiry for viewing
+
+      if (error) throw error;
+      window.open(data.signedUrl, "_blank");
+    } catch (error) {
+      console.error("Preview error:", error);
+      toast.error("Failed to preview document");
+    }
+  };
+
   const handleDownload = async (filePath: string, displayName: string) => {
     try {
       const { data, error } = await supabase.storage
@@ -54,8 +73,6 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
         .createSignedUrl(filePath, 60);
 
       if (error) throw error;
-
-      // Open in new tab for download
       window.open(data.signedUrl, "_blank");
     } catch (error) {
       console.error("Download error:", error);
@@ -101,7 +118,7 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
                     <TableHead className="min-w-[200px]">Document</TableHead>
                     <TableHead className="hidden sm:table-cell">Category</TableHead>
                     <TableHead className="hidden md:table-cell">Uploaded</TableHead>
-                    <TableHead className="w-[100px] text-right">Action</TableHead>
+                    <TableHead className="w-[160px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -139,15 +156,28 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
                         {format(new Date(doc.created_at), "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(doc.file_path, doc.display_name)}
-                          className="min-h-[44px] sm:min-h-0"
-                        >
-                          <Download className="w-4 h-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Download</span>
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {isPreviewable(doc.mime_type) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePreview(doc.file_path)}
+                              className="min-h-[44px] sm:min-h-0"
+                            >
+                              <Eye className="w-4 h-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Preview</span>
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownload(doc.file_path, doc.display_name)}
+                            className="min-h-[44px] sm:min-h-0"
+                          >
+                            <Download className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Download</span>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
