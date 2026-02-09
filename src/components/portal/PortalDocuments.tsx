@@ -12,9 +12,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Download, Loader2, FolderOpen, Eye } from "lucide-react";
+import { FileText, Download, Loader2, FolderOpen, Eye, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Legal: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
@@ -32,6 +33,7 @@ interface PortalDocumentsProps {
 export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {}) {
   const clientContext = useClient();
   const resolvedClientId = clientIdOverride || clientContext.clientId;
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ["documents", resolvedClientId],
@@ -52,7 +54,7 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
     return mimeType === "application/pdf" || mimeType.startsWith("image/");
   };
 
-  const handlePreview = async (filePath: string) => {
+  const handlePreview = async (docId: string, filePath: string) => {
     // Open window IMMEDIATELY in user gesture context to avoid popup blocker
     const newWindow = window.open('about:blank', '_blank');
     
@@ -61,19 +63,35 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
       return;
     }
 
+    setPreviewingId(docId);
+
     try {
       const { data, error } = await supabase.storage
         .from("hotel-documents")
-        .createSignedUrl(filePath, 300); // 5 min expiry for viewing
+        .createSignedUrl(filePath, 60); // 60 sec expiry for security
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes("not found")) {
+          throw new Error("Document not found");
+        }
+        throw error;
+      }
       
       // Navigate the already-opened window to the signed URL
       newWindow.location.href = data.signedUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Preview error:", error);
       newWindow.close(); // Close the blank tab on error
-      toast.error("Failed to preview document");
+      
+      if (error.message?.includes("not found")) {
+        toast.error("Unable to load document. File not found.");
+      } else if (error.message?.includes("permission") || error.message?.includes("denied")) {
+        toast.error("Unable to load document. Access denied.");
+      } else {
+        toast.error("Unable to load document. Please try again.");
+      }
+    } finally {
+      setPreviewingId(null);
     }
   };
 
@@ -181,11 +199,17 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handlePreview(doc.file_path)}
+                              onClick={() => handlePreview(doc.id, doc.file_path)}
+                              disabled={previewingId === doc.id}
                               className="min-h-[44px] sm:min-h-0"
                             >
-                              <Eye className="w-4 h-4 sm:mr-2" />
+                              {previewingId === doc.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin sm:mr-2" />
+                              ) : (
+                                <Eye className="w-4 h-4 sm:mr-2" />
+                              )}
                               <span className="hidden sm:inline">Preview</span>
+                              <ExternalLink className="w-3 h-3 hidden sm:inline ml-1 opacity-60" />
                             </Button>
                           )}
                           <Button
