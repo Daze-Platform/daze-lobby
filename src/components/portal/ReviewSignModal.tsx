@@ -95,8 +95,6 @@ const createAgreementText = (d: PilotAgreementData) => {
 
   const hwNone = d.hardware_option !== "daze_provided" ? "[X]" : "[ ]";
   const hwDaze = d.hardware_option === "daze_provided" ? "[X]" : "[ ]";
-  const tablets = d.num_tablets != null ? String(d.num_tablets) : "__________";
-  const mounts = d.mounts_stands?.trim() || "____________";
 
   const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
   const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
@@ -155,8 +153,6 @@ Available products include:
 2.3 Hardware Selection
 ${hwNone} No Daze Hardware Required
 ${hwDaze} Daze-Provided Hardware
-• Number of Tablets: ${tablets}
-• Mounts/Stands: ${mounts}
 
 2.4 Enabled Capabilities
 During the Pilot Term, Daze shall provide the following capabilities:
@@ -351,8 +347,6 @@ export function ReviewSignModal({
   const [outlet3, setOutlet3] = useState("");
   const [outlet4, setOutlet4] = useState("");
   const [hardwareOption, setHardwareOption] = useState<"none" | "daze_provided">("none");
-  const [numTablets, setNumTablets] = useState("");
-  const [mountsStands, setMountsStands] = useState("");
 
   // Section C: Pilot Term
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -399,8 +393,6 @@ export function ReviewSignModal({
       setOutlet3(outlets[2] || "");
       setOutlet4(outlets[3] || "");
       setHardwareOption(d.hardware_option || "none");
-      setNumTablets(d.num_tablets != null ? String(d.num_tablets) : "");
-      setMountsStands(d.mounts_stands || "");
 
       if (d.start_date) {
         try { setStartDate(new Date(d.start_date)); } catch { setStartDate(undefined); }
@@ -427,8 +419,6 @@ export function ReviewSignModal({
     contact_email: contactEmail,
     covered_outlets: [outlet1, outlet2, outlet3, outlet4].filter(o => o.trim()),
     hardware_option: hardwareOption,
-    num_tablets: numTablets ? parseInt(numTablets, 10) : undefined,
-    mounts_stands: mountsStands,
     start_date: startDate?.toISOString(),
     pilot_term_days: pilotTermDays ? parseInt(pilotTermDays, 10) : undefined,
     pricing_model: pricingModel,
@@ -437,7 +427,7 @@ export function ReviewSignModal({
     pos_version: posVersion,
     pos_api_key: posApiKey,
     pos_contact: posContact,
-  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, numTablets, mountsStands, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
+  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
 
   const agreementText = useMemo(() => createAgreementText(currentEntity), [currentEntity]);
 
@@ -586,18 +576,6 @@ export function ReviewSignModal({
                               <Label htmlFor="hw-daze" className="text-xs font-normal cursor-pointer">Daze-Provided Hardware</Label>
                             </div>
                           </RadioGroup>
-                          {hardwareOption === "daze_provided" && (
-                            <div className="grid grid-cols-2 gap-2 pl-6">
-                              <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground">Tablets</Label>
-                                <Input type="number" min="0" placeholder="0" value={numTablets} onChange={e => setNumTablets(e.target.value)} className="h-8 text-xs" />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground">Mounts/Stands</Label>
-                                <Input placeholder="e.g., Wall mount x2" value={mountsStands} onChange={e => setMountsStands(e.target.value)} className="h-8 text-xs" />
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </FormSection>
