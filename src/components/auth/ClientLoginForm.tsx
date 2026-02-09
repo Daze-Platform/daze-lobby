@@ -208,10 +208,10 @@ export function ClientLoginForm() {
           </span>
         </div>
         <h1 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-          {mode === "signup" ? "Create your account" : "Welcome back"}
+          {mode === "signup" ? "Create your account" : "Sign in to your portal"}
         </h1>
         <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          {mode === "signup" ? "Sign up to access your onboarding portal" : "Access your onboarding portal"}
+          {mode === "signup" ? "Sign up to access your onboarding portal" : "Enter your credentials to continue"}
         </p>
       </div>
 
