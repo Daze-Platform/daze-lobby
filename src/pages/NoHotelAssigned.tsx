@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, LogOut, Mail } from "lucide-react";
+import { CircleDashed, SignOut, EnvelopeSimple } from "@phosphor-icons/react";
 import { signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,8 +24,8 @@ export default function NoHotelAssigned() {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <img src={dazeLogo} alt="Daze" className="h-8 w-auto" />
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+            <SignOut size={16} weight="duotone" />
             Sign Out
           </Button>
         </div>
@@ -35,8 +35,15 @@ export default function NoHotelAssigned() {
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-warning/10 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="w-6 h-6 text-warning" />
+            <div className="mx-auto mb-4">
+              <CircleDashed 
+                size={48} 
+                weight="duotone" 
+                className="text-orange-400 animate-pulse"
+                style={{ 
+                  '--ph-duotone-opacity': 0.2 
+                } as React.CSSProperties}
+              />
             </div>
             <CardTitle className="text-xl">No Hotel Assigned</CardTitle>
             <CardDescription>
@@ -57,7 +64,7 @@ export default function NoHotelAssigned() {
             <div className="flex flex-col gap-2">
               <Button asChild variant="outline" className="w-full gap-2">
                 <a href="mailto:support@daze.com">
-                  <Mail className="w-4 h-4" />
+                  <EnvelopeSimple size={16} weight="duotone" />
                   Contact Support
                 </a>
               </Button>
