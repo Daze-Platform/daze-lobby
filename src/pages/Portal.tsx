@@ -221,26 +221,26 @@ export default function Portal() {
 
             <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
               {/* Progress Card - Premium glass with decorative gradient accent */}
-              <Card className="lg:col-span-1 entrance-hero relative overflow-hidden group">
-                {/* Decorative top gradient bar */}
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary/70 to-[hsl(var(--daze-sunset))]" />
-                
-                {/* Subtle background radial glow */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,hsl(var(--primary)/0.04),transparent_70%)] pointer-events-none" />
-                
-                <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6 relative">
-                  <span className="label-micro">Progress</span>
+              <Card className="lg:col-span-1 entrance-hero relative overflow-hidden border-t-2 border-primary shadow-md">
+                <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6">
+                  <div className="flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />
+                    <span className="label-micro">Progress</span>
+                  </div>
                   <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 sm:pt-4 px-4 sm:px-6 pb-6 relative">
+                <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 sm:pt-4 px-4 sm:px-6 pb-6">
                   <div className="w-full flex justify-center">
                     <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
                     <ProgressRing progress={progress} status={status} size={180} className="hidden sm:block" />
                   </div>
                   <StatusBadge status={status} />
                   
+                  {/* Divider */}
+                  <div className="w-full border-t border-border/50" />
+                  
                   {/* Completed tasks counter */}
-                  <div className="w-full pt-3 border-t border-border/50">
+                  <div className="w-full">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Tasks completed</span>
                       <span className="font-semibold tabular-nums">
