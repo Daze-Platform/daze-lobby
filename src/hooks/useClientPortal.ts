@@ -427,23 +427,36 @@ export function useClientPortal() {
 
       if (updateError) throw updateError;
 
-      return { path: filePath, url: urlData?.publicUrl };
+      return { path: filePath, url: urlData?.publicUrl, venueId };
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["venues"] });
+    onMutate: async ({ venueId }) => {
+      // Cancel outgoing refetches so they don't overwrite optimistic update
+      await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
+      const previous = queryClient.getQueryData<DbVenue[]>(["venues", clientId]);
+      return { previous };
+    },
+    onSuccess: (data, variables) => {
+      // Optimistically patch the venue in cache immediately
+      queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
+        old?.map(v => v.id === data.venueId ? { ...v, menu_pdf_url: data.url ?? null } : v) ?? []
+      );
       
-      // Log activity
       logActivity.mutate({
         action: "menu_uploaded",
-        details: {
-          venue_name: variables.venueName,
-        },
+        details: { venue_name: variables.venueName },
       });
       
       toast.success("Menu uploaded successfully!");
     },
-    onError: (error) => {
+    onError: (error, _vars, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClient.setQueryData(["venues", clientId], context.previous);
+      }
       toast.error("Failed to upload menu: " + error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
     },
   });
 
@@ -485,23 +498,34 @@ export function useClientPortal() {
 
       if (updateError) throw updateError;
 
-      return { path: filePath, url: urlData?.publicUrl };
+      return { path: filePath, url: urlData?.publicUrl, venueId };
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["venues"] });
+    onMutate: async ({ venueId }) => {
+      await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
+      const previous = queryClient.getQueryData<DbVenue[]>(["venues", clientId]);
+      return { previous };
+    },
+    onSuccess: (data, variables) => {
+      // Optimistically patch the venue in cache immediately
+      queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
+        old?.map(v => v.id === data.venueId ? { ...v, logo_url: data.url ?? null } : v) ?? []
+      );
       
-      // Log activity
       logActivity.mutate({
         action: "venue_logo_uploaded",
-        details: {
-          venue_name: variables.venueName,
-        },
+        details: { venue_name: variables.venueName },
       });
       
       toast.success("Venue logo uploaded!");
     },
-    onError: (error) => {
+    onError: (error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["venues", clientId], context.previous);
+      }
       toast.error("Failed to upload logo: " + error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
     },
   });
 
