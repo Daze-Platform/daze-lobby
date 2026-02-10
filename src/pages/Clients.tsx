@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { HotelDetailPanel } from "@/components/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,7 @@ const phaseColors: Record<string, string> = {
 
 export default function Clients() {
   const { data: clients, isLoading } = useClients();
+  const navigate = useNavigate();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [notifyClient, setNotifyClient] = useState<Client | null>(null);
@@ -162,7 +164,7 @@ export default function Clients() {
                                     className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      window.open(`/admin/portal/${client.client_slug}`, "_blank");
+                                      navigate(`/admin/portal/${client.client_slug}`);
                                     }}
                                   >
                                     <ArrowSquareOut size={16} weight="duotone" />
