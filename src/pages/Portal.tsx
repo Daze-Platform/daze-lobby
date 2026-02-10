@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,7 +120,7 @@ export default function Portal() {
     uploadFile({ taskKey, file, fieldName });
   };
 
-  const handleAddVenue = async (): Promise<Venue | undefined> => {
+  const handleAddVenue = useCallback(async (): Promise<Venue | undefined> => {
     const result = await addVenue({ name: "" });
     if (result) {
       return {
@@ -131,27 +131,27 @@ export default function Portal() {
       };
     }
     return undefined;
-  };
+  }, [addVenue]);
 
-  const handleUpdateVenue = async (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => {
+  const handleUpdateVenue = useCallback(async (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => {
     await updateVenue({ id, updates });
-  };
+  }, [updateVenue]);
 
-  const handleRemoveVenue = async (id: string) => {
+  const handleRemoveVenue = useCallback(async (id: string) => {
     await deleteVenue(id);
-  };
+  }, [deleteVenue]);
 
-  const handleUploadMenu = async (venueId: string, venueName: string, file: File) => {
+  const handleUploadMenu = useCallback(async (venueId: string, venueName: string, file: File) => {
     await uploadVenueMenu({ venueId, venueName, file });
-  };
+  }, [uploadVenueMenu]);
 
-  const handleUploadVenueLogo = async (venueId: string, venueName: string, file: File) => {
+  const handleUploadVenueLogo = useCallback(async (venueId: string, venueName: string, file: File) => {
     await uploadVenueLogo({ venueId, venueName, file });
-  };
+  }, [uploadVenueLogo]);
 
-  const handleCompleteVenueStep = async () => {
+  const handleCompleteVenueStep = useCallback(async () => {
     await completeVenueStep();
-  };
+  }, [completeVenueStep]);
 
   if (isLoading) {
     return (
