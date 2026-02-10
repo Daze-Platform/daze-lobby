@@ -1,27 +1,51 @@
 
 
-# Fix: "View Portal" Button Navigation on Clients Page
+# Fix: Venue Name Input "Skewing" / Auto-completing While Typing
 
 ## Problem
 
-The "View portal" button on client cards uses `window.open(..., "_blank")` to open the admin portal in a new tab. On the deployed site, this fails — instead of opening the portal, the page appears to reload the dashboard. This is likely due to the browser's popup blocker silently preventing the new tab from opening, causing only the card's own click handler to fire (which opens the detail panel).
+When typing a venue name, the text jumps or gets auto-completed unexpectedly. This happens because of a race condition:
+
+1. User types in the input, updating `localName` and triggering a debounced save (600ms)
+2. The debounced save writes the name to the database
+3. React Query refetches venue data, updating `venue.name`
+4. A `useEffect` in `VenueCard` resets `localName` to match `venue.name`
+5. This overwrites what the user is currently typing, causing characters to disappear or revert
 
 ## Solution
 
-Replace `window.open` with React Router's `useNavigate` for reliable in-app navigation. This avoids popup blocker issues entirely and preserves the authenticated session seamlessly.
+Track whether the input is actively focused. Only sync `localName` from the server value (`venue.name`) when the input is **not focused** — this prevents the server response from overwriting the user's in-progress typing.
 
-## Changes
+## File Change
 
-### `src/pages/Clients.tsx`
+### `src/components/portal/VenueCard.tsx`
 
-1. Add `useNavigate` to the existing `react-router-dom` import
-2. Replace `window.open(`/admin/portal/${client.client_slug}`, "_blank")` with `navigate(`/admin/portal/${client.client_slug}`)`
+1. Add an `isFocused` ref to track input focus state
+2. Add `onFocus` and `onBlur` handlers to the venue name `Input`
+3. Guard the `useEffect` sync so it only updates `localName` when the input is not focused
 
-This is a minimal two-line change:
-- One import update
-- One line in the button's `onClick` handler
+```text
+Before:
+  useEffect(() => {
+    setLocalName(venue.name);
+  }, [venue.name]);
 
-## Result
+After:
+  const isFocusedRef = useRef(false);
 
-Clicking "View portal" will navigate to `/admin/portal/:clientSlug` within the same tab, reliably loading the admin portal view for that client. The back button will return the user to the Clients list.
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setLocalName(venue.name);
+    }
+  }, [venue.name]);
+
+  // Input gets onFocus/onBlur handlers:
+  onFocus={() => { isFocusedRef.current = true; }}
+  onBlur={() => {
+    isFocusedRef.current = false;
+    setLocalName(venue.name); // sync to latest server value on blur
+  }}
+```
+
+This is a small, targeted fix -- no architectural changes needed.
 
