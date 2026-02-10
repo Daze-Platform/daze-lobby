@@ -9,7 +9,6 @@ import {
   CaretLeft,
   CaretRight,
   X,
-  Eye,
   Plus,
   type Icon as PhosphorIcon
 } from "@phosphor-icons/react";
