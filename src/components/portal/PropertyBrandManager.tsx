@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,10 +59,13 @@ export function PropertyBrandManager({
   const [localProperties, setLocalProperties] = useState<PropertyBrand[]>(properties);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [newPropertyName, setNewPropertyName] = useState("");
+  const isEditingRef = useRef(false);
 
-  // Sync with external properties
+  // Sync with external properties only when not actively editing
   useEffect(() => {
-    setLocalProperties(properties);
+    if (!isEditingRef.current) {
+      setLocalProperties(properties);
+    }
   }, [properties]);
 
   const addProperty = () => {
@@ -263,6 +266,8 @@ export function PropertyBrandManager({
                         <Input
                           value={property.name}
                           onChange={(e) => updateProperty(property.id, { name: e.target.value })}
+                          onFocus={() => { isEditingRef.current = true; }}
+                          onBlur={() => { isEditingRef.current = false; }}
                           placeholder="Property name"
                           className="h-9"
                         />
