@@ -112,7 +112,10 @@ export default function Portal() {
   }, [status]);
 
   // Redirect admin users to /portal/admin
-  if (isAdmin) {
+  const location = useLocation();
+  const isSlugRoute = location.pathname !== "/portal" && location.pathname.startsWith("/portal/") && !location.pathname.startsWith("/portal/admin") && !location.pathname.startsWith("/portal/login");
+
+  if (isAdmin && !isSlugRoute) {
     return <Navigate to="/portal/admin" replace />;
   }
 
