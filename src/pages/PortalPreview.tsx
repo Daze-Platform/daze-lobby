@@ -13,7 +13,7 @@ import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, FileText, Clock, ArrowLeft } from "lucide-react";
+import { ClipboardList, FileText, Clock, ArrowLeft, Target } from "lucide-react";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
