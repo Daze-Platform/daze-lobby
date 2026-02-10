@@ -312,10 +312,10 @@ export default function PortalPreview() {
         ) : (
           <>
             {/* Welcome Section - Hero entrance */}
-            <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
-              <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
-              <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
-                {displayName}
+            <div className="mb-4 sm:mb-6 lg:mb-10 entrance-hero">
+              <span className="label-micro mb-1 sm:mb-2 block">Your Portal</span>
+              <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-0.5">
+                👋 {displayName}
               </h1>
               <p className="text-xs sm:text-base lg:text-lg text-muted-foreground">
                 {clientName
