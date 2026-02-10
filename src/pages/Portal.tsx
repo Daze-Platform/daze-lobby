@@ -258,30 +258,46 @@ export default function Portal() {
 
               {/* Task List - Enhanced with step indicator */}
               <Card className="lg:col-span-2 entrance-content relative overflow-hidden">
-                {/* Decorative top gradient bar */}
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/30 to-transparent" />
-                
                 <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="label-micro">Checklist</span>
                       <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        {progress === 0
+                          ? "Let's get started — your first step awaits."
+                          : progress === 100
+                            ? "All done! Your property is ready for review."
+                            : progress >= 80
+                              ? "Almost there — just a few more to go!"
+                              : "You're making great progress."}
+                      </p>
                     </div>
-                    {/* Step progress pills */}
-                    <div className="hidden sm:flex items-center gap-1.5">
+                    {/* Step progress indicators with numbers */}
+                    <div className="hidden sm:flex items-center gap-2">
                       {formattedTasks.map((task, i) => (
-                        <div
-                          key={task.key}
-                          className={cn(
-                            "h-1.5 rounded-full transition-all duration-500",
-                            i === 0 ? "w-6" : "w-4",
+                        <div key={task.key} className="flex flex-col items-center gap-0.5">
+                          <div
+                            className={cn(
+                              "w-6 h-1.5 rounded-full transition-all duration-500",
+                              task.isCompleted
+                                ? "bg-success"
+                                : i === formattedTasks.findIndex(t => !t.isCompleted)
+                                  ? "bg-primary"
+                                  : "bg-muted-foreground/20"
+                            )}
+                          />
+                          <span className={cn(
+                            "text-[9px] font-medium tabular-nums",
                             task.isCompleted
-                              ? "bg-success"
+                              ? "text-success"
                               : i === formattedTasks.findIndex(t => !t.isCompleted)
-                                ? "bg-primary animate-pulse"
-                                : "bg-muted-foreground/20"
-                          )}
-                        />
+                                ? "text-primary"
+                                : "text-muted-foreground/40"
+                          )}>
+                            {i + 1}
+                          </span>
+                        </div>
                       ))}
                     </div>
                   </div>
