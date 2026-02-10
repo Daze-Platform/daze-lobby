@@ -13,10 +13,10 @@ import Clients from "./pages/Clients";
 import Blockers from "./pages/Blockers";
 import Devices from "./pages/Devices";
 import Revenue from "./pages/Revenue";
-import Portal from "./pages/Portal";
 import PortalLogin from "./pages/PortalLogin";
 import PortalAdmin from "./pages/PortalAdmin";
 import PortalBySlug from "./pages/PortalBySlug";
+import AdminPortalBySlug from "./pages/AdminPortalBySlug";
 import Auth from "./pages/Auth";
 import PostAuth from "./pages/PostAuth";
 import NotFound from "./pages/NotFound";
@@ -89,13 +89,21 @@ const App = () => (
                   </RoleBasedRoute>
                 }
               />
-              {/* Admin Portal Viewer - Control Tower users only */}
-              {/* Admin Portal Viewer - Control Tower users only */}
+              {/* Admin Portal - client picker */}
               <Route
-                path="/portal/admin"
+                path="/admin/portal"
                 element={
                   <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
                     <PortalAdmin />
+                  </RoleBasedRoute>
+                }
+              />
+              {/* Admin Portal - viewing specific client by slug */}
+              <Route
+                path="/admin/portal/:clientSlug"
+                element={
+                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
+                    <AdminPortalBySlug />
                   </RoleBasedRoute>
                 }
               />
@@ -108,9 +116,15 @@ const App = () => (
                   </AuthRedirect>
                 } 
               />
-              {/* Dynamic client portal by slug */}
-              <Route path="/portal/:clientSlug" element={<PortalBySlug />} />
-              {/* Client portal - after specific /portal/* routes */}
+              {/* Client portal by slug */}
+              <Route
+                path="/portal/:clientSlug"
+                element={
+                  <PortalRoute>
+                    <PortalBySlug />
+                  </PortalRoute>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

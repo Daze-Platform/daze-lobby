@@ -37,8 +37,8 @@ export default function PostAuth() {
     if (!isAuthenticated) return isPortalOrigin ? "/portal/login" : "/auth";
     // If there's a valid returnTo, use it regardless of role
     if (returnTo) return returnTo;
-    // Client users must always go to /portal, never /dashboard or /auth
-    if (isClient(role)) return "/portal";
+    // Client users go to /portal/login to access their slug-based portal
+    if (isClient(role)) return "/portal/login";
     if (hasDashboardAccess(role)) return "/dashboard";
     return null;
   }, [isAuthenticated, role, returnTo, isPortalOrigin]);

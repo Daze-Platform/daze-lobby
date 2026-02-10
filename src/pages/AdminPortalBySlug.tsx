@@ -1,27 +1,23 @@
-import { useParams, Navigate, useLocation } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { hasDashboardAccess } from "@/lib/auth";
 import Portal from "./Portal";
 
 /**
- * Resolves a client slug from the URL, sets it as the selected client
- * in the ClientContext, and renders the real Portal component.
- *
- * Auth guard: handled by PortalRoute wrapper (client-only).
- * Admin users accessing /portal/:slug are redirected to /admin/portal/:slug.
+ * AdminPortalBySlug - resolves a client slug for admin users
+ * and renders the Portal component with admin context.
+ * 
+ * Route: /admin/portal/:clientSlug
  */
-export default function PortalBySlug() {
+export default function AdminPortalBySlug() {
   const { clientSlug } = useParams<{ clientSlug: string }>();
-  const { isAuthenticated, loading: authLoading, role } = useAuthContext();
+  const { isAuthenticated, loading: authLoading } = useAuthContext();
   const { setSelectedClientId } = useClient();
-  const location = useLocation();
 
-  // Resolve slug → clientId
   const {
     data: client,
     isLoading,
@@ -40,18 +36,15 @@ export default function PortalBySlug() {
     enabled: !!clientSlug && isAuthenticated,
   });
 
-  // When the client resolves, set it as the selected client in context
   useEffect(() => {
     if (client?.id) {
       setSelectedClientId(client.id);
     }
     return () => {
-      // Clean up when leaving the slug route
       setSelectedClientId(null);
     };
   }, [client?.id, setSelectedClientId]);
 
-  // Auth loading
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -60,22 +53,10 @@ export default function PortalBySlug() {
     );
   }
 
-  // Not authenticated → redirect to portal login
   if (!isAuthenticated) {
-    return (
-      <Navigate
-        to={`/portal/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        replace
-      />
-    );
+    return <Navigate to="/auth" replace />;
   }
 
-  // Admin users should use /admin/portal/:slug
-  if (hasDashboardAccess(role)) {
-    return <Navigate to={`/admin/portal/${clientSlug}`} replace />;
-  }
-
-  // Resolving slug
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -84,7 +65,6 @@ export default function PortalBySlug() {
     );
   }
 
-  // Slug not found
   if (error || !client) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -98,6 +78,5 @@ export default function PortalBySlug() {
     );
   }
 
-  // Render real portal
   return <Portal />;
 }
