@@ -63,7 +63,7 @@ export function AdminClientSwitcher() {
             </span>
           </div>
         </SelectTrigger>
-        <SelectContent align="end" className="w-[300px]">
+        <SelectContent align="end" className="w-[340px] z-[100]">
           {allClients.map((c) => (
             <SelectItem key={c.id} value={c.id} className="py-2.5">
               <div className="flex items-center justify-between w-full gap-3">
