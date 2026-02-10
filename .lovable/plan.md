@@ -1,69 +1,72 @@
 
+# Restructure Portal Routing: Dedicated Admin and Client Paths
 
-# Make Admin Portal View Match Client Portal View
+## Summary
 
-## Problem
+Reorganize routing so that:
+- **Clients** access their portal at `/portal/:clientSlug` (e.g., `/portal/springhill-suites-orange-beach`)
+- **Admins** access client portals at `/admin/portal/:clientSlug` (e.g., `/admin/portal/springhill-suites-orange-beach`)
+- The only UI difference is admins see the location (client) dropdown in the header; clients do not
+- Remove the old `/portal/admin` picker page and `/portal` base route for clients
 
-The `/portal/admin` page has a different visual layout than what clients see on `/portal`. Differences include:
-- "Admin View" label instead of "Your Portal"
-- Different background color (`bg-muted/30` vs `bg-ambient`)
-- Missing the premium progress card styling (no border accent, no task counter, no divider)
-- Missing the step progress indicators in the task card header
-- Missing the contextual progress message ("You're making great progress", etc.)
-- No welcome tour
-- Different mobile bottom nav (includes client switcher + dashboard button)
+## Route Changes
 
-## Solution
+| Route | Who | Purpose |
+|-------|-----|---------|
+| `/portal/:clientSlug` | Client users | Client's own portal (no switcher) |
+| `/admin/portal` | Admin users | Client picker (no client selected yet) |
+| `/admin/portal/:clientSlug` | Admin users | View specific client portal (with switcher) |
+| `/portal/login` | All | Client login page (unchanged) |
 
-Replace the main content area of `PortalAdmin.tsx` with the `Portal` component itself when a client is selected, so admins see the exact same UI. The admin-specific elements (client switcher, back-to-dashboard) will be preserved only in the header and mobile nav — the portal content will be identical.
+## File Changes
 
-### Changes
+### 1. `src/App.tsx`
+- Replace `/portal/admin` route with `/admin/portal` (client picker)
+- Add `/admin/portal/:clientSlug` route using `RoleBasedRoute` wrapping a new `AdminPortalBySlug` component (or reuse `PortalBySlug` with admin awareness)
+- Keep `/portal/:clientSlug` for client access (wrap with `PortalRoute` to enforce client-only access)
+- Remove the bare `/portal` route (clients now use `/portal/:clientSlug`)
 
-**`src/pages/PortalAdmin.tsx`**
+### 2. `src/pages/PortalAdmin.tsx`
+- Update the "Back to Dashboard" and navigation references from `/portal/admin` to `/admin/portal`
+- When a client is selected from the picker, navigate to `/admin/portal/:clientSlug` instead of rendering Portal inline
+- This makes the URL reflect which client the admin is viewing
 
-When a client is selected, instead of rendering its own duplicate layout, render the actual `<Portal />` component. This ensures pixel-perfect parity with what clients see.
+### 3. Create `src/pages/AdminPortalBySlug.tsx`
+- Similar to `PortalBySlug` but for admins
+- Resolves slug, sets `selectedClientId` in context, renders `<Portal />`
+- No auth redirect to `/portal/login` -- admins use `/auth`
 
-Key adjustments:
-- Once `selectedClientId` is set, render `<Portal />` directly (the same approach `PortalBySlug` uses)
-- The slug route detection in `Portal.tsx` already prevents the admin redirect when accessed from a sub-route context; we need to also allow it when the `PortalAdmin` renders it
-- Keep the "no client selected" picker screen as-is (it's admin-only and needed)
+### 4. `src/pages/Portal.tsx`
+- Remove the admin redirect guard entirely (routing now handles separation)
+- The `Portal` component becomes a pure view -- it renders the portal UI regardless of role
+- The `PortalHeader` receives `isAdmin` / `isAdminViewing` props based on role context, which controls whether the client switcher dropdown is shown
 
-**`src/pages/Portal.tsx`**
+### 5. `src/pages/PortalBySlug.tsx`
+- Add a role check: if the user is an admin, redirect them to `/admin/portal/:clientSlug` so they land on the correct route
+- If the user is a client, verify they are assigned to the client matching that slug (security)
 
-Update the admin redirect guard to also skip when the path is `/portal/admin` (since `PortalAdmin` will now render `Portal` at that path):
+### 6. `src/components/layout/PortalRoute.tsx`
+- Update the admin redirect from `/portal/admin` to `/admin/portal`
 
-```
-const isSlugRoute = location.pathname !== "/portal" &&
-  location.pathname.startsWith("/portal/") &&
-  !location.pathname.startsWith("/portal/login");
-```
+### 7. `src/components/portal/AdminClientSwitcher.tsx`
+- When a client is selected, use `navigate()` to go to `/admin/portal/:clientSlug` instead of just setting the context state
+- This requires looking up the slug for the selected client (add `client_slug` to the query)
 
-This removes the `/portal/admin` exclusion so `Portal` renders normally there too.
+### 8. Update navigation references across the codebase
+- Any "View portal" buttons on client cards that currently link to `/portal/:slug` should link to `/admin/portal/:slug` when used by admins
+- The "Back to Dashboard" button in the header dropdown should still navigate to `/dashboard`
+- `PostAuth.tsx` and `RoleBasedRoute.tsx`: update any `/portal/admin` references to `/admin/portal`
 
-Update the `PortalHeader` props when an admin is on a slug or admin route:
-- Pass `isAdmin={true}` and `isAdminViewing={true}` so the header shows the client switcher and "Back to Dashboard" in the dropdown
-- Keep all other portal content (progress card, tasks, welcome section) identical to the client view
+## Technical Details
 
-**`src/pages/PortalAdmin.tsx` (simplified)**
+### Security
+- `/portal/:clientSlug` enforced by `PortalRoute` -- only authenticated client users whose `user_clients` record matches the slug
+- `/admin/portal/*` enforced by `RoleBasedRoute` with `allowedRoles={["admin", "ops_manager", "support"]}`
 
-The selected-client view reduces to:
-```
-return <Portal />;
-```
+### Client Switcher Behavior
+- In `AdminClientSwitcher`, selecting a client navigates to `/admin/portal/{slug}` rather than just setting state
+- The `client_slug` field needs to be included in the admin clients query
 
-This mirrors the `PortalBySlug` pattern. The no-client-selected picker screen stays unchanged.
-
-**`src/pages/Portal.tsx` (header props update)**
-
-Detect admin context and pass appropriate header props:
-- When admin is on a slug/admin route, show `isAdmin={true}`, `isAdminViewing={true}`, and provide `onBackToDashboard`
-- This shows the client switcher in the header and "Back to Dashboard" in the profile dropdown
-- All portal content (progress ring, tasks, welcome message) remains the client view
-
-## Summary of File Changes
-
-| File | Change |
-|------|--------|
-| `src/pages/PortalAdmin.tsx` | Remove duplicate portal layout; render `<Portal />` when client is selected |
-| `src/pages/Portal.tsx` | Update admin redirect to allow `/portal/admin`; detect admin context for header props |
-
+### Portal Component
+- `Portal.tsx` checks `hasDashboardAccess(role)` to determine whether to show the switcher in the header
+- No redirect logic inside Portal -- routing guards handle access control completely
