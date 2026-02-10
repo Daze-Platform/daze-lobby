@@ -326,22 +326,33 @@ export default function PortalPreview() {
 
             <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
               {/* Hero Section - Progress */}
-              <Card className="lg:col-span-1 entrance-hero">
+              <Card className="lg:col-span-1 entrance-hero relative overflow-hidden border-t-2 border-primary shadow-md">
                 <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-                  <span className="label-micro">Progress</span>
+                  <div className="flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />
+                    <span className="label-micro">Progress</span>
+                  </div>
                   <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
                   {/* Responsive Progress Ring - smaller on mobile */}
                   <div className="w-full flex justify-center">
                     <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
-                    <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
+                    <ProgressRing progress={progress} status={status} size={180} className="hidden sm:block" />
                   </div>
                   <StatusBadge status={status} />
                   <ConfettiCelebration 
                     trigger={showConfetti} 
                     onComplete={() => setShowConfetti(false)} 
                   />
+
+                  {/* Tasks completed counter */}
+                  <div className="w-full pt-3 sm:pt-4 border-t border-border/30">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tasks completed</span>
+                      <span className="font-semibold">{completedCount} / {tasks.length}</span>
+                    </div>
+                  </div>
                   
                   {/* Demo Status Toggle - Horizontal scroll on mobile */}
                   {isDemo && (
