@@ -1,33 +1,77 @@
 
 
-# Sync Portal Preview UI with Portal Page
+# Remove Portal Preview, Use Real Portal for Slug Routes
 
-## Problem
+## What's Changing
 
-The UI improvements (solid accent border, Target icon, motivational copy, step numbers, waving hand emoji, tasks counter) were applied only to `src/pages/Portal.tsx`. The Portal Preview page (`src/pages/PortalPreview.tsx`) is a separate component that still uses the old styling. Since Portal Preview is meant to maintain 1:1 UI parity with the client portal, it needs the same visual updates.
+The separate `PortalPreview` page is being removed. The `/portal/:clientSlug` route will render the real `Portal` experience instead. Admins will access client portals via a "View Portal" button on each client card in the Clients page.
 
 ## Changes
 
-### `src/pages/PortalPreview.tsx`
+### 1. Delete `src/pages/PortalPreview.tsx`
 
-**Welcome Section (lines 314-325)**
-- Change "Welcome Back" label to "Your Portal"
-- Add waving hand emoji before the display name
-- Tighten spacing (`mb-0.5` instead of `mb-3`, `mb-4 sm:mb-6 lg:mb-10` instead of `mb-8 lg:mb-12`)
+This 497-line file is no longer needed. All its functionality is already covered by `Portal.tsx`.
 
-**Progress Card (lines 329-366)**
-- Add `border-t-2 border-primary shadow-md` to the Card
-- Add `Target` icon next to the "Progress" label
-- Increase desktop ProgressRing size from 160 to 180
-- Add a divider and "Tasks completed" counter between StatusBadge and the demo controls
-- Adjust padding for consistency
+### 2. Delete `src/components/layout/DedicatedPortalRoute.tsx`
 
-**Checklist Card (lines 369-391)**
-- Add step progress indicators with numbered pills (1-5) in the card header, color-coded by completion status
-- Add dynamic motivational micro-copy below the "Setup Tasks" title based on progress percentage
-- Add `overflow-hidden` to the card
+No longer needed -- the slug route will use the existing `PortalRoute` or a simplified guard.
 
-### No new files or dependencies required
+### 3. Create a new route component for slug-based access
 
-All changes mirror the exact markup and logic already present in `Portal.tsx`.
+A new lightweight wrapper page (`src/pages/PortalBySlug.tsx`) that:
+- Reads `clientSlug` from the URL params
+- Resolves the slug to a `clientId` via a database lookup
+- Wraps the existing `Portal` component inside a `ClientProvider` override with that resolved `clientId`
+- Shows a loading spinner while resolving, and a "not found" state if the slug is invalid
 
+This keeps the real `Portal.tsx` untouched and reuses all its logic (activity feed, documents, progress, welcome tour).
+
+### 4. Update `src/App.tsx` routing
+
+- Remove the `PortalPreview` and `DedicatedPortalRoute` imports
+- Change the `/portal/:clientSlug` route to use the new `PortalBySlug` wrapper with appropriate auth guarding
+- Remove the `/portal-preview` redirect route
+- Keep all other routes unchanged
+
+### 5. Add "View Portal" button to Clients page
+
+In `src/pages/Clients.tsx`, add a button on each client card:
+- Icon: `ArrowSquareOut` (Phosphor) or `ExternalLink` (Lucide)
+- Positioned next to the notify bell and phase badge
+- Clicks navigate to `/portal/{client.client_slug}` (opens in new tab)
+- Only shown when `client.client_slug` is present
+- `e.stopPropagation()` to prevent triggering the card's detail panel
+
+### 6. Remove `/portal/admin` sidebar link (optional cleanup)
+
+If there are sidebar references to "Portal Preview", update them to point to the Clients page instead since the preview is now accessed per-client.
+
+## Technical Details
+
+### New File: `src/pages/PortalBySlug.tsx`
+
+```
+- Read clientSlug from useParams
+- Query clients table: .eq("client_slug", slug).single()
+- If loading: show spinner
+- If not found: show 404-style message
+- If found: render Portal inside a ClientProvider with the resolved clientId
+- Auth guard: require authentication, redirect to /portal/login if not
+```
+
+### Modified File: `src/App.tsx`
+
+- Remove `PortalPreview` import
+- Remove `DedicatedPortalRoute` import
+- Add `PortalBySlug` import
+- Update `/portal/:clientSlug` route element
+
+### Modified File: `src/pages/Clients.tsx`
+
+- Add an `ExternalLink` or `ArrowSquareOut` icon button per client card
+- Link target: `/portal/${client.client_slug}` opened in a new tab
+- Tooltip: "View portal"
+
+### Deleted Files
+- `src/pages/PortalPreview.tsx`
+- `src/components/layout/DedicatedPortalRoute.tsx`
