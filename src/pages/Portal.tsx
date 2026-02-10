@@ -18,7 +18,7 @@ import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { useUnreadNotificationCount } from "@/hooks/useUnreadNotificationCount";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, LogOut, ClipboardList, FileText, Clock } from "lucide-react";
+import { Loader2, LogOut, ClipboardList, FileText, Clock, Target } from "lucide-react";
 import { signOut, hasDashboardAccess } from "@/lib/auth";
 import { toast } from "sonner";
 import type { Venue } from "@/types/venue";
