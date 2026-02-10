@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useClient } from "@/contexts/ClientContext";
 import { 
   Select,
@@ -9,6 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Building2, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // Map phase to display label
 const phaseLabels: Record<string, string> = {
@@ -27,6 +30,7 @@ const phaseStyles: Record<string, string> = {
 };
 
 export function AdminClientSwitcher() {
+  const navigate = useNavigate();
   const { 
     allClients, 
     isLoadingAllClients, 
@@ -34,6 +38,23 @@ export function AdminClientSwitcher() {
     setSelectedClientId,
     client,
   } = useClient();
+
+  // Fetch slugs for all clients so we can navigate by slug
+  const { data: clientSlugs = {} } = useQuery({
+    queryKey: ["client-slugs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, client_slug");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach(c => {
+        if (c.client_slug) map[c.id] = c.client_slug;
+      });
+      return map;
+    },
+    enabled: allClients.length > 0,
+  });
 
   if (isLoadingAllClients) {
     return (
@@ -48,12 +69,22 @@ export function AdminClientSwitcher() {
   const progress = selectedClient?.onboarding_progress ?? 0;
   const phase = selectedClient?.phase || "onboarding";
 
+  const handleClientChange = (value: string) => {
+    const slug = clientSlugs[value];
+    if (slug) {
+      setSelectedClientId(value);
+      navigate(`/admin/portal/${slug}`);
+    } else {
+      setSelectedClientId(value || null);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
       {/* Client Selector */}
       <Select
         value={selectedClientId || ""}
-        onValueChange={(value) => setSelectedClientId(value || null)}
+        onValueChange={handleClientChange}
       >
         <SelectTrigger className="w-[140px] lg:w-[180px] h-9 bg-background/80 border-border/60">
           <div className="flex items-center gap-2 min-w-0">
@@ -91,7 +122,6 @@ export function AdminClientSwitcher() {
       {/* Client Progress Indicator - only when a client is selected */}
       {selectedClient && (
         <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-border/50">
-          {/* Phase Badge */}
           <Badge 
             variant="outline" 
             className={`font-medium text-xs px-2.5 py-1 ${phaseStyles[phase] || ""}`}
@@ -99,7 +129,6 @@ export function AdminClientSwitcher() {
             {phaseLabels[phase] || phase.replace("_", " ")}
           </Badge>
           
-          {/* Progress Bar */}
           <div className="flex items-center gap-2 min-w-[100px]">
             <TrendingUp className="w-3.5 h-3.5 text-muted-foreground shrink-0" strokeWidth={1.5} />
             <Progress value={progress} className="h-1.5 w-16" />

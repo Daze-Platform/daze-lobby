@@ -34,7 +34,7 @@ export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) 
     if (!allowedRoles.includes(role)) {
       // Redirect to appropriate route based on role
       if (isClient(role)) {
-        return <Navigate to="/portal" replace />;
+        return <Navigate to="/portal/login" replace />;
       }
       if (hasDashboardAccess(role)) {
         return <Navigate to="/" replace />;

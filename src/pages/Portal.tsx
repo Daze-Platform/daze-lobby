@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Navigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useClient } from "@/contexts/ClientContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -24,19 +24,24 @@ import { toast } from "sonner";
 import type { Venue } from "@/types/venue";
 
 /**
- * Portal - Client-only portal page
+ * Portal - Pure portal view component.
  * 
- * This page is exclusively for client users to view their onboarding progress.
- * Admin users are redirected to /portal/admin instead.
+ * Renders identically for clients and admins. Routing guards handle access control.
+ * The only difference: admins see the client switcher in the header.
  */
 export default function Portal() {
   const { user, role } = useAuthContext();
   const { client, clientId } = useClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [activeView, setActiveView] = useState<PortalView>("onboarding");
   const prevStatus = useRef<string | null>(null);
+  
+  // Determine if admin is viewing
+  const isAdmin = hasDashboardAccess(role);
+  const isAdminViewingPortal = isAdmin && location.pathname.startsWith("/admin/portal");
   
   // Welcome tour for first-time users
   const { showTour, completeTour } = useWelcomeTour(user?.id);
@@ -57,33 +62,16 @@ export default function Portal() {
     },
     enabled: !!clientId,
   });
-  
-  // Redirect admins to their dedicated portal route
-  const isAdmin = hasDashboardAccess(role);
-  
+
   const { 
-    tasks, 
-    venues,
-    isLoading, 
-    progress, 
-    status, 
-    signLegal,
-    updateTask, 
-    uploadFile,
-    uploadVenueMenu,
-    uploadVenueLogo,
-    addVenue,
-    updateVenue,
-    deleteVenue,
-    completeVenueStep,
-    isSigningLegal,
-    isUpdating,
-    isAddingVenue,
-    isUpdatingVenue,
-    isDeletingVenue,
+    tasks, venues, isLoading, progress, status,
+    signLegal, updateTask, uploadFile,
+    uploadVenueMenu, uploadVenueLogo,
+    addVenue, updateVenue, deleteVenue, completeVenueStep,
+    isSigningLegal, isUpdating, isAddingVenue, isUpdatingVenue, isDeletingVenue,
   } = useClientPortal();
 
-  // MEMOIZED: Format tasks for the accordion - MUST be before early returns
+  // MEMOIZED: Format tasks for the accordion
   const formattedTasks = useMemo(() => 
     tasks.length > 0 
       ? tasks.map(t => ({
@@ -102,7 +90,7 @@ export default function Portal() {
     [tasks]
   );
 
-  // SINGLE REACTIVE PATH: Confetti & toast celebration when status changes to live
+  // Confetti & toast celebration when status changes to live
   useEffect(() => {
     if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
       setShowConfetti(true);
@@ -111,19 +99,10 @@ export default function Portal() {
     prevStatus.current = status;
   }, [status]);
 
-  // Redirect admin users to /portal/admin (unless they're on a slug or admin route)
-  const location = useLocation();
-  const isAdminViewingPortal = location.pathname.startsWith("/portal/admin") || 
-    (location.pathname !== "/portal" && location.pathname.startsWith("/portal/") && !location.pathname.startsWith("/portal/login"));
-
-  if (isAdmin && !isAdminViewingPortal) {
-    return <Navigate to="/portal/admin" replace />;
-  }
-
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate("/portal/login");
+      navigate(isAdmin ? "/auth" : "/portal/login");
     } catch (error) {
       toast.error("Failed to sign out");
     }
@@ -141,7 +120,6 @@ export default function Portal() {
     uploadFile({ taskKey, file, fieldName });
   };
 
-  // Venue CRUD handlers
   const handleAddVenue = async (): Promise<Venue | undefined> => {
     const result = await addVenue({ name: "" });
     if (result) {
@@ -185,17 +163,13 @@ export default function Portal() {
 
   return (
     <div className="min-h-screen bg-ambient dark:bg-ambient-dark pb-24 sm:pb-20 md:pb-0">
-      {/* Welcome Tour for first-time users */}
-      {showTour && (
-        <WelcomeTour onComplete={completeTour} />
-      )}
+      {showTour && <WelcomeTour onComplete={completeTour} />}
 
-      {/* Portal Header with Navigation */}
       <PortalHeader
         activeView={activeView}
         onViewChange={setActiveView}
-        isAdmin={isAdmin && isAdminViewingPortal}
-        isAdminViewing={isAdmin && isAdminViewingPortal}
+        isAdmin={isAdminViewingPortal}
+        isAdminViewing={isAdminViewingPortal}
         userEmail={user?.email}
         userFullName={user?.fullName || undefined}
         userAvatarUrl={user?.avatarUrl}
@@ -206,14 +180,12 @@ export default function Portal() {
         }}
         unreadNotificationCount={unreadCount}
         documentCount={documentCount}
-        onBackToDashboard={isAdmin ? () => navigate("/dashboard") : undefined}
+        onBackToDashboard={isAdminViewingPortal ? () => navigate("/dashboard") : undefined}
       />
 
-      {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-8 lg:py-12">
         {activeView === "onboarding" ? (
           <>
-            {/* Welcome Section */}
             <div className="mb-4 sm:mb-6 lg:mb-10 entrance-hero">
               <span className="label-micro mb-1 block">Your Portal</span>
               <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-0.5 sm:mb-1.5">
@@ -225,7 +197,6 @@ export default function Portal() {
             </div>
 
             <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
-              {/* Progress Card - Premium glass with decorative gradient accent */}
               <Card className="lg:col-span-1 entrance-hero relative overflow-hidden border-t-2 border-primary shadow-md">
                 <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6">
                   <div className="flex items-center gap-1.5">
@@ -240,11 +211,7 @@ export default function Portal() {
                     <ProgressRing progress={progress} status={status} size={180} className="hidden sm:block" />
                   </div>
                   <StatusBadge status={status} />
-                  
-                  {/* Divider */}
                   <div className="w-full border-t border-border/50" />
-                  
-                  {/* Completed tasks counter */}
                   <div className="w-full">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Tasks completed</span>
@@ -253,15 +220,10 @@ export default function Portal() {
                       </span>
                     </div>
                   </div>
-                  
-                  <ConfettiCelebration 
-                    trigger={showConfetti} 
-                    onComplete={() => setShowConfetti(false)} 
-                  />
+                  <ConfettiCelebration trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
                 </CardContent>
               </Card>
 
-              {/* Task List - Enhanced with step indicator */}
               <Card className="lg:col-span-2 entrance-content relative overflow-hidden">
                 <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6">
                   <div className="flex items-center justify-between">
@@ -278,7 +240,6 @@ export default function Portal() {
                               : "You're making great progress."}
                       </p>
                     </div>
-                    {/* Step progress indicators with numbers */}
                     <div className="hidden sm:flex items-center gap-2">
                       {formattedTasks.map((task, i) => (
                         <div key={task.key} className="flex flex-col items-center gap-0.5">
@@ -340,7 +301,6 @@ export default function Portal() {
           <PortalDocuments />
         )}
 
-        {/* No Client Assigned State (shouldn't reach here due to routing) */}
         {!client && !isLoading && (
           <Card className="mt-8">
             <CardContent className="py-12 text-center">
@@ -353,7 +313,7 @@ export default function Portal() {
         )}
       </main>
 
-      {/* Mobile Bottom Navigation - Client only (no admin switcher) */}
+      {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-4">
           <Button
@@ -406,7 +366,6 @@ export default function Portal() {
         </div>
       </nav>
 
-      {/* Activity Feed Panel */}
       <ActivityFeedPanel
         open={showActivityFeed}
         onClose={() => setShowActivityFeed(false)}

@@ -40,9 +40,9 @@ export function PortalRoute({ children }: PortalRouteProps) {
     return <Navigate to="/post-auth" replace />;
   }
 
-  // Admins should use /portal/admin instead
+  // Admins should use /admin/portal instead
   if (isAdmin) {
-    return <Navigate to="/portal/admin" replace />;
+    return <Navigate to="/admin/portal" replace />;
   }
 
   // Must be a client role to access /portal

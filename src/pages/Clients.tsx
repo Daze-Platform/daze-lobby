@@ -162,7 +162,7 @@ export default function Clients() {
                                     className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      window.open(`/portal/${client.client_slug}`, "_blank");
+                                      window.open(`/admin/portal/${client.client_slug}`, "_blank");
                                     }}
                                   >
                                     <ArrowSquareOut size={16} weight="duotone" />
