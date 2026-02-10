@@ -13,7 +13,7 @@ import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, FileText, Clock, ArrowLeft } from "lucide-react";
+import { ClipboardList, FileText, Clock, ArrowLeft, Target } from "lucide-react";
 import { toast } from "sonner";
 import type { Venue } from "@/components/portal/VenueCard";
 import { signOut } from "@/lib/auth";
@@ -312,10 +312,10 @@ export default function PortalPreview() {
         ) : (
           <>
             {/* Welcome Section - Hero entrance */}
-            <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
-              <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
-              <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
-                {displayName}
+            <div className="mb-4 sm:mb-6 lg:mb-10 entrance-hero">
+              <span className="label-micro mb-1 sm:mb-2 block">Your Portal</span>
+              <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-0.5">
+                👋 {displayName}
               </h1>
               <p className="text-xs sm:text-base lg:text-lg text-muted-foreground">
                 {clientName
@@ -326,22 +326,33 @@ export default function PortalPreview() {
 
             <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
               {/* Hero Section - Progress */}
-              <Card className="lg:col-span-1 entrance-hero">
+              <Card className="lg:col-span-1 entrance-hero relative overflow-hidden border-t-2 border-primary shadow-md">
                 <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-                  <span className="label-micro">Progress</span>
+                  <div className="flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />
+                    <span className="label-micro">Progress</span>
+                  </div>
                   <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
                   {/* Responsive Progress Ring - smaller on mobile */}
                   <div className="w-full flex justify-center">
                     <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
-                    <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
+                    <ProgressRing progress={progress} status={status} size={180} className="hidden sm:block" />
                   </div>
                   <StatusBadge status={status} />
                   <ConfettiCelebration 
                     trigger={showConfetti} 
                     onComplete={() => setShowConfetti(false)} 
                   />
+
+                  {/* Tasks completed counter */}
+                  <div className="w-full pt-3 sm:pt-4 border-t border-border/30">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tasks completed</span>
+                      <span className="font-semibold">{completedCount} / {tasks.length}</span>
+                    </div>
+                  </div>
                   
                   {/* Demo Status Toggle - Horizontal scroll on mobile */}
                   {isDemo && (
@@ -366,10 +377,38 @@ export default function PortalPreview() {
               </Card>
 
               {/* Task List - Content entrance */}
-              <Card className="lg:col-span-2 entrance-content">
+              <Card className="lg:col-span-2 entrance-content overflow-hidden">
                 <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-                  <span className="label-micro">Checklist</span>
-                  <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="label-micro">Checklist</span>
+                      <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        {progress === 0
+                          ? "Let's get started — your first step awaits."
+                          : progress === 100
+                            ? "All done! Your property is ready for review."
+                            : progress >= 80
+                              ? "Almost there — just a few more to go!"
+                              : "You're making great progress."}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Step progress indicators */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 pt-3">
+                    {tasks.map((task, i) => (
+                      <div
+                        key={task.key}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-[10px] flex items-center justify-center text-xs sm:text-sm font-medium transition-all duration-300 ${
+                          task.isCompleted
+                            ? "bg-success text-success-foreground shadow-sm"
+                            : "bg-card text-muted-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
+                        }`}
+                      >
+                        {task.isCompleted ? "✓" : i + 1}
+                      </div>
+                    ))}
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
                   <TaskAccordion 
