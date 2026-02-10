@@ -9,7 +9,6 @@ import {
   CaretLeft,
   CaretRight,
   X,
-  Eye,
   Plus,
   type Icon as PhosphorIcon
 } from "@phosphor-icons/react";
@@ -114,16 +113,6 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           href: "/devices",
           icon: DeviceMobile,
           badge: devicesCount ?? undefined,
-        },
-      ],
-    },
-    {
-      label: "PREVIEW",
-      items: [
-        {
-          title: "Client Portal",
-          href: "/portal/daze-beach-resort",
-          icon: Eye,
         },
       ],
     },
