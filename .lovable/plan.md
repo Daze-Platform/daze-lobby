@@ -1,77 +1,43 @@
 
 
-# Remove Portal Preview, Use Real Portal for Slug Routes
+# Fix: Allow Admins to View Slug-Based Client Portals
 
-## What's Changing
+## Problem
 
-The separate `PortalPreview` page is being removed. The `/portal/:clientSlug` route will render the real `Portal` experience instead. Admins will access client portals via a "View Portal" button on each client card in the Clients page.
+When an admin clicks "View portal" on a client card, the app navigates to `/portal/springhill-suites-orange-beach`. The `PortalBySlug` wrapper correctly resolves the slug and renders `<Portal />`. However, `Portal.tsx` itself has an admin guard at line 114-117 that redirects any admin user to `/portal/admin` -- so the admin gets bounced away before ever seeing the portal.
 
-## Changes
+## Solution
 
-### 1. Delete `src/pages/PortalPreview.tsx`
+The fix is simple: `Portal.tsx` should skip its admin redirect when the portal is being rendered in the context of a slug-based route (i.e., the admin intentionally navigated to a specific client's portal).
 
-This 497-line file is no longer needed. All its functionality is already covered by `Portal.tsx`.
+### Option: Use the URL to detect slug context
 
-### 2. Delete `src/components/layout/DedicatedPortalRoute.tsx`
+Check `useLocation()` -- if the current path matches `/portal/:slug` (anything beyond `/portal`), skip the admin redirect. This requires no prop drilling or context changes.
 
-No longer needed -- the slug route will use the existing `PortalRoute` or a simplified guard.
+### Changes
 
-### 3. Create a new route component for slug-based access
+**`src/pages/Portal.tsx` (lines ~114-117)**
 
-A new lightweight wrapper page (`src/pages/PortalBySlug.tsx`) that:
-- Reads `clientSlug` from the URL params
-- Resolves the slug to a `clientId` via a database lookup
-- Wraps the existing `Portal` component inside a `ClientProvider` override with that resolved `clientId`
-- Shows a loading spinner while resolving, and a "not found" state if the slug is invalid
-
-This keeps the real `Portal.tsx` untouched and reuses all its logic (activity feed, documents, progress, welcome tour).
-
-### 4. Update `src/App.tsx` routing
-
-- Remove the `PortalPreview` and `DedicatedPortalRoute` imports
-- Change the `/portal/:clientSlug` route to use the new `PortalBySlug` wrapper with appropriate auth guarding
-- Remove the `/portal-preview` redirect route
-- Keep all other routes unchanged
-
-### 5. Add "View Portal" button to Clients page
-
-In `src/pages/Clients.tsx`, add a button on each client card:
-- Icon: `ArrowSquareOut` (Phosphor) or `ExternalLink` (Lucide)
-- Positioned next to the notify bell and phase badge
-- Clicks navigate to `/portal/{client.client_slug}` (opens in new tab)
-- Only shown when `client.client_slug` is present
-- `e.stopPropagation()` to prevent triggering the card's detail panel
-
-### 6. Remove `/portal/admin` sidebar link (optional cleanup)
-
-If there are sidebar references to "Portal Preview", update them to point to the Clients page instead since the preview is now accessed per-client.
-
-## Technical Details
-
-### New File: `src/pages/PortalBySlug.tsx`
-
-```
-- Read clientSlug from useParams
-- Query clients table: .eq("client_slug", slug).single()
-- If loading: show spinner
-- If not found: show 404-style message
-- If found: render Portal inside a ClientProvider with the resolved clientId
-- Auth guard: require authentication, redirect to /portal/login if not
+Replace the unconditional admin redirect:
+```typescript
+if (isAdmin) {
+  return <Navigate to="/portal/admin" replace />;
+}
 ```
 
-### Modified File: `src/App.tsx`
+With a conditional check that only redirects when on the bare `/portal` path:
+```typescript
+const location = useLocation();
+const isSlugRoute = location.pathname !== "/portal" && location.pathname.startsWith("/portal/") && !location.pathname.startsWith("/portal/admin") && !location.pathname.startsWith("/portal/login");
 
-- Remove `PortalPreview` import
-- Remove `DedicatedPortalRoute` import
-- Add `PortalBySlug` import
-- Update `/portal/:clientSlug` route element
+if (isAdmin && !isSlugRoute) {
+  return <Navigate to="/portal/admin" replace />;
+}
+```
 
-### Modified File: `src/pages/Clients.tsx`
+This way:
+- Admins on `/portal` still get redirected to `/portal/admin` (existing behavior)
+- Admins on `/portal/springhill-suites-orange-beach` see the actual portal (new behavior)
 
-- Add an `ExternalLink` or `ArrowSquareOut` icon button per client card
-- Link target: `/portal/${client.client_slug}` opened in a new tab
-- Tooltip: "View portal"
+Only one file changes, and no new dependencies are needed.
 
-### Deleted Files
-- `src/pages/PortalPreview.tsx`
-- `src/components/layout/DedicatedPortalRoute.tsx`
