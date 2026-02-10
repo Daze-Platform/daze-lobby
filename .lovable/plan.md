@@ -1,72 +1,82 @@
 
-# Restructure Portal Routing: Dedicated Admin and Client Paths
+# Fix: Preserve Portal Slug Through Auth Flow
 
-## Summary
+## Problem
 
-Reorganize routing so that:
-- **Clients** access their portal at `/portal/:clientSlug` (e.g., `/portal/springhill-suites-orange-beach`)
-- **Admins** access client portals at `/admin/portal/:clientSlug` (e.g., `/admin/portal/springhill-suites-orange-beach`)
-- The only UI difference is admins see the location (client) dropdown in the header; clients do not
-- Remove the old `/portal/admin` picker page and `/portal` base route for clients
+When a GM visits `/portal/springhill-suites-orange-beach` while unauthenticated:
+1. `PortalRoute` redirects to `/portal/login` but drops the slug (no `returnTo` param)
+2. After login, `PostAuth` sends client users to `/portal/login`, which `AuthRedirect` bounces back to `PostAuth` -- creating an infinite redirect loop
 
-## Route Changes
+## Solution
 
-| Route | Who | Purpose |
-|-------|-----|---------|
-| `/portal/:clientSlug` | Client users | Client's own portal (no switcher) |
-| `/admin/portal` | Admin users | Client picker (no client selected yet) |
-| `/admin/portal/:clientSlug` | Admin users | View specific client portal (with switcher) |
-| `/portal/login` | All | Client login page (unchanged) |
+Two targeted fixes:
 
-## File Changes
+### 1. `src/components/layout/PortalRoute.tsx` -- Preserve the slug
 
-### 1. `src/App.tsx`
-- Replace `/portal/admin` route with `/admin/portal` (client picker)
-- Add `/admin/portal/:clientSlug` route using `RoleBasedRoute` wrapping a new `AdminPortalBySlug` component (or reuse `PortalBySlug` with admin awareness)
-- Keep `/portal/:clientSlug` for client access (wrap with `PortalRoute` to enforce client-only access)
-- Remove the bare `/portal` route (clients now use `/portal/:clientSlug`)
+When redirecting unauthenticated users to `/portal/login`, include the current path as a `returnTo` query param so the slug survives the auth flow.
 
-### 2. `src/pages/PortalAdmin.tsx`
-- Update the "Back to Dashboard" and navigation references from `/portal/admin` to `/admin/portal`
-- When a client is selected from the picker, navigate to `/admin/portal/:clientSlug` instead of rendering Portal inline
-- This makes the URL reflect which client the admin is viewing
+**Change (line 34-36):**
+```typescript
+// Before
+return <Navigate to="/portal/login" replace />;
 
-### 3. Create `src/pages/AdminPortalBySlug.tsx`
-- Similar to `PortalBySlug` but for admins
-- Resolves slug, sets `selectedClientId` in context, renders `<Portal />`
-- No auth redirect to `/portal/login` -- admins use `/auth`
+// After -- preserve the slug
+const currentPath = window.location.pathname;
+return <Navigate to={`/portal/login?returnTo=${encodeURIComponent(currentPath)}`} replace />;
+```
 
-### 4. `src/pages/Portal.tsx`
-- Remove the admin redirect guard entirely (routing now handles separation)
-- The `Portal` component becomes a pure view -- it renders the portal UI regardless of role
-- The `PortalHeader` receives `isAdmin` / `isAdminViewing` props based on role context, which controls whether the client switcher dropdown is shown
+### 2. `src/pages/PostAuth.tsx` -- Fix the client user loop
 
-### 5. `src/pages/PortalBySlug.tsx`
-- Add a role check: if the user is an admin, redirect them to `/admin/portal/:clientSlug` so they land on the correct route
-- If the user is a client, verify they are assigned to the client matching that slug (security)
+When a client user has no `returnTo`, instead of sending them to `/portal/login` (which loops), look up their assigned client slug and redirect directly to `/portal/:slug`.
 
-### 6. `src/components/layout/PortalRoute.tsx`
-- Update the admin redirect from `/portal/admin` to `/admin/portal`
+**Changes:**
+- Query `user_clients` joined with `clients` to get the user's `client_slug`
+- If found, navigate to `/portal/{slug}` directly
+- If not found (no client assigned), navigate to an error/no-hotel page
+- This eliminates the `/portal/login` -> `PostAuth` -> `/portal/login` loop
 
-### 7. `src/components/portal/AdminClientSwitcher.tsx`
-- When a client is selected, use `navigate()` to go to `/admin/portal/:clientSlug` instead of just setting the context state
-- This requires looking up the slug for the selected client (add `client_slug` to the query)
+```typescript
+// In targetPath logic, replace:
+if (isClient(role)) return "/portal/login";
 
-### 8. Update navigation references across the codebase
-- Any "View portal" buttons on client cards that currently link to `/portal/:slug` should link to `/admin/portal/:slug` when used by admins
-- The "Back to Dashboard" button in the header dropdown should still navigate to `/dashboard`
-- `PostAuth.tsx` and `RoleBasedRoute.tsx`: update any `/portal/admin` references to `/admin/portal`
+// With a resolved slug path:
+if (isClient(role) && clientSlug) return `/portal/${clientSlug}`;
+if (isClient(role) && !clientSlugLoading) return "/no-hotel-assigned";
+```
 
-## Technical Details
+This requires adding a small query in `PostAuth` to fetch the client slug for client-role users:
+```typescript
+const { data: clientLink, isLoading: clientSlugLoading } = useQuery({
+  queryKey: ["user-client-slug", user?.id],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("user_clients")
+      .select("clients(client_slug)")
+      .eq("user_id", user!.id)
+      .maybeSingle();
+    return data;
+  },
+  enabled: isClient(role) && !!user?.id && !returnTo,
+});
+```
 
-### Security
-- `/portal/:clientSlug` enforced by `PortalRoute` -- only authenticated client users whose `user_clients` record matches the slug
-- `/admin/portal/*` enforced by `RoleBasedRoute` with `allowedRoles={["admin", "ops_manager", "support"]}`
+## Complete Flow After Fix
 
-### Client Switcher Behavior
-- In `AdminClientSwitcher`, selecting a client navigates to `/admin/portal/{slug}` rather than just setting state
-- The `client_slug` field needs to be included in the admin clients query
+1. GM clicks link to `/portal/springhill-suites-orange-beach`
+2. `PortalRoute` redirects to `/portal/login?returnTo=%2Fportal%2Fspringhill-suites-orange-beach`
+3. GM signs up, verifies email, signs in
+4. `ClientLoginForm` sends to `/post-auth?origin=portal&returnTo=%2Fportal%2Fspringhill-suites-orange-beach`
+5. `PostAuth` sees `returnTo` and navigates to `/portal/springhill-suites-orange-beach`
+6. Portal loads successfully
 
-### Portal Component
-- `Portal.tsx` checks `hasDashboardAccess(role)` to determine whether to show the switcher in the header
-- No redirect logic inside Portal -- routing guards handle access control completely
+For returning client users with no `returnTo` (e.g., visiting `/portal/login` directly):
+1. Login succeeds, goes to `/post-auth?origin=portal`
+2. `PostAuth` looks up their assigned client slug
+3. Navigates to `/portal/{their-slug}` directly -- no loop
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/layout/PortalRoute.tsx` | Add `returnTo` param when redirecting unauthenticated users |
+| `src/pages/PostAuth.tsx` | Look up client slug for client-role users instead of redirecting to `/portal/login` |
