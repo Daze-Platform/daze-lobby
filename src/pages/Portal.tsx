@@ -111,11 +111,12 @@ export default function Portal() {
     prevStatus.current = status;
   }, [status]);
 
-  // Redirect admin users to /portal/admin
+  // Redirect admin users to /portal/admin (unless they're on a slug or admin route)
   const location = useLocation();
-  const isSlugRoute = location.pathname !== "/portal" && location.pathname.startsWith("/portal/") && !location.pathname.startsWith("/portal/admin") && !location.pathname.startsWith("/portal/login");
+  const isAdminViewingPortal = location.pathname.startsWith("/portal/admin") || 
+    (location.pathname !== "/portal" && location.pathname.startsWith("/portal/") && !location.pathname.startsWith("/portal/login"));
 
-  if (isAdmin && !isSlugRoute) {
+  if (isAdmin && !isAdminViewingPortal) {
     return <Navigate to="/portal/admin" replace />;
   }
 
@@ -189,12 +190,12 @@ export default function Portal() {
         <WelcomeTour onComplete={completeTour} />
       )}
 
-      {/* Portal Header with Navigation - Client view (no admin elements) */}
+      {/* Portal Header with Navigation */}
       <PortalHeader
         activeView={activeView}
         onViewChange={setActiveView}
-        isAdmin={false}
-        isAdminViewing={false}
+        isAdmin={isAdmin && isAdminViewingPortal}
+        isAdminViewing={isAdmin && isAdminViewingPortal}
         userEmail={user?.email}
         userFullName={user?.fullName || undefined}
         userAvatarUrl={user?.avatarUrl}
@@ -205,6 +206,7 @@ export default function Portal() {
         }}
         unreadNotificationCount={unreadCount}
         documentCount={documentCount}
+        onBackToDashboard={isAdmin ? () => navigate("/dashboard") : undefined}
       />
 
       {/* Main Content */}
