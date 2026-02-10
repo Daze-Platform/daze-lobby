@@ -50,12 +50,15 @@ export function VenueCard({
   autoFocus,
 }: VenueCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const isFocusedRef = useRef(false);
   const [localName, setLocalName] = useState(venue.name);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
-  // Sync local name when venue changes from server
+  // Sync local name when venue changes from server, but only if not actively typing
   useEffect(() => {
-    setLocalName(venue.name);
+    if (!isFocusedRef.current) {
+      setLocalName(venue.name);
+    }
   }, [venue.name]);
   
   // Auto-focus when newly added
@@ -171,6 +174,11 @@ export function VenueCard({
             id={`venue-name-${venue.id}`}
             value={localName}
             onChange={handleNameChange}
+            onFocus={() => { isFocusedRef.current = true; }}
+            onBlur={() => {
+              isFocusedRef.current = false;
+              setLocalName(venue.name);
+            }}
             placeholder="e.g., Pool Deck, Lobby Bar, Room Service"
             className="font-medium"
             maxLength={100}
