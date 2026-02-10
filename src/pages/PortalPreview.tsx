@@ -377,10 +377,38 @@ export default function PortalPreview() {
               </Card>
 
               {/* Task List - Content entrance */}
-              <Card className="lg:col-span-2 entrance-content">
+              <Card className="lg:col-span-2 entrance-content overflow-hidden">
                 <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-                  <span className="label-micro">Checklist</span>
-                  <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="label-micro">Checklist</span>
+                      <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        {progress === 0
+                          ? "Let's get started — your first step awaits."
+                          : progress === 100
+                            ? "All done! Your property is ready for review."
+                            : progress >= 80
+                              ? "Almost there — just a few more to go!"
+                              : "You're making great progress."}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Step progress indicators */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 pt-3">
+                    {tasks.map((task, i) => (
+                      <div
+                        key={task.key}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-[10px] flex items-center justify-center text-xs sm:text-sm font-medium transition-all duration-300 ${
+                          task.isCompleted
+                            ? "bg-success text-success-foreground shadow-sm"
+                            : "bg-card text-muted-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
+                        }`}
+                      >
+                        {task.isCompleted ? "✓" : i + 1}
+                      </div>
+                    ))}
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
                   <TaskAccordion 
