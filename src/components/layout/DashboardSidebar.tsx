@@ -117,16 +117,6 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         },
       ],
     },
-    {
-      label: "PREVIEW",
-      items: [
-        {
-          title: "Client Portal",
-          href: "/portal/daze-beach-resort",
-          icon: Eye,
-        },
-      ],
-    },
   ];
 
   // On mobile, always show full width, no collapse

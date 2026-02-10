@@ -151,6 +151,29 @@ export default function Clients() {
                           ) : null}
                         </CardTitle>
                         <div className="flex items-center gap-2">
+                          {/* View Portal Button */}
+                          {client.client_slug && (
+                            <TooltipProvider delayDuration={0}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(`/portal/${client.client_slug}`, "_blank");
+                                    }}
+                                  >
+                                    <ArrowSquareOut size={16} weight="duotone" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <p>View portal</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {/* Notify Button - Only show when there are pending tasks */}
                           {client.incompleteCount > 0 && (
                             <TooltipProvider delayDuration={0}>
