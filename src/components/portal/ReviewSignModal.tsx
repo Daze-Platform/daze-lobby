@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useDeferredValue, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -262,8 +262,7 @@ Who to Contact: ${posContact}
 13.10 Counterparts`;
 };
 
-// Highlight injected values in the text
-const HighlightedText = ({ text, entity }: { text: string; entity: PilotAgreementData }) => {
+const HighlightedText = memo(({ text, entity }: { text: string; entity: PilotAgreementData }) => {
   const values = [
     entity.legal_entity_name?.trim(),
     entity.dba_name?.trim(),
@@ -289,7 +288,8 @@ const HighlightedText = ({ text, entity }: { text: string; entity: PilotAgreemen
       })}
     </>
   );
-};
+});
+HighlightedText.displayName = "HighlightedText";
 
 // Collapsible form section component
 function FormSection({ title, icon: Icon, children, defaultOpen = false }: {
@@ -429,10 +429,12 @@ export function ReviewSignModal({
     pos_contact: posContact,
   }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
 
-  const agreementText = useMemo(() => createAgreementText(currentEntity), [currentEntity]);
+  // Defer agreement text rendering so typing stays instant
+  const deferredEntity = useDeferredValue(currentEntity);
+  const agreementText = useMemo(() => createAgreementText(deferredEntity), [deferredEntity]);
 
   // Section A required, B-E optional
-  const isFormValid =
+  const isFormValid = useMemo(() =>
     propertyName.trim().length > 0 &&
     legalEntityName.trim().length > 0 &&
     addressStreet.trim().length > 0 &&
@@ -440,7 +442,9 @@ export function ReviewSignModal({
     addressState.trim().length > 0 &&
     addressZip.trim().length > 0 &&
     authorizedSignerName.trim().length > 0 &&
-    authorizedSignerTitle.trim().length > 0;
+    authorizedSignerTitle.trim().length > 0,
+    [propertyName, legalEntityName, addressStreet, addressCity, addressState, addressZip, authorizedSignerName, authorizedSignerTitle]
+  );
 
   const handleSignatureChange = (hasSig: boolean) => setHasSignature(hasSig);
 
@@ -678,7 +682,7 @@ export function ReviewSignModal({
                   <div className="p-3 sm:p-4 bg-white dark:bg-background border rounded-lg text-xs sm:text-sm leading-relaxed max-h-[200px] sm:max-h-none overflow-y-auto">
                     {agreementText.split('\n\n').map((paragraph, index) => (
                       <p key={index} className="whitespace-pre-wrap mb-2 sm:mb-3 last:mb-0">
-                        <HighlightedText text={paragraph} entity={currentEntity} />
+                        <HighlightedText text={paragraph} entity={deferredEntity} />
                       </p>
                     ))}
                   </div>
