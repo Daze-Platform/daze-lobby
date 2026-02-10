@@ -109,22 +109,8 @@ const App = () => (
                 } 
               />
               {/* Dynamic client portal by slug */}
-              <Route path="/portal/:clientSlug" element={
-                <DedicatedPortalRoute>
-                  <PortalPreview />
-                </DedicatedPortalRoute>
-              } />
+              <Route path="/portal/:clientSlug" element={<PortalBySlug />} />
               {/* Client portal - after specific /portal/* routes */}
-              <Route
-                path="/portal"
-                element={
-                  <PortalRoute>
-                    <Portal />
-                  </PortalRoute>
-                }
-              />
-              {/* Redirect old preview route */}
-              <Route path="/portal-preview" element={<Navigate to="/portal/daze-beach-resort" replace />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
