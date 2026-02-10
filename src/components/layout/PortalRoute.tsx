@@ -32,7 +32,8 @@ export function PortalRoute({ children }: PortalRouteProps) {
 
   // Not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/portal/login" replace />;
+    const currentPath = window.location.pathname;
+    return <Navigate to={`/portal/login?returnTo=${encodeURIComponent(currentPath)}`} replace />;
   }
 
   // Check role - redirect admins to their dedicated route

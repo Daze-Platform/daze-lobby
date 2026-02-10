@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { hasDashboardAccess, isClient, signOut } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * PostAuth
@@ -14,7 +16,7 @@ import { hasDashboardAccess, isClient, signOut } from "@/lib/auth";
  * Prevents redirect loops when role/profile rows haven't hydrated yet.
  */
 export default function PostAuth() {
-  const { isAuthenticated, loading, role } = useAuthContext();
+  const { isAuthenticated, loading, role, user } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
   const [showRoleMissing, setShowRoleMissing] = useState(false);
@@ -33,15 +35,33 @@ export default function PostAuth() {
     return params.get("origin") === "portal" || !!returnTo;
   }, [params, returnTo]);
 
+  // For client-role users without a returnTo, look up their assigned client slug
+  const { data: clientLink, isLoading: clientSlugLoading } = useQuery({
+    queryKey: ["user-client-slug", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_clients")
+        .select("clients(client_slug)")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isClient(role) && !!user?.id && !returnTo,
+  });
+
+  const clientSlug = (clientLink?.clients as any)?.client_slug as string | undefined;
+
   const targetPath = useMemo(() => {
     if (!isAuthenticated) return isPortalOrigin ? "/portal/login" : "/auth";
     // If there's a valid returnTo, use it regardless of role
     if (returnTo) return returnTo;
-    // Client users go to /portal/login to access their slug-based portal
-    if (isClient(role)) return "/portal/login";
+    // Client users: resolve their slug-based portal directly
+    if (isClient(role) && clientSlug) return `/portal/${clientSlug}`;
+    if (isClient(role) && !clientSlugLoading) return "/no-hotel-assigned";
+    if (isClient(role) && clientSlugLoading) return null; // still loading
     if (hasDashboardAccess(role)) return "/dashboard";
     return null;
-  }, [isAuthenticated, role, returnTo, isPortalOrigin]);
+  }, [isAuthenticated, role, returnTo, isPortalOrigin, clientSlug, clientSlugLoading]);
 
   // Give hydration a brief moment after sign-in to avoid flashing an error.
   useEffect(() => {
@@ -90,7 +110,7 @@ export default function PostAuth() {
         <CardHeader>
           <CardTitle>Account not ready</CardTitle>
           <CardDescription>
-            Your account is signed in, but it doesn’t have access assigned yet.
+            Your account is signed in, but it doesn't have access assigned yet.
             Please contact an admin to set your permissions.
           </CardDescription>
         </CardHeader>
