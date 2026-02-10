@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -209,7 +210,7 @@ export default function Portal() {
           <>
             {/* Welcome Section */}
             <div className="mb-4 sm:mb-8 lg:mb-12 entrance-hero">
-              <span className="label-micro mb-1 sm:mb-2 block">Welcome Back</span>
+              <span className="label-micro mb-1 sm:mb-2 block">Your Portal</span>
               <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1 sm:mb-3">
                 {client?.name || "Partner"}
               </h1>
@@ -219,18 +220,35 @@ export default function Portal() {
             </div>
 
             <div className="grid gap-3 sm:gap-6 lg:gap-8 lg:grid-cols-3">
-              {/* Progress Card */}
-              <Card className="lg:col-span-1 entrance-hero">
-                <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+              {/* Progress Card - Premium glass with decorative gradient accent */}
+              <Card className="lg:col-span-1 entrance-hero relative overflow-hidden group">
+                {/* Decorative top gradient bar */}
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary/70 to-[hsl(var(--daze-sunset))]" />
+                
+                {/* Subtle background radial glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,hsl(var(--primary)/0.04),transparent_70%)] pointer-events-none" />
+                
+                <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6 relative">
                   <span className="label-micro">Progress</span>
                   <CardTitle className="text-base sm:text-xl">Onboarding</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center gap-3 sm:gap-6 pt-0 sm:pt-2 px-3 sm:px-6 pb-4">
+                <CardContent className="flex flex-col items-center gap-4 sm:gap-6 pt-2 sm:pt-4 px-4 sm:px-6 pb-6 relative">
                   <div className="w-full flex justify-center">
                     <ProgressRing progress={progress} status={status} size={140} className="sm:hidden" />
-                    <ProgressRing progress={progress} status={status} size={160} className="hidden sm:block" />
+                    <ProgressRing progress={progress} status={status} size={180} className="hidden sm:block" />
                   </div>
                   <StatusBadge status={status} />
+                  
+                  {/* Completed tasks counter */}
+                  <div className="w-full pt-3 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tasks completed</span>
+                      <span className="font-semibold tabular-nums">
+                        {formattedTasks.filter(t => t.isCompleted).length} / {formattedTasks.length}
+                      </span>
+                    </div>
+                  </div>
+                  
                   <ConfettiCelebration 
                     trigger={showConfetti} 
                     onComplete={() => setShowConfetti(false)} 
@@ -238,11 +256,35 @@ export default function Portal() {
                 </CardContent>
               </Card>
 
-              {/* Task List */}
-              <Card className="lg:col-span-2 entrance-content">
-                <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-                  <span className="label-micro">Checklist</span>
-                  <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+              {/* Task List - Enhanced with step indicator */}
+              <Card className="lg:col-span-2 entrance-content relative overflow-hidden">
+                {/* Decorative top gradient bar */}
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/30 to-transparent" />
+                
+                <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6 pt-5 sm:pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="label-micro">Checklist</span>
+                      <CardTitle className="text-base sm:text-xl">Setup Tasks</CardTitle>
+                    </div>
+                    {/* Step progress pills */}
+                    <div className="hidden sm:flex items-center gap-1.5">
+                      {formattedTasks.map((task, i) => (
+                        <div
+                          key={task.key}
+                          className={cn(
+                            "h-1.5 rounded-full transition-all duration-500",
+                            i === 0 ? "w-6" : "w-4",
+                            task.isCompleted
+                              ? "bg-success"
+                              : i === formattedTasks.findIndex(t => !t.isCompleted)
+                                ? "bg-primary animate-pulse"
+                                : "bg-muted-foreground/20"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0 sm:pt-2 px-1.5 sm:px-4 md:px-6">
                   <TaskAccordion 
