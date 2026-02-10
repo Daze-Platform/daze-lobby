@@ -326,7 +326,7 @@ export function ClientLoginForm() {
               <button
                 type="button"
                 onClick={() => { setMode("signup"); setError(null); }}
-                className="font-medium text-accent hover:text-accent/80 transition-colors"
+                className="font-medium text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
               >
                 Sign up
               </button>
@@ -337,7 +337,7 @@ export function ClientLoginForm() {
               <button
                 type="button"
                 onClick={() => { setMode("login"); setError(null); }}
-                className="font-medium text-accent hover:text-accent/80 transition-colors"
+                className="font-medium text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
               >
                 Sign in
               </button>
