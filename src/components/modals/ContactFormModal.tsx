@@ -51,6 +51,7 @@ export function ContactFormModal({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -59,6 +60,7 @@ export function ContactFormModal({
       setEmail(contact?.email ?? "");
       setPhone(contact?.phone ?? "");
       setIsPrimary(contact?.is_primary ?? false);
+      setTouched(false);
     }
   }, [open, contact]);
 
@@ -118,8 +120,15 @@ export function ContactFormModal({
     },
   });
 
-  const canSave = name.trim().length > 0;
+  const nameError = touched && !name.trim();
+  const emailError = touched && !email.trim();
+  const canSave = name.trim().length > 0 && email.trim().length > 0;
   const isBusy = saveMutation.isPending || deleteMutation.isPending;
+
+  const handleSave = () => {
+    setTouched(true);
+    if (canSave) saveMutation.mutate();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,7 +152,11 @@ export function ContactFormModal({
               placeholder="e.g. John Smith"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className={nameError ? "border-destructive" : ""}
             />
+            {nameError && (
+              <p className="text-xs text-destructive">This field is required.</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -158,14 +171,20 @@ export function ContactFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="contact-email">Email</Label>
+              <Label htmlFor="contact-email">
+                Email <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="contact-email"
                 type="email"
                 placeholder="john@hotel.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className={emailError ? "border-destructive" : ""}
               />
+              {emailError && (
+                <p className="text-xs text-destructive">This field is required.</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="contact-phone">Phone</Label>
@@ -230,9 +249,9 @@ export function ContactFormModal({
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isBusy}>
               Cancel
             </Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={!canSave || isBusy}>
+            <Button onClick={handleSave} disabled={isBusy}>
               {isBusy && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-              {isEditing ? "Save" : "Add Contact"}
+              {isBusy ? "Saving..." : isEditing ? "Save" : "Add Contact"}
             </Button>
           </div>
         </DialogFooter>
