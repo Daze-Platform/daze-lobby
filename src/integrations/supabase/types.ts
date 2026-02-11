@@ -162,6 +162,7 @@ export type Database = {
           client_slug: string | null
           contract_value: number | null
           created_at: string
+          deleted_at: string | null
           id: string
           legal_entity_name: string | null
           logo_url: string | null
@@ -185,6 +186,7 @@ export type Database = {
           client_slug?: string | null
           contract_value?: number | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           legal_entity_name?: string | null
           logo_url?: string | null
@@ -208,6 +210,7 @@ export type Database = {
           client_slug?: string | null
           contract_value?: number | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           legal_entity_name?: string | null
           logo_url?: string | null

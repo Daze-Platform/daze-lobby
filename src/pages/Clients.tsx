@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { HotelDetailPanel } from "@/components/dashboard";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -17,6 +18,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { 
   Buildings, 
   User, 
@@ -29,8 +38,11 @@ import {
   CircleDashed,
   ArrowSquareOut,
   Trash,
+  MagnifyingGlass,
+  FunnelSimple,
+  ArrowCounterClockwise,
 } from "@phosphor-icons/react";
-import { useClients, useDeleteClient, type Client } from "@/hooks/useClients";
+import { useClients, useDeleteClient, useRestoreClient, type Client } from "@/hooks/useClients";
 import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
 import { cn } from "@/lib/utils";
 
@@ -41,60 +53,153 @@ const phaseColors: Record<string, string> = {
   contracted: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
 };
 
+const phaseLabels: Record<string, string> = {
+  onboarding: "Onboarding",
+  reviewing: "Reviewing",
+  pilot_live: "Pilot Live",
+  contracted: "Contracted",
+};
+
+type PhaseFilter = "onboarding" | "reviewing" | "pilot_live" | "contracted";
+
 export default function Clients() {
-  const { data: clients, isLoading } = useClients();
+  const [showDeleted, setShowDeleted] = useState(false);
+  const { data: clients, isLoading } = useClients(showDeleted);
   const navigate = useNavigate();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [notifyClient, setNotifyClient] = useState<Client | null>(null);
-  const [deleteClient, setDeleteClient] = useState<Client | null>(null);
+  const [deleteClientTarget, setDeleteClientTarget] = useState<Client | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [phaseFilters, setPhaseFilters] = useState<Set<PhaseFilter>>(new Set());
   
   const sendNotification = useSendBlockerNotification();
   const deleteClientMutation = useDeleteClient();
+  const restoreClientMutation = useRestoreClient();
+
+  const togglePhaseFilter = (phase: PhaseFilter) => {
+    setPhaseFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(phase)) next.delete(phase);
+      else next.add(phase);
+      return next;
+    });
+  };
+
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
+    return clients.filter((client) => {
+      // Search filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesName = client.name.toLowerCase().includes(q);
+        const matchesContact = client.primaryContact?.name?.toLowerCase().includes(q);
+        const matchesCode = client.client_code?.toLowerCase().includes(q);
+        if (!matchesName && !matchesContact && !matchesCode) return false;
+      }
+      // Phase filter
+      if (phaseFilters.size > 0 && !phaseFilters.has(client.phase as PhaseFilter)) {
+        return false;
+      }
+      return true;
+    });
+  }, [clients, searchQuery, phaseFilters]);
+
+  const activeFilterCount = phaseFilters.size + (showDeleted ? 1 : 0);
 
   const handleClientClick = (client: Client) => {
+    if (showDeleted) return; // Don't open detail panel for deleted clients
     setSelectedClient(client);
     setIsPanelOpen(true);
   };
 
   const handleNotifyClick = (e: React.MouseEvent, client: Client) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setNotifyClient(client);
   };
 
   const handleSendNotification = () => {
     if (!notifyClient) return;
-    
     sendNotification.mutate({
       clientId: notifyClient.id,
       blockerReason: "Action required on your onboarding tasks",
       message: "Please review and complete your pending onboarding tasks to proceed.",
     }, {
-      onSettled: () => {
-        setNotifyClient(null);
-      }
+      onSettled: () => setNotifyClient(null),
     });
   };
-
 
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        {/* Responsive header */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Clients</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">Manage all client properties</p>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
+              {showDeleted ? "Deleted Clients" : "Clients"}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {showDeleted ? "Recently deleted clients that can be restored" : "Manage all client properties"}
+            </p>
           </div>
           <Badge variant="secondary" className="gap-1.5 self-start sm:self-auto">
             <User size={14} weight="duotone" />
-            {isLoading ? "..." : `${clients?.length ?? 0} Total`}
+            {isLoading ? "..." : `${filteredClients.length} ${showDeleted ? "Deleted" : "Total"}`}
           </Badge>
         </div>
 
+        {/* Search & Filter Toolbar */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <MagnifyingGlass size={16} weight="duotone" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, contact, or client code..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 shrink-0">
+                <FunnelSimple size={16} weight="duotone" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Phase</DropdownMenuLabel>
+              {(Object.entries(phaseLabels) as [PhaseFilter, string][]).map(([key, label]) => (
+                <DropdownMenuCheckboxItem
+                  key={key}
+                  checked={phaseFilters.has(key)}
+                  onCheckedChange={() => togglePhaseFilter(key)}
+                >
+                  <Badge className={cn("mr-2 text-2xs", phaseColors[key])}>
+                    {label}
+                  </Badge>
+                </DropdownMenuCheckboxItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={showDeleted}
+                onCheckedChange={() => setShowDeleted(!showDeleted)}
+              >
+                <Trash size={14} weight="duotone" className="mr-2 text-destructive" />
+                Recently Deleted
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Client List */}
         <div className="grid gap-3 sm:gap-4">
           {isLoading ? (
-            // Loading skeletons
             Array.from({ length: 5 }).map((_, i) => (
               <Card key={i}>
                 <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
@@ -111,162 +216,189 @@ export default function Clients() {
                 </CardContent>
               </Card>
             ))
+          ) : filteredClients.length === 0 ? (
+            <Card className="py-12 sm:py-16">
+              <div className="flex flex-col items-center justify-center text-center px-4">
+                <CircleDashed 
+                  size={64} 
+                  weight="duotone" 
+                  className="text-orange-400 animate-pulse"
+                  style={{ '--ph-duotone-opacity': 0.2 } as React.CSSProperties}
+                />
+                <h3 className="mt-4 text-lg font-semibold text-foreground">
+                  {searchQuery || phaseFilters.size > 0
+                    ? "No clients match your filters"
+                    : showDeleted
+                      ? "No deleted clients"
+                      : "No clients yet"}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                  {searchQuery || phaseFilters.size > 0
+                    ? "Try adjusting your search or filters."
+                    : showDeleted
+                      ? "Deleted clients will appear here for recovery."
+                      : "Add your first client to get started with the onboarding process."}
+                </p>
+              </div>
+            </Card>
           ) : (
-            clients?.length === 0 ? (
-              // Empty state
-              <Card className="py-12 sm:py-16">
-                <div className="flex flex-col items-center justify-center text-center px-4">
-                  <div className="relative">
-                    <CircleDashed 
-                      size={64} 
-                      weight="duotone" 
-                      className="text-orange-400 animate-pulse"
-                      style={{ 
-                        '--ph-duotone-opacity': 0.2 
-                      } as React.CSSProperties}
-                    />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold text-foreground">No clients yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                    Add your first client to get started with the onboarding process.
-                  </p>
-                </div>
-              </Card>
-            ) : (
-              clients?.map((client) => {
-                const isContracted = client.phase === "contracted";
-                const isPending = client.phase === "onboarding" || client.phase === "reviewing";
+            filteredClients.map((client) => {
+              const isContracted = client.phase === "contracted";
+              const isPending = client.phase === "onboarding" || client.phase === "reviewing";
+              const isDeleted = !!client.deleted_at;
 
-                return (
-                  <Card 
-                    key={client.id} 
-                    className="hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
-                    onClick={() => handleClientClick(client)}
-                  >
-                    <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                          <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
-                          <span className="truncate">{client.name}</span>
-                          {client.client_slug === "daze-downtown-hotel" && (
-                            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-2xs font-medium px-1.5 py-0">
-                              Test
-                            </Badge>
-                          )}
-                          {/* Status icon */}
-                          {isContracted ? (
-                            <CheckCircle size={16} weight="duotone" className="text-emerald-500 shrink-0" />
-                          ) : isPending ? (
-                            <Timer size={16} weight="duotone" className="text-orange-500 shrink-0" />
-                          ) : null}
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          {/* View Portal Button */}
-                          {client.client_slug && (
+              return (
+                <Card 
+                  key={client.id} 
+                  className={cn(
+                    "transition-all group",
+                    isDeleted
+                      ? "opacity-70 border-dashed"
+                      : "hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                  )}
+                  onClick={() => handleClientClick(client)}
+                >
+                  <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
+                        <span className={cn("truncate", isDeleted && "line-through text-muted-foreground")}>{client.name}</span>
+                        {client.client_slug === "daze-downtown-hotel" && (
+                          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-2xs font-medium px-1.5 py-0">
+                            Test
+                          </Badge>
+                        )}
+                        {!isDeleted && isContracted && (
+                          <CheckCircle size={16} weight="duotone" className="text-emerald-500 shrink-0" />
+                        )}
+                        {!isDeleted && isPending && (
+                          <Timer size={16} weight="duotone" className="text-orange-500 shrink-0" />
+                        )}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        {isDeleted ? (
+                          /* Restore button for deleted clients */
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              restoreClientMutation.mutate(client.id);
+                            }}
+                            disabled={restoreClientMutation.isPending}
+                          >
+                            {restoreClientMutation.isPending ? (
+                              <CircleNotch size={14} weight="bold" className="animate-spin" />
+                            ) : (
+                              <ArrowCounterClockwise size={14} weight="duotone" />
+                            )}
+                            Restore
+                          </Button>
+                        ) : (
+                          <>
+                            {/* View Portal Button */}
+                            {client.client_slug && (
+                              <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/admin/portal/${client.client_slug}`);
+                                      }}
+                                    >
+                                      <ArrowSquareOut size={16} weight="duotone" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top"><p>View portal</p></TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                            {/* Delete Button */}
                             <TooltipProvider delayDuration={0}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      navigate(`/admin/portal/${client.client_slug}`);
+                                      setDeleteClientTarget(client);
                                     }}
                                   >
-                                    <ArrowSquareOut size={16} weight="duotone" />
+                                    <Trash size={16} weight="duotone" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  <p>View portal</p>
-                                </TooltipContent>
+                                <TooltipContent side="top"><p>Delete client</p></TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                          )}
-                          {/* Delete Button */}
-                          <TooltipProvider delayDuration={0}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteClient(client);
-                                  }}
-                                >
-                                  <Trash size={16} weight="duotone" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <p>Delete client</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {/* Notify Button - Only show when there are pending tasks */}
-                          {client.incompleteCount > 0 && (
-                            <TooltipProvider delayDuration={0}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn(
-                                      "h-8 w-8",
-                                      client.hasRecentReminder
-                                        ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                                        : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                                    )}
-                                    onClick={(e) => handleNotifyClick(e, client)}
-                                  >
-                                    <Bell size={16} weight="duotone" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  <p>{client.hasRecentReminder ? "Reminder already sent" : "Send reminder to client"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          <Badge className={phaseColors[client.phase] || phaseColors.onboarding}>
-                            {client.phase.replace("_", " ")}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
-                      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                        {client.primaryContact && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <User size={14} weight="duotone" className="shrink-0" />
-                              <span className="truncate">{client.primaryContact.name}</span>
-                            </div>
-                            {client.primaryContact.email && (
-                              <div className="flex items-center gap-2">
-                                <EnvelopeSimple size={14} weight="duotone" className="shrink-0" />
-                                <span className="truncate">{client.primaryContact.email}</span>
-                              </div>
-                            )}
-                            {client.primaryContact.phone && (
-                              <div className="hidden sm:flex items-center gap-2">
-                                <Phone size={14} weight="duotone" className="shrink-0" />
-                                <span>{client.primaryContact.phone}</span>
-                              </div>
+                            {/* Notify Button */}
+                            {client.incompleteCount > 0 && (
+                              <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className={cn(
+                                        "h-8 w-8",
+                                        client.hasRecentReminder
+                                          ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                          : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                      )}
+                                      onClick={(e) => handleNotifyClick(e, client)}
+                                    >
+                                      <Bell size={16} weight="duotone" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <p>{client.hasRecentReminder ? "Reminder already sent" : "Send reminder to client"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </>
                         )}
-                        {!client.primaryContact && (
-                          <span className="text-muted-foreground/60 italic">No primary contact</span>
-                        )}
+                        <Badge className={phaseColors[client.phase] || phaseColors.onboarding}>
+                          {client.phase.replace("_", " ")}
+                        </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 sm:px-6">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                      {client.primaryContact ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <User size={14} weight="duotone" className="shrink-0" />
+                            <span className="truncate">{client.primaryContact.name}</span>
+                          </div>
+                          {client.primaryContact.email && (
+                            <div className="flex items-center gap-2">
+                              <EnvelopeSimple size={14} weight="duotone" className="shrink-0" />
+                              <span className="truncate">{client.primaryContact.email}</span>
+                            </div>
+                          )}
+                          {client.primaryContact.phone && (
+                            <div className="hidden sm:flex items-center gap-2">
+                              <Phone size={14} weight="duotone" className="shrink-0" />
+                              <span>{client.primaryContact.phone}</span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground/60 italic">No primary contact</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>
@@ -302,21 +434,21 @@ export default function Clients() {
       </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteClient} onOpenChange={(open) => !open && setDeleteClient(null)}>
+      <AlertDialog open={!!deleteClientTarget} onOpenChange={(open) => !open && setDeleteClientTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteClient?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {deleteClientTarget?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the client and all associated data.
+              This client will be moved to the deleted list. You can restore it later from the "Recently Deleted" filter.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleteClient) {
-                  deleteClientMutation.mutate(deleteClient.id, {
-                    onSettled: () => setDeleteClient(null),
+                if (deleteClientTarget) {
+                  deleteClientMutation.mutate(deleteClientTarget.id, {
+                    onSettled: () => setDeleteClientTarget(null),
                   });
                 }
               }}
