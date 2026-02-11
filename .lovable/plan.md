@@ -1,27 +1,13 @@
 
+## Make "New Contact" Button Blue
 
-## Display Primary Contact Name in Client Portal Greeting
-
-### What Changes
-In the **client-facing** portal, the greeting will show the primary contact's first name (e.g., "Hi John") instead of the property name (e.g., "Langston Street Hotel LLC"). The **admin view** of the portal will continue showing the property name as it does today.
-
-### How
-
-**File: `src/pages/Portal.tsx`**
-
-1. Add a query to fetch the primary contact for the current client from the `client_contacts` table (where `is_primary = true`).
-2. Extract the contact's first name from the `name` field (split on space, take the first part).
-3. In the greeting heading, use the primary contact's first name when the user is a client, and fall back to the property name for admins or when no primary contact exists.
-
-The greeting line changes from:
-- Client sees: "Langston Street Hotel LLC"
-- To: "Hi John" (primary contact's first name)
-
-Admin continues to see: "Langston Street Hotel LLC" (property name, unchanged)
+### Change
+Update the "New Contact" button in the Contacts tab of the Client Details Sidebar from `variant="outline"` to `variant="default"`, which renders it with the solid Ocean Blue primary color per the Daze design system.
 
 ### Technical Detail
 
-- Query: `supabase.from("client_contacts").select("name").eq("client_id", clientId).eq("is_primary", true).maybeSingle()`
-- First name extraction: `contactName?.split(" ")[0]`
-- Conditional display: `isAdminViewingPortal ? client?.name : (primaryFirstName || "Partner")`
-- Single file change, no schema or migration needed
+**File: `src/components/dashboard/ClientDetailPanel.tsx`** (line 334)
+
+- Change `variant="outline"` to `variant="default"` on the "New Contact" `Button`.
+
+This single-line change aligns with the brand guideline of using solid Ocean Blue for primary action buttons.
