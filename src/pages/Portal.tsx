@@ -49,6 +49,24 @@ export default function Portal() {
   // Unread notification count for badge
   const { unreadCount, markAsRead } = useUnreadNotificationCount(clientId);
 
+  // Primary contact name for client greeting
+  const { data: primaryContact } = useQuery({
+    queryKey: ["primary-contact", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_contacts")
+        .select("name")
+        .eq("client_id", clientId!)
+        .eq("is_primary", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clientId && !isAdminViewingPortal,
+  });
+
+  const primaryFirstName = primaryContact?.name?.split(" ")[0];
+
   // Document count for badge
   const { data: documentCount = 0 } = useQuery({
     queryKey: ["documents-count", clientId],
@@ -189,7 +207,7 @@ export default function Portal() {
             <div className="mb-4 sm:mb-6 lg:mb-10 entrance-hero">
               <span className="label-micro mb-1 block">Your Portal</span>
               <h1 className="font-display text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-0.5 sm:mb-1.5">
-                👋 {client?.name || "Partner"}
+                👋 {isAdminViewingPortal ? (client?.name || "Partner") : (primaryFirstName || "Partner")}
               </h1>
               <p className="text-xs sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
                 Complete the steps below to get your property ready for launch.
