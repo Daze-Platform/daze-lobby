@@ -101,7 +101,10 @@ export function ClientLoginForm() {
 
     try {
       if (mode === "signup") {
-        await withTimeout(signUp(email, password, fullName), 15000, "Sign up timed out. Please try again.");
+        const redirectUrl = returnTo
+          ? `${window.location.origin}/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
+          : `${window.location.origin}/post-auth?origin=portal`;
+        await withTimeout(signUp(email, password, fullName, redirectUrl), 15000, "Sign up timed out. Please try again.");
         setSignupSuccess(true);
       } else {
         // Login flow
