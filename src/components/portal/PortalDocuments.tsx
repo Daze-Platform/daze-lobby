@@ -86,13 +86,14 @@ export function PortalDocuments({ clientIdOverride }: PortalDocumentsProps = {})
       
       // Navigate the already-opened window to the signed URL
       newWindow.location.href = data.signedUrl;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Preview error:", error);
       newWindow.close(); // Close the blank tab on error
       
-      if (error.message?.includes("not found")) {
+      const message = error instanceof Error ? error.message : "";
+      if (message.includes("not found")) {
         toast.error("Unable to load document. File not found.");
-      } else if (error.message?.includes("permission") || error.message?.includes("denied")) {
+      } else if (message.includes("permission") || message.includes("denied")) {
         toast.error("Unable to load document. Access denied.");
       } else {
         toast.error("Unable to load document. Please try again.");

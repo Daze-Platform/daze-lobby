@@ -34,7 +34,7 @@ export function useDevices() {
 
       if (error) throw error;
 
-      return (data || []).map((d: any) => ({
+      return (data || []).map((d) => ({
         id: d.id,
         serial_number: d.serial_number,
         device_type: d.device_type,
@@ -45,7 +45,7 @@ export function useDevices() {
         last_check_in: d.last_check_in,
         created_at: d.created_at,
         updated_at: d.updated_at,
-        clientName: d.clients?.name ?? null,
+        clientName: (d.clients as { name: string } | null)?.name ?? null,
         // Simulated telemetry (would come from real-time source)
         venue: undefined,
         batteryLevel: undefined,

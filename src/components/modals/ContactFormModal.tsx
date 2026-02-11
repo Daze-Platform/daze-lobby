@@ -74,7 +74,7 @@ export function ContactFormModal({
         client_id: clientId,
         name: name.trim(),
         role: role.trim() || null,
-        email: email.trim() || null,
+        email: email.trim(),
         phone: phone.trim() || null,
         is_primary: isPrimary,
       };
