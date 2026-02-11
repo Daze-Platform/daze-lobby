@@ -13,7 +13,7 @@ import Clients from "./pages/Clients";
 import Blockers from "./pages/Blockers";
 import Devices from "./pages/Devices";
 import Revenue from "./pages/Revenue";
-import CodeReview from "./pages/CodeReview";
+
 import PortalLogin from "./pages/PortalLogin";
 import PortalAdmin from "./pages/PortalAdmin";
 import PortalBySlug from "./pages/PortalBySlug";
@@ -87,14 +87,6 @@ const App = () => (
                 element={
                   <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
                     <Revenue />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/code-review"
-                element={
-                  <RoleBasedRoute allowedRoles={["admin"]}>
-                    <CodeReview />
                   </RoleBasedRoute>
                 }
               />
