@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import { MultiLogoUpload } from "./MultiLogoUpload";
 import { ColorPaletteManager } from "./ColorPaletteManager";
 import { BrandDocumentUpload } from "./BrandDocumentUpload";
 import { OrDivider } from "@/components/ui/or-divider";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -100,10 +102,12 @@ export function PropertyBrandManager({
   };
 
   const deleteProperty = (id: string) => {
+    const prop = localProperties.find(p => p.id === id);
     const updated = localProperties.filter((p) => p.id !== id);
     setLocalProperties(updated);
     onChange(updated);
     setDeleteTarget(null);
+    toast.success(`"${prop?.name || "Property"}" removed`);
   };
 
   const toggleExpanded = (id: string) => {
@@ -178,12 +182,20 @@ export function PropertyBrandManager({
       {/* Properties List */}
       {localProperties.length > 0 ? (
         <div className="space-y-3">
-          {localProperties.map((property) => {
+          <AnimatePresence mode="popLayout">
+            {localProperties.map((property) => {
             const status = getPropertyStatus(property);
             
             return (
+              <motion.div
+                key={property.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+                transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              >
               <Card 
-                key={property.id} 
                 className={cn(
                   "border-border/50 overflow-hidden transition-all",
                   property.isExpanded && "ring-1 ring-primary/20"
@@ -307,8 +319,10 @@ export function PropertyBrandManager({
                   </CollapsibleContent>
                 </Collapsible>
               </Card>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
         </div>
       ) : (
         <Card className="border-dashed border-2 border-border/50">
