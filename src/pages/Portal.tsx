@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClient } from "@/contexts/ClientContext";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -22,6 +23,7 @@ import { Loader2, LogOut, ClipboardList, FileText, Clock, Target } from "lucide-
 import { signOut, hasDashboardAccess } from "@/lib/auth";
 import { toast } from "sonner";
 import type { Venue } from "@/types/venue";
+import type { PilotAgreementData } from "@/types/pilotAgreement";
 
 /**
  * Portal - Pure portal view component.
@@ -32,6 +34,7 @@ import type { Venue } from "@/types/venue";
 export default function Portal() {
   const { user, role } = useAuthContext();
   const { client, clientId } = useClient();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const [showConfetti, setShowConfetti] = useState(false);
@@ -129,6 +132,45 @@ export default function Portal() {
   const handleLegalSign = (signatureDataUrl: string, legalEntityData: Record<string, unknown>) => {
     signLegal({ signatureDataUrl, legalEntityData: legalEntityData as { legal_entity_name?: string; billing_address?: string; authorized_signer_name?: string; authorized_signer_title?: string; } });
   };
+
+  const handleSaveLegalDraft = useCallback(async (draftData: Record<string, unknown>) => {
+    if (!clientId) return;
+    try {
+      // Save 4 core fields to clients table
+      const { error: clientError } = await supabase
+        .from("clients")
+        .update({
+          legal_entity_name: (draftData.legal_entity_name as string) || null,
+          billing_address: (draftData.billing_address as string) || null,
+          authorized_signer_name: (draftData.authorized_signer_name as string) || null,
+          authorized_signer_title: (draftData.authorized_signer_title as string) || null,
+        })
+        .eq("id", clientId);
+      if (clientError) throw clientError;
+
+      // Save all fields to legal task JSONB (spread-merge to preserve signature data)
+      const { data: freshTask } = await supabase
+        .from("onboarding_tasks")
+        .select("data")
+        .eq("client_id", clientId)
+        .eq("task_key", "legal")
+        .maybeSingle();
+      const existingData = (freshTask?.data as Record<string, unknown>) || {};
+
+      const { error: taskError } = await supabase
+        .from("onboarding_tasks")
+        .update({ data: { ...existingData, ...draftData } } as never)
+        .eq("client_id", clientId)
+        .eq("task_key", "legal");
+      if (taskError) throw taskError;
+
+      queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["client"] });
+    } catch {
+      // Silent fail for draft save — don't block user
+      console.warn("Failed to save legal draft");
+    }
+  }, [clientId]);
 
   const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
     updateTask({ taskKey, data });
@@ -312,12 +354,14 @@ export default function Portal() {
                     isDeletingVenue={isDeletingVenue}
                     isSigningLegal={isSigningLegal}
                     isUpdating={isUpdating}
+                    onSaveLegalDraft={handleSaveLegalDraft}
                     hotelLegalEntity={{
-                      legal_entity_name: client?.legal_entity_name || undefined,
-                      billing_address: client?.billing_address || undefined,
-                      authorized_signer_name: client?.authorized_signer_name || undefined,
-                      authorized_signer_title: client?.authorized_signer_title || undefined,
-                    }}
+                      ...(formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown> || {}),
+                      legal_entity_name: client?.legal_entity_name || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.legal_entity_name as string || undefined,
+                      billing_address: client?.billing_address || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.billing_address as string || undefined,
+                      authorized_signer_name: client?.authorized_signer_name || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.authorized_signer_name as string || undefined,
+                      authorized_signer_title: client?.authorized_signer_title || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.authorized_signer_title as string || undefined,
+                    } as PilotAgreementData}
                   />
                 </CardContent>
               </Card>

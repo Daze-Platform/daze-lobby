@@ -73,6 +73,7 @@ interface ReviewSignModalProps {
   onOpenChange: (open: boolean) => void;
   documentTitle: string;
   onSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
+  onDraftSave?: (data: Record<string, unknown>) => Promise<void>;
   isSubmitting?: boolean;
   existingSignatureUrl?: string;
   signedAt?: string;
@@ -322,6 +323,7 @@ export function ReviewSignModal({
   onOpenChange,
   documentTitle,
   onSign,
+  onDraftSave,
   isSubmitting = false,
   existingSignatureUrl,
   signedAt,
@@ -476,7 +478,13 @@ export function ReviewSignModal({
     : null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen && !isSigned && onDraftSave) {
+        // Auto-save draft when closing unsigned
+        onDraftSave(currentEntity as unknown as Record<string, unknown>);
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-5xl h-[100dvh] sm:h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-sm sm:text-lg">
