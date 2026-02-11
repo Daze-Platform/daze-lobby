@@ -1,34 +1,44 @@
 
 
-## Link Brian's Account to Daze Downtown Hotel
+## Fix Portal Greeting to Show Logged-in User's Name
 
 ### Problem
-Brian (`brian.92rod@hotmail.com`) has the correct `client` role, but has no record in the `user_clients` table linking him to any hotel. This causes the portal to redirect him to `/no-hotel-assigned`.
+The portal greeting ("Your Portal / [wave] Name") currently pulls from the `client_contacts` table (primary contact record), not from the logged-in user's profile. This means:
+- It shows "Brian Rodriguez" instead of "Andres Diaz" (the name he signed up with)
+- Any new user who signs up will see the primary contact's name, not their own
 
-### Fix
-Insert one row into `user_clients` to associate his user account with the "Daze Downtown Hotel" client.
+### Changes
 
-### Technical Details
+**1. Database: Update contact name**
 
-A single database migration will run:
+Update the existing primary contact record to reflect the correct name:
 
 ```sql
-INSERT INTO user_clients (user_id, client_id)
-SELECT u.id, 'd88d4554-0153-4b82-97ba-50d579234450'
-FROM auth.users u
-WHERE u.email = 'brian.92rod@hotmail.com'
-  AND NOT EXISTS (
-    SELECT 1 FROM user_clients uc
-    WHERE uc.user_id = u.id
-      AND uc.client_id = 'd88d4554-0153-4b82-97ba-50d579234450'
-  );
+UPDATE client_contacts 
+SET name = 'Andres Diaz' 
+WHERE id = '4db9aeb4-169c-45c5-8763-69afc931e446';
 ```
 
-This uses a safe subquery to avoid duplicates and to pull the user ID dynamically.
+**2. `src/pages/Portal.tsx` -- Use the logged-in user's profile name for the greeting**
+
+Replace the `primaryContact` query and `primaryFirstName` logic with the user's own profile name. The `user` object from `useAuthContext()` already contains `fullName` (loaded from the `profiles` table).
+
+Change line 270 from:
+```
+{isAdminViewingPortal ? (client?.name || "Partner") : (primaryFirstName || "Partner")}
+```
+to:
+```
+{isAdminViewingPortal ? (client?.name || "Partner") : (user?.fullName?.split(" ")[0] || "Partner")}
+```
+
+Remove the now-unused `primaryContact` query (lines 56-69) and the `primaryFirstName` variable (line 71) to keep the code clean.
 
 ### Result
-After this, when Brian logs into `/portal/daze-downtown-hotel`, his session will resolve to the Daze Downtown Hotel portal and he will see the onboarding flow.
+- Andres will see "Andres" in the greeting immediately
+- Any future client user who signs up with their name will see their own first name in the portal greeting, not the primary contact's name
+- Admin view continues showing the hotel/client name as before
 
 ### Files Changed
-- None (database-only change)
-
+- `src/pages/Portal.tsx`
+- Database update (one row in `client_contacts`)
