@@ -28,7 +28,15 @@ export function AuthRedirect({ children }: AuthRedirectProps) {
     const origin = searchParams.get("origin");
     const qs = new URLSearchParams();
     if (returnTo) qs.set("returnTo", returnTo);
-    if (origin) qs.set("origin", origin);
+
+    // Auto-inject origin=portal when on /portal/login so PostAuth can block admins
+    const isPortalLogin = window.location.pathname.startsWith("/portal/");
+    if (origin) {
+      qs.set("origin", origin);
+    } else if (isPortalLogin) {
+      qs.set("origin", "portal");
+    }
+
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return <Navigate to={`/post-auth${suffix}`} replace />;
   }
