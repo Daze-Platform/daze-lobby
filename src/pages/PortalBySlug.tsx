@@ -51,6 +51,16 @@ export default function PortalBySlug() {
     };
   }, [client?.id, setSelectedClientId]);
 
+  // Set browser tab title based on resolved client name
+  useEffect(() => {
+    if (client?.name) {
+      document.title = `${client.name} | Daze Onboarding`;
+    }
+    return () => {
+      document.title = "Daze Onboarding";
+    };
+  }, [client?.name]);
+
   // Auth loading
   if (authLoading) {
     return (
