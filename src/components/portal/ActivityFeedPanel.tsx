@@ -51,6 +51,10 @@ export function getActionConfig(action: string): { icon: React.ElementType; colo
     // Admin document actions
     document_uploaded: { icon: Upload, color: "text-primary", bgColor: "bg-primary/10" },
     document_deleted: { icon: FileText, color: "text-destructive", bgColor: "bg-destructive/10" },
+    // Deletion actions
+    client_deleted: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
+    client_restored: { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+    device_deleted: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
   };
   
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
@@ -74,6 +78,9 @@ export function formatAction(log: ActivityLog): { userName: string; actionText: 
     blocker_notification: `sent a notification: "${(details?.message as string) || (details?.blocker_reason as string) || "Action required"}"`,
     document_uploaded: `uploaded ${(details?.title as string) || "a document"}`,
     document_deleted: `removed ${(details?.title as string) || "a document"}`,
+    client_deleted: `deleted client "${(details?.client_name as string) || "a client"}"`,
+    client_restored: `restored client "${(details?.client_name as string) || "a client"}"`,
+    device_deleted: `deleted device ${(details?.serial_number as string) || "a device"}`,
   };
   
   // Check for custom message in details
