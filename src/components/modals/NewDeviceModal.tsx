@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 import {
   Dialog,
   DialogContent,
@@ -89,10 +90,22 @@ export function NewDeviceModal({ open, onOpenChange, clientId, clientName }: New
       const { error } = await supabase.from("devices").insert(devices);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["devices"] });
       queryClient.invalidateQueries({ queryKey: ["devices-count"] });
       queryClient.invalidateQueries({ queryKey: ["client-devices", clientId] });
+      // Log device creation
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: "device_created",
+          details: { device_type: deviceType, quantity, client_name: clientName } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", clientId] });
+      }
       toast.success(
         `${quantity} device${quantity > 1 ? "s" : ""} added to ${clientName}`
       );

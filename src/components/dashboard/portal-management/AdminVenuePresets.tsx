@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,9 +79,21 @@ export function AdminVenuePresets({ clientId }: AdminVenuePresetsProps) {
       }
       toast.error(`Failed to add venue: ${error.message}`);
     },
-    onSuccess: () => {
+    onSuccess: async (_data, name) => {
       setNewVenueName("");
       toast.success("Venue added");
+      // Log venue preset added
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: "venue_preset_added",
+          details: { venue_name: name.trim() } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", clientId] });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-venues", clientId] });
@@ -116,8 +129,21 @@ export function AdminVenuePresets({ clientId }: AdminVenuePresetsProps) {
       }
       toast.error(`Failed to delete venue: ${error.message}`);
     },
-    onSuccess: () => {
+    onSuccess: async (_data, venueId) => {
       toast.success("Venue removed");
+      // Log venue preset removed
+      const { data: { user } } = await supabase.auth.getUser();
+      const removedVenue = venues?.find(v => v.id === venueId);
+      if (user) {
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: "venue_preset_removed",
+          details: { venue_name: removedVenue?.name || "Unknown" } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", clientId] });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-venues", clientId] });

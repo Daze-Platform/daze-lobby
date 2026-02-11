@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface Message {
   id: string;
@@ -77,8 +78,19 @@ export function useSendMessage() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["messages", variables.clientId] });
+      // Log message sent
+      if (user?.id) {
+        await supabase.from("activity_logs").insert([{
+          client_id: variables.clientId,
+          user_id: user.id,
+          action: "message_sent",
+          details: { preview: variables.content.substring(0, 50) } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", variables.clientId] });
+      }
     },
     onError: (error) => {
       toast.error("Failed to send message: " + error.message);

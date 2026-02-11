@@ -16,7 +16,14 @@ import {
   Settings,
   Copy,
   Send,
-  Bell
+  Bell,
+  UserPlus,
+  UserMinus,
+  UserCog,
+  MessageSquare,
+  Cpu,
+  MapPin,
+  ArrowRightLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,6 +62,16 @@ export function getActionConfig(action: string): { icon: React.ElementType; colo
     client_deleted: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
     client_restored: { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     device_deleted: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
+    // New action types
+    phase_changed: { icon: ArrowRightLeft, color: "text-primary", bgColor: "bg-primary/10" },
+    client_created: { icon: Building2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+    device_created: { icon: Cpu, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+    contact_added: { icon: UserPlus, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+    contact_updated: { icon: UserCog, color: "text-primary", bgColor: "bg-primary/10" },
+    contact_removed: { icon: UserMinus, color: "text-destructive", bgColor: "bg-destructive/10" },
+    message_sent: { icon: MessageSquare, color: "text-primary", bgColor: "bg-primary/10" },
+    venue_preset_added: { icon: MapPin, color: "text-violet-500", bgColor: "bg-violet-500/10" },
+    venue_preset_removed: { icon: MapPin, color: "text-destructive", bgColor: "bg-destructive/10" },
   };
   
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
@@ -81,6 +98,16 @@ export function formatAction(log: ActivityLog): { userName: string; actionText: 
     client_deleted: `deleted client "${(details?.client_name as string) || "a client"}"`,
     client_restored: `restored client "${(details?.client_name as string) || "a client"}"`,
     device_deleted: `deleted device ${(details?.serial_number as string) || "a device"}`,
+    // New action types
+    phase_changed: `moved client to ${(details?.phase_label as string) || (details?.new_phase as string) || "a new phase"}`,
+    client_created: `created client "${(details?.client_name as string) || "a client"}"`,
+    device_created: `added ${(details?.quantity as number) || 1} ${(details?.device_type as string) || "device"}${((details?.quantity as number) || 1) > 1 ? "s" : ""}`,
+    contact_added: `added contact "${(details?.contact_name as string) || "a contact"}"`,
+    contact_updated: `updated contact "${(details?.contact_name as string) || "a contact"}"`,
+    contact_removed: `removed contact "${(details?.contact_name as string) || "a contact"}"`,
+    message_sent: "sent a message",
+    venue_preset_added: `added venue preset "${(details?.venue_name as string) || "a venue"}"`,
+    venue_preset_removed: `removed venue preset "${(details?.venue_name as string) || "a venue"}"`,
   };
   
   // Check for custom message in details
