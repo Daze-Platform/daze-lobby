@@ -106,7 +106,7 @@ export default function Clients() {
     });
   }, [clients, searchQuery, phaseFilters]);
 
-  const activeFilterCount = phaseFilters.size + (showDeleted ? 1 : 0);
+  const activeFilterCount = phaseFilters.size;
 
   const handleClientClick = (client: Client) => {
     if (showDeleted) return; // Don't open detail panel for deleted clients
@@ -143,10 +143,21 @@ export default function Clients() {
               {showDeleted ? "Recently deleted clients that can be restored" : "Manage all client properties"}
             </p>
           </div>
-          <Badge variant="secondary" className="gap-1.5 self-start sm:self-auto">
-            <User size={14} weight="duotone" />
-            {isLoading ? "..." : `${filteredClients.length} ${showDeleted ? "Deleted" : "Total"}`}
-          </Badge>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Badge variant="secondary" className="gap-1.5">
+              <User size={14} weight="duotone" />
+              {isLoading ? "..." : `${filteredClients.length} Total`}
+            </Badge>
+            <Button
+              variant={showDeleted ? "destructive" : "outline"}
+              size="sm"
+              className="gap-1.5 text-xs h-7"
+              onClick={() => setShowDeleted(!showDeleted)}
+            >
+              <Trash size={14} weight="duotone" />
+              Recently Deleted
+            </Button>
+          </div>
         </div>
 
         {/* Search & Filter Toolbar */}
@@ -185,14 +196,6 @@ export default function Clients() {
                   </Badge>
                 </DropdownMenuCheckboxItem>
               ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={showDeleted}
-                onCheckedChange={() => setShowDeleted(!showDeleted)}
-              >
-                <Trash size={14} weight="duotone" className="mr-2 text-destructive" />
-                Recently Deleted
-              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
