@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ContactFormModal } from "@/components/modals/ContactFormModal";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +25,7 @@ import {
   Monitor,
   Settings2,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DocumentUploadSection } from "./DocumentUploadSection";
@@ -46,11 +48,11 @@ interface ClientDetailPanelProps {
 type ClientContact = Tables<"client_contacts">;
 
 // Helper components
-function ContactCard({ contact }: { contact: ClientContact }) {
+function ContactCard({ contact, onEdit }: { contact: ClientContact; onEdit: () => void }) {
   const initials = contact.name.split(" ").map(n => n[0]).join("").toUpperCase();
   
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group">
       <Avatar className="h-10 w-10 ring-2 ring-background">
         <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
           {initials}
@@ -64,6 +66,13 @@ function ContactCard({ contact }: { contact: ClientContact }) {
               Primary
             </Badge>
           )}
+          <button
+            onClick={onEdit}
+            className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-muted"
+            aria-label={`Edit ${contact.name}`}
+          >
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
         </div>
         {contact.role && (
           <p className="text-xs text-muted-foreground mt-0.5">{contact.role}</p>
@@ -203,6 +212,8 @@ function RealActivityItem({ log }: { log: ActivityLog }) {
 export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPanelProps) {
   const [activeTab, setActiveTab] = useState("portal");
   const [isNewDeviceOpen, setIsNewDeviceOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
 
   const { data: clientDevices = [], isLoading: devicesLoading } = useQuery({
     queryKey: ["client-devices", hotel?.id],
@@ -314,6 +325,23 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
           </TabsContent>
 
           <TabsContent value="contacts" className="mt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">
+                {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => {
+                  setEditingContact(null);
+                  setContactModalOpen(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New Contact
+              </Button>
+            </div>
             {contactsLoading ? (
               <div className="space-y-3">
                 {[...Array(2)].map((_, i) => (
@@ -334,9 +362,22 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
               </div>
             ) : (
               contacts.map((contact) => (
-                <ContactCard key={contact.id} contact={contact} />
+                <ContactCard
+                  key={contact.id}
+                  contact={contact}
+                  onEdit={() => {
+                    setEditingContact(contact);
+                    setContactModalOpen(true);
+                  }}
+                />
               ))
             )}
+            <ContactFormModal
+              open={contactModalOpen}
+              onOpenChange={setContactModalOpen}
+              clientId={hotel.id}
+              contact={editingContact}
+            />
           </TabsContent>
 
           <TabsContent value="devices" className="mt-4 space-y-3">
