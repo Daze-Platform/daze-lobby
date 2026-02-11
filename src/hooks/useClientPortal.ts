@@ -135,7 +135,7 @@ export function useClientPortal() {
         throw new Error("Not authenticated or no client assigned");
       }
 
-      // Update client record with legal entity data AND property name
+      // Step 1: Update client record with legal entity data AND property name
       if (legalEntityData) {
         const updateData: Record<string, unknown> = {
           legal_entity_name: legalEntityData.legal_entity_name || null,
@@ -144,7 +144,6 @@ export function useClientPortal() {
           authorized_signer_title: legalEntityData.authorized_signer_title || null,
         };
 
-        // Update the client name if property_name is provided
         if (legalEntityData.property_name) {
           updateData.name = legalEntityData.property_name;
         }
@@ -157,42 +156,37 @@ export function useClientPortal() {
         if (clientError) throw clientError;
       }
 
-      // Convert base64 data URL to Blob using robust utility
-      // This avoids MIME type issues and potential stack overflow with large files
+      // Step 2: Convert base64 data URL to Blob and upload signature
       const blob = dataUrlToBlob(signatureDataUrl);
-
-      // MULTI-TENANT PATH: contracts/{client_id}/pilot_agreement.png
       const filePath = `${clientId}/pilot_agreement.png`;
 
       const { error: uploadError } = await supabase.storage
         .from("contracts")
         .upload(filePath, blob, {
-          contentType: "image/png", // Explicitly set content type
+          contentType: "image/png",
           upsert: true,
         });
 
       if (uploadError) throw uploadError;
 
-      // Get the URL (private bucket - use signed URL)
+      // Step 3: Get signed URL for signature
       const { data: urlData } = await supabase.storage
         .from("contracts")
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
 
       const signatureUrl = urlData?.signedUrl;
       const signedAt = new Date().toISOString();
 
-      // Update the legal task with signature data + all agreement fields
+      // Step 4: Update the legal task with signature data + all agreement fields
       const taskData: Record<string, unknown> = {
         pilot_signed: true,
         signature_url: signatureUrl,
         signed_at: signedAt,
         signature_path: filePath,
-        // Core fields (backward compat)
         property_name: legalEntityData?.property_name,
         signer_name: legalEntityData?.authorized_signer_name,
         signer_title: legalEntityData?.authorized_signer_title,
         legal_entity: legalEntityData?.legal_entity_name,
-        // Extended pilot agreement fields
         contact_email: legalEntityData?.contact_email,
         covered_outlets: legalEntityData?.covered_outlets,
         hardware_option: legalEntityData?.hardware_option,
@@ -222,70 +216,133 @@ export function useClientPortal() {
 
       if (updateError) throw updateError;
 
-      // Generate signed PDF and upload to hotel-documents bucket
-      try {
-        const pdfEntity: PilotAgreementData = {
-          property_name: legalEntityData?.property_name,
-          legal_entity_name: legalEntityData?.legal_entity_name,
-          dba_name: legalEntityData?.dba_name as string | undefined,
-          billing_address: legalEntityData?.billing_address,
-          authorized_signer_name: legalEntityData?.authorized_signer_name,
-          authorized_signer_title: legalEntityData?.authorized_signer_title,
-          contact_email: legalEntityData?.contact_email as string | undefined,
-          covered_outlets: legalEntityData?.covered_outlets as string[] | undefined,
-          hardware_option: legalEntityData?.hardware_option as PilotAgreementData["hardware_option"],
-          start_date: legalEntityData?.start_date as string | undefined,
-          pilot_term_days: legalEntityData?.pilot_term_days as number | undefined,
-          pricing_model: legalEntityData?.pricing_model as PilotAgreementData["pricing_model"],
-          pricing_amount: legalEntityData?.pricing_amount as string | undefined,
-          pos_system: legalEntityData?.pos_system as string | undefined,
-          pos_version: legalEntityData?.pos_version as string | undefined,
-          pos_api_key: legalEntityData?.pos_api_key as string | undefined,
-          pos_contact: legalEntityData?.pos_contact as string | undefined,
-        };
+      // Steps 5-7: PDF generation + upload + document insert — fire-and-forget background
+      const bgUserId = user.id;
+      const bgClientId = clientId;
+      const bgLegalEntityData = legalEntityData;
+      const bgSignatureDataUrl = signatureDataUrl;
+      const bgSignedAt = signedAt;
 
-        const pdfBlob = await generateAgreementPdfBlob({
-          entity: pdfEntity,
-          signatureDataUrl,
-          signedAt,
-        });
+      Promise.resolve().then(async () => {
+        try {
+          const pdfEntity: PilotAgreementData = {
+            property_name: bgLegalEntityData?.property_name,
+            legal_entity_name: bgLegalEntityData?.legal_entity_name,
+            dba_name: bgLegalEntityData?.dba_name as string | undefined,
+            billing_address: bgLegalEntityData?.billing_address,
+            authorized_signer_name: bgLegalEntityData?.authorized_signer_name,
+            authorized_signer_title: bgLegalEntityData?.authorized_signer_title,
+            contact_email: bgLegalEntityData?.contact_email as string | undefined,
+            covered_outlets: bgLegalEntityData?.covered_outlets as string[] | undefined,
+            hardware_option: bgLegalEntityData?.hardware_option as PilotAgreementData["hardware_option"],
+            start_date: bgLegalEntityData?.start_date as string | undefined,
+            pilot_term_days: bgLegalEntityData?.pilot_term_days as number | undefined,
+            pricing_model: bgLegalEntityData?.pricing_model as PilotAgreementData["pricing_model"],
+            pricing_amount: bgLegalEntityData?.pricing_amount as string | undefined,
+            pos_system: bgLegalEntityData?.pos_system as string | undefined,
+            pos_version: bgLegalEntityData?.pos_version as string | undefined,
+            pos_api_key: bgLegalEntityData?.pos_api_key as string | undefined,
+            pos_contact: bgLegalEntityData?.pos_contact as string | undefined,
+          };
 
-        const pdfFileName = `pilot-agreement-signed.pdf`;
-        const pdfPath = `${clientId}/${pdfFileName}`;
-
-        const { error: pdfUploadError } = await supabase.storage
-          .from("hotel-documents")
-          .upload(pdfPath, pdfBlob, {
-            contentType: "application/pdf",
-            upsert: true,
+          const pdfBlob = await generateAgreementPdfBlob({
+            entity: pdfEntity,
+            signatureDataUrl: bgSignatureDataUrl,
+            signedAt: bgSignedAt,
           });
 
-        if (!pdfUploadError) {
-          // Insert document record so it appears in Documents tab
-          await supabase.from("documents").insert({
-            client_id: clientId,
-            display_name: "Pilot Agreement (Signed)",
-            file_name: pdfFileName,
-            file_path: pdfPath,
-            file_size: pdfBlob.size,
-            category: "Contract",
-            mime_type: "application/pdf",
-            uploaded_by_id: user.id,
-          });
+          const pdfFileName = `pilot-agreement-signed.pdf`;
+          const pdfPath = `${bgClientId}/${pdfFileName}`;
+
+          const { error: pdfUploadError } = await supabase.storage
+            .from("hotel-documents")
+            .upload(pdfPath, pdfBlob, {
+              contentType: "application/pdf",
+              upsert: true,
+            });
+
+          if (!pdfUploadError) {
+            await supabase.from("documents").insert({
+              client_id: bgClientId,
+              display_name: "Pilot Agreement (Signed)",
+              file_name: pdfFileName,
+              file_path: pdfPath,
+              file_size: pdfBlob.size,
+              category: "Contract",
+              mime_type: "application/pdf",
+              uploaded_by_id: bgUserId,
+            });
+            // Refresh documents list once PDF is ready
+            queryClient.invalidateQueries({ queryKey: ["documents", bgClientId] });
+          }
+        } catch (pdfError) {
+          console.warn("Background PDF generation/upload failed:", pdfError);
         }
-      } catch (pdfError) {
-        // Don't fail the signing if PDF upload fails — signature is already saved
-        console.warn("Failed to upload signed PDF to documents:", pdfError);
+      });
+
+      return { signatureUrl, signedAt, taskData };
+    },
+    onMutate: async () => {
+      // Optimistic update: immediately mark legal task as signed in cache
+      await queryClient.cancelQueries({ queryKey: ["onboarding-tasks", clientId] });
+      const previousTasks = queryClient.getQueryData<OnboardingTask[]>(["onboarding-tasks", clientId]);
+
+      if (previousTasks) {
+        const optimisticTasks = previousTasks.map(task =>
+          task.task_key === "legal"
+            ? {
+                ...task,
+                is_completed: true,
+                completed_at: new Date().toISOString(),
+                data: {
+                  ...task.data,
+                  pilot_signed: true,
+                  signed_at: new Date().toISOString(),
+                },
+              }
+            : task
+        );
+        queryClient.setQueryData(["onboarding-tasks", clientId], optimisticTasks);
       }
 
-      return { signatureUrl, signedAt };
+      return { previousTasks };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (result, variables) => {
+      // Pre-seed cache with known data to avoid refetch latency
+      const currentTasks = queryClient.getQueryData<OnboardingTask[]>(["onboarding-tasks", clientId]);
+      if (currentTasks && result) {
+        const seededTasks = currentTasks.map(task =>
+          task.task_key === "legal"
+            ? {
+                ...task,
+                is_completed: true,
+                completed_at: result.signedAt,
+                data: result.taskData as Record<string, unknown>,
+              }
+            : task
+        );
+        queryClient.setQueryData(["onboarding-tasks", clientId], seededTasks);
+      }
+
+      // Pre-seed client cache with legal entity fields
+      if (variables.legalEntityData) {
+        const currentClient = queryClient.getQueryData<Record<string, unknown>>(["client"]);
+        if (currentClient) {
+          queryClient.setQueryData(["client"], {
+            ...currentClient,
+            legal_entity_name: variables.legalEntityData.legal_entity_name || null,
+            billing_address: variables.legalEntityData.billing_address || null,
+            authorized_signer_name: variables.legalEntityData.authorized_signer_name || null,
+            authorized_signer_title: variables.legalEntityData.authorized_signer_title || null,
+            ...(variables.legalEntityData.property_name ? { name: variables.legalEntityData.property_name } : {}),
+          });
+        }
+      }
+
+      // Background refetch to sync with server
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["client"] });
-      queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       
-      // Log activity
       logActivity.mutate({
         action: "legal_signed",
         details: {
@@ -295,7 +352,11 @@ export function useClientPortal() {
       
       toast.success("Agreement signed successfully! Next step unlocked.");
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["onboarding-tasks", clientId], context.previousTasks);
+      }
       toast.error("Failed to save signature: " + error.message);
     },
   });
