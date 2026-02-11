@@ -20,6 +20,7 @@ interface LegalStepProps {
   isActive?: boolean;
   data?: Record<string, unknown>;
   onSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
+  onDraftSave?: (data: Record<string, unknown>) => Promise<void>;
   isSubmitting?: boolean;
   isJustCompleted?: boolean;
   isUnlocking?: boolean;
@@ -32,6 +33,7 @@ export function LegalStep({
   isActive = false,
   data, 
   onSign,
+  onDraftSave,
   isSubmitting,
   isJustCompleted,
   isUnlocking,
@@ -168,6 +170,7 @@ export function LegalStep({
         onOpenChange={setShowPilotModal}
         documentTitle="Pilot Agreement"
         onSign={handleSign}
+        onDraftSave={onDraftSave}
         isSubmitting={isSubmitting}
         existingSignatureUrl={signatureUrl}
         signedAt={signedAt}

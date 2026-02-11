@@ -18,6 +18,7 @@ interface TaskAccordionProps {
   onLegalSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
+  onSaveLegalDraft?: (data: Record<string, unknown>) => Promise<void>;
   // Venue CRUD handlers (passed to VenueProvider)
   venues: Venue[];
   onAddVenue: () => Promise<Venue | undefined>;
@@ -57,7 +58,8 @@ export function TaskAccordion({
   isDeletingVenue,
   isSigningLegal,
   isUpdating,
-  hotelLegalEntity
+  hotelLegalEntity,
+  onSaveLegalDraft
 }: TaskAccordionProps) {
   const [accordionValue, setAccordionValue] = useState<string | undefined>();
   const [recentlyCompleted, setRecentlyCompleted] = useState<string | null>(null);
@@ -259,6 +261,7 @@ export function TaskAccordion({
           isLocked={isTaskLocked("legal")}
           data={getTaskData("legal")?.data}
           onSign={handleLegalSign}
+          onDraftSave={onSaveLegalDraft}
           isSubmitting={isSigningLegal}
           isJustCompleted={recentlyCompleted === "legal"}
           isUnlocking={unlockingStep === "legal"}
