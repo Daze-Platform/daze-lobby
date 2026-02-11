@@ -214,9 +214,9 @@ export function ContactFormModal({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                  className="gap-1.5"
                   disabled={isBusy}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
