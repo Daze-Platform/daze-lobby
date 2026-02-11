@@ -8,7 +8,6 @@ import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signIn } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import dazeLogo from "@/assets/daze-logo.png";
 
@@ -56,35 +55,10 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   const [shouldShake, setShouldShake] = useState(false);
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const navigationAttemptedRef = useRef(false);
   const navigate = useNavigate();
-  const { isAuthenticated, loading: authLoading } = useAuthContext();
 
-  // Check for existing session on mount - handles "silent success"
-  useEffect(() => {
-    const checkExistingSession = async () => {
-      try {
-        console.log("[LoginForm] Checking for existing session on mount...");
-
-        const sessionResult = await withTimeout(
-          supabase.auth.getSession(),
-          8000,
-          "Session check timed out"
-        );
-        const session = (sessionResult as { data: { session: unknown } })?.data?.session ?? null;
-
-        if (session && !navigationAttemptedRef.current) {
-          console.log("[LoginForm] Existing session found, redirecting immediately");
-          navigationAttemptedRef.current = true;
-          navigate("/post-auth", { replace: true });
-        }
-      } catch (err) {
-        console.error("[LoginForm] Error checking session:", err);
-      }
-    };
-
-    checkExistingSession();
-  }, [navigate]);
+  // Session detection and role-based redirects are handled by AuthRedirect (route wrapper).
+  // This form only handles submission logic.
 
   // Trigger shake animation on error
   useEffect(() => {
@@ -94,15 +68,6 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
       return () => clearTimeout(timer);
     }
   }, [error]);
-
-  // Navigate when auth state confirms login
-  useEffect(() => {
-    if (isAuthenticated && !authLoading && !navigationAttemptedRef.current) {
-      console.log("[LoginForm] Auth context confirmed, navigating...");
-      navigationAttemptedRef.current = true;
-      navigate("/post-auth", { replace: true });
-    }
-  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,21 +94,6 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     setError(null);
 
     try {
-      // Handle "silent success" / in-flight sessions
-      const preSessionResult = await withTimeout(
-        supabase.auth.getSession(),
-        8000,
-        "Session check timed out"
-      );
-      const preSession = (preSessionResult as { data: { session: unknown } })?.data?.session ?? null;
-
-      if (preSession && !navigationAttemptedRef.current) {
-        console.log("[LoginForm] Session already present, redirecting");
-        navigationAttemptedRef.current = true;
-        navigate("/post-auth", { replace: true });
-        return;
-      }
-
       const result = await withTimeout(
         signIn(email, password),
         15000,
@@ -169,9 +119,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         )) as { data: { session: unknown } })?.data?.session ??
         null;
 
-      if (session && !navigationAttemptedRef.current) {
+      if (session) {
         console.log("[LoginForm] Session confirmed, redirecting");
-        navigationAttemptedRef.current = true;
         navigate("/post-auth", { replace: true });
         return;
       }
