@@ -292,10 +292,14 @@ export function useClientPortal() {
     }) => {
       if (!clientId) throw new Error("No client found");
 
+      // Merge with existing data to preserve upload paths (logos, palette docs)
+      const existingTask = tasks?.find(t => t.task_key === taskKey);
+      const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+
       const { error } = await supabase
         .from("onboarding_tasks")
         .update({ 
-          data: data as unknown as Record<string, unknown>,
+          data: { ...existingData, ...data } as unknown as Record<string, unknown>,
           is_completed: true,
           completed_at: new Date().toISOString(),
         } as never)
