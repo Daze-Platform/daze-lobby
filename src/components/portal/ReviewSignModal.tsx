@@ -354,9 +354,9 @@ export function ReviewSignModal({
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [pilotTermDays, setPilotTermDays] = useState("90");
 
-  // Section D: Pricing
-  const [pricingModel, setPricingModel] = useState<"none" | "subscription" | "daze_rev_share" | "client_rev_share">("none");
-  const [pricingAmount, setPricingAmount] = useState("");
+  // Section D: Pricing — hardcoded to 10% Daze Revenue Share
+  const pricingModel = "daze_rev_share" as const;
+  const pricingAmount = "10";
 
   // Section E: POS
   const [posSystem, setPosSystem] = useState("");
@@ -402,8 +402,7 @@ export function ReviewSignModal({
       }
       setPilotTermDays(d.pilot_term_days != null ? String(d.pilot_term_days) : "90");
 
-      setPricingModel(d.pricing_model || "none");
-      setPricingAmount(d.pricing_amount || "");
+      // pricing is hardcoded — skip pre-fill
 
       setPosSystem(d.pos_system || "");
       setPosVersion(d.pos_version || "");
@@ -621,34 +620,13 @@ export function ReviewSignModal({
                       </div>
                     </FormSection>
 
-                    {/* Section D: Pricing */}
+                    {/* Section D: Pricing — hardcoded 10% Daze Revenue Share */}
                     <FormSection title="D — Pricing" icon={DollarSign}>
-                      <RadioGroup value={pricingModel} onValueChange={v => setPricingModel(v as typeof pricingModel)} className="gap-2">
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem value="none" id="pr-none" />
-                          <Label htmlFor="pr-none" className="text-xs font-normal cursor-pointer">No Fees</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem value="subscription" id="pr-sub" />
-                          <Label htmlFor="pr-sub" className="text-xs font-normal cursor-pointer">Subscription Fee ($)</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem value="daze_rev_share" id="pr-daze" />
-                          <Label htmlFor="pr-daze" className="text-xs font-normal cursor-pointer">Daze Revenue Share (%)</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <RadioGroupItem value="client_rev_share" id="pr-client" />
-                          <Label htmlFor="pr-client" className="text-xs font-normal cursor-pointer">Client Revenue Share (%)</Label>
-                        </div>
-                      </RadioGroup>
-                      {pricingModel !== "none" && (
-                        <div className="space-y-1 pt-1">
-                          <Label className="text-[10px] text-muted-foreground">
-                            {pricingModel === "subscription" ? "Amount ($)" : "Percentage (%)"}
-                          </Label>
-                          <Input placeholder={pricingModel === "subscription" ? "e.g., 500" : "e.g., 15"} value={pricingAmount} onChange={e => setPricingAmount(e.target.value)} className="h-8 text-xs" />
-                        </div>
-                      )}
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <p className="text-xs font-medium">Daze Revenue Share</p>
+                        <p className="text-lg font-semibold">10%</p>
+                        <p className="text-[10px] text-muted-foreground">of gross transaction value</p>
+                      </div>
                     </FormSection>
 
                     {/* Section E: POS Integration */}
