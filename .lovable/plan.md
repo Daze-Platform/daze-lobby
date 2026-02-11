@@ -1,74 +1,63 @@
 
-## Complexity and Maintainability Audit
 
-### Critical Issues (Must Fix)
+## Block Admin Login on Client Portal
 
-**1. `as any` proliferation in auth forms (LoginForm.tsx, ClientLoginForm.tsx)**
-Both login forms use `(sessionResult as any)?.data?.session` in 4+ places each. The fix applied to `useAuth.ts` needs to be replicated here using the same typed assertion pattern:
-```typescript
-const result = sessionResult as { data: { session: Session | null } };
-const session = result.data.session;
+### Problem
+Admin users (e.g., `@dazeapp.com` emails) can currently log in through the Client Portal login page (`/portal/login`). After authenticating, they get redirected to `/admin/portal/:slug`, but they should never be allowed to authenticate through the client portal at all.
+
+### Solution
+Add a post-login role check in two places to catch admin users and reject them with a clear error message:
+
+### Changes
+
+**1. `src/pages/PostAuth.tsx`** -- Reject admin users who arrived via portal origin
+
+When `isPortalOrigin` is true and the user has dashboard access (admin/ops_manager/support), instead of redirecting to `/dashboard`, sign them out and show an error message telling them to use the admin login at `/auth`.
+
+- In the `targetPath` computation: if `isPortalOrigin && hasDashboardAccess(role)`, return a special sentinel (e.g., `"__portal_blocked__"`)
+- In the redirect effect: detect this sentinel, sign the user out, and navigate to `/portal/login` with an error query param
+- Alternatively, render an inline error card (similar to the "Account not ready" card) with a message like "This login is for hotel partners only. Please use the admin login." and a button linking to `/auth`
+
+**2. `src/components/auth/ClientLoginForm.tsx`** -- Pre-check after email/password login
+
+After successful `signIn()` call (line 134), before navigating to PostAuth:
+- Fetch the user's role from `user_roles` table
+- If the role is admin/ops_manager/support, sign them out immediately and show an error: "This portal is for hotel partners only. Please sign in at the admin dashboard."
+- This provides instant feedback without the user seeing the PostAuth loading screen
+
+**3. Google OAuth edge case**
+
+For Google sign-in, the redirect goes through PostAuth anyway, so fix number 1 covers this path automatically. No changes needed in the Google OAuth handler.
+
+### Technical Details
+
+In `ClientLoginForm.tsx`, after `signIn()`:
 ```
-- Files: `src/components/auth/LoginForm.tsx` (lines 73, 137, 154, 159)
-- Files: `src/components/auth/ClientLoginForm.tsx` (lines 73, 127, 136, 137)
+// After successful signIn, check role
+const { data: roleData } = await supabase
+  .from("user_roles")
+  .select("role")
+  .eq("user_id", result.user.id)
+  .maybeSingle();
 
-**2. `as any` in PostAuth.tsx (line 52)**
-`(clientLink?.clients as any)?.client_slug` -- the Supabase join type is not being inferred. Fix with an explicit type assertion for the joined result:
-```typescript
-const clientSlug = (clientLink?.clients as { client_slug: string } | null)?.client_slug;
+const userRole = roleData?.role;
+if (userRole === "admin" || userRole === "ops_manager" || userRole === "support") {
+  await supabase.auth.signOut();
+  setError("This portal is for hotel partners only. Please sign in at the admin dashboard.");
+  setLoading(false);
+  return;
+}
 ```
-- File: `src/pages/PostAuth.tsx` (line 52)
 
-**3. `as any` in useMessages.ts (lines 43-44)**
-`(msg.profiles as any)?.full_name` -- same Supabase join pattern. Fix with explicit type for the joined `profiles` relation:
-```typescript
-const profile = msg.profiles as { full_name: string | null; avatar_url: string | null } | null;
+In `PostAuth.tsx`, update `targetPath`:
 ```
-- File: `src/hooks/useMessages.ts` (lines 43-44)
-
-**4. `as never` workaround in useClientPortal.ts (5 occurrences)**
-The `.update({ ... } as never)` pattern on `onboarding_tasks` suppresses a legitimate type mismatch between the JSONB `data` column type and `Record<string, unknown>`. This is a known Supabase codegen limitation. Replacing `as never` with a targeted type assertion is safer:
-```typescript
-.update({
-  data: taskData as Database["public"]["Tables"]["onboarding_tasks"]["Update"]["data"],
-  is_completed: true,
-  ...
-})
+// If admin came from portal origin, block them
+if (isPortalOrigin && hasDashboardAccess(role)) return "__portal_blocked__";
 ```
-However, the risk of this breaking anything is low -- the `as never` pattern works and the data shapes are validated upstream. **Recommendation: Warning-level -- defer to post-launch.**
 
-**5. Stale dependency in useAuth.ts `fetchUser` callback (line 50)**
-`fetchUser` has `[user]` in its `useCallback` dependency array. Since `fetchUser` sets `user`, this causes a new function reference on every auth event, which triggers the `useEffect` on line 122 (`[fetchUser]` dep) to re-run. In practice the `fetchInProgressRef` guard prevents infinite loops, but the dependency is semantically incorrect. Fix: remove `user` from the dep array (the ref guard makes the stale closure safe).
+Then render a rejection card when `targetPath === "__portal_blocked__"` with a "Go to Admin Login" button that navigates to `/auth`.
 
-### Warnings (Fix Post-Launch)
+### Files Modified
+- `src/components/auth/ClientLoginForm.tsx` -- role check after email/password login
+- `src/pages/PostAuth.tsx` -- role check for portal-origin admin users (covers Google OAuth)
 
-**6. `useClientPortal.ts` is 821 lines**
-This hook handles 8 mutations, 2 queries, computed state, and an auto-phase-transition effect. It works correctly but is difficult to maintain. Consider splitting into:
-- `useOnboardingTasks` (queries + task mutations)
-- `useVenueMutations` (venue CRUD + uploads)
-- `usePortalStatus` (phase transition logic)
-
-**7. Console.log statements in production auth flow**
-`useAuth.ts` and both login forms contain `console.log("[Auth] ...")` statements. These are useful for debugging but should be behind a `DEBUG` flag or removed before the pilot launch to avoid leaking internal flow details.
-
-**8. `updateClientPhaseMutation` in useEffect dependency (line 776)**
-The mutation object is recreated on every render. While `useMutation` returns a stable reference in modern TanStack Query, the ESLint exhaustive-deps rule flags it. Wrapping the `.mutate()` call in a `useCallback` would make the intent clearer.
-
-### Summary Table
-
-| # | Severity | File | Issue |
-|---|----------|------|-------|
-| 1 | Critical | LoginForm.tsx | 4x `as any` on session results |
-| 2 | Critical | ClientLoginForm.tsx | 4x `as any` on session results |
-| 3 | Critical | PostAuth.tsx | `as any` on client slug join |
-| 4 | Critical | useMessages.ts | `as any` on profile join |
-| 5 | Critical | useAuth.ts | Stale `user` dependency in `fetchUser` |
-| 6 | Warning | useClientPortal.ts | 5x `as never`, 821-line file |
-| 7 | Warning | Auth files | Console.log in production |
-| 8 | Warning | useClientPortal.ts | Mutation in useEffect dep array |
-
-### Implementation Plan
-
-1. Fix all `as any` in LoginForm.tsx, ClientLoginForm.tsx, PostAuth.tsx, and useMessages.ts with proper type assertions
-2. Fix `fetchUser` dependency array in useAuth.ts
-3. All changes are safe, non-breaking refactors -- no runtime behavior changes
