@@ -1,59 +1,62 @@
 
 
-## Fix: Pilot Agreement Fields Resetting on Every Render
+## Performance: Speed Up Signature Registration and Data Loading
 
-### Root Cause
+### Problem Analysis
 
-The pre-fill `useEffect` in `ReviewSignModal.tsx` (line 377) has `initialLegalEntity` in its dependency array. But `initialLegalEntity` is built as an inline object in `Portal.tsx` JSX -- meaning it's a **new object reference on every render**. Any parent re-render while the modal is open causes the effect to fire again, resetting all typed values back to the initial (possibly empty) data.
+**Issue 1: Signature takes a long time to register**
 
-### Fix (2 files)
+The `signLegalMutation` in `useClientPortal.ts` performs 7 sequential operations before showing success:
+1. Update client record with legal entity data
+2. Convert signature to blob and upload to storage
+3. Generate a signed URL for the signature
+4. Update the legal task with all agreement fields
+5. Generate a multi-page PDF from the agreement data
+6. Upload the PDF to storage
+7. Insert a document record
 
-**1. `src/components/portal/ReviewSignModal.tsx`**
+Steps 5-7 (PDF generation and upload) are non-critical -- the agreement is already saved after step 4. These can run in the background.
 
-Change the `useEffect` so it only runs when the modal **transitions from closed to open** (not on every `initialLegalEntity` change). Use a ref to track the previous `open` state:
+**Issue 2: Form data takes a while to load on reopen**
 
-```typescript
-const prevOpenRef = useRef(false);
+After signing, `queryClient.invalidateQueries` triggers network refetches. The modal data depends on these queries completing before the `hotelLegalEntity` memo updates. This is inherent latency from the cache invalidation round-trip.
 
-useEffect(() => {
-  // Only pre-fill when the modal is OPENING (false -> true)
-  if (open && !prevOpenRef.current && initialLegalEntity) {
-    const d = initialLegalEntity;
-    setPropertyName(d.property_name || "");
-    setLegalEntityName(d.legal_entity_name || "");
-    // ... rest of pre-fill logic stays the same
-  }
-  prevOpenRef.current = open;
-}, [open, initialLegalEntity]);
+### Fix 1: Move PDF generation to background (non-blocking)
+
+**File: `src/hooks/useClientPortal.ts`**
+
+Split the mutation so that steps 1-4 complete and trigger `onSuccess` immediately. Steps 5-7 (PDF generation/upload/document insert) run as a fire-and-forget `Promise` after the mutation resolves -- they don't block the UI or the success toast.
+
+```text
+Before (sequential):
+  client update -> signature upload -> signed URL -> task update -> PDF gen -> PDF upload -> doc insert -> onSuccess
+
+After (parallel tail):
+  client update -> signature upload -> signed URL -> task update -> onSuccess
+                                                                      |
+                                                          (background) PDF gen -> PDF upload -> doc insert
 ```
 
-This ensures fields are populated once on open and never overwritten while the user is typing.
+### Fix 2: Optimistic cache update after signing
 
-**2. `src/pages/Portal.tsx`** (optional but good practice)
+**File: `src/hooks/useClientPortal.ts`**
 
-Memoize the `hotelLegalEntity` object so it doesn't create a new reference on every render:
+Add `onMutate` to the `signLegalMutation` that optimistically updates the `onboarding-tasks` query cache with `pilot_signed: true`, `signed_at`, and `is_completed: true`. This makes the UI reflect the signed state instantly without waiting for the refetch round-trip.
 
-```typescript
-const hotelLegalEntity = useMemo(() => {
-  const legalTaskData = formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown> || {};
-  return {
-    ...legalTaskData,
-    legal_entity_name: client?.legal_entity_name || legalTaskData?.legal_entity_name,
-    billing_address: client?.billing_address || legalTaskData?.billing_address,
-    authorized_signer_name: client?.authorized_signer_name || legalTaskData?.authorized_signer_name,
-    authorized_signer_title: client?.authorized_signer_title || legalTaskData?.authorized_signer_title,
-  } as PilotAgreementData;
-}, [formattedTasks, client]);
-```
+### Fix 3: Pre-seed query cache for faster data reload
 
-Then pass `hotelLegalEntity={hotelLegalEntity}` in the JSX.
+**File: `src/hooks/useClientPortal.ts`**
 
-### Why This Fixes It
+In the `onSuccess` of `signLegalMutation`, use `queryClient.setQueryData` to directly inject the known task data into the cache instead of only calling `invalidateQueries`. This eliminates the network round-trip for the immediate UI update (a background refetch still happens to sync).
 
-- The `useEffect` will only pre-fill form fields the moment the modal opens
-- While the modal is open, typing is never overwritten by stale data
-- Draft save on close still works unchanged
-- Pre-fill on next open still works because `initialLegalEntity` will have the saved data from the previous draft save
+### Technical Details
 
-### No other files affected
-The draft save logic in `Portal.tsx`, `LegalStep.tsx`, and `TaskAccordion.tsx` remains unchanged.
+- PDF generation will use a detached async block (`Promise.resolve().then(...)`) so errors in PDF generation never affect the signing success path.
+- Console warnings will still log if PDF upload fails.
+- The optimistic update in `onMutate` follows the existing enterprise pattern of snapshot + rollback on error.
+- The `client` query will also get a direct `setQueryData` update for the 4 core legal entity fields, so the `hotelLegalEntity` memo recomputes immediately.
+- No database or schema changes needed.
+
+### Files Changed
+- `src/hooks/useClientPortal.ts` -- restructure `signLegalMutation` for background PDF, add optimistic updates
+
