@@ -368,6 +368,8 @@ export function useClientPortal() {
       const existingData = (freshTask?.data as Record<string, unknown>) || {};
       const existingLogos = (existingData.logos || {}) as Record<string, string>;
 
+      const existingLogoFilenames = (existingData.logoFilenames || {}) as Record<string, string>;
+
       const { error: updateError } = await supabase
         .from("onboarding_tasks")
         .update({ 
@@ -376,7 +378,11 @@ export function useClientPortal() {
             logos: { 
               ...existingLogos, 
               [variant]: urlData?.publicUrl 
-            }
+            },
+            logoFilenames: {
+              ...existingLogoFilenames,
+              [variant]: file.name,
+            },
           },
         } as never)
         .eq("client_id", clientId)
@@ -575,11 +581,11 @@ export function useClientPortal() {
         .maybeSingle();
       const existingData = (freshTask?.data as Record<string, unknown>) || {};
 
-      // Update task with file reference
+      // Update task with file reference and original filename
       const { error: updateError } = await supabase
         .from("onboarding_tasks")
         .update({ 
-          data: { ...existingData, [fieldName]: filePath },
+          data: { ...existingData, [fieldName]: filePath, [`${fieldName}_filename`]: file.name },
         } as never)
         .eq("client_id", clientId)
         .eq("task_key", taskKey);

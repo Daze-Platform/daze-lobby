@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 interface BrandDocumentUploadProps {
   onUpload: (file: File) => void;
   existingUrl?: string | null;
+  existingFilename?: string | null;
   isUploading?: boolean;
   label?: string;
   description?: string;
@@ -15,6 +16,7 @@ interface BrandDocumentUploadProps {
 export function BrandDocumentUpload({
   onUpload,
   existingUrl,
+  existingFilename,
   isUploading = false,
   label = "Upload Brand Guidelines",
   description = "PDF, PNG, or image with your official color palette",
@@ -81,7 +83,7 @@ export function BrandDocumentUpload({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {selectedFile?.name || "Color palette document"}
+              {selectedFile?.name || existingFilename || "Brand guidelines document"}
             </p>
             <p className="text-xs text-muted-foreground">
               {isUploading ? "Uploading..." : "Uploaded successfully"}

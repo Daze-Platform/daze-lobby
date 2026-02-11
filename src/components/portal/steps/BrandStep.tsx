@@ -57,9 +57,19 @@ export function BrandStep({
     const fieldKey = `palette_document_${propertyId}`;
     const filePath = taskData[fieldKey] as string | undefined;
     if (!filePath) return null;
-    // The file path is stored, we need to construct the public URL
-    // Files are stored in onboarding-assets bucket
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/onboarding-assets/${filePath}`;
+  };
+
+  // Helper to extract palette document filename
+  const getPaletteDocumentFilename = (propertyId: string, taskData?: Record<string, unknown>): string | null => {
+    if (!taskData) return null;
+    return (taskData[`palette_document_${propertyId}_filename`] as string) || null;
+  };
+
+  // Helper to extract logo filenames from task data
+  const getLogoFilenames = (taskData?: Record<string, unknown>): Record<string, string> => {
+    if (!taskData) return {};
+    return (taskData.logoFilenames as Record<string, string>) || {};
   };
 
   // Helper to extract logo URLs for a property from task data
@@ -98,10 +108,13 @@ export function BrandStep({
       // Hydrate with palette document URLs and logo URLs from task data
       return savedProperties.map(prop => {
         const extractedLogoUrls = getLogoUrls(prop.id, data);
+        const extractedLogoFilenames = getLogoFilenames(data);
         return {
           ...prop,
           logoUrls: { ...(prop.logoUrls || {}), ...extractedLogoUrls },
+          logoFilenames: { ...(prop.logoFilenames || {}), ...extractedLogoFilenames },
           paletteDocumentUrl: prop.paletteDocumentUrl || getPaletteDocumentUrl(prop.id, data),
+          paletteDocumentFilename: prop.paletteDocumentFilename || getPaletteDocumentFilename(prop.id, data),
         };
       });
     }
@@ -129,10 +142,13 @@ export function BrandStep({
       // Hydrate with palette document URLs and logo URLs from task data
       setProperties(savedProperties.map(prop => {
         const extractedLogoUrls = getLogoUrls(prop.id, data);
+        const extractedLogoFilenames = getLogoFilenames(data);
         return {
           ...prop,
           logoUrls: { ...(prop.logoUrls || {}), ...extractedLogoUrls },
+          logoFilenames: { ...(prop.logoFilenames || {}), ...extractedLogoFilenames },
           paletteDocumentUrl: prop.paletteDocumentUrl || getPaletteDocumentUrl(prop.id, data),
+          paletteDocumentFilename: prop.paletteDocumentFilename || getPaletteDocumentFilename(prop.id, data),
         };
       }));
     }
