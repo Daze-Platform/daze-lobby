@@ -1,51 +1,34 @@
 
-## Fix: Email Verification Redirects Client Users to Control Tower
+
+## Link Brian's Account to Daze Downtown Hotel
 
 ### Problem
-When a client signs up at `/portal/login`, the verification email link sends them to `window.location.origin` (the site root), which resolves to the admin Control Tower. Clients should land back in the portal after verifying.
+Brian (`brian.92rod@hotmail.com`) has the correct `client` role, but has no record in the `user_clients` table linking him to any hotel. This causes the portal to redirect him to `/no-hotel-assigned`.
 
-### Changes
+### Fix
+Insert one row into `user_clients` to associate his user account with the "Daze Downtown Hotel" client.
 
-**1. `src/lib/auth.ts` -- Add optional `redirectTo` parameter to `signUp`**
+### Technical Details
 
-Update the function signature to accept an optional redirect URL. When provided, it overrides the default `window.location.origin`:
+A single database migration will run:
 
-```typescript
-export async function signUp(
-  email: string, password: string, fullName: string, redirectTo?: string
-) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: redirectTo || window.location.origin,
-      data: { full_name: fullName },
-    },
-  });
-  if (error) throw error;
-  return data;
-}
+```sql
+INSERT INTO user_clients (user_id, client_id)
+SELECT u.id, 'd88d4554-0153-4b82-97ba-50d579234450'
+FROM auth.users u
+WHERE u.email = 'brian.92rod@hotmail.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM user_clients uc
+    WHERE uc.user_id = u.id
+      AND uc.client_id = 'd88d4554-0153-4b82-97ba-50d579234450'
+  );
 ```
 
-**2. `src/components/auth/ClientLoginForm.tsx` -- Pass portal-aware redirect URL**
+This uses a safe subquery to avoid duplicates and to pull the user ID dynamically.
 
-When calling `signUp`, build a redirect URL that includes portal context so PostAuth routes the user correctly after verification:
-
-```typescript
-const redirectUrl = returnTo
-  ? `${window.location.origin}/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
-  : `${window.location.origin}/post-auth?origin=portal`;
-
-await withTimeout(signUp(email, password, fullName, redirectUrl), 15000, "...");
-```
-
-The `returnTo` value (e.g., `/portal/daze-downtown-hotel`) is already available from search params. This ensures the verification email link sends the user to `/post-auth?origin=portal&returnTo=/portal/daze-downtown-hotel`, where PostAuth resolves their client assignment and routes them to the correct portal.
-
-### No other changes needed
-- Admin signups from `/auth` continue using the default `window.location.origin` (no `redirectTo` passed)
-- PostAuth already handles `origin=portal` and `returnTo` parameters correctly
-- No database or schema changes required
+### Result
+After this, when Brian logs into `/portal/daze-downtown-hotel`, his session will resolve to the Daze Downtown Hotel portal and he will see the onboarding flow.
 
 ### Files Changed
-- `src/lib/auth.ts`
-- `src/components/auth/ClientLoginForm.tsx`
+- None (database-only change)
+
