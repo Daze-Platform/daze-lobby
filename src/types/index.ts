@@ -18,8 +18,10 @@ export type {
 export type {
   VenueRow,
   Venue,
+  VenueMenu,
   VenueUpdate,
   DbVenue,
+  DbVenueMenu,
 } from "./venue";
 
 // Task types

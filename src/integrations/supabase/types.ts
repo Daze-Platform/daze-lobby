@@ -529,6 +529,41 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_menus: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+          label: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_url: string
+          id?: string
+          label?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          label?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_menus_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           client_id: string

@@ -9,17 +9,32 @@ import type { Tables } from "@/integrations/supabase/types";
 export type VenueRow = Tables<"venues">;
 
 /**
+ * A single menu document attached to a venue
+ */
+export interface VenueMenu {
+  id: string;
+  venueId: string;
+  fileUrl: string;
+  fileName: string;
+  label: string;
+}
+
+/**
  * UI venue with optional file attachments
  * Used in VenueCard component and portal forms
  */
 export interface Venue {
   id: string;
   name: string;
+  /** @deprecated Use menus array instead */
   menuFile?: File;
+  /** @deprecated Use menus array instead */
   menuFileName?: string;
+  /** @deprecated Use menus array instead */
   menuPdfUrl?: string;
   logoFile?: File;
   logoUrl?: string;
+  menus: VenueMenu[];
 }
 
 /**
@@ -42,4 +57,16 @@ export interface DbVenue {
   logo_url: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Database venue_menus shape
+ */
+export interface DbVenueMenu {
+  id: string;
+  venue_id: string;
+  file_url: string;
+  file_name: string;
+  label: string;
+  created_at: string;
 }
