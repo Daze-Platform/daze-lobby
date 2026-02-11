@@ -1,63 +1,58 @@
 
-
-# Fix Brand Logo Persistence on Refresh
+# Fix: Brand Uploads Lost on Save (Data Overwrite Bug)
 
 ## Problem
-Brand logos disappear on page refresh because of a mismatch between how they're stored and retrieved.
+When a user uploads a brand logo or palette document, the file is saved to storage and the path is written to the `onboarding_tasks.data` JSONB field as a top-level key (e.g., `data["logo_propId_dark"] = "path/to/file"`).
 
-- **Write path**: Logos are saved as `data["logo_{propertyId}_{variant}"]` = file path (via `uploadFileMutation`)
-- **Read path**: `BrandStep.getLogoUrls()` looks inside `data.logos` object for matching keys, and treats values as URLs
-
-This means logos are never found on reload.
+However, when the user clicks **"Save Brand Settings"**, `updateTaskMutation` completely **replaces** the `data` field with `{ properties: [...] }`, wiping out all the upload paths. On refresh, the logos and documents are gone.
 
 ## Root Cause
-Two separate bugs in `src/components/portal/steps/BrandStep.tsx`:
+`updateTaskMutation` (line 295-303 in `useClientPortal.ts`) writes:
+```
+data: newData   // replaces everything
+```
 
-1. **Wrong lookup location**: `getLogoUrls()` searches `data.logos` but the upload stores at `data["logo_{propertyId}_{variant}"]` (top-level)
-2. **Path vs URL**: The stored value is a storage file path, not a public URL. `getPaletteDocumentUrl` correctly constructs the full URL from the path, but `getLogoUrls` does not.
+While `uploadFileMutation` (line 560-563) correctly merges:
+```
+data: { ...existingData, [fieldName]: filePath }   // preserves existing keys
+```
+
+The save and the upload use different mutations with conflicting merge strategies.
+
+## Affected Uploads
+- Brand logos (dark, light, icon per property) -- paths lost on save
+- Brand palette documents -- paths lost on save
+- Venue menus/logos -- NOT affected (use dedicated DB columns)
+- Legal signature -- NOT affected (uses separate mutation)
 
 ## Fix
 
-### File: `src/components/portal/steps/BrandStep.tsx`
+### File: `src/hooks/useClientPortal.ts`
 
-Rewrite `getLogoUrls()` to:
-1. Search top-level keys in `taskData` for keys matching `logo_{propertyId}_{variant}`
-2. Convert file paths to full public URLs (same pattern as `getPaletteDocumentUrl`)
-3. Keep fallback support for the legacy `data.logos` format
+**Change `updateTaskMutation`** to merge new data with existing task data instead of replacing it:
 
+```typescript
+// Before (line 295-298):
+const { error } = await supabase
+  .from("onboarding_tasks")
+  .update({ 
+    data: data as unknown as Record<string, unknown>,
+    ...
+
+// After:
+const existingTask = tasks?.find(t => t.task_key === taskKey);
+const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+
+const { error } = await supabase
+  .from("onboarding_tasks")
+  .update({ 
+    data: { ...existingData, ...data },
+    ...
 ```
-const getLogoUrls = (propertyId: string, taskData?: Record<string, unknown>): Record<string, string> => {
-    if (!taskData) return {};
-    const result: Record<string, string> = {};
 
-    // Primary: look at top-level keys like "logo_{propertyId}_{variant}" (stored by uploadFileMutation)
-    const propertyPrefix = `logo_${propertyId}_`;
-    for (const [key, value] of Object.entries(taskData)) {
-      if (key.startsWith(propertyPrefix) && typeof value === "string") {
-        const variant = key.substring(propertyPrefix.length);
-        // Value is a file path, construct full URL
-        result[variant] = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/onboarding-assets/${value}`;
-      }
-    }
-
-    // Fallback: legacy data.logos format (full URLs)
-    const logos = (taskData.logos || {}) as Record<string, string>;
-    for (const [key, url] of Object.entries(logos)) {
-      const legacyPrefix = `logo_${propertyId}_`;
-      if (key.startsWith(legacyPrefix)) {
-        const variant = key.substring(legacyPrefix.length);
-        if (!result[variant]) result[variant] = url;
-      } else if (!key.startsWith("logo_") && ["dark", "light", "icon"].includes(key)) {
-        if (!result[key]) result[key] = url;
-      }
-    }
-
-    return result;
-  };
-```
+This single change ensures that when Brand Settings are saved with `{ properties: [...] }`, the existing `logo_*` and `palette_document_*` keys are preserved in the JSONB field.
 
 ## Scope
-- **1 file changed**: `src/components/portal/steps/BrandStep.tsx` (the `getLogoUrls` helper function)
-- No database or storage changes needed -- uploads already work correctly
-- Venue uploads (menus, logos) already persist fine via dedicated DB columns
-
+- **1 file changed**: `src/hooks/useClientPortal.ts` (3-4 lines added in `updateTaskMutation`)
+- No database, storage, or schema changes needed
+- No new components needed -- all upload and retrieval logic already works correctly
