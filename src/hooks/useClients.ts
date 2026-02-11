@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables, Enums } from "@/integrations/supabase/types";
+import type { Tables, Enums, Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 export type Client = Tables<"clients"> & {
@@ -162,7 +162,26 @@ export function useUpdateClientPhase() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
     },
-    onSuccess: () => {},
+    onSuccess: async (_data, { clientId, newPhase }) => {
+      // Log phase change activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const phaseLabels: Record<string, string> = {
+          onboarding: "Onboarding",
+          reviewing: "In Review",
+          pilot_live: "Pilot Live",
+          contracted: "Contracted",
+        };
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: "phase_changed",
+          details: { new_phase: newPhase, phase_label: phaseLabels[newPhase] || newPhase } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", clientId] });
+      }
+    },
   });
 }
 

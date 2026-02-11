@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import {
   Dialog,
   DialogContent,
@@ -92,9 +93,21 @@ export function ContactFormModal({
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(isEditing ? "Contact updated" : "Contact added");
       invalidate();
+      // Log contact change
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: isEditing ? "contact_updated" : "contact_added",
+          details: { contact_name: name.trim(), contact_role: role.trim() || null } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", clientId] });
+      }
       onOpenChange(false);
     },
     onError: (err: Error) => {
@@ -110,9 +123,21 @@ export function ContactFormModal({
         .eq("id", contact!.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(`"${contact!.name}" removed`);
       invalidate();
+      // Log contact removal
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: "contact_removed",
+          details: { contact_name: contact!.name } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+        queryClient.invalidateQueries({ queryKey: ["activity-logs", clientId] });
+      }
       onOpenChange(false);
     },
     onError: (err: Error) => {

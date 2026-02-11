@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 import {
   Dialog,
   DialogContent,
@@ -157,9 +158,20 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
 
       return client.id;
     },
-    onSuccess: (clientId) => {
+    onSuccess: async (clientId) => {
       queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
       queryClient.invalidateQueries({ queryKey: ["all-clients-admin"] });
+      // Log new client creation
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activity_logs").insert([{
+          client_id: clientId,
+          user_id: user.id,
+          action: "client_created",
+          details: { client_name: propertyName.trim() } as unknown as Json,
+          is_auto_logged: false,
+        }]);
+      }
       toast.success("Client created successfully!");
       handleClose();
       navigate(`/clients?selected=${clientId}`);
