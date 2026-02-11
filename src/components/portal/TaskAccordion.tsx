@@ -116,8 +116,9 @@ export function TaskAccordion({
     onFileUpload("brand", file, `logo_${propertyId}_${variant}`);
   };
 
-  const handleBrandDocumentUpload = (propertyId: string, file: File) => {
-    onFileUpload("brand", file, `palette_document_${propertyId}`);
+  const handleBrandDocumentUpload = (propertyId: string, file: File, slotIndex: number) => {
+    const fieldName = slotIndex === 0 ? `palette_document_${propertyId}` : `palette_document_${propertyId}_${slotIndex}`;
+    onFileUpload("brand", file, fieldName);
   };
 
   const handleLogoRemove = async (propertyId: string, variant: string) => {
@@ -142,12 +143,13 @@ export function TaskAccordion({
     onTaskUpdate("brand", cleaned);
   };
 
-  const handleDocumentRemove = async (propertyId: string) => {
+  const handleDocumentRemove = async (propertyId: string, slotIndex: number) => {
     const brandTask = tasks.find(t => t.key === "brand");
     const existingData = (brandTask?.data || {}) as Record<string, unknown>;
     const cleaned: Record<string, unknown> = { ...existingData };
-    delete cleaned[`palette_document_${propertyId}`];
-    delete cleaned[`palette_document_${propertyId}_filename`];
+    const fieldKey = slotIndex === 0 ? `palette_document_${propertyId}` : `palette_document_${propertyId}_${slotIndex}`;
+    delete cleaned[fieldKey];
+    delete cleaned[`${fieldKey}_filename`];
     onTaskUpdate("brand", cleaned);
   };
 

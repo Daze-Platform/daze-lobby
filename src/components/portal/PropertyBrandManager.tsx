@@ -44,6 +44,8 @@ export interface PropertyBrand {
   colors: string[];
   paletteDocumentUrl?: string | null;
   paletteDocumentFilename?: string | null;
+  paletteDocumentUrls?: (string | null)[];
+  paletteDocumentFilenames?: (string | null)[];
   isExpanded?: boolean;
 }
 
@@ -52,8 +54,8 @@ interface PropertyBrandManagerProps {
   onChange: (properties: PropertyBrand[]) => void;
   onLogoUpload: (propertyId: string, file: File, variant: string) => void;
   onLogoRemove?: (propertyId: string, variant: string) => void;
-  onDocumentUpload?: (propertyId: string, file: File) => void;
-  onDocumentRemove?: (propertyId: string) => void;
+  onDocumentUpload?: (propertyId: string, file: File, slotIndex: number) => void;
+  onDocumentRemove?: (propertyId: string, slotIndex: number) => void;
 }
 
 export function PropertyBrandManager({
@@ -135,11 +137,13 @@ export function PropertyBrandManager({
     updateProperty(propertyId, { colors });
   };
 
-  const handleDocumentUpload = (propertyId: string, file: File) => {
+  const handleDocumentUpload = (propertyId: string, file: File, slotIndex: number) => {
     if (onDocumentUpload) {
-      onDocumentUpload(propertyId, file);
+      onDocumentUpload(propertyId, file, slotIndex);
     }
   };
+
+  const DOCUMENT_SLOTS = 3;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -308,14 +312,25 @@ export function PropertyBrandManager({
                           </p>
                         </div>
 
-                      <BrandDocumentUpload
-                          onUpload={(file) => handleDocumentUpload(property.id, file)}
-                          onRemove={onDocumentRemove ? () => onDocumentRemove(property.id) : undefined}
-                          existingUrl={property.paletteDocumentUrl}
-                          existingFilename={property.paletteDocumentFilename}
-                          label="Upload Brand Guidelines"
-                          description="PDF, PNG, or image with your official color palette"
-                        />
+                        {Array.from({ length: DOCUMENT_SLOTS }).map((_, slotIndex) => {
+                          const docUrls = property.paletteDocumentUrls || [];
+                          const docFilenames = property.paletteDocumentFilenames || [];
+                          // Slot 0 falls back to legacy single-document fields
+                          const url = docUrls[slotIndex] ?? (slotIndex === 0 ? property.paletteDocumentUrl : null);
+                          const filename = docFilenames[slotIndex] ?? (slotIndex === 0 ? property.paletteDocumentFilename : null);
+
+                          return (
+                            <BrandDocumentUpload
+                              key={slotIndex}
+                              onUpload={(file) => handleDocumentUpload(property.id, file, slotIndex)}
+                              onRemove={onDocumentRemove ? () => onDocumentRemove(property.id, slotIndex) : undefined}
+                              existingUrl={url}
+                              existingFilename={filename}
+                              label={slotIndex === 0 ? "Upload Brand Guidelines" : `Additional Document ${slotIndex}`}
+                              description="PDF, PNG, or image with your official brand guidelines"
+                            />
+                          );
+                        })}
 
                         <OrDivider />
 

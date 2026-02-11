@@ -20,8 +20,8 @@ interface BrandStepProps {
   onSave: (data: { properties: PropertyBrand[] }) => void;
   onLogoUpload: (propertyId: string, file: File, variant: string) => void;
   onLogoRemove?: (propertyId: string, variant: string) => void;
-  onDocumentUpload?: (propertyId: string, file: File) => void;
-  onDocumentRemove?: (propertyId: string) => void;
+  onDocumentUpload?: (propertyId: string, file: File, slotIndex: number) => void;
+  onDocumentRemove?: (propertyId: string, slotIndex: number) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
@@ -55,19 +55,23 @@ export function BrandStep({
         ? "active" 
         : "pending";
 
+  // Helper to get document key for a given property and slot index
+  const getDocumentKey = (propertyId: string, slotIndex: number) =>
+    slotIndex === 0 ? `palette_document_${propertyId}` : `palette_document_${propertyId}_${slotIndex}`;
+
   // Helper to extract palette document URL for a property from task data
-  const getPaletteDocumentUrl = (propertyId: string, taskData?: Record<string, unknown>): string | null => {
+  const getPaletteDocumentUrl = (propertyId: string, slotIndex: number, taskData?: Record<string, unknown>): string | null => {
     if (!taskData) return null;
-    const fieldKey = `palette_document_${propertyId}`;
+    const fieldKey = getDocumentKey(propertyId, slotIndex);
     const filePath = taskData[fieldKey] as string | undefined;
     if (!filePath) return null;
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/onboarding-assets/${filePath}`;
   };
 
   // Helper to extract palette document filename
-  const getPaletteDocumentFilename = (propertyId: string, taskData?: Record<string, unknown>): string | null => {
+  const getPaletteDocumentFilename = (propertyId: string, slotIndex: number, taskData?: Record<string, unknown>): string | null => {
     if (!taskData) return null;
-    return (taskData[`palette_document_${propertyId}_filename`] as string) || null;
+    return (taskData[`${getDocumentKey(propertyId, slotIndex)}_filename`] as string) || null;
   };
 
   // Helper to extract logo filenames from task data
@@ -113,12 +117,16 @@ export function BrandStep({
       return savedProperties.map(prop => {
         const extractedLogoUrls = getLogoUrls(prop.id, data);
         const extractedLogoFilenames = getLogoFilenames(data);
+        const docUrls = [0, 1, 2].map(i => getPaletteDocumentUrl(prop.id, i, data));
+        const docFilenames = [0, 1, 2].map(i => getPaletteDocumentFilename(prop.id, i, data));
         return {
           ...prop,
           logoUrls: { ...(prop.logoUrls || {}), ...extractedLogoUrls },
           logoFilenames: { ...(prop.logoFilenames || {}), ...extractedLogoFilenames },
-          paletteDocumentUrl: prop.paletteDocumentUrl || getPaletteDocumentUrl(prop.id, data),
-          paletteDocumentFilename: prop.paletteDocumentFilename || getPaletteDocumentFilename(prop.id, data),
+          paletteDocumentUrl: prop.paletteDocumentUrl || docUrls[0],
+          paletteDocumentFilename: prop.paletteDocumentFilename || docFilenames[0],
+          paletteDocumentUrls: docUrls,
+          paletteDocumentFilenames: docFilenames,
         };
       });
     }
@@ -132,7 +140,9 @@ export function BrandStep({
         logos: {},
         logoUrls: legacyLogos,
         colors: legacyColors || ["#3B82F6"],
-        paletteDocumentUrl: getPaletteDocumentUrl("property-default", data),
+        paletteDocumentUrl: getPaletteDocumentUrl("property-default", 0, data),
+        paletteDocumentUrls: [0, 1, 2].map(i => getPaletteDocumentUrl("property-default", i, data)),
+        paletteDocumentFilenames: [0, 1, 2].map(i => getPaletteDocumentFilename("property-default", i, data)),
         isExpanded: true,
       }];
     }
@@ -147,12 +157,16 @@ export function BrandStep({
       setProperties(savedProperties.map(prop => {
         const extractedLogoUrls = getLogoUrls(prop.id, data);
         const extractedLogoFilenames = getLogoFilenames(data);
+        const docUrls = [0, 1, 2].map(i => getPaletteDocumentUrl(prop.id, i, data));
+        const docFilenames = [0, 1, 2].map(i => getPaletteDocumentFilename(prop.id, i, data));
         return {
           ...prop,
           logoUrls: { ...(prop.logoUrls || {}), ...extractedLogoUrls },
           logoFilenames: { ...(prop.logoFilenames || {}), ...extractedLogoFilenames },
-          paletteDocumentUrl: prop.paletteDocumentUrl || getPaletteDocumentUrl(prop.id, data),
-          paletteDocumentFilename: prop.paletteDocumentFilename || getPaletteDocumentFilename(prop.id, data),
+          paletteDocumentUrl: prop.paletteDocumentUrl || docUrls[0],
+          paletteDocumentFilename: prop.paletteDocumentFilename || docFilenames[0],
+          paletteDocumentUrls: docUrls,
+          paletteDocumentFilenames: docFilenames,
         };
       }));
     }
@@ -166,9 +180,9 @@ export function BrandStep({
     onLogoUpload(propertyId, file, variant);
   };
 
-  const handleDocumentUpload = (propertyId: string, file: File) => {
+  const handleDocumentUpload = (propertyId: string, file: File, slotIndex: number) => {
     if (onDocumentUpload) {
-      onDocumentUpload(propertyId, file);
+      onDocumentUpload(propertyId, file, slotIndex);
     }
   };
 
