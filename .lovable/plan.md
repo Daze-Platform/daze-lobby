@@ -1,45 +1,62 @@
 
 
-## Add Color Palette to Venue Manager
+## Fix Pilot Agreement Data Persistence
 
-Each venue will get its own color palette, allowing clients to define brand colors per venue location (e.g., different color schemes for "Pool Deck" vs "Lobby Bar").
+Two issues are causing data loss in the Pilot Agreement form:
 
-### Database Change
+1. **No draft save** -- Closing the modal without signing discards all entered data. Users must complete the entire form in one session.
+2. **Incomplete pre-fill on reopen** -- When reopening the modal (signed or unsigned), only 4 fields load from the client record. The remaining ~12 fields (email, outlets, pricing, POS, dates) stored in the task's JSONB `data` are never passed back to the form.
 
-Add a `color_palette` JSONB column to the `venues` table to store an array of hex color strings per venue.
+### Fix 1: Merge task data into `initialLegalEntity`
 
+**File: `src/pages/Portal.tsx`** (and/or `TaskAccordion.tsx`)
+
+Currently `hotelLegalEntity` only passes client-table fields:
 ```text
-venues table
-+----------------+----------+
-| column         | type     |
-+----------------+----------+
-| ...existing... | ...      |
-| color_palette  | jsonb    | (new - default '[]')
-+----------------+----------+
+hotelLegalEntity={{
+  legal_entity_name: client?.legal_entity_name,
+  billing_address: client?.billing_address,
+  authorized_signer_name: client?.authorized_signer_name,
+  authorized_signer_title: client?.authorized_signer_title,
+}}
 ```
 
-### Code Changes
+Change this to merge the legal task's saved `data` (which already contains all extended fields after a previous sign or draft save):
+```text
+hotelLegalEntity={{
+  ...legalTaskData,  // all saved pilot agreement fields from task JSONB
+  legal_entity_name: client?.legal_entity_name || legalTaskData?.legal_entity_name,
+  billing_address: client?.billing_address || legalTaskData?.billing_address,
+  ...
+}}
+```
 
-1. **Migration** - Add `color_palette jsonb DEFAULT '[]'::jsonb` column to `venues` table.
+This means extracting the legal task's `data` field and passing it through. The task data already stores `contact_email`, `covered_outlets`, `hardware_option`, `start_date`, `pilot_term_days`, `pricing_model`, `pricing_amount`, `pos_system`, `pos_version`, `pos_api_key`, `pos_contact`, and `dba_name`.
 
-2. **Types (`src/types/venue.ts`)** - Add `colorPalette: string[]` to the `Venue` interface and `color_palette` to `DbVenue`.
+### Fix 2: Add auto-draft save on modal close
 
-3. **Data layer (`src/hooks/useClientPortal.ts`)** - Map `color_palette` from the database into the `colorPalette` field when fetching venues. Include `colorPalette` in the `updateVenue` mutation payload.
+**File: `src/components/portal/ReviewSignModal.tsx`**
 
-4. **Venue update types (`src/types/venue.ts`)** - Add `colorPalette?: string[]` to `VenueUpdate`.
+When the modal closes (unsigned), save the current form state to the legal task's JSONB `data` using a spread-merge so it persists for next open.
 
-5. **Venue handlers (`src/hooks/useVenueHandlers.ts`)** - Pass through `colorPalette` updates.
+**File: `src/pages/Portal.tsx`**
 
-6. **VenueContext (`src/contexts/VenueContext.tsx`)** - No structural changes needed; it already proxies `updateVenue`.
+Add a `saveLegalDraft` handler that calls `updateTask` (or a new lightweight mutation) to persist the form fields without marking the task as completed. Pass this as a new prop to `LegalStep` and then to `ReviewSignModal`.
 
-7. **VenueCard (`src/components/portal/VenueCard.tsx`)** - Import and render the existing `ColorPaletteManager` component below the logo upload section. Wire `onChange` to call `onColorPaletteChange` which debounce-saves to the database.
+### Fix 3: Wire draft save through LegalStep
 
-8. **VenueManager (`src/components/portal/VenueManager.tsx`)** - Add `onColorPaletteChange` handler that calls `updateVenue` with the new palette. Pass it down to `VenueCard`. Color palette remains optional for step completion (not gated by validation).
+**File: `src/components/portal/steps/LegalStep.tsx`**
+
+Accept a new `onDraftSave` prop and pass it to `ReviewSignModal`.
+
+**File: `src/components/portal/ReviewSignModal.tsx`**
+
+Call `onDraftSave(currentEntity)` when the dialog closes and the form is dirty (not yet signed).
 
 ### Technical Details
 
-- Reuses the existing `ColorPaletteManager` component as-is (supports up to 5 colors with picker, hex input, preview strip).
-- Color palette changes auto-save via the same debounced `updateVenue` path used for venue names.
-- The palette is optional -- venues can complete the step without adding colors.
-- Stored as JSONB array (e.g., `["#3B82F6", "#F59E0B"]`) for flexibility.
+- The `saveLegalDraft` will use a dedicated mutation (or reuse `saveLegalEntityMutation`) that updates both the `clients` table (4 core fields) and the `onboarding_tasks` `data` JSONB (all extended fields) without setting `is_completed = true`.
+- Uses the existing spread-merge strategy (`{...existingData, ...newData}`) to avoid overwriting signature data if already signed.
+- No database schema changes needed -- the task's JSONB `data` column already stores all fields.
+- Draft saves happen on modal close only (not on every keystroke) to keep it simple.
 
