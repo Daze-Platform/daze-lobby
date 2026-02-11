@@ -567,6 +567,7 @@ export type Database = {
       venues: {
         Row: {
           client_id: string
+          color_palette: Json | null
           created_at: string
           id: string
           logo_url: string | null
@@ -576,6 +577,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          color_palette?: Json | null
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -585,6 +587,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          color_palette?: Json | null
           created_at?: string
           id?: string
           logo_url?: string | null

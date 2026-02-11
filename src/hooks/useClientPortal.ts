@@ -659,13 +659,14 @@ export function useClientPortal() {
 
   // Update single venue (name, menu_pdf_url, or logo_url)
   const updateVenueMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null; colorPalette?: string[] } }) => {
       if (!clientId) throw new Error("No client found");
       
       const updateData: Record<string, unknown> = {};
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.menuPdfUrl !== undefined) updateData.menu_pdf_url = updates.menuPdfUrl;
       if (updates.logoUrl !== undefined) updateData.logo_url = updates.logoUrl;
+      if (updates.colorPalette !== undefined) updateData.color_palette = updates.colorPalette;
       
       const { error } = await supabase
         .from("venues")
@@ -844,6 +845,7 @@ export function useClientPortal() {
       menuPdfUrl: v.menu_pdf_url || undefined,
       logoUrl: v.logo_url || undefined,
       menus: menusMap.get(v.id) || [],
+      colorPalette: (v.color_palette as string[] | null) || [],
     })),
     [venuesData, menusMap]
   );

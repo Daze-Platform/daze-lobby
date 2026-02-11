@@ -147,6 +147,7 @@ export default function Portal() {
         menuPdfUrl: (result as { menu_pdf_url?: string | null }).menu_pdf_url || undefined,
         logoUrl: (result as { logo_url?: string | null }).logo_url || undefined,
         menus: [],
+        colorPalette: [],
       };
     }
     return undefined;

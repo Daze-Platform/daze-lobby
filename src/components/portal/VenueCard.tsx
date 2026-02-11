@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Upload, FileText, X, Check, Loader2, AlertCircle, Store, Image, Plus } from "lucide-react";
+import { ColorPaletteManager } from "./ColorPaletteManager";
 import { cn } from "@/lib/utils";
 import { validateMenuFile, validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ interface VenueCardProps {
   onRemove: () => void;
   onMenuRemove?: (menuId: string) => void;
   onLogoRemove?: () => void;
+  onColorPaletteChange?: (colors: string[]) => void;
   isSaving?: boolean;
   isDeleting?: boolean;
   isUploading?: boolean;
@@ -47,6 +49,7 @@ export function VenueCard({
   onRemove,
   onMenuRemove,
   onLogoRemove,
+  onColorPaletteChange,
   isSaving,
   isDeleting,
   isUploading,
@@ -325,6 +328,14 @@ export function VenueCard({
             />
           </label>
         </div>
+
+        {/* Color Palette */}
+        {onColorPaletteChange && (
+          <ColorPaletteManager
+            colors={venue.colorPalette || []}
+            onChange={onColorPaletteChange}
+          />
+        )}
       </CardContent>
     </Card>
   );

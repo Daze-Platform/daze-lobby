@@ -1,0 +1,1 @@
+ALTER TABLE public.venues ADD COLUMN color_palette jsonb DEFAULT '[]'::jsonb;

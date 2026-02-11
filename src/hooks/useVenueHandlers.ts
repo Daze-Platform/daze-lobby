@@ -27,6 +27,7 @@ export function useVenueHandlers(portal: PortalHook) {
         menuPdfUrl: (result as { menu_pdf_url?: string | null }).menu_pdf_url || undefined,
         logoUrl: (result as { logo_url?: string | null }).logo_url || undefined,
         menus: [],
+        colorPalette: [],
       };
     }
     return undefined;
@@ -34,7 +35,7 @@ export function useVenueHandlers(portal: PortalHook) {
 
   const handleUpdateVenue = useCallback(async (
     id: string, 
-    updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null }
+    updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null; colorPalette?: string[] }
   ) => {
     await updateVenue({ id, updates });
   }, [updateVenue]);
