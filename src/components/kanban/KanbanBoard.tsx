@@ -22,6 +22,23 @@ import type { Enums } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import confetti from "canvas-confetti";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const PHASE_ORDER: Record<Enums<"lifecycle_phase">, number> = {
+  onboarding: 0,
+  reviewing: 1,
+  pilot_live: 2,
+  contracted: 3,
+};
 
 const COLUMNS: {
   phase: Enums<"lifecycle_phase">;
@@ -50,6 +67,13 @@ const COLUMNS: {
   },
 ];
 
+const PHASE_LABELS: Record<Enums<"lifecycle_phase">, string> = {
+  onboarding: "Onboarding",
+  reviewing: "In Review",
+  pilot_live: "Pilot Live",
+  contracted: "Contracted",
+};
+
 function triggerMiniConfetti() {
   confetti({
     spread: 60,
@@ -74,6 +98,15 @@ export function KanbanBoard() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeClient, setActiveClient] = useState<Client | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
+  
+  // Backward move warning state
+  const [pendingBackwardMove, setPendingBackwardMove] = useState<{
+    clientId: string;
+    clientName: string;
+    fromPhase: Enums<"lifecycle_phase">;
+    toPhase: Enums<"lifecycle_phase">;
+  } | null>(null);
+  const [backwardWarningOpen, setBackwardWarningOpen] = useState(false);
   
   // Blocker modal state
   const [blockerModalOpen, setBlockerModalOpen] = useState(false);
@@ -148,11 +181,22 @@ export function KanbanBoard() {
     const activeClientData = clients?.find((c) => c.id === active.id);
     if (!activeClientData) return;
 
-    // over.id is always a column phase now
     const targetPhase = over.id as Enums<"lifecycle_phase">;
     
     if (!COLUMNS.some((col) => col.phase === targetPhase)) return;
     if (targetPhase === activeClientData.phase) return;
+
+    // Backward move detection
+    if (PHASE_ORDER[targetPhase] < PHASE_ORDER[activeClientData.phase]) {
+      setPendingBackwardMove({
+        clientId: active.id as string,
+        clientName: activeClientData.name,
+        fromPhase: activeClientData.phase,
+        toPhase: targetPhase,
+      });
+      setBackwardWarningOpen(true);
+      return;
+    }
 
     if (targetPhase === "contracted") {
       setTimeout(triggerMiniConfetti, 200);
@@ -163,6 +207,21 @@ export function KanbanBoard() {
       newPhase: targetPhase,
     });
   }, [clients, updatePhase]);
+
+  const handleConfirmBackwardMove = useCallback(() => {
+    if (!pendingBackwardMove) return;
+    updatePhase.mutate({
+      clientId: pendingBackwardMove.clientId,
+      newPhase: pendingBackwardMove.toPhase,
+    });
+    setPendingBackwardMove(null);
+    setBackwardWarningOpen(false);
+  }, [pendingBackwardMove, updatePhase]);
+
+  const handleCancelBackwardMove = useCallback(() => {
+    setPendingBackwardMove(null);
+    setBackwardWarningOpen(false);
+  }, []);
 
   const handleDragCancel = useCallback(() => {
     document.body.style.cursor = '';
@@ -265,6 +324,26 @@ export function KanbanBoard() {
         open={detailPanelOpen}
         onOpenChange={setDetailPanelOpen}
       />
+
+      <AlertDialog open={backwardWarningOpen} onOpenChange={setBackwardWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move client backward?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to move <strong>{pendingBackwardMove?.clientName}</strong> from{" "}
+              <strong>{pendingBackwardMove ? PHASE_LABELS[pendingBackwardMove.fromPhase] : ""}</strong> back to{" "}
+              <strong>{pendingBackwardMove ? PHASE_LABELS[pendingBackwardMove.toPhase] : ""}</strong>.
+              This is an unusual action. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelBackwardMove}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBackwardMove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Move backward
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DndContext>
   );
 }
