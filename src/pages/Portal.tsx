@@ -273,13 +273,12 @@ export default function Portal() {
                   </div>
                   <StatusBadge status={status} />
                   <div className="w-full border-t border-border/50" />
-                  <div className="w-full">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Tasks completed</span>
-                      <span className="font-semibold tabular-nums">
-                        {formattedTasks.filter(t => t.isCompleted).length} / {formattedTasks.length}
-                      </span>
-                    </div>
+                  <div className="w-full text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {formattedTasks.every(t => t.isCompleted)
+                        ? "All tasks complete — awaiting review"
+                        : `Next up: ${formattedTasks.find(t => !t.isCompleted)?.name ?? "—"}`}
+                    </p>
                   </div>
                   <ConfettiCelebration trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
                 </CardContent>
