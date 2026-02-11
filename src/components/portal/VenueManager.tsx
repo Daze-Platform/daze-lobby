@@ -62,6 +62,14 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     [updateVenue]
   );
 
+  // Debounced color palette save
+  const debouncedColorPaletteUpdate = useMemo(
+    () => debounce(async (id: string, colorPalette: string[]) => {
+      await updateVenue(id, { colorPalette });
+    }, 600),
+    [updateVenue]
+  );
+
   const handleAddVenue = async () => {
     const newVenue = await addVenue();
     if (newVenue) {
@@ -123,6 +131,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
                   onMenuRemove={(menuId) => removeMenu(menuId)}
                   onLogoRemove={() => removeLogo(venue.id)}
+                  onColorPaletteChange={(colors) => debouncedColorPaletteUpdate(venue.id, colors)}
                   onRemove={() => {
                     const venueName = venue.name || "Venue";
                     removeVenue(venue.id);
