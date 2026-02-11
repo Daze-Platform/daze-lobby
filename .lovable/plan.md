@@ -1,69 +1,26 @@
 
-## AI-Powered Codebase Review with GPT 5.2
 
-### What This Does
-Adds a "Code Review" feature to the dashboard that sends your key source files to OpenAI's GPT 5.2 model (via Lovable AI) and returns a structured analysis covering code quality, security, performance, and architecture.
+## Fix Progress Ring Beam Position
 
-### How It Works
-1. A new "Code Review" page accessible from the dashboard sidebar
-2. Click "Run Review" to send the codebase to GPT 5.2
-3. The AI analyzes key areas: architecture, security (RLS, auth), performance, type safety, and patterns
-4. Results stream back in real-time and are displayed in categorized sections
+### Problem
+The glowing "beam" dot on the ProgressRing appears at the wrong position along the arc. At 80%, it should sit at the leading tip (near where 100% would be), but it currently appears offset because the -90 degree rotation is applied twice: once in the `progressAngle` calculation and again via the CSS `transform -rotate-90` class on the SVG element.
 
-### User Flow
+### Fix
+**File: `src/components/portal/ProgressRing.tsx`**
+
+Change the `progressAngle` calculation from:
 ```text
-Dashboard Sidebar -> "Code Review" link -> Click "Run Review" -> Streaming results appear in cards
+const progressAngle = (progress / 100) * 360 - 90;
+```
+to:
+```text
+const progressAngle = (progress / 100) * 360;
 ```
 
-### What Gets Reviewed
-The edge function will bundle and send the most impactful files for review:
-- **Hooks** (useClients, useDevices, useMessages, useAuth, etc.) -- core business logic
-- **Pages** (Dashboard, Clients, Devices, Blockers, Portal, Auth) -- routing and page structure
-- **Key components** (KanbanBoard, ActivityFeedPanel, modals) -- complex UI logic
-- **Contexts** (AuthContext, ClientContext, VenueContext) -- state management
-- **Types** (client, auth, task, venue) -- type definitions
-- **Utilities** (auth, utils, fileValidation) -- shared helpers
+The CSS class `-rotate-90` on the `<svg>` element already rotates the entire coordinate system so that 0% starts at the top (12 o'clock). The `tipX`/`tipY` values are computed in SVG-local space and then the CSS rotation shifts them visually. Subtracting 90 in the angle formula causes a double offset, placing the dot roughly 90 degrees behind where it should be.
 
-Files like UI primitives (button, card, etc.) are excluded since they are standard shadcn components.
+### Result
+- At 80%, the beam will appear at the tip of the arc, just before the gap leading to 100%.
+- At low percentages, the beam will sit just past the 12 o'clock start.
+- No other files are affected. The glow filter, pulse animation, and conditional visibility (only shown when 0 < progress < 100 and not live) remain unchanged.
 
----
-
-### Technical Details
-
-**1. Edge Function: `supabase/functions/code-review/index.ts`**
-- Accepts a POST with `{ files: { path: string, content: string }[] }`
-- Constructs a system prompt instructing GPT 5.2 to act as a senior code reviewer
-- Sends to `https://ai.gateway.lovable.dev/v1/chat/completions` with model `openai/gpt-5.2`
-- Streams the response back as SSE for real-time display
-- Review categories: Architecture, Security, Performance, Type Safety, Error Handling, Best Practices
-- Handles 429/402 rate limit errors gracefully
-
-**2. Update `supabase/config.toml`**
-- Add `[functions.code-review]` with `verify_jwt = true` (admin-only)
-
-**3. New Page: `src/pages/CodeReview.tsx`**
-- "Run Review" button that collects key source files and sends them to the edge function
-- Streams tokens and renders the review in a readable format with markdown support
-- Shows loading state during analysis
-- Displays results in a clean card layout
-
-**4. File Collection: `src/lib/codeReviewFiles.ts`**
-- A static list of file paths to include in the review
-- A function that reads their content by fetching from the project (or hardcoded content bundled at build time)
-- Since we cannot read files from the browser at runtime, the files will be imported as raw strings using Vite's `?raw` import suffix
-
-**5. Sidebar Update: `src/components/layout/DashboardSidebar.tsx`**
-- Add a "Code Review" nav item under a new "TOOLS" section with a code icon
-
-**6. Route: `src/App.tsx`**
-- Add `/code-review` route pointing to the new page, protected behind admin role
-
-### Files to Create
-- `supabase/functions/code-review/index.ts`
-- `src/pages/CodeReview.tsx`
-- `src/lib/codeReviewFiles.ts`
-
-### Files to Modify
-- `supabase/config.toml` -- add function config
-- `src/components/layout/DashboardSidebar.tsx` -- add nav link
-- `src/App.tsx` -- add route
