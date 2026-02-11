@@ -6,15 +6,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, Image, Loader2, X, FileText, Save } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Upload, Image, Loader2, X, FileText, Save, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+const POS_PROVIDERS = [
+  { id: "toast", name: "Toast", logo: "/pos-logos/toast.svg" },
+  { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.svg" },
+  { id: "par_brink", name: "PAR Brink", logo: "" },
+  { id: "dinerware", name: "Dinerware", logo: "" },
+  { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "positouch", name: "POSitouch", logo: "" },
+  { id: "squirrel_systems", name: "Squirrel Systems", logo: "" },
+  { id: "xpient", name: "XPIENT", logo: "" },
+  { id: "maitred", name: "Maitre'D", logo: "" },
+  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "/pos-logos/ncr-aloha.svg" },
+  { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "simphonycloud", name: "SimphonyCloud", logo: "/pos-logos/oracle-micros.svg" },
+  { id: "other", name: "Other", logo: "" },
+];
 
 interface AdminBrandPosControlsProps {
   clientId: string;
   currentLogoUrl?: string | null;
   currentBrandPalette?: string[] | null;
   currentPosInstructions?: string | null;
+  currentPosProvider?: string | null;
 }
 
 export function AdminBrandPosControls({
@@ -22,6 +47,7 @@ export function AdminBrandPosControls({
   currentLogoUrl,
   currentBrandPalette,
   currentPosInstructions,
+  currentPosProvider,
 }: AdminBrandPosControlsProps) {
   const queryClient = useQueryClient();
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -30,13 +56,15 @@ export function AdminBrandPosControls({
   const [posInstructions, setPosInstructions] = useState(currentPosInstructions || "");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(currentLogoUrl || null);
+  const [selectedPosProvider, setSelectedPosProvider] = useState<string>(currentPosProvider || "");
 
   // Sync state when props change
   useEffect(() => {
     
     setPosInstructions(currentPosInstructions || "");
     setLogoPreview(currentLogoUrl || null);
-  }, [currentPosInstructions, currentLogoUrl]);
+    setSelectedPosProvider(currentPosProvider || "");
+  }, [currentPosInstructions, currentLogoUrl, currentPosProvider]);
 
   
 
@@ -87,7 +115,7 @@ export function AdminBrandPosControls({
   });
 
   const savePosInstructionsMutation = useMutation({
-    mutationFn: async (instructions: string) => {
+    mutationFn: async ({ instructions, provider }: { instructions: string; provider: string }) => {
       // Find or create the POS onboarding task
       const { data: task, error: fetchError } = await supabase
         .from("onboarding_tasks")
@@ -108,6 +136,7 @@ export function AdminBrandPosControls({
             data: {
               ...existingData,
               admin_instructions: instructions,
+              ...(provider ? { provider } : {}),
             },
           })
           .eq("id", task.id);
@@ -117,7 +146,7 @@ export function AdminBrandPosControls({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks", clientId] });
-      toast.success("POS instructions saved");
+      toast.success("POS settings saved");
     },
     onError: (error: Error) => {
       toast.error(`Failed to save: ${error.message}`);
@@ -149,6 +178,45 @@ export function AdminBrandPosControls({
 
   return (
     <div className="space-y-4">
+      {/* POS Provider Selection */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Store className="h-4 w-4 text-primary" />
+            POS Provider
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Select the client's point-of-sale system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select value={selectedPosProvider} onValueChange={setSelectedPosProvider}>
+            <SelectTrigger className="h-10 bg-background">
+              <SelectValue placeholder="Select POS provider" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover z-50">
+              {POS_PROVIDERS.map((provider) => (
+                <SelectItem key={provider.id} value={provider.id}>
+                  <div className="flex items-center gap-2">
+                    {provider.logo ? (
+                      <img
+                        src={provider.logo}
+                        alt={provider.name}
+                        className="w-5 h-5 object-contain rounded-sm"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <Store className="w-5 h-5 text-muted-foreground" />
+                    )}
+                    <span>{provider.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       {/* Logo Upload */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
@@ -247,7 +315,7 @@ export function AdminBrandPosControls({
           <Button
             size="sm"
             className="w-full"
-            onClick={() => savePosInstructionsMutation.mutate(posInstructions)}
+            onClick={() => savePosInstructionsMutation.mutate({ instructions: posInstructions, provider: selectedPosProvider })}
             disabled={savePosInstructionsMutation.isPending}
           >
             {savePosInstructionsMutation.isPending ? (
