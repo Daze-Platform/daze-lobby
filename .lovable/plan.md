@@ -1,51 +1,28 @@
 
 
-# Fix: Venue Name Input "Skewing" / Auto-completing While Typing
+## Fix: Admin redirect from `/portal/:slug` drops the client slug
 
-## Problem
+### Problem
+When an admin visits `/portal/daze-downtown-hotel`, the `PortalRoute` guard on line 46 redirects to `/admin/portal` (without the slug). This lands on the admin portal picker page, which may further redirect to `/dashboard`. The slug is lost.
 
-When typing a venue name, the text jumps or gets auto-completed unexpectedly. This happens because of a race condition:
+### Root Cause
+`PortalRoute` doesn't have access to the URL params. It hardcodes the redirect to `/admin/portal` instead of `/admin/portal/:clientSlug`.
 
-1. User types in the input, updating `localName` and triggering a debounced save (600ms)
-2. The debounced save writes the name to the database
-3. React Query refetches venue data, updating `venue.name`
-4. A `useEffect` in `VenueCard` resets `localName` to match `venue.name`
-5. This overwrites what the user is currently typing, causing characters to disappear or revert
+### Fix
+**File: `src/components/layout/PortalRoute.tsx`**
+- Import `useLocation` from `react-router-dom`
+- Extract the client slug from `location.pathname` (the last segment after `/portal/`)
+- Change the admin redirect from `/admin/portal` to `/admin/portal/{slug}` when a slug is present
 
-## Solution
+### Technical Detail
+```
+// Before (line 46):
+return <Navigate to="/admin/portal" replace />;
 
-Track whether the input is actively focused. Only sync `localName` from the server value (`venue.name`) when the input is **not focused** — this prevents the server response from overwriting the user's in-progress typing.
-
-## File Change
-
-### `src/components/portal/VenueCard.tsx`
-
-1. Add an `isFocused` ref to track input focus state
-2. Add `onFocus` and `onBlur` handlers to the venue name `Input`
-3. Guard the `useEffect` sync so it only updates `localName` when the input is not focused
-
-```text
-Before:
-  useEffect(() => {
-    setLocalName(venue.name);
-  }, [venue.name]);
-
-After:
-  const isFocusedRef = useRef(false);
-
-  useEffect(() => {
-    if (!isFocusedRef.current) {
-      setLocalName(venue.name);
-    }
-  }, [venue.name]);
-
-  // Input gets onFocus/onBlur handlers:
-  onFocus={() => { isFocusedRef.current = true; }}
-  onBlur={() => {
-    isFocusedRef.current = false;
-    setLocalName(venue.name); // sync to latest server value on blur
-  }}
+// After:
+const slug = location.pathname.split("/portal/")[1];
+return <Navigate to={slug ? `/admin/portal/${slug}` : "/admin/portal"} replace />;
 ```
 
-This is a small, targeted fix -- no architectural changes needed.
+This is a one-line fix in a single file. The `PortalBySlug` component already has the correct admin redirect logic (line 80: ``Navigate to={`/admin/portal/${clientSlug}`}``), but it never runs because `PortalRoute` intercepts first.
 
