@@ -10,6 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   DeviceTablet, 
   WifiHigh, 
@@ -24,12 +35,14 @@ import {
   BatteryLow,
   MapPin,
   Package,
+  Trash,
+  CircleNotch,
   type Icon as PhosphorIcon
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DeviceDetailPanel } from "@/components/dashboard/DeviceDetailPanel";
-import { useDevices, useClientList, type DeviceWithClient } from "@/hooks/useDevices";
+import { useDevices, useDeleteDevice, useClientList, type DeviceWithClient } from "@/hooks/useDevices";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const deviceIcons: Record<string, PhosphorIcon> = {
@@ -70,10 +83,12 @@ type FilterType = "all" | "offline" | "low-battery";
 
 function DeviceCard({ 
   device, 
-  onClick 
+  onClick,
+  onDelete,
 }: { 
   device: DeviceWithClient; 
   onClick: () => void;
+  onDelete: () => void;
 }) {
   const DeviceIcon = deviceIcons[device.device_type] || DeviceTablet;
   const config = statusConfig[device.status];
@@ -96,8 +111,24 @@ function DeviceCard({
       {/* Liquid Glass Overlay Effect */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
       
-      {/* Status Pulse Indicator */}
+      {/* Status Pulse Indicator + Delete */}
       <div className="absolute top-3 right-3 flex items-center gap-1.5">
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+              >
+                <Trash size={14} weight="duotone" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top"><p>Delete device</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="relative">
           <span className={cn(
             "block w-2.5 h-2.5 rounded-full",
@@ -222,9 +253,11 @@ export default function Devices() {
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [selectedDevice, setSelectedDevice] = useState<DeviceWithClient | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [deleteDeviceTarget, setDeleteDeviceTarget] = useState<DeviceWithClient | null>(null);
 
   const { data: devices = [], isLoading } = useDevices();
   const { data: clients = [] } = useClientList();
+  const deleteDeviceMutation = useDeleteDevice();
 
   const filteredDevices = useMemo(() => {
     let result = devices;
@@ -388,6 +421,7 @@ export default function Devices() {
                 key={device.id} 
                 device={device} 
                 onClick={() => handleDeviceClick(device)}
+                onDelete={() => setDeleteDeviceTarget(device)}
               />
             ))}
           </div>
@@ -410,6 +444,35 @@ export default function Devices() {
         open={isPanelOpen}
         onOpenChange={setIsPanelOpen}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteDeviceTarget} onOpenChange={(open) => !open && setDeleteDeviceTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteDeviceTarget?.serial_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this device from the inventory. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteDeviceTarget) {
+                  deleteDeviceMutation.mutate(deleteDeviceTarget.id, {
+                    onSettled: () => setDeleteDeviceTarget(null),
+                  });
+                }
+              }}
+              disabled={deleteDeviceMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+            >
+              {deleteDeviceMutation.isPending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
