@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { Loader2 } from "lucide-react";
-import { isClient, hasDashboardAccess, signOut } from "@/lib/auth";
+import { isClient, hasDashboardAccess, forceCleanSession } from "@/lib/auth";
 import NoHotelAssigned from "@/pages/NoHotelAssigned";
 import { useEffect, useState } from "react";
 
@@ -28,22 +28,9 @@ export function PortalRoute({ children }: PortalRouteProps) {
   useEffect(() => {
     if (!authLoading && isAuthenticated && isAdminUser && !signingOut) {
       setSigningOut(true);
-      signOut()
-        .catch(() => {})
-        .finally(() => {
-          // Forcibly clear Supabase session from storage as fallback
-          // Handles Brave and other privacy-focused browsers
-          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-          if (projectId) {
-            const storageKey = `sb-${projectId}-auth-token`;
-            try {
-              localStorage.removeItem(storageKey);
-              sessionStorage.removeItem(storageKey);
-            } catch {
-              // Storage access may be blocked
-            }
-          }
-        });
+      forceCleanSession().finally(() => {
+        // Session cleaned — component will re-render as unauthenticated
+      });
     }
   }, [authLoading, isAuthenticated, isAdminUser, signingOut]);
 
