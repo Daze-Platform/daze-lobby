@@ -132,6 +132,25 @@ export function ClientLoginForm() {
         }
 
         const result = await withTimeout(signIn(email, password), 15000, "Sign in timed out. Please try again.");
+
+        // Check if user has an admin role — block them from client portal
+        const userId = (result as { user?: { id: string } })?.user?.id;
+        if (userId) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          const userRole = roleData?.role;
+          if (userRole === "admin" || userRole === "ops_manager" || userRole === "support") {
+            await supabase.auth.signOut();
+            setError("This portal is for hotel partners only. Please sign in at the admin dashboard.");
+            setLoading(false);
+            return;
+          }
+        }
+
         const session =
           (result as { session?: unknown })?.session ??
           ((await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out")) as { data: { session: unknown } })?.data?.session ??
