@@ -54,7 +54,7 @@ export function PortalManagementPanel({
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
-      return data?.data as { admin_instructions?: string } | null;
+      return data?.data as { admin_instructions?: string; provider?: string } | null;
     },
   });
 
@@ -136,6 +136,7 @@ export function PortalManagementPanel({
             currentLogoUrl={currentLogoUrl}
             currentBrandPalette={currentBrandPalette}
             currentPosInstructions={posTask?.admin_instructions}
+            currentPosProvider={posTask?.provider as string | undefined}
           />
         </TabsContent>
 
