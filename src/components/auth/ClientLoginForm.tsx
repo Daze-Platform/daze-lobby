@@ -48,6 +48,7 @@ export function ClientLoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shouldShake, setShouldShake] = useState(false);
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const navigationAttemptedRef = useRef(false);
@@ -165,8 +166,15 @@ export function ClientLoginForm() {
         setError("Authentication succeeded but session not established. Please try again.");
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to sign in";
+      const rawMessage = err instanceof Error ? err.message : "Failed to sign in";
+      const isInvalidCreds = rawMessage.toLowerCase().includes("invalid login credentials");
+      const errorMessage = isInvalidCreds
+        ? "No account found with these credentials. Please sign up first."
+        : rawMessage;
       setError(errorMessage);
+      if (isInvalidCreds && mode === "login") {
+        setShowSignUpPrompt(true);
+      }
       toast({ title: mode === "signup" ? "Sign Up Failed" : "Sign In Failed", description: errorMessage, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -243,7 +251,19 @@ export function ClientLoginForm() {
         {error && (
           <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {showSignUpPrompt && (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="ml-1 p-0 h-auto text-destructive underline underline-offset-2"
+                  onClick={() => { setShowSignUpPrompt(false); setError(null); setMode("signup"); }}
+                >
+                  Back to Sign Up
+                </Button>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 
