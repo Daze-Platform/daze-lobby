@@ -65,23 +65,29 @@ export function BrandStep({
   // Helper to extract logo URLs for a property from task data
   const getLogoUrls = (propertyId: string, taskData?: Record<string, unknown>): Record<string, string> => {
     if (!taskData) return {};
-    const logos = (taskData.logos || {}) as Record<string, string>;
     const result: Record<string, string> = {};
-    
-    // Logo keys are stored as: logo_{propertyId}_{variant} -> URL
-    // or for legacy single-property: {variant} -> URL
-    for (const [key, url] of Object.entries(logos)) {
-      // Check for property-specific logo pattern: logo_{propertyId}_{variant}
-      const propertyPrefix = `logo_${propertyId}_`;
-      if (key.startsWith(propertyPrefix)) {
-        const variant = key.substring(propertyPrefix.length); // Extract: dark, light, icon
-        result[variant] = url;
-      } else if (!key.startsWith("logo_") && ["dark", "light", "icon"].includes(key)) {
-        // Legacy format: direct variant names for single-property setup
-        result[key] = url;
+
+    // Primary: look at top-level keys like "logo_{propertyId}_{variant}" (stored by uploadFileMutation)
+    const propertyPrefix = `logo_${propertyId}_`;
+    for (const [key, value] of Object.entries(taskData)) {
+      if (key.startsWith(propertyPrefix) && typeof value === "string") {
+        const variant = key.substring(propertyPrefix.length);
+        result[variant] = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/onboarding-assets/${value}`;
       }
     }
-    
+
+    // Fallback: legacy data.logos format (full URLs)
+    const logos = (taskData.logos || {}) as Record<string, string>;
+    for (const [key, url] of Object.entries(logos)) {
+      const legacyPrefix = `logo_${propertyId}_`;
+      if (key.startsWith(legacyPrefix)) {
+        const variant = key.substring(legacyPrefix.length);
+        if (!result[variant]) result[variant] = url;
+      } else if (!key.startsWith("logo_") && ["dark", "light", "icon"].includes(key)) {
+        if (!result[key]) result[key] = url;
+      }
+    }
+
     return result;
   };
 
