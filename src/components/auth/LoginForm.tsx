@@ -151,6 +151,23 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
       );
       console.log("[LoginForm] Supabase response received:", result.user?.email);
 
+      // Check if user has a client role -- block them from Control Tower
+      const userId = result?.user?.id;
+      if (userId) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (roleData?.role === "client") {
+          await supabase.auth.signOut();
+          setError("This dashboard is for internal team members only. Please sign in at the Partner Portal.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const session =
         (result as { session?: unknown })?.session ??
         ((await withTimeout(
