@@ -10,12 +10,12 @@ export interface UserWithRole {
   role: AppRole | null;
 }
 
-export async function signUp(email: string, password: string, fullName: string) {
+export async function signUp(email: string, password: string, fullName: string, redirectTo?: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: window.location.origin,
+      emailRedirectTo: redirectTo || window.location.origin,
       data: {
         full_name: fullName,
       },
