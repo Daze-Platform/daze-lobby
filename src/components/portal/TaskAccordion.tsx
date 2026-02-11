@@ -26,6 +26,7 @@ interface TaskAccordionProps {
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   onUploadVenueLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   onCompleteVenueStep: () => Promise<void>;
+  onDeleteVenueMenu: (menuId: string) => Promise<void>;
   isAddingVenue?: boolean;
   isUpdatingVenue?: boolean;
   isDeletingVenue?: boolean;
@@ -48,6 +49,7 @@ export function TaskAccordion({
   onUploadMenu,
   onUploadVenueLogo,
   onCompleteVenueStep,
+  onDeleteVenueMenu,
   isAddingVenue,
   isUpdatingVenue,
   isDeletingVenue,
@@ -192,6 +194,7 @@ export function TaskAccordion({
       onUploadMenu={onUploadMenu}
       onUploadLogo={onUploadVenueLogo}
       onCompleteStep={onCompleteVenueStep}
+      onDeleteMenu={onDeleteVenueMenu}
       isAddingVenue={isAddingVenue}
       isUpdatingVenue={isUpdatingVenue}
       isDeletingVenue={isDeletingVenue}

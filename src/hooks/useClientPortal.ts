@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { toast } from "sonner";
-import type { Venue, DbVenue } from "@/types/venue";
+import type { Venue, DbVenue, DbVenueMenu, VenueMenu } from "@/types/venue";
 import { sanitizeFilename } from "@/lib/fileValidation";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { dataUrlToBlob } from "@/lib/dataUrlToBlob";
@@ -64,6 +64,25 @@ export function useClientPortal() {
       return (data || []) as DbVenue[];
     },
     enabled: !!clientId,
+  });
+
+  // Fetch venue menus for all venues
+  const venueIds = useMemo(() => (venuesData || []).map(v => v.id), [venuesData]);
+  const { data: venueMenusData } = useQuery({
+    queryKey: ["venue-menus", clientId],
+    queryFn: async () => {
+      if (!clientId || venueIds.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from("venue_menus")
+        .select("*")
+        .in("venue_id", venueIds)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as DbVenueMenu[];
+    },
+    enabled: !!clientId && venueIds.length > 0,
   });
 
   // Save legal entity info to clients table (draft save)
@@ -410,7 +429,7 @@ export function useClientPortal() {
     },
   });
 
-  // Upload venue menu - ISOLATED PATH: venues/{client_id}/{venue_name}/menu.pdf
+  // Upload venue menu - inserts into venue_menus table
   const uploadVenueMenuMutation = useMutation({
     mutationFn: async ({ 
       venueId,
@@ -425,8 +444,9 @@ export function useClientPortal() {
 
       // Sanitize venue name for path
       const safeVenueName = venueName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      // MULTI-TENANT PATH: venues/{client_id}/{venue_name}/menu.pdf
-      const filePath = `${clientId}/${safeVenueName}/menu.pdf`;
+      const timestamp = Date.now();
+      const safeName = sanitizeFilename(file.name);
+      const filePath = `${clientId}/${safeVenueName}/menu_${timestamp}_${safeName}`;
       
       const { error: uploadError } = await supabase.storage
         .from("onboarding-assets")
@@ -439,27 +459,24 @@ export function useClientPortal() {
         .from("onboarding-assets")
         .getPublicUrl(filePath);
 
-      // Update venue with menu URL
-      const { error: updateError } = await supabase
-        .from("venues")
-        .update({ menu_pdf_url: urlData?.publicUrl })
-        .eq("id", venueId);
+      // Insert into venue_menus table
+      const { data: menuRow, error: insertError } = await supabase
+        .from("venue_menus")
+        .insert({
+          venue_id: venueId,
+          file_url: urlData?.publicUrl || '',
+          file_name: file.name,
+          label: '',
+        })
+        .select()
+        .single();
 
-      if (updateError) throw updateError;
+      if (insertError) throw insertError;
 
-      return { path: filePath, url: urlData?.publicUrl, venueId };
+      return { menuId: menuRow.id, url: urlData?.publicUrl, venueId };
     },
-    onMutate: async ({ venueId }) => {
-      // Cancel outgoing refetches so they don't overwrite optimistic update
-      await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
-      const previous = queryClient.getQueryData<DbVenue[]>(["venues", clientId]);
-      return { previous };
-    },
-    onSuccess: (data, variables) => {
-      // Optimistically patch the venue in cache immediately
-      queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
-        old?.map(v => v.id === data.venueId ? { ...v, menu_pdf_url: data.url ?? null } : v) ?? []
-      );
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["venue-menus", clientId] });
       
       logActivity.mutate({
         action: "menu_uploaded",
@@ -468,15 +485,27 @@ export function useClientPortal() {
       
       toast.success("Menu uploaded successfully!");
     },
-    onError: (error, _vars, context) => {
-      // Rollback on error
-      if (context?.previous) {
-        queryClient.setQueryData(["venues", clientId], context.previous);
-      }
+    onError: (error) => {
       toast.error("Failed to upload menu: " + error.message);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+  });
+
+  // Delete a venue menu
+  const deleteVenueMenuMutation = useMutation({
+    mutationFn: async (menuId: string) => {
+      const { error } = await supabase
+        .from("venue_menus")
+        .delete()
+        .eq("id", menuId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["venue-menus", clientId] });
+      toast.success("Menu removed");
+    },
+    onError: (error) => {
+      toast.error("Failed to remove menu: " + error.message);
     },
   });
 
@@ -796,6 +825,17 @@ export function useClientPortal() {
     }
   }, [tasks, client, updateClientPhaseMutation]);
 
+  // Group venue menus by venue ID
+  const menusMap = useMemo(() => {
+    const map = new Map<string, VenueMenu[]>();
+    (venueMenusData || []).forEach(m => {
+      const list = map.get(m.venue_id) || [];
+      list.push({ id: m.id, venueId: m.venue_id, fileUrl: m.file_url, fileName: m.file_name, label: m.label });
+      map.set(m.venue_id, list);
+    });
+    return map;
+  }, [venueMenusData]);
+
   // Transform venues to component format - MEMOIZED
   const venues: Venue[] = useMemo(() => 
     (venuesData || []).map(v => ({
@@ -803,8 +843,9 @@ export function useClientPortal() {
       name: v.name,
       menuPdfUrl: v.menu_pdf_url || undefined,
       logoUrl: v.logo_url || undefined,
+      menus: menusMap.get(v.id) || [],
     })),
-    [venuesData]
+    [venuesData, menusMap]
   );
 
   return {
@@ -825,6 +866,7 @@ export function useClientPortal() {
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
     uploadVenueLogo: uploadVenueLogoMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
+    deleteVenueMenu: deleteVenueMenuMutation.mutateAsync,
     // Individual venue CRUD
     addVenue: addVenueMutation.mutateAsync,
     updateVenue: updateVenueMutation.mutateAsync,

@@ -88,7 +88,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     onStepComplete?.();
   };
 
-  const hasValidVenues = venues.length > 0 && venues.every(v => v.name.trim() && (v.menuPdfUrl || v.menuFile) && (v.logoUrl || v.logoFile));
+  const hasValidVenues = venues.length > 0 && venues.every(v => v.name.trim() && v.menus.length > 0 && (v.logoUrl || v.logoFile));
   const hasMissingFields = venues.length > 0 && !hasValidVenues;
 
   return (
@@ -121,7 +121,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   onNameChange={(name) => handleVenueNameChange(venue.id, name)}
                   onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
                   onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
-                  onMenuRemove={() => removeMenu(venue.id)}
+                  onMenuRemove={(menuId) => removeMenu(menuId)}
                   onLogoRemove={() => removeLogo(venue.id)}
                   onRemove={() => {
                     const venueName = venue.name || "Venue";

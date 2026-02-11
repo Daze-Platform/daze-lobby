@@ -84,7 +84,7 @@ export default function Portal() {
   const { 
     tasks, venues, isLoading, progress, status,
     signLegal, updateTask, uploadFile,
-    uploadVenueMenu, uploadVenueLogo,
+    uploadVenueMenu, uploadVenueLogo, deleteVenueMenu,
     addVenue, updateVenue, deleteVenue, completeVenueStep,
     isSigningLegal, isUpdating, isAddingVenue, isUpdatingVenue, isDeletingVenue,
   } = useClientPortal();
@@ -146,6 +146,7 @@ export default function Portal() {
         name: result.name,
         menuPdfUrl: (result as { menu_pdf_url?: string | null }).menu_pdf_url || undefined,
         logoUrl: (result as { logo_url?: string | null }).logo_url || undefined,
+        menus: [],
       };
     }
     return undefined;
@@ -299,6 +300,7 @@ export default function Portal() {
                     onUploadMenu={handleUploadMenu}
                     onUploadVenueLogo={handleUploadVenueLogo}
                     onCompleteVenueStep={handleCompleteVenueStep}
+                    onDeleteVenueMenu={deleteVenueMenu}
                     isAddingVenue={isAddingVenue}
                     isUpdatingVenue={isUpdatingVenue}
                     isDeletingVenue={isDeletingVenue}

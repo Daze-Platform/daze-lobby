@@ -23,7 +23,7 @@ interface VenueContextType {
   addVenue: () => Promise<Venue | undefined>;
   updateVenue: (id: string, updates: VenueUpdate) => Promise<void>;
   removeVenue: (id: string) => Promise<void>;
-  removeMenu: (venueId: string) => Promise<void>;
+  removeMenu: (menuId: string) => Promise<void>;
   removeLogo: (venueId: string) => Promise<void>;
   uploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   uploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
@@ -40,6 +40,7 @@ interface VenueProviderProps {
   onRemoveVenue: (id: string) => Promise<void>;
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   onUploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onDeleteMenu: (menuId: string) => Promise<void>;
   onCompleteStep: () => Promise<void>;
   isAddingVenue?: boolean;
   isUpdatingVenue?: boolean;
@@ -54,6 +55,7 @@ export function VenueProvider({
   onRemoveVenue,
   onUploadMenu,
   onUploadLogo,
+  onDeleteMenu,
   onCompleteStep,
   isAddingVenue = false,
   isUpdatingVenue = false,
@@ -90,9 +92,9 @@ export function VenueProvider({
     }
   }, [onUploadLogo]);
 
-  const removeMenu = useCallback(async (venueId: string) => {
-    await onUpdateVenue(venueId, { menuPdfUrl: null });
-  }, [onUpdateVenue]);
+  const removeMenu = useCallback(async (menuId: string) => {
+    await onDeleteMenu(menuId);
+  }, [onDeleteMenu]);
 
   const removeLogo = useCallback(async (venueId: string) => {
     await onUpdateVenue(venueId, { logoUrl: null });

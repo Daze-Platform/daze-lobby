@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Upload, FileText, X, Check, Loader2, AlertCircle, Store, Image } from "lucide-react";
+import { Upload, FileText, X, Check, Loader2, AlertCircle, Store, Image, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateMenuFile, validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ interface VenueCardProps {
   onMenuUpload: (file: File) => void;
   onLogoUpload: (file: File) => void;
   onRemove: () => void;
-  onMenuRemove?: () => void;
+  onMenuRemove?: (menuId: string) => void;
   onLogoRemove?: () => void;
   isSaving?: boolean;
   isDeleting?: boolean;
@@ -77,26 +77,25 @@ export function VenueCard({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file before processing
     const validation = validateMenuFile(file, 20);
     if (!validation.isValid) {
       toast.error(validation.error || "Invalid file");
-      e.target.value = ''; // Reset input
+      e.target.value = '';
       return;
     }
 
     onMenuUpload(file);
+    e.target.value = ''; // Reset so same file can be uploaded again
   };
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file before processing
     const validation = validateImageFile(file, 5);
     if (!validation.isValid) {
       toast.error(validation.error || "Invalid file");
-      e.target.value = ''; // Reset input
+      e.target.value = '';
       return;
     }
 
@@ -114,13 +113,8 @@ export function VenueCard({
     onRemove();
   };
 
-  const hasMenu = venue.menuFile || venue.menuPdfUrl;
   const hasLogo = venue.logoFile || venue.logoUrl;
-
-  // Derive menu file name from URL or local file
-  const menuDisplayName = venue.menuFileName 
-    || (venue.menuPdfUrl ? decodeURIComponent(venue.menuPdfUrl.split('/').pop() || '').replace(/^\d+_/, '') || 'Menu uploaded' : undefined)
-    || (venue.menuFile ? venue.menuFile.name : undefined);
+  const hasMenus = venue.menus.length > 0;
 
   return (
     <Card className="relative group">
@@ -257,20 +251,53 @@ export function VenueCard({
           </label>
         </div>
 
-        {/* Menu Upload */}
+        {/* Menus Section - Multiple Upload */}
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground flex items-center gap-2">
             <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
-            Menu (PDF)
+            Menus (PDF)
             <span className="text-destructive">*</span>
+            {hasMenus && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                {venue.menus.length} menu{venue.menus.length !== 1 ? "s" : ""}
+              </span>
+            )}
           </Label>
 
+          {/* Existing Menus List */}
+          {venue.menus.map((menu) => (
+            <div
+              key={menu.id}
+              className="flex items-center gap-3 p-3 rounded-lg border border-border bg-primary/5"
+            >
+              <div className="flex items-center gap-2 text-primary shrink-0">
+                <FileText className="w-4 h-4" strokeWidth={1.5} />
+                <Check className="w-3.5 h-3.5" strokeWidth={2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{menu.fileName || "Menu"}</p>
+                {menu.label && (
+                  <p className="text-xs text-muted-foreground truncate">{menu.label}</p>
+                )}
+              </div>
+              {onMenuRemove && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => onMenuRemove(menu.id)}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
+          ))}
+
+          {/* Upload New Menu */}
           <label
             className={cn(
               "flex flex-col items-center justify-center p-5 border-2 border-dashed rounded-lg cursor-pointer transition-all",
-              hasMenu 
-                ? "border-primary bg-primary/5" 
-                : "border-muted-foreground/30 hover:border-primary hover:bg-muted/50"
+              "border-muted-foreground/30 hover:border-primary hover:bg-muted/50"
             )}
           >
             {isUploading ? (
@@ -278,34 +305,11 @@ export function VenueCard({
                 <Loader2 className="w-7 h-7 text-primary animate-spin mb-2" strokeWidth={1.5} />
                 <span className="text-sm text-muted-foreground">Uploading...</span>
               </>
-            ) : hasMenu ? (
-              <div className="relative w-full flex flex-col items-center">
-                <div className="flex items-center gap-2 text-primary mb-1">
-                  <FileText className="w-5 h-5" strokeWidth={1.5} />
-                  <Check className="w-4 h-4" strokeWidth={2} />
-                </div>
-                <span className="text-sm font-medium text-foreground">
-                  {menuDisplayName || "Menu uploaded"}
-                </span>
-                <span className="text-xs text-muted-foreground mt-1">
-                  Click to replace
-                </span>
-                {onMenuRemove && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-0 right-0 h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMenuRemove(); }}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </div>
             ) : (
               <>
-                <IconStack backgroundIcon={FileText} foregroundIcon={Upload} />
+                <IconStack backgroundIcon={FileText} foregroundIcon={hasMenus ? Plus : Upload} />
                 <span className="text-sm text-muted-foreground mt-2">
-                  Drop menu PDF or click to upload
+                  {hasMenus ? "Add another menu" : "Drop menu PDF or click to upload"}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
