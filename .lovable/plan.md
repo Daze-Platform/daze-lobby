@@ -1,72 +1,51 @@
 
+## Fix: Email Verification Redirects Client Users to Control Tower
 
-## Fix Auth Conflicts Between Admin and Client Users on Same Browser
+### Problem
+When a client signs up at `/portal/login`, the verification email link sends them to `window.location.origin` (the site root), which resolves to the admin Control Tower. Clients should land back in the portal after verifying.
 
-### Root Cause
+### Changes
 
-When two users share the same browser (or one user has both admin and client accounts), stale sessions from the other role prevent access to the correct login page. The `AuthRedirect` component blindly redirects any authenticated user away from login pages without checking if they belong on that login page.
+**1. `src/lib/auth.ts` -- Add optional `redirectTo` parameter to `signUp`**
 
-### Problem Breakdown
+Update the function signature to accept an optional redirect URL. When provided, it overrides the default `window.location.origin`:
 
-1. **Admin can't reach /auth**: If a client session lingers, `AuthRedirect` sees `isAuthenticated=true` and redirects to `/post-auth`, which resolves to the client portal. The admin never sees the login form.
-
-2. **Client can't reach /portal/login**: If an admin session lingers, both `ClientLoginForm` (mount effect) and `PortalRoute` (guard) race to sign out the admin, causing flicker, double sign-outs, and sometimes a stuck state on Brave.
-
-3. **Brave storage issues**: `signOut()` may not fully clear `localStorage`/`sessionStorage` auth tokens in privacy-focused browsers, leaving ghost sessions.
-
-### Fix 1: Make AuthRedirect role-aware
-
-**File: `src/components/layout/AuthRedirect.tsx`**
-
-Instead of redirecting all authenticated users, check their role:
-- On `/auth` (admin login): if the user is a **client**, sign them out and show the login form instead of redirecting
-- On `/portal/login` (client login): if the user is an **admin**, sign them out and show the login form instead of redirecting
-- If the role matches the login page context, redirect to `/post-auth` as before
-
-This eliminates the "can't reach login form" problem entirely.
-
-### Fix 2: Remove redundant admin sign-out from ClientLoginForm mount
-
-**File: `src/components/auth/ClientLoginForm.tsx`**
-
-Remove the `checkExistingSession` effect (lines 66-101) that signs out admin users on mount. This is now handled by `AuthRedirect` before the form even renders, eliminating the race condition with `PortalRoute`.
-
-### Fix 3: Consolidate Brave storage cleanup into a shared utility
-
-**File: `src/lib/auth.ts`**
-
-Add a `forceCleanSession()` helper that:
-1. Calls `supabase.auth.signOut()`
-2. Explicitly removes the `sb-{projectId}-auth-token` key from both `localStorage` and `sessionStorage`
-
-Use this in `AuthRedirect` when signing out a mismatched role user, and in `PortalRoute` for admin rejection. This replaces the scattered inline storage cleanup code.
-
-### Fix 4: Simplify PortalRoute admin handling
-
-**File: `src/components/layout/PortalRoute.tsx`**
-
-Replace the `useEffect`-based admin sign-out with a call to the new `forceCleanSession()` utility, and redirect to `/portal/login` after cleanup completes. Remove the duplicated inline `localStorage`/`sessionStorage` removal code.
-
-### Technical Flow After Fix
-
-```text
-Admin Brian visits /auth with stale client session:
-  AuthRedirect detects: authenticated + client role + on /auth
-    -> forceCleanSession()
-    -> renders <Auth /> login form (no redirect)
-    -> Admin Brian logs in fresh
-
-Client Brian visits /portal/login with stale admin session:
-  AuthRedirect detects: authenticated + admin role + on /portal/login
-    -> forceCleanSession()
-    -> renders <PortalLogin /> form (no redirect)
-    -> Client Brian logs in fresh
+```typescript
+export async function signUp(
+  email: string, password: string, fullName: string, redirectTo?: string
+) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirectTo || window.location.origin,
+      data: { full_name: fullName },
+    },
+  });
+  if (error) throw error;
+  return data;
+}
 ```
 
+**2. `src/components/auth/ClientLoginForm.tsx` -- Pass portal-aware redirect URL**
+
+When calling `signUp`, build a redirect URL that includes portal context so PostAuth routes the user correctly after verification:
+
+```typescript
+const redirectUrl = returnTo
+  ? `${window.location.origin}/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
+  : `${window.location.origin}/post-auth?origin=portal`;
+
+await withTimeout(signUp(email, password, fullName, redirectUrl), 15000, "...");
+```
+
+The `returnTo` value (e.g., `/portal/daze-downtown-hotel`) is already available from search params. This ensures the verification email link sends the user to `/post-auth?origin=portal&returnTo=/portal/daze-downtown-hotel`, where PostAuth resolves their client assignment and routes them to the correct portal.
+
+### No other changes needed
+- Admin signups from `/auth` continue using the default `window.location.origin` (no `redirectTo` passed)
+- PostAuth already handles `origin=portal` and `returnTo` parameters correctly
+- No database or schema changes required
+
 ### Files Changed
-
-- `src/lib/auth.ts` -- add `forceCleanSession()` utility
-- `src/components/layout/AuthRedirect.tsx` -- role-aware redirect logic with session cleanup
-- `src/components/auth/ClientLoginForm.tsx` -- remove redundant admin session check on mount
-- `src/components/layout/PortalRoute.tsx` -- use shared cleanup utility, simplify admin guard
-
+- `src/lib/auth.ts`
+- `src/components/auth/ClientLoginForm.tsx`
