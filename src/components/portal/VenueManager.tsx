@@ -111,7 +111,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-2">
           <MapPin className="w-4 h-4" />
-          Venue Locations
+          Venues
         </Label>
         <span className="text-xs text-muted-foreground">
           {venues.length} venue{venues.length !== 1 ? "s" : ""} • Auto-saved
