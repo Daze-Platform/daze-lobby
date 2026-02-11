@@ -2,8 +2,9 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { Loader2 } from "lucide-react";
-import { isClient, hasDashboardAccess } from "@/lib/auth";
+import { isClient, hasDashboardAccess, signOut } from "@/lib/auth";
 import NoHotelAssigned from "@/pages/NoHotelAssigned";
+import { useEffect, useState } from "react";
 
 interface PortalRouteProps {
   children: React.ReactNode;
@@ -19,8 +20,19 @@ export function PortalRoute({ children }: PortalRouteProps) {
   const { isAuthenticated, loading: authLoading, role } = useAuthContext();
   const { clientId, isLoading: clientLoading, error } = useClient();
   const location = useLocation();
+  const [signingOut, setSigningOut] = useState(false);
 
-  const isAdmin = hasDashboardAccess(role);
+  const isAdminUser = hasDashboardAccess(role);
+
+  // Sign out admin users who landed on a client portal route
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && isAdminUser && !signingOut) {
+      setSigningOut(true);
+      signOut().catch(() => {}).finally(() => {
+        // After sign-out, redirect will happen via the !isAuthenticated check below
+      });
+    }
+  }, [authLoading, isAuthenticated, isAdminUser, signingOut]);
 
   // Still loading auth
   if (authLoading) {
@@ -42,10 +54,13 @@ export function PortalRoute({ children }: PortalRouteProps) {
     return <Navigate to="/post-auth" replace />;
   }
 
-  // Admins should use /admin/portal instead
-  if (isAdmin) {
-    const slug = location.pathname.split("/portal/")[1];
-    return <Navigate to={slug ? `/admin/portal/${slug}` : "/admin/portal"} replace />;
+  // Admins are being signed out — show loader while that completes
+  if (isAdminUser || signingOut) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   // Must be a client role to access /portal
