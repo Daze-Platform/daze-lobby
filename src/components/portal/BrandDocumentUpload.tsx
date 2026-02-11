@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface BrandDocumentUploadProps {
   onUpload: (file: File) => void;
+  onRemove?: () => void;
   existingUrl?: string | null;
   existingFilename?: string | null;
   isUploading?: boolean;
@@ -15,6 +16,7 @@ interface BrandDocumentUploadProps {
 
 export function BrandDocumentUpload({
   onUpload,
+  onRemove,
   existingUrl,
   existingFilename,
   isUploading = false,
@@ -63,6 +65,7 @@ export function BrandDocumentUpload({
     if (inputRef.current) {
       inputRef.current.value = "";
     }
+    onRemove?.();
   };
 
   const hasFile = selectedFile || existingUrl;

@@ -33,7 +33,7 @@ export function useVenueHandlers(portal: PortalHook) {
 
   const handleUpdateVenue = useCallback(async (
     id: string, 
-    updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }
+    updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null }
   ) => {
     await updateVenue({ id, updates });
   }, [updateVenue]);

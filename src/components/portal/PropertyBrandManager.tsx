@@ -51,14 +51,18 @@ interface PropertyBrandManagerProps {
   properties: PropertyBrand[];
   onChange: (properties: PropertyBrand[]) => void;
   onLogoUpload: (propertyId: string, file: File, variant: string) => void;
+  onLogoRemove?: (propertyId: string, variant: string) => void;
   onDocumentUpload?: (propertyId: string, file: File) => void;
+  onDocumentRemove?: (propertyId: string) => void;
 }
 
 export function PropertyBrandManager({
   properties,
   onChange,
   onLogoUpload,
+  onLogoRemove,
   onDocumentUpload,
+  onDocumentRemove,
 }: PropertyBrandManagerProps) {
   const [localProperties, setLocalProperties] = useState<PropertyBrand[]>(properties);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -290,6 +294,7 @@ export function PropertyBrandManager({
                       {/* Logo Upload */}
                       <MultiLogoUpload
                         onLogosChange={(logos) => handleLogosChange(property.id, logos)}
+                        onLogoRemove={onLogoRemove ? (variant) => onLogoRemove(property.id, variant) : undefined}
                         existingUrls={property.logoUrls}
                         existingFilenames={property.logoFilenames}
                       />
@@ -305,6 +310,7 @@ export function PropertyBrandManager({
 
                       <BrandDocumentUpload
                           onUpload={(file) => handleDocumentUpload(property.id, file)}
+                          onRemove={onDocumentRemove ? () => onDocumentRemove(property.id) : undefined}
                           existingUrl={property.paletteDocumentUrl}
                           existingFilename={property.paletteDocumentFilename}
                           label="Upload Brand Guidelines"

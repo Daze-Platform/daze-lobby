@@ -21,7 +21,7 @@ interface TaskAccordionProps {
   // Venue CRUD handlers (passed to VenueProvider)
   venues: Venue[];
   onAddVenue: () => Promise<Venue | undefined>;
-  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string; logoUrl?: string }) => Promise<void>;
+  onUpdateVenue: (id: string, updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null }) => Promise<void>;
   onRemoveVenue: (id: string) => Promise<void>;
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   onUploadVenueLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
@@ -120,6 +120,37 @@ export function TaskAccordion({
     onFileUpload("brand", file, `palette_document_${propertyId}`);
   };
 
+  const handleLogoRemove = async (propertyId: string, variant: string) => {
+    // Remove logo variant from task data (logos and logoFilenames maps)
+    const brandTask = tasks.find(t => t.key === "brand");
+    const existingData = (brandTask?.data || {}) as Record<string, unknown>;
+    const logos = { ...((existingData.logos || {}) as Record<string, string>) };
+    const logoFilenames = { ...((existingData.logoFilenames || {}) as Record<string, string>) };
+    
+    // Remove from logos map
+    delete logos[variant];
+    delete logos[`logo_${propertyId}_${variant}`];
+    delete logoFilenames[variant];
+    delete logoFilenames[`logo_${propertyId}_${variant}`];
+    
+    // Remove top-level key
+    const topLevelKey = `logo_${propertyId}_${variant}`;
+    const cleaned: Record<string, unknown> = { ...existingData, logos, logoFilenames };
+    delete cleaned[topLevelKey];
+    delete cleaned[`${topLevelKey}_filename`];
+    
+    onTaskUpdate("brand", cleaned);
+  };
+
+  const handleDocumentRemove = async (propertyId: string) => {
+    const brandTask = tasks.find(t => t.key === "brand");
+    const existingData = (brandTask?.data || {}) as Record<string, unknown>;
+    const cleaned: Record<string, unknown> = { ...existingData };
+    delete cleaned[`palette_document_${propertyId}`];
+    delete cleaned[`palette_document_${propertyId}_filename`];
+    onTaskUpdate("brand", cleaned);
+  };
+
   const handleLegalSign = (signatureDataUrl: string, legalEntityData: PilotAgreementData) => {
     onLegalSign(signatureDataUrl, legalEntityData);
     // Trigger step completion after a brief delay for the save to process
@@ -176,7 +207,9 @@ export function TaskAccordion({
           data={getTaskData("brand")?.data}
           onSave={handleBrandSave}
           onLogoUpload={handleLogoUpload}
+          onLogoRemove={handleLogoRemove}
           onDocumentUpload={handleBrandDocumentUpload}
+          onDocumentRemove={handleDocumentRemove}
           isSaving={isUpdating}
           onStepComplete={handleBrandComplete}
           isJustCompleted={recentlyCompleted === "brand"}
