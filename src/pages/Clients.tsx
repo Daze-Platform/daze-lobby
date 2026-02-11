@@ -246,6 +246,9 @@ export default function Clients() {
               const isContracted = client.phase === "contracted";
               const isPending = client.phase === "onboarding" || client.phase === "reviewing";
               const isDeleted = !!client.deleted_at;
+              const daysRemaining = isDeleted
+                ? Math.max(0, 30 - Math.floor((Date.now() - new Date(client.deleted_at!).getTime()) / (1000 * 60 * 60 * 24)))
+                : 0;
 
               return (
                 <Card 
@@ -277,24 +280,32 @@ export default function Clients() {
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         {isDeleted ? (
-                          /* Restore button for deleted clients */
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              restoreClientMutation.mutate(client.id);
-                            }}
-                            disabled={restoreClientMutation.isPending}
-                          >
-                            {restoreClientMutation.isPending ? (
-                              <CircleNotch size={14} weight="bold" className="animate-spin" />
-                            ) : (
-                              <ArrowCounterClockwise size={14} weight="duotone" />
-                            )}
-                            Restore
-                          </Button>
+                          /* Restore button + days remaining for deleted clients */
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "text-2xs font-medium",
+                              daysRemaining <= 7 ? "text-destructive" : "text-muted-foreground"
+                            )}>
+                              {daysRemaining} {daysRemaining === 1 ? "day" : "days"} left
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                restoreClientMutation.mutate(client.id);
+                              }}
+                              disabled={restoreClientMutation.isPending}
+                            >
+                              {restoreClientMutation.isPending ? (
+                                <CircleNotch size={14} weight="bold" className="animate-spin" />
+                              ) : (
+                                <ArrowCounterClockwise size={14} weight="duotone" />
+                              )}
+                              Restore
+                            </Button>
+                          </div>
                         ) : (
                           <>
                             {/* View Portal Button */}

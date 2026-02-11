@@ -22,7 +22,12 @@ export function useClients(includeDeleted = false) {
         .order("created_at", { ascending: false });
 
       if (includeDeleted) {
-        query = query.not("deleted_at", "is", null);
+        // Only show clients deleted within the last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        query = query
+          .not("deleted_at", "is", null)
+          .gte("deleted_at", thirtyDaysAgo.toISOString());
       } else {
         query = query.is("deleted_at", null);
       }
