@@ -331,7 +331,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
               </span>
               <Button
                 size="sm"
-                variant="outline"
+                variant="default"
                 className="gap-1.5"
                 onClick={() => {
                   setEditingContact(null);
