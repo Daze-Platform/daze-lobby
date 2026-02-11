@@ -80,7 +80,7 @@ interface ReviewSignModalProps {
   initialLegalEntity?: PilotAgreementData;
 }
 
-// Full 13-section agreement text with dynamic injection
+// Full 13-section agreement text with dynamic injection — verbatim from Daze Pilot Agreement PDF
 const createAgreementText = (d: PilotAgreementData) => {
   const name = d.legal_entity_name?.trim() || "[Client Legal Name]";
   const dba = d.dba_name?.trim() || "[DBA]";
@@ -96,6 +96,8 @@ const createAgreementText = (d: PilotAgreementData) => {
 
   const hwNone = d.hardware_option !== "daze_provided" ? "[X]" : "[ ]";
   const hwDaze = d.hardware_option === "daze_provided" ? "[X]" : "[ ]";
+  const numTablets = d.num_tablets?.trim() || "__________";
+  const mountsStands = d.mounts_stands?.trim() || "____________";
 
   const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
   const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
@@ -140,31 +142,36 @@ The pilot is intended as a pre-commercial implementation to demonstrate operatio
 
 2.1 Covered Outlets
 The Pilot will be conducted at the following F&B outlets and Serviceable areas:
+Pool/Beach/Room/Common Space area
 ${outletLines}
 
 2.2 Products and Services
 The Pilot may include one or more Daze products, which shall be deployed and rolled out according to a written implementation schedule agreed by both parties ("Implementation Schedule"). Rollout of additional products beyond the initial scope requires written approval from both parties and may trigger revised pilot terms.
 
 Available products include:
-• Pool & Beach Mobile Ordering
-• Common Space Digital Ordering
-• Table Pay & Order
-• In-Room Dining
+• Pool & Beach Mobile Ordering: Digital ordering and payment facilitation for outdoor beach and pool areas.
+• Common Space Digital Ordering: Digital ordering and payment facilitation for indoor common areas.
+• Table Pay & Order: Digital menu access, ordering, and payment for restaurant tables and dining areas.
+• In-Room Dining: Full digital menu access and ordering for guest rooms and suites.
 
 2.3 Hardware Selection
 ${hwNone} No Daze Hardware Required
-${hwDaze} Daze-Provided Hardware
+${hwDaze} Daze-Provided Hardware. Daze shall provide the following physical materials as a bailment under Section 4.3
+  • Number of Tablets: ${numTablets}
+  • Mounts/Stands: ${mountsStands}
 
 2.4 Enabled Capabilities
 During the Pilot Term, Daze shall provide the following capabilities:
 • Guest mobile ordering via smartphone or tablet.
 • Payment processing and facilitation (Client remains merchant of record).
-• Location-based delivery coordination.
+• Location-based delivery coordination to beach chairs, poolside loungers, guest rooms, and designated areas.
 • Management reporting and analytics dashboard.
 • POS integration with Client's designated point-of-sale system(s).
-• QR Code Access Points: Design and provision of branded QR code signage.
+• QR Code Access Points: Design and provision of branded QR code signage for guest access; Client may also utilize Daze-approved digital QR assets for integration into Client-owned physical materials or signage.
 
 3. PILOT TERM
+
+The pilot shall commence on the "Start Date" specified below and continue for the "Pilot Term" specified below, unless terminated earlier in accordance with Section 9.
 
 Start Date: ${startDate}
 Pilot Term: ${termDays} days (recommended: 60-90 days)
@@ -175,15 +182,15 @@ The Pilot Term may be extended by mutual written agreement of both parties.
 
 4.1 Daze Responsibilities
 Daze shall:
-• Configure and deploy the platform for Covered Outlets.
+• Configure and deploy the platform for Covered Outlets according to the Implementation Schedule.
 • Provide onboard training for Client staff.
 • Provide operational support during business hours.
-• Monitor platform performance and provide reporting.
-• Integrate with Client's designated POS system(s).
+• Monitor platform performance and provide reporting during the Pilot Term.
+• Integrate with Client's designated POS system(s) as specified in Section 13.2.
 
 4.2 Client Responsibilities
 Client shall:
-• Provide operational access to Covered Outlets, including Wi-Fi and power access.
+• Provide operational access to Covered Outlets, including Wi-Fi connectivity and power access.
 • Ensure staff participation in training and day-to-day platform operation.
 • Designate a primary point of contact with authority to make operational decisions.
 • Provide timely feedback on platform performance and guest experience.
@@ -191,76 +198,165 @@ Client shall:
 • Provide API credentials and technical documentation for POS integration.
 
 4.3 Hardware & Physical Materials
-If selected in Section 2.3, Daze shall provide Client with hardware and physical materials ("Hardware"). All such Hardware remains the sole property of Daze and is subject to bailment terms including standard of care, restrictions, recovery & reimbursement, and QR Code IP provisions.
+If selected in Section 2.3, Daze shall provide Client with hardware and physical materials ("Hardware"). All such Hardware remains the sole property of Daze and is subject to the following terms:
+
+Ownership: All Hardware remains the sole and exclusive property of Daze. This Agreement constitutes a bailment of Hardware for the Pilot Term only.
+
+Standard of Care: Client shall be responsible for the care, security, and proper use of the Hardware and shall protect it from loss, theft, or damage beyond normal wear and tear.
+
+Restrictions: Client shall not sell, transfer, modify, or repurpose the Hardware and shall ensure it is used solely by authorized staff for the Services.
+
+Recovery & Reimbursement: Upon termination or expiration of the Pilot Term, Client shall return all Hardware to Daze within seven (7) days. If Hardware is not returned or is returned in a damaged state, Client shall reimburse Daze for the full replacement cost at then-current market rates.
+
+QR Code IP: QR code designs and branding provided by Daze are the Intellectual Property of Daze and are licensed to Client solely for use with the Daze platform during the Pilot Term.
 
 5. PILOT FEES
 
+Pilot pricing is agreed separately below and does not establish precedent for long-term pricing under any MSA or Order Form.
+
+Select one pricing model:
+
 ${pNone} 5.1 No Fees — No fees apply during the Pilot Term.
 
-${pSub} 5.2 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform during the Pilot Term.
+${pSub} 5.2 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform and related services during the Pilot Term.
 
-${pDaze} 5.3 Daze Revenue Share Fee — Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform.
+${pDaze} 5.3 Daze Revenue Share Fee — During the Pilot Term, Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform. The remaining net proceeds, including applicable food and beverage revenue and tips, shall be remitted to Client in accordance with Section 6.
 
-${pClient} 5.4 Client Revenue Share Fee — Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order.
+Daze acts solely as a payment facilitation agent and does not purchase, resell, or take ownership of any food, beverage, or tip amounts.
+
+${pClient} 5.4 Client Revenue Share Fee — During the Pilot Term, Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order processed through the platform. Such revenue-share fees shall be borne solely by Client and shall not be presented to or charged to guests.
+
+Daze acts strictly as a technology provider and payment facilitation agent and does not purchase, resell, or take ownership of any food, beverage, or tip amounts. All guest payments represent the Client's food and beverage sales.
 
 5.5 Payment Terms
-Any pilot fees will be invoiced by Daze and are due Net 7 from the invoice date, unless otherwise agreed in writing.
+Any pilot fees will be invoiced by Daze and are due Net 7 from the invoice date, unless otherwise agreed in writing. Pilot fees are provided solely for evaluation purposes and do not establish pricing, discounts, or commercial terms for any future agreement.
+
+Any continued use of the Services following the Pilot Term will be governed exclusively by a mutually executed Master Services Agreement ("MSA") and applicable Order Form.
 
 6. SETTLEMENT, TIPS, AND CHARGEBACKS
 
-6.1 Settlement — Net food and beverage proceeds, less applicable platform fees, are remitted to Client on a Net 7 settlement basis.
-6.2 Tips and Gratuities — All customer tips are pass-through funds, excluded from platform fee calculations.
-6.3 Payment Disputes and Chargebacks — Client remains solely responsible for all refunds, returns, chargebacks, and payment disputes.
+6.1 Settlement
+Net food and beverage proceeds, less applicable platform fees, are remitted to Client on a Net 7 settlement basis measured from the applicable settlement statement date, unless otherwise specified. Settlement payments will be made via ACH to Client's designated bank account.
+
+Minimum Settlement Threshold: Daze may accumulate settlements and remit when the balance exceeds $250. Balances below this threshold shall be remitted quarterly.
+
+6.2 Tips and Gratuities
+All customer tips and gratuities are pass-through funds, are not revenue of Daze, are excluded from platform fee calculations, and are not subject to settlement timing. Daze may hold tips in reserve to cover chargebacks, refunds, or payment disputes, releasing them to Client upon resolution.
+
+6.3 Payment Disputes and Chargebacks
+Client remains solely responsible for all refunds, returns, chargebacks, payment disputes, and fraudulent transactions. Daze may deduct chargeback amounts, dispute fees, and associated costs from future settlements or invoice Client directly within seven (7) days.
+
+If chargeback rates exceed 2% of gross transaction volume in any month, Daze may, at its sole discretion: (a) suspend revenue share settlements and require pre-payment; (b) increase the revenue share percentage by 1% to offset risk; or (c) terminate this Agreement upon fourteen (14) days' written notice.
 
 7. PILOT SUCCESS CHECKPOINT & CONTINUITY CLAUSE
 
-During the Pilot Term, the parties agree to conduct a good-faith review of pilot performance (the "Pilot Success Checkpoint"), typically scheduled 14–21 days prior to the end of the Pilot Term.
+During the Pilot Term, the parties agree to conduct a good-faith review of pilot performance, operational workflows, and guest adoption (the "Pilot Success Checkpoint"), typically scheduled 14–21 days prior to the end of the Pilot Term. The Pilot Success Checkpoint is intended to assess whether the Services meet the Client's operational and experiential objectives and whether the parties wish to continue the relationship under a commercial agreement governed by Daze's Master Services Agreement ("MSA") and an applicable Order Form.
+
+Participation in the Pilot Success Checkpoint does not obligate either party to enter into a commercial agreement, and either party may terminate the Pilot in accordance with this Agreement. Unless the Client provides written notice of termination within fourteen (14) days following the end of the Pilot Term, the Services may continue on an interim basis under the terms of this Pilot Agreement solely to facilitate transition discussions, until an MSA and Order Form are executed or the Services are terminated. Client acknowledges that POS integration may require coordination with third-party POS vendors, and Daze is not responsible for delays or failures caused by such third parties.
 
 8. DATA, SECURITY, AND CONFIDENTIALITY
 
-8.1 Data Ownership — Daze retains all rights to the Daze platform; Client retains all rights to Client Data.
-8.2 Data License — Client grants Daze a non-exclusive, perpetual license to use Client Data solely in aggregated and de-identified form.
-8.3 Security Standards — Platform architecture is aligned with SOC 2 Trust Services Criteria.
-8.4 Encryption — AES-256 at rest and TLS 1.2+ in transit.
-8.5 Privacy — Daze shall not sell, rent, or share guest PII with third parties.
-8.6 PCI DSS — No raw credit card data is stored on Daze-managed servers.
-8.7 Incident Response — Daze will notify Client within 48 hours of a confirmed breach.
-8.8 Confidentiality — Both parties agree to maintain confidentiality for 3 years from disclosure.
+8.1 Data Ownership & Sovereignty
+• Daze IP: Daze retains all rights, title, and interest in and to the Daze platform, software, algorithms, documentation, and related intellectual property.
+• Client Data: Client retains all right, title, and interest in and to all guest data, transaction records, and operational information processed through the Platform ("Client Data").
+
+8.2 Data License (The "Valuation" Clause)
+Client grants Daze a non-exclusive, perpetual, irrevocable, royalty-free license to use Client Data solely in aggregated and de-identified form ("Aggregated Data"). Daze may use Aggregated Data for benchmarking, service improvement, analytics, and industry reporting, provided that such data does not identify Client, any individual guest, or specific transactions.
+
+8.3 Security Standards & SOC-2 Alignment
+Daze maintains administrative, technical, and physical safeguards designed to protect the integrity and confidentiality of Client Data. The Platform architecture is aligned with SOC 2 Trust Services Criteria (Security, Availability, and Confidentiality) and is hosted on enterprise-grade infrastructure providers (e.g., AWS) that maintain current SOC 2 Type II certifications.
+
+8.4 Encryption & Access Control
+All Client Data is encrypted using AES-256 at rest and TLS 1.2 or higher in transit. Daze employs multi-factor authentication (MFA) and least-privilege access controls for all administrative and backend systems.
+
+8.5 Privacy & PII Compliance Protection
+Daze shall not sell, rent, or share guest Personally Identifiable Information (PII) with third parties (except as required for payment processing via authorized subcontractors). Any data used for platform optimization or performance analytics must be strictly anonymized.
+
+8.6 PCI DSS Compliance
+The Platform is designed so that no raw credit card data is stored on Daze-managed servers. All payment processing is facilitated through PCI-compliant third-party gateways (e.g., Stripe), ensuring the Client's environment remains secure and compliant with global payment standards. Client is responsible for maintaining PCI DSS compliance for its own operations and on-premises networks.
+
+8.7 Incident Response
+In the event of a confirmed security breach involving Client Data, Daze will notify the Client within forty-eight (48) hours of discovery and provide reasonable cooperation in any subsequent investigation or remediation efforts.
+
+8.8 Confidentiality
+Both parties agree to maintain the confidentiality of non-public information disclosed during the Pilot, using reasonable care for a period of three (3) years from the date of disclosure.
 
 9. TERMINATION
 
-Either party may terminate this Agreement upon fourteen (14) days' written notice.
+Either party may terminate this Agreement upon fourteen (14) days' written notice to the other party.
+
+Upon termination: (a) Client shall immediately cease use of the platform; (b) Daze shall provide final settlement within fourteen (14) days; (c) each party shall return or destroy the other's Confidential Information.
 
 10. INDEMNIFICATION
 
-Client shall indemnify and hold harmless Daze from claims arising from Client's use of the Services, products sold, guest complaints, PCI breaches, negligence, or IP infringement.
+Client shall indemnify, defend, and hold harmless Daze and its officers, directors, employees, and agents from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or relating to:
+• Client's use of the Services in violation of this Agreement.
+• Any food, beverage, or product sold or delivered by Client.
+• Any guest complaint, injury, or claim related to Client's operations.
+• Client's breach of PCI DSS or payment processing obligations.
+• Client's negligence or willful misconduct.
+• Any claim that Client data or content infringes third-party intellectual property rights.
 
 11. LIMITATION OF LIABILITY
 
-NEITHER PARTY'S LIABILITY SHALL EXCEED FEES PAID UNDER THIS AGREEMENT. NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES.
+TO THE MAXIMUM EXTENT PERMITTED BY LAW:
+• NEITHER PARTY'S LIABILITY SHALL EXCEED FEES PAID BY CLIENT UNDER THIS AGREEMENT;
+• NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, OR PUNITIVE DAMAGES, INCLUDING LOST PROFITS, LOST DATA, OR BUSINESS INTERRUPTION.
+
+THESE LIMITATIONS DO NOT APPLY TO: BREACHES OF CONFIDENTIALITY, IP INFRINGEMENT, INDEMNIFICATION OBLIGATIONS, GROSS NEGLIGENCE, WILLFUL MISCONDUCT, OR AMOUNTS THAT CANNOT BE LIMITED UNDER APPLICABLE LAW.
 
 12. SERVICE LEVEL AGREEMENT
 
-Daze targets 99.5% platform uptime during Client's operating hours (excluding scheduled maintenance).
+Daze targets 99.5% platform uptime during Client's operating hours (excluding scheduled maintenance). "Uptime" means the platform is accessible and processing transactions.
+
+Scheduled maintenance shall not exceed four (4) hours monthly and shall be conducted during low-traffic periods with 48 hours' advance notice.
+
+Daze does not guarantee uptime for issues caused by: third-party services (including POS systems), Client's internet connectivity, force majeure events, or Client's misuse of the platform.
 
 13. MISCELLANEOUS
 
-13.1 Subcontractors — Daze may use third-party subcontractors (including AWS, payment processors, analytics providers).
+13.1 Subcontractors
+Daze may use third-party subcontractors (including AWS for hosting, payment processors, and analytics providers) to perform Services. Daze remains responsible for subcontractor performance. Daze shall maintain a list of material subcontractors available upon request and shall notify Client of any changes to material subcontractors thirty (30) days in advance.
 
 13.2 POS Integration
+Daze will integrate with Client's designated POS system(s) as specified in the Implementation Schedule.
+
 POS System: ${posSystem}
 Version: ${posVersion}
 API Key: ${posApiKey}
 Who to Contact: ${posContact}
 
-13.3 Governing Law — State of Florida.
-13.4 Dispute Resolution — Good faith negotiation, then courts in Miami-Dade County, Florida.
+Client is responsible for:
+• Providing API credentials, technical documentation, and test environmental access.
+• Designating a technical point of contact with appropriate technical knowledge.
+• Testing and validating integration functionality before go-live.
+• Promptly reporting integration issues and cooperating in resolution.
+
+Daze does not warrant compatibility with all POS versions, configurations, or customizations. Daze's liability for integration failures is limited to commercially reasonable efforts to resolve issues and does not include lost revenue, data corruption, or operational downtime.
+
+13.3 Governing Law
+This Agreement is governed by and construed in accordance with the laws of the State of Florida, without regard to its conflict of laws principles.
+
+13.4 Dispute Resolution
+Any dispute arising out of or relating to this Agreement shall first be resolved through good faith negotiation between senior executives of both parties. If the dispute cannot be resolved within thirty (30) days, either party may pursue any remedy available at law or in equity in the state or federal courts located in Miami-Dade County, Florida.
+
 13.5 Entire Agreement
-13.6 Amendment — Written instrument signed by both parties.
+This Agreement constitutes the entire agreement between the parties regarding the subject matter hereof and supersedes all prior agreements, LOIs, and understandings.
+
+13.6 Amendment
+This Agreement may not be amended except by written instrument signed by both parties.
+
 13.7 Assignment
+Neither party may assign this Agreement without prior written consent, except to affiliates or in connection with a merger, acquisition, or sale of substantially all assets.
+
 13.8 Force Majeure
+Neither party is liable for delays or failures caused by events beyond reasonable control, including acts of God, natural disasters, war, terrorism, government actions, internet outages, third-party service failures, or pandemics.
+
 13.9 Severability
-13.10 Counterparts`;
+If any provision is held invalid, the remaining provisions shall continue in full force and effect.
+
+13.10 Counterparts
+This Agreement may be executed in counterparts, each of which shall be deemed an original.`;
 };
 
 const HighlightedText = memo(({ text, entity }: { text: string; entity: PilotAgreementData }) => {
@@ -349,6 +445,8 @@ export function ReviewSignModal({
   const [outlet3, setOutlet3] = useState("");
   const [outlet4, setOutlet4] = useState("");
   const [hardwareOption, setHardwareOption] = useState<"none" | "daze_provided">("none");
+  const [numTablets, setNumTablets] = useState("");
+  const [mountsStands, setMountsStands] = useState("");
 
   // Section C: Pilot Term
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -396,6 +494,8 @@ export function ReviewSignModal({
       setOutlet3(outlets[2] || "");
       setOutlet4(outlets[3] || "");
       setHardwareOption(d.hardware_option || "none");
+      setNumTablets(d.num_tablets || "");
+      setMountsStands(d.mounts_stands || "");
 
       if (d.start_date) {
         try { setStartDate(new Date(d.start_date)); } catch { setStartDate(undefined); }
@@ -422,6 +522,8 @@ export function ReviewSignModal({
     contact_email: contactEmail,
     covered_outlets: [outlet1, outlet2, outlet3, outlet4].filter(o => o.trim()),
     hardware_option: hardwareOption,
+    num_tablets: numTablets,
+    mounts_stands: mountsStands,
     start_date: startDate?.toISOString(),
     pilot_term_days: pilotTermDays ? parseInt(pilotTermDays, 10) : undefined,
     pricing_model: pricingModel,
@@ -430,7 +532,7 @@ export function ReviewSignModal({
     pos_version: posVersion,
     pos_api_key: posApiKey,
     pos_contact: posContact,
-  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
+  }), [propertyName, legalEntityName, billingAddress, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, hardwareOption, numTablets, mountsStands, startDate, pilotTermDays, pricingModel, pricingAmount, posSystem, posVersion, posApiKey, posContact]);
 
   // Defer agreement text rendering so typing stays instant
   const deferredEntity = useDeferredValue(currentEntity);
@@ -573,12 +675,12 @@ export function ReviewSignModal({
                       <div className="space-y-2.5">
                         <Label className="text-[10px] sm:text-xs text-muted-foreground">Covered Outlets (at least 1 required) <span className="text-destructive">*</span></Label>
                         {[
-                          { val: outlet1, set: setOutlet1 },
-                          { val: outlet2, set: setOutlet2 },
-                          { val: outlet3, set: setOutlet3 },
-                          { val: outlet4, set: setOutlet4 },
+                          { val: outlet1, set: setOutlet1, placeholder: "[F&B Outlet] & [Service area]" },
+                          { val: outlet2, set: setOutlet2, placeholder: "[F&B Outlet] & [Service area]" },
+                          { val: outlet3, set: setOutlet3, placeholder: "[F&B Outlet] & [Service area]" },
+                          { val: outlet4, set: setOutlet4, placeholder: "[F&B Outlet] & [Service area]" },
                         ].map((o, i) => (
-                          <Input key={i} placeholder={`Outlet ${i + 1}`} value={o.val} onChange={e => o.set(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                          <Input key={i} placeholder={o.placeholder} value={o.val} onChange={e => o.set(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
                         ))}
                         <div className="pt-2 space-y-2">
                           <Label className="text-[10px] sm:text-xs text-muted-foreground">Hardware Selection</Label>
@@ -592,6 +694,18 @@ export function ReviewSignModal({
                               <Label htmlFor="hw-daze" className="text-xs font-normal cursor-pointer">Daze-Provided Hardware</Label>
                             </div>
                           </RadioGroup>
+                          {hardwareOption === "daze_provided" && (
+                            <div className="grid grid-cols-2 gap-2.5 pt-1 pl-6">
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground">Number of Tablets</Label>
+                                <Input placeholder="e.g., 4" value={numTablets} onChange={e => setNumTablets(e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground">Mounts/Stands</Label>
+                                <Input placeholder="e.g., 4 floor stands" value={mountsStands} onChange={e => setMountsStands(e.target.value)} className="h-8 text-xs" />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </FormSection>

@@ -13,6 +13,8 @@ export interface PilotAgreementData {
   // Pilot Scope
   covered_outlets?: string[];
   hardware_option?: "none" | "daze_provided";
+  num_tablets?: string;
+  mounts_stands?: string;
 
   // Pilot Term
   start_date?: string;
