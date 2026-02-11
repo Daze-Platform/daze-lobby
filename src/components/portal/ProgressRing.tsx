@@ -82,7 +82,7 @@ export function ProgressRing({
   const glowFilterId = useMemo(() => `glow-filter-${Math.random().toString(36).substr(2, 9)}`, []);
 
   // Calculate the position of the progress tip for the glow effect
-  const progressAngle = (progress / 100) * 360 - 90; // -90 to start from top
+  const progressAngle = (progress / 100) * 360; // CSS -rotate-90 already handles the top start
   const tipX = effectiveSize / 2 + radius * Math.cos((progressAngle * Math.PI) / 180);
   const tipY = effectiveSize / 2 + radius * Math.sin((progressAngle * Math.PI) / 180);
 
