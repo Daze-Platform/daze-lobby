@@ -1,43 +1,66 @@
 
 
-## Block Client Users from the Control Tower Login
+## Fix: Client Portal Session Interfering with Dashboard Navigation
 
-### Problem
-The admin login page (`/auth`) currently allows any user to sign in, including client-role users like `brian.92rod@hotmail.com`. The client portal login (`/portal/login`) already blocks admin users, but the reverse guard is missing.
+### Root Cause
 
-### Solution
-Add a role check to `LoginForm.tsx` (the Control Tower login form) that mirrors the existing guard in `ClientLoginForm.tsx`. After a successful email/password sign-in, check the user's role -- if it's `client`, sign them out and show an error message directing them to the Partner Portal.
+Both the admin dashboard and client portal share the same authentication session (same domain, same backend). When Brian is logged in as `brian.92rod@hotmail.com` (client role), every admin route (`/dashboard`, `/clients`, `/auth`, etc.) detects his client role and silently redirects him back to his portal. Signing out destroys the shared session, which also ends any dashboard session in another tab.
+
+### What We Can Fix
+
+**Issue 1 -- Silent redirect to portal when visiting admin URLs**
+
+Currently, `RoleBasedRoute` sends client-role users to `/portal/login`, which auto-resolves back to their portal. Instead, we should show an informational screen explaining they're logged into the wrong account and offer clear options.
+
+**Issue 2 -- Shared sign-out**
+
+This is a fundamental limitation of sharing one authentication backend on one domain. Two different accounts cannot maintain independent sessions simultaneously. However, we can make the portal sign-out redirect cleaner so it doesn't interfere with the admin login page state.
 
 ### Changes
 
-**File: `src/components/auth/LoginForm.tsx`**
+**1. `src/components/layout/RoleBasedRoute.tsx` -- Show a "wrong account" screen instead of silent redirect**
 
-After the `signIn()` call succeeds (around line 152), add a role check before proceeding with navigation:
+When a client-role user lands on an admin route, instead of redirecting to `/portal/login` (which bounces them to the portal), render a card explaining the situation with two options:
+- "Go to Partner Portal" (navigate to their portal)
+- "Switch Account" (sign out and show admin login)
 
-```typescript
-// Check if user has a client role -- block them from Control Tower
-const userId = result?.user?.id;
-if (userId) {
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (roleData?.role === "client") {
-    await supabase.auth.signOut();
-    setError("This dashboard is for internal team members only. Please sign in at the Partner Portal.");
-    setLoading(false);
-    return;
-  }
-}
+```text
++---------------------------------------------+
+|  Wrong account                               |
+|                                              |
+|  You're signed in as brian.92rod@hotmail.com  |
+|  (Partner Portal account).                   |
+|                                              |
+|  To access the dashboard, sign out and       |
+|  use your @dazeapp.com email.                |
+|                                              |
+|  [Go to Partner Portal]  [Switch Account]    |
++---------------------------------------------+
 ```
 
-This is the same pattern already used in `ClientLoginForm.tsx` (lines 121-137) but in reverse -- blocking `client` role instead of blocking `admin`/`ops_manager`/`support` roles.
+**2. `src/components/layout/AuthRedirect.tsx` -- Skip auto-clean for client users on `/auth`**
 
-### What This Does NOT Change
-- Google OAuth flow on `/auth`: Already handled by `PostAuth.tsx` and `AuthRedirect.tsx` which detect role mismatches
-- The `/portal/login` page: Already has the reverse guard blocking admins
-- Brian can still use `brian@dazeapp.com` (admin role) to access the Control Tower
-- Brian can still use `brian.92rod@hotmail.com` (client role) to access the Partner Portal
+Currently, `AuthRedirect` force-cleans the session when a client visits `/auth`. Instead, let the `RoleBasedRoute` screen (or a similar card on `/auth`) inform the user, so they can choose to switch accounts intentionally rather than having their portal session silently destroyed.
+
+### Technical Details
+
+**File: `src/components/layout/RoleBasedRoute.tsx`**
+- Import `signOut` from `@/lib/auth`, `Button` and `Card` components
+- Replace the `isClient(role)` redirect on line 36-38 with a rendered "wrong account" card
+- The "Switch Account" button calls `signOut()` then navigates to `/auth`
+- The "Go to Partner Portal" button navigates to `/post-auth`
+
+**File: `src/components/layout/AuthRedirect.tsx`**
+- Modify the wrong-role handling for `isAdminLogin && isClient(role)` case
+- Instead of calling `forceCleanSession()` automatically, render a card similar to the one in `RoleBasedRoute`, giving the user the choice to switch accounts or go back to their portal
+- This prevents the portal session from being silently destroyed just by visiting `/auth`
+
+### What This Does NOT Fix
+
+- **Simultaneous dual login**: Brian cannot be logged into both `brian.92rod@hotmail.com` and `brian@dazeapp.com` at the same time in the same browser. This is a fundamental limitation of single-session authentication on the same domain. He should use an incognito window or different browser for the second account.
+- **Shared sign-out**: Signing out will always end the single shared session. The improvement is making it intentional rather than accidental.
+
+### Files Changed
+- `src/components/layout/RoleBasedRoute.tsx`
+- `src/components/layout/AuthRedirect.tsx`
 
