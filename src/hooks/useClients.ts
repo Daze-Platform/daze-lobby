@@ -7,22 +7,27 @@ export type Client = Tables<"clients"> & {
   hasBlocker: boolean;
   primaryContact: Tables<"client_contacts"> | null;
   dazeDeviceCount: number;
-  // Incomplete items count (pending tasks + active blockers)
   incompleteCount: number;
-  // True if a blocker notification was sent for this client
   hasRecentReminder: boolean;
 };
 
-export function useClients() {
+export function useClients(includeDeleted = false) {
   return useQuery({
-    queryKey: ["clients-with-details"],
+    queryKey: ["clients-with-details", { includeDeleted }],
     queryFn: async () => {
-      // Fetch clients
-      const { data: clients, error: clientsError } = await supabase
+      // Fetch clients — filter by deleted_at based on flag
+      let query = supabase
         .from("clients")
         .select("*")
         .order("created_at", { ascending: false });
 
+      if (includeDeleted) {
+        query = query.not("deleted_at", "is", null);
+      } else {
+        query = query.is("deleted_at", null);
+      }
+
+      const { data: clients, error: clientsError } = await query;
       if (clientsError) throw clientsError;
 
       // Fetch active blockers
@@ -35,7 +40,6 @@ export function useClients() {
 
       const blockerClientIds = new Set(blockers?.map((b) => b.client_id) || []);
       
-      // Count blockers per client
       const blockersByClient = new Map<string, number>();
       blockers?.forEach((b) => {
         const current = blockersByClient.get(b.client_id) || 0;
@@ -62,16 +66,12 @@ export function useClients() {
 
       if (devicesError) throw devicesError;
 
-      // Count Daze devices per client
       const dazeDevicesByClient = new Map<string, number>();
       devices?.forEach((d) => {
         const current = dazeDevicesByClient.get(d.client_id) || 0;
         dazeDevicesByClient.set(d.client_id, current + 1);
       });
 
-      // Fetch blocker notifications to track which clients have been reminded
-
-      // Fetch blocker notifications to track which clients have been reminded
       const { data: notifications, error: notificationsError } = await supabase
         .from("activity_logs")
         .select("client_id")
@@ -79,14 +79,12 @@ export function useClients() {
 
       if (notificationsError) throw notificationsError;
 
-      // Track clients that have received at least one reminder
       const clientsWithReminders = new Set(
         notifications?.map((n) => n.client_id) || []
       );
 
-      // Check for stale clients (no activity > 48h)
       const now = new Date();
-      const staleThreshold = 48 * 60 * 60 * 1000; // 48 hours in ms
+      const staleThreshold = 48 * 60 * 60 * 1000;
 
       return (clients || []).map((client) => {
         const lastUpdate = new Date(client.updated_at);
@@ -129,15 +127,10 @@ export function useUpdateClientPhase() {
     },
     // OPTIMISTIC UPDATE: Instantly update UI before API call completes
     onMutate: async ({ clientId, newPhase }) => {
-      // Cancel any outgoing refetches to prevent overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: ["clients-with-details"] });
-
-      // Snapshot the previous value for rollback
       const previousClients = queryClient.getQueryData<Client[]>([
         "clients-with-details",
       ]);
-
-      // Optimistically update the cache
       queryClient.setQueryData<Client[]>(["clients-with-details"], (old) => {
         if (!old) return old;
         return old.map((client) =>
@@ -150,11 +143,8 @@ export function useUpdateClientPhase() {
             : client
         );
       });
-
-      // Return context for potential rollback
       return { previousClients };
     },
-    // ROLLBACK: If mutation fails, restore previous state
     onError: (error, _variables, context) => {
       if (context?.previousClients) {
         queryClient.setQueryData(
@@ -164,17 +154,14 @@ export function useUpdateClientPhase() {
       }
       toast.error("Failed to update phase: " + error.message);
     },
-    // SETTLE: Sync with server after mutation (success or failure)
     onSettled: () => {
-      // Refetch to ensure cache is in sync with server
       queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
     },
-    onSuccess: () => {
-      // Silent success - no toast since the UI already updated instantly
-    },
+    onSuccess: () => {},
   });
 }
 
+/** Soft-delete: sets deleted_at timestamp */
 export function useDeleteClient() {
   const queryClient = useQueryClient();
 
@@ -182,7 +169,7 @@ export function useDeleteClient() {
     mutationFn: async (clientId: string) => {
       const { error } = await supabase
         .from("clients")
-        .delete()
+        .update({ deleted_at: new Date().toISOString() } as never)
         .eq("id", clientId);
       if (error) throw error;
     },
@@ -192,6 +179,28 @@ export function useDeleteClient() {
     },
     onError: (error) => {
       toast.error("Failed to delete client: " + error.message);
+    },
+  });
+}
+
+/** Restore a soft-deleted client */
+export function useRestoreClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (clientId: string) => {
+      const { error } = await supabase
+        .from("clients")
+        .update({ deleted_at: null } as never)
+        .eq("id", clientId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
+      toast.success("Client restored successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to restore client: " + error.message);
     },
   });
 }
