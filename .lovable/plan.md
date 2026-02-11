@@ -1,63 +1,50 @@
 
 
-## Block Admin Login on Client Portal
+## Plan: Harden Admin Blocking on Client Portal Routes
 
 ### Problem
-Admin users (e.g., `@dazeapp.com` emails) can currently log in through the Client Portal login page (`/portal/login`). After authenticating, they get redirected to `/admin/portal/:slug`, but they should never be allowed to authenticate through the client portal at all.
+When an admin is already signed into the Control Tower and navigates to a client portal route like `/portal/springhill-suites-orange-beach`, the system relies on an async `signOut()` call in `PortalRoute` to clear the session. In browsers like Brave with aggressive privacy shields, this async flow may not reliably complete, potentially allowing brief access or redirect loops.
 
 ### Solution
-Add a post-login role check in two places to catch admin users and reject them with a clear error message:
+Strengthen the blocking at multiple levels to ensure admins can never access `/portal/*` routes, regardless of browser behavior.
 
 ### Changes
 
-**1. `src/pages/PostAuth.tsx`** -- Reject admin users who arrived via portal origin
+**1. `src/components/layout/AuthRedirect.tsx`**
+- Detect when the current path is `/portal/login` and automatically inject `origin=portal` into the PostAuth redirect query string
+- This ensures PostAuth correctly identifies the portal context and shows the rejection card if an admin is already signed in
 
-When `isPortalOrigin` is true and the user has dashboard access (admin/ops_manager/support), instead of redirecting to `/dashboard`, sign them out and show an error message telling them to use the admin login at `/auth`.
+**2. `src/components/layout/PortalRoute.tsx`**
+- Add a secondary session-clearing mechanism: after calling `signOut()`, also explicitly clear `localStorage` keys related to the auth session (e.g., the Supabase auth token key) as a fallback for browsers like Brave where `signOut()` may not fully clear storage
+- Ensure the component never renders children until it has confirmed the user is NOT an admin — move the admin check before ANY child rendering logic
 
-- In the `targetPath` computation: if `isPortalOrigin && hasDashboardAccess(role)`, return a special sentinel (e.g., `"__portal_blocked__"`)
-- In the redirect effect: detect this sentinel, sign the user out, and navigate to `/portal/login` with an error query param
-- Alternatively, render an inline error card (similar to the "Account not ready" card) with a message like "This login is for hotel partners only. Please use the admin login." and a button linking to `/auth`
+**3. `src/pages/PortalBySlug.tsx`**
+- Remove the `Navigate to /admin/portal/:slug` redirect for admin users — this is now redundant since `PortalRoute` already blocks admins before this component renders
+- Replace it with a hard block (return null) as an additional safety net, so even if `PortalRoute` somehow passes through, the component itself won't render portal content for admins
 
-**2. `src/components/auth/ClientLoginForm.tsx`** -- Pre-check after email/password login
-
-After successful `signIn()` call (line 134), before navigating to PostAuth:
-- Fetch the user's role from `user_roles` table
-- If the role is admin/ops_manager/support, sign them out immediately and show an error: "This portal is for hotel partners only. Please sign in at the admin dashboard."
-- This provides instant feedback without the user seeing the PostAuth loading screen
-
-**3. Google OAuth edge case**
-
-For Google sign-in, the redirect goes through PostAuth anyway, so fix number 1 covers this path automatically. No changes needed in the Google OAuth handler.
+**4. `src/components/auth/ClientLoginForm.tsx`**
+- On mount, before checking for an existing session, also check the current user's role; if admin, call `signOut()` immediately and show the "This portal is for hotel partners only" error instead of auto-redirecting
 
 ### Technical Details
 
-In `ClientLoginForm.tsx`, after `signIn()`:
-```
-// After successful signIn, check role
-const { data: roleData } = await supabase
-  .from("user_roles")
-  .select("role")
-  .eq("user_id", result.user.id)
-  .maybeSingle();
-
-const userRole = roleData?.role;
-if (userRole === "admin" || userRole === "ops_manager" || userRole === "support") {
-  await supabase.auth.signOut();
-  setError("This portal is for hotel partners only. Please sign in at the admin dashboard.");
-  setLoading(false);
-  return;
-}
+The key hardening in `PortalRoute.tsx`:
+```text
+// After signOut(), forcibly clear Supabase session from localStorage
+// This handles Brave and other privacy-focused browsers
+const storageKey = `sb-${supabaseProjectId}-auth-token`;
+localStorage.removeItem(storageKey);
+sessionStorage.removeItem(storageKey);
 ```
 
-In `PostAuth.tsx`, update `targetPath`:
-```
-// If admin came from portal origin, block them
-if (isPortalOrigin && hasDashboardAccess(role)) return "__portal_blocked__";
+The `AuthRedirect` origin detection:
+```text
+// If we're on /portal/login, ensure origin=portal is set
+const isPortalLogin = window.location.pathname.startsWith("/portal/");
+if (isPortalLogin && !origin) qs.set("origin", "portal");
 ```
 
-Then render a rejection card when `targetPath === "__portal_blocked__"` with a "Go to Admin Login" button that navigates to `/auth`.
-
-### Files Modified
-- `src/components/auth/ClientLoginForm.tsx` -- role check after email/password login
-- `src/pages/PostAuth.tsx` -- role check for portal-origin admin users (covers Google OAuth)
+### What Won't Change
+- The `/admin/portal/:slug` route continues to work normally for admins
+- Client users are unaffected by any of these changes
+- The overall auth flow (listeners before session check) remains intact
 
