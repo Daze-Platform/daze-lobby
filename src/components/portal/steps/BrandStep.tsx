@@ -19,7 +19,9 @@ interface BrandStepProps {
   data?: Record<string, unknown>;
   onSave: (data: { properties: PropertyBrand[] }) => void;
   onLogoUpload: (propertyId: string, file: File, variant: string) => void;
+  onLogoRemove?: (propertyId: string, variant: string) => void;
   onDocumentUpload?: (propertyId: string, file: File) => void;
+  onDocumentRemove?: (propertyId: string) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
@@ -33,7 +35,9 @@ export function BrandStep({
   data, 
   onSave, 
   onLogoUpload,
+  onLogoRemove,
   onDocumentUpload,
+  onDocumentRemove,
   isSaving,
   onStepComplete,
   isJustCompleted,
@@ -224,7 +228,9 @@ export function BrandStep({
             properties={properties}
             onChange={handlePropertiesChange}
             onLogoUpload={handleLogoUpload}
+            onLogoRemove={onLogoRemove}
             onDocumentUpload={handleDocumentUpload}
+            onDocumentRemove={onDocumentRemove}
           />
 
           {hasAtLeastOneProperty && !canSave && (

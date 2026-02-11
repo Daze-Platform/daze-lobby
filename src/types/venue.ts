@@ -27,8 +27,8 @@ export interface Venue {
  */
 export interface VenueUpdate {
   name?: string;
-  menuPdfUrl?: string;
-  logoUrl?: string;
+  menuPdfUrl?: string | null;
+  logoUrl?: string | null;
 }
 
 /**

@@ -23,6 +23,8 @@ interface VenueContextType {
   addVenue: () => Promise<Venue | undefined>;
   updateVenue: (id: string, updates: VenueUpdate) => Promise<void>;
   removeVenue: (id: string) => Promise<void>;
+  removeMenu: (venueId: string) => Promise<void>;
+  removeLogo: (venueId: string) => Promise<void>;
   uploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   uploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   completeStep: () => Promise<void>;
@@ -88,6 +90,14 @@ export function VenueProvider({
     }
   }, [onUploadLogo]);
 
+  const removeMenu = useCallback(async (venueId: string) => {
+    await onUpdateVenue(venueId, { menuPdfUrl: null });
+  }, [onUpdateVenue]);
+
+  const removeLogo = useCallback(async (venueId: string) => {
+    await onUpdateVenue(venueId, { logoUrl: null });
+  }, [onUpdateVenue]);
+
   const value = useMemo<VenueContextType>(() => ({
     venues,
     isAddingVenue,
@@ -98,6 +108,8 @@ export function VenueProvider({
     addVenue: onAddVenue,
     updateVenue: onUpdateVenue,
     removeVenue: onRemoveVenue,
+    removeMenu,
+    removeLogo,
     uploadMenu,
     uploadLogo,
     completeStep: onCompleteStep,
@@ -111,6 +123,8 @@ export function VenueProvider({
     onAddVenue,
     onUpdateVenue,
     onRemoveVenue,
+    removeMenu,
+    removeLogo,
     uploadMenu,
     uploadLogo,
     onCompleteStep,

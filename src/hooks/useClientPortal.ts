@@ -630,7 +630,7 @@ export function useClientPortal() {
 
   // Update single venue (name, menu_pdf_url, or logo_url)
   const updateVenueMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string; logoUrl?: string } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null } }) => {
       if (!clientId) throw new Error("No client found");
       
       const updateData: Record<string, unknown> = {};

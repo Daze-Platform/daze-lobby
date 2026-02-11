@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Check, Image, AlertCircle, Moon, Sun, Images } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Upload, Check, Image, AlertCircle, Moon, Sun, Images, X, Type, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
 
+type LogoVariantType = "dark" | "light" | "icon" | "wordmark" | "alternate";
+
 interface LogoVariant {
-  type: "dark" | "light" | "icon";
+  type: LogoVariantType;
   label: string;
   description: string;
   file?: File;
@@ -17,6 +20,7 @@ interface LogoVariant {
 
 interface MultiLogoUploadProps {
   onLogosChange: (logos: Record<string, File>) => void;
+  onLogoRemove?: (variant: string) => void;
   existingUrls?: Record<string, string>;
   existingFilenames?: Record<string, string>;
 }
@@ -25,9 +29,11 @@ const createInitialLogos = (existingUrls?: Record<string, string>): LogoVariant[
   { type: "dark", label: "Dark Version", description: "For light backgrounds", existingUrl: existingUrls?.dark },
   { type: "light", label: "Light Version", description: "For dark backgrounds", existingUrl: existingUrls?.light },
   { type: "icon", label: "Additional Logos", description: "For marketing materials & guest interfaces", existingUrl: existingUrls?.icon },
+  { type: "wordmark", label: "Wordmark / Text Logo", description: "Text-based logo version", existingUrl: existingUrls?.wordmark },
+  { type: "alternate", label: "Alternate Logo", description: "Secondary or seasonal variant", existingUrl: existingUrls?.alternate },
 ];
 
-export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames }: MultiLogoUploadProps) {
+export function MultiLogoUpload({ onLogosChange, onLogoRemove, existingUrls, existingFilenames }: MultiLogoUploadProps) {
   const [logos, setLogos] = useState<LogoVariant[]>(() => createInitialLogos(existingUrls));
 
   // Sync existingUrls when they change (e.g., after data loads from DB)
@@ -40,7 +46,14 @@ export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames
     }
   }, [existingUrls]);
 
-  const handleFileChange = (type: "dark" | "light" | "icon", file: File | undefined) => {
+  const handleRemoveLogo = (type: LogoVariantType) => {
+    setLogos((prev) => prev.map((logo) =>
+      logo.type === type ? { ...logo, file: undefined, preview: undefined, existingUrl: undefined } : logo
+    ));
+    onLogoRemove?.(type);
+  };
+
+  const handleFileChange = (type: LogoVariantType, file: File | undefined) => {
     if (!file) return;
 
     // Validate file before processing
@@ -72,15 +85,17 @@ export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames
     reader.readAsDataURL(file);
   };
 
-  // Separate primary variants (dark/light) from icon
+  // Separate primary variants (dark/light) from secondary slots
   const primaryVariants = logos.filter(l => l.type === "dark" || l.type === "light");
-  const iconVariant = logos.find(l => l.type === "icon");
+  const secondaryVariants = logos.filter(l => l.type === "icon" || l.type === "wordmark" || l.type === "alternate");
 
   const getVariantIcon = (type: string) => {
     switch (type) {
       case "dark": return Moon;
       case "light": return Sun;
       case "icon": return Images;
+      case "wordmark": return Type;
+      case "alternate": return Layers;
       default: return Image;
     }
   };
@@ -114,6 +129,17 @@ export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames
               </div>
               
               {/* Upload Box - Larger and more prominent */}
+              <div className="relative">
+                {hasUpload && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 z-10 bg-background/80 hover:bg-destructive/10 hover:text-destructive rounded-full"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveLogo(logo.type); }}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
               <label
                 className={cn(
                   "flex flex-col items-center justify-center cursor-pointer transition-all",
@@ -159,6 +185,7 @@ export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames
                   onChange={(e) => handleFileChange(logo.type, e.target.files?.[0])}
                 />
               </label>
+              </div>
               
               {/* Filename if uploaded */}
               {(logo.file || (!logo.file && logo.existingUrl && existingFilenames?.[logo.type])) && (
@@ -171,73 +198,84 @@ export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames
         })}
       </div>
 
-      {/* Additional Logos - Full width below */}
-      {iconVariant && (() => {
-        const hasIconUpload = iconVariant.file || iconVariant.existingUrl;
-        const displayIconImage = iconVariant.preview || iconVariant.existingUrl;
+      {/* Secondary Logo Slots - Full width below */}
+      {secondaryVariants.map((variant) => {
+        const VariantIcon = getVariantIcon(variant.type);
+        const hasUpload = variant.file || variant.existingUrl;
+        const displayImage = variant.preview || variant.existingUrl;
         
         return (
-        <div className="space-y-2">
+        <div key={variant.type} className="space-y-2">
           <div className="flex items-center gap-2">
-            <Images className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
-            <span className="text-sm font-medium">{iconVariant.label}</span>
-            {hasIconUpload && (
+            <VariantIcon className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <span className="text-sm font-medium">{variant.label}</span>
+            {hasUpload && (
               <span className="inline-flex items-center gap-1 text-xs text-primary ml-auto">
                 <Check className="w-3 h-3" strokeWidth={2} />
-                {iconVariant.file ? "New upload" : "Saved"}
+                {variant.file ? "New upload" : "Saved"}
               </span>
             )}
           </div>
           
-          <label
-            className={cn(
-              "flex items-center gap-4 cursor-pointer transition-all",
-              "w-full p-4 rounded-xl border-2 border-dashed",
-              "bg-muted/50",
-              hasIconUpload 
-                ? "border-primary bg-primary/5" 
-                : "border-muted-foreground/30 hover:border-primary/60",
-              "group"
+          <div className="relative">
+            {hasUpload && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6 z-10 bg-background/80 hover:bg-destructive/10 hover:text-destructive rounded-full"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveLogo(variant.type); }}
+              >
+                <X className="w-3 h-3" />
+              </Button>
             )}
-          >
-            {/* Square preview area */}
-            <div className={cn(
-              "w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
-              displayIconImage ? "bg-transparent" : "bg-muted group-hover:bg-muted/80"
-            )}>
-              {displayIconImage ? (
-                <img
-                  src={displayIconImage}
-                  alt={iconVariant.label}
-                  className="w-full h-full object-contain rounded-lg"
-                />
-              ) : (
-                <Upload className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+            <label
+              className={cn(
+                "flex items-center gap-4 cursor-pointer transition-all",
+                "w-full p-4 rounded-xl border-2 border-dashed",
+                "bg-muted/50",
+                hasUpload 
+                  ? "border-primary bg-primary/5" 
+                  : "border-muted-foreground/30 hover:border-primary/60",
+                "group"
               )}
-            </div>
-            
-            {/* Description */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground">
-                {iconVariant.description}
-              </p>
-              {(iconVariant.file || (!iconVariant.file && iconVariant.existingUrl && existingFilenames?.icon)) && (
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {iconVariant.file?.name || existingFilenames?.icon}
+            >
+              <div className={cn(
+                "w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
+                displayImage ? "bg-transparent" : "bg-muted group-hover:bg-muted/80"
+              )}>
+                {displayImage ? (
+                  <img
+                    src={displayImage}
+                    alt={variant.label}
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                ) : (
+                  <Upload className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-muted-foreground">
+                  {variant.description}
                 </p>
-              )}
-            </div>
-            
-            <Input
-              type="file"
-              accept=".png,.svg,.jpg,.jpeg,image/png,image/jpeg,image/svg+xml"
-              className="sr-only"
-              onChange={(e) => handleFileChange("icon", e.target.files?.[0])}
-            />
-          </label>
+                {(variant.file || (!variant.file && variant.existingUrl && existingFilenames?.[variant.type])) && (
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {variant.file?.name || existingFilenames?.[variant.type]}
+                  </p>
+                )}
+              </div>
+              
+              <Input
+                type="file"
+                accept=".png,.svg,.jpg,.jpeg,image/png,image/jpeg,image/svg+xml"
+                className="sr-only"
+                onChange={(e) => handleFileChange(variant.type, e.target.files?.[0])}
+              />
+            </label>
+          </div>
         </div>
         );
-      })()}
+      })}
 
       <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
         <AlertCircle className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />

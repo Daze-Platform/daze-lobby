@@ -30,6 +30,8 @@ interface VenueCardProps {
   onMenuUpload: (file: File) => void;
   onLogoUpload: (file: File) => void;
   onRemove: () => void;
+  onMenuRemove?: () => void;
+  onLogoRemove?: () => void;
   isSaving?: boolean;
   isDeleting?: boolean;
   isUploading?: boolean;
@@ -42,7 +44,9 @@ export function VenueCard({
   onNameChange, 
   onMenuUpload,
   onLogoUpload, 
-  onRemove, 
+  onRemove,
+  onMenuRemove,
+  onLogoRemove,
   isSaving,
   isDeleting,
   isUploading,
@@ -222,6 +226,16 @@ export function VenueCard({
                   </span>
                   <span className="text-xs text-muted-foreground">Click to replace</span>
                 </div>
+                {onLogoRemove && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLogoRemove(); }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </>
             ) : (
               <div className="flex items-center gap-3 w-full">
@@ -265,7 +279,7 @@ export function VenueCard({
                 <span className="text-sm text-muted-foreground">Uploading...</span>
               </>
             ) : hasMenu ? (
-              <>
+              <div className="relative w-full flex flex-col items-center">
                 <div className="flex items-center gap-2 text-primary mb-1">
                   <FileText className="w-5 h-5" strokeWidth={1.5} />
                   <Check className="w-4 h-4" strokeWidth={2} />
@@ -276,7 +290,17 @@ export function VenueCard({
                 <span className="text-xs text-muted-foreground mt-1">
                   Click to replace
                 </span>
-              </>
+                {onMenuRemove && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-0 right-0 h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMenuRemove(); }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
             ) : (
               <>
                 <IconStack backgroundIcon={FileText} foregroundIcon={Upload} />

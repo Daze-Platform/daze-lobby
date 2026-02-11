@@ -30,6 +30,8 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     addVenue,
     updateVenue,
     removeVenue,
+    removeMenu,
+    removeLogo,
     uploadMenu,
     uploadLogo,
     completeStep,
@@ -119,6 +121,8 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   onNameChange={(name) => handleVenueNameChange(venue.id, name)}
                   onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
                   onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
+                  onMenuRemove={() => removeMenu(venue.id)}
+                  onLogoRemove={() => removeLogo(venue.id)}
                   onRemove={() => {
                     const venueName = venue.name || "Venue";
                     removeVenue(venue.id);
