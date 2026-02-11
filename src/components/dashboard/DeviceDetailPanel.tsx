@@ -1,5 +1,16 @@
 import { useState } from "react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -26,10 +37,13 @@ import {
   Settings,
   AlertTriangle,
   Package,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import type { DeviceWithClient } from "@/hooks/useDevices";
+import { useDeleteDevice } from "@/hooks/useDevices";
 
 interface DeviceDetailPanelProps {
   device: DeviceWithClient | null;
@@ -117,6 +131,7 @@ function ConfigItem({ icon: Icon, label, value, badge }: { icon: typeof Building
 export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPanelProps) {
   const [isPinging, setIsPinging] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const deleteDeviceMutation = useDeleteDevice();
 
   if (!device) return null;
 
@@ -265,6 +280,47 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
                 Device is offline. Actions unavailable.
               </p>
             )}
+          </div>
+
+          {/* Delete Device */}
+          <div className="pt-2 border-t border-border/50">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full gap-2"
+                  disabled={deleteDeviceMutation.isPending}
+                >
+                  {deleteDeviceMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                  ) : (
+                    <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                  )}
+                  {deleteDeviceMutation.isPending ? "Deleting..." : "Delete Device"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {device.serial_number}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently remove this device from the inventory. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      deleteDeviceMutation.mutate(device.id, {
+                        onSuccess: () => onOpenChange(false),
+                      });
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </SheetContent>
