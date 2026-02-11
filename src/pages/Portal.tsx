@@ -111,6 +111,18 @@ export default function Portal() {
     [tasks]
   );
 
+  // MEMOIZED: Legal entity data for ReviewSignModal (stable reference prevents re-render resets)
+  const hotelLegalEntity = useMemo(() => {
+    const legalTaskData = formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown> || {};
+    return {
+      ...legalTaskData,
+      legal_entity_name: client?.legal_entity_name || legalTaskData?.legal_entity_name,
+      billing_address: client?.billing_address || legalTaskData?.billing_address,
+      authorized_signer_name: client?.authorized_signer_name || legalTaskData?.authorized_signer_name,
+      authorized_signer_title: client?.authorized_signer_title || legalTaskData?.authorized_signer_title,
+    } as PilotAgreementData;
+  }, [formattedTasks, client]);
+
   // Confetti & toast celebration when status changes to live
   useEffect(() => {
     if (status === "live" && prevStatus.current !== null && prevStatus.current !== "live") {
@@ -355,13 +367,7 @@ export default function Portal() {
                     isSigningLegal={isSigningLegal}
                     isUpdating={isUpdating}
                     onSaveLegalDraft={handleSaveLegalDraft}
-                    hotelLegalEntity={{
-                      ...(formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown> || {}),
-                      legal_entity_name: client?.legal_entity_name || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.legal_entity_name as string || undefined,
-                      billing_address: client?.billing_address || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.billing_address as string || undefined,
-                      authorized_signer_name: client?.authorized_signer_name || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.authorized_signer_name as string || undefined,
-                      authorized_signer_title: client?.authorized_signer_title || (formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown>)?.authorized_signer_title as string || undefined,
-                    } as PilotAgreementData}
+                    hotelLegalEntity={hotelLegalEntity}
                   />
                 </CardContent>
               </Card>

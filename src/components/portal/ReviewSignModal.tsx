@@ -373,9 +373,10 @@ export function ReviewSignModal({
     zip: addressZip,
   });
 
-  // Pre-fill from saved data
+  // Pre-fill from saved data — only when the modal OPENS (false → true)
+  const prevOpenRef = useRef(false);
   useEffect(() => {
-    if (open && initialLegalEntity) {
+    if (open && !prevOpenRef.current && initialLegalEntity) {
       const d = initialLegalEntity;
       setPropertyName(d.property_name || "");
       setLegalEntityName(d.legal_entity_name || "");
@@ -409,6 +410,7 @@ export function ReviewSignModal({
       setPosApiKey(d.pos_api_key || "");
       setPosContact(d.pos_contact || "");
     }
+    prevOpenRef.current = open;
   }, [open, initialLegalEntity]);
 
   const currentEntity: PilotAgreementData = useMemo(() => ({
