@@ -175,4 +175,25 @@ export function useUpdateClientPhase() {
   });
 }
 
+export function useDeleteClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (clientId: string) => {
+      const { error } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", clientId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
+      toast.success("Client deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete client: " + error.message);
+    },
+  });
+}
+
 // Note: Client type is now available from @/types

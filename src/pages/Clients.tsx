@@ -28,8 +28,9 @@ import {
   Timer,
   CircleDashed,
   ArrowSquareOut,
+  Trash,
 } from "@phosphor-icons/react";
-import { useClients, type Client } from "@/hooks/useClients";
+import { useClients, useDeleteClient, type Client } from "@/hooks/useClients";
 import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
 import { cn } from "@/lib/utils";
 
@@ -46,8 +47,10 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [notifyClient, setNotifyClient] = useState<Client | null>(null);
+  const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   
   const sendNotification = useSendBlockerNotification();
+  const deleteClientMutation = useDeleteClient();
 
   const handleClientClick = (client: Client) => {
     setSelectedClient(client);
@@ -181,6 +184,27 @@ export default function Clients() {
                               </Tooltip>
                             </TooltipProvider>
                           )}
+                          {/* Delete Button */}
+                          <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteClient(client);
+                                  }}
+                                >
+                                  <Trash size={16} weight="duotone" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>Delete client</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {/* Notify Button - Only show when there are pending tasks */}
                           {client.incompleteCount > 0 && (
                             <TooltipProvider delayDuration={0}>
@@ -272,6 +296,35 @@ export default function Clients() {
             >
               {sendNotification.isPending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
               Send Notification
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteClient} onOpenChange={(open) => !open && setDeleteClient(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteClient?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the client and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteClient) {
+                  deleteClientMutation.mutate(deleteClient.id, {
+                    onSettled: () => setDeleteClient(null),
+                  });
+                }
+              }}
+              disabled={deleteClientMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+            >
+              {deleteClientMutation.isPending && <CircleNotch size={16} weight="bold" className="animate-spin" />}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
