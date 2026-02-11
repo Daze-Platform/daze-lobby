@@ -104,7 +104,12 @@ export function TaskAccordion({
   }, []);
 
   const handleBrandSave = async (data: { properties: PropertyBrand[] }) => {
-    onTaskUpdate("brand", { properties: data.properties });
+    // Strip File objects (non-serializable) before saving to DB
+    const cleanProperties = data.properties.map(p => ({
+      ...p,
+      logos: {},  // File objects can't be serialized; URLs are stored separately via uploadLogoMutation
+    }));
+    onTaskUpdate("brand", { properties: cleanProperties });
   };
 
   const handleLogoUpload = (propertyId: string, file: File, variant: string) => {

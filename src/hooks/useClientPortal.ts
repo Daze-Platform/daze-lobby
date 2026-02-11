@@ -292,9 +292,14 @@ export function useClientPortal() {
     }) => {
       if (!clientId) throw new Error("No client found");
 
-      // Merge with existing data to preserve upload paths (logos, palette docs)
-      const existingTask = tasks?.find(t => t.task_key === taskKey);
-      const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+      // Fetch fresh data from DB to avoid stale cache race conditions
+      const { data: freshTask } = await supabase
+        .from("onboarding_tasks")
+        .select("data")
+        .eq("client_id", clientId)
+        .eq("task_key", taskKey)
+        .maybeSingle();
+      const existingData = (freshTask?.data as Record<string, unknown>) || {};
 
       const { error } = await supabase
         .from("onboarding_tasks")
@@ -353,9 +358,14 @@ export function useClientPortal() {
         .from("onboarding-assets")
         .getPublicUrl(filePath);
 
-      // Update brand task with logo reference
-      const existingTask = tasks?.find(t => t.task_key === "brand");
-      const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+      // Fetch fresh data from DB to avoid stale cache race conditions
+      const { data: freshTask } = await supabase
+        .from("onboarding_tasks")
+        .select("data")
+        .eq("client_id", clientId)
+        .eq("task_key", "brand")
+        .maybeSingle();
+      const existingData = (freshTask?.data as Record<string, unknown>) || {};
       const existingLogos = (existingData.logos || {}) as Record<string, string>;
 
       const { error: updateError } = await supabase
@@ -556,9 +566,14 @@ export function useClientPortal() {
 
       if (uploadError) throw uploadError;
 
-      // Get existing task data to merge
-      const existingTask = tasks?.find(t => t.task_key === taskKey);
-      const existingData = (existingTask?.data || {}) as Record<string, unknown>;
+      // Fetch fresh data from DB to avoid stale cache race conditions
+      const { data: freshTask } = await supabase
+        .from("onboarding_tasks")
+        .select("data")
+        .eq("client_id", clientId)
+        .eq("task_key", taskKey)
+        .maybeSingle();
+      const existingData = (freshTask?.data as Record<string, unknown>) || {};
 
       // Update task with file reference
       const { error: updateError } = await supabase
