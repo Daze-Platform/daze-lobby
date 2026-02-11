@@ -95,3 +95,26 @@ export function isClient(role: AppRole | null): boolean {
 export function hasDashboardAccess(role: AppRole | null): boolean {
   return role === "admin" || role === "ops_manager" || role === "support";
 }
+
+/**
+ * Force-clean the session, including manual storage removal for privacy browsers (Brave).
+ * Use when switching between admin/client roles on the same browser.
+ */
+export async function forceCleanSession(): Promise<void> {
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // signOut may throw if session already invalid
+  }
+  // Explicitly wipe Supabase auth tokens from storage (Brave workaround)
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  if (projectId) {
+    const storageKey = `sb-${projectId}-auth-token`;
+    try {
+      localStorage.removeItem(storageKey);
+      sessionStorage.removeItem(storageKey);
+    } catch {
+      // Storage access may be blocked
+    }
+  }
+}
