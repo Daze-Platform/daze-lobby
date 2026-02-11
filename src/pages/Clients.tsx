@@ -41,7 +41,7 @@ import {
   ArrowSquareOut,
   Trash,
   MagnifyingGlass,
-  FunnelSimple,
+  SlidersHorizontal,
   ArrowCounterClockwise,
 } from "@phosphor-icons/react";
 import { useClients, useDeleteClient, useRestoreClient, type Client } from "@/hooks/useClients";
@@ -176,7 +176,7 @@ export default function Clients() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2 shrink-0">
-                <FunnelSimple size={16} weight="duotone" />
+                <SlidersHorizontal size={16} weight="duotone" />
                 Filters
                 {activeFilterCount > 0 && (
                   <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
