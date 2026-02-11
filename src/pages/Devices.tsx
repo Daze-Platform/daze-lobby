@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -462,6 +464,13 @@ export default function Devices() {
                   deleteDeviceMutation.mutate(deleteDeviceTarget.id, {
                     onSettled: () => setDeleteDeviceTarget(null),
                   });
+                  // Log activity
+                  supabase.from("activity_logs").insert([{
+                    client_id: deleteDeviceTarget.client_id,
+                    action: "device_deleted",
+                    details: { serial_number: deleteDeviceTarget.serial_number, device_type: deleteDeviceTarget.device_type } as unknown as Json,
+                    is_auto_logged: false,
+                  }]);
                 }
               }}
               disabled={deleteDeviceMutation.isPending}

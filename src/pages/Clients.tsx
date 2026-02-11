@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { HotelDetailPanel } from "@/components/dashboard";
@@ -298,6 +300,12 @@ export default function Clients() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 restoreClientMutation.mutate(client.id);
+                                supabase.from("activity_logs").insert([{
+                                  client_id: client.id,
+                                  action: "client_restored",
+                                  details: { client_name: client.name } as unknown as Json,
+                                  is_auto_logged: false,
+                                }]);
                               }}
                               disabled={restoreClientMutation.isPending}
                             >
@@ -464,6 +472,13 @@ export default function Clients() {
                   deleteClientMutation.mutate(deleteClientTarget.id, {
                     onSettled: () => setDeleteClientTarget(null),
                   });
+                  // Log activity
+                  supabase.from("activity_logs").insert([{
+                    client_id: deleteClientTarget.id,
+                    action: "client_deleted",
+                    details: { client_name: deleteClientTarget.name } as unknown as Json,
+                    is_auto_logged: false,
+                  }]);
                 }
               }}
               disabled={deleteClientMutation.isPending}

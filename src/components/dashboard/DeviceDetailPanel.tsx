@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -311,7 +313,16 @@ export function DeviceDetailPanel({ device, open, onOpenChange }: DeviceDetailPa
                   <AlertDialogAction
                     onClick={() => {
                       deleteDeviceMutation.mutate(device.id, {
-                        onSuccess: () => onOpenChange(false),
+                        onSuccess: () => {
+                          // Log activity
+                          supabase.from("activity_logs").insert([{
+                            client_id: device.client_id,
+                            action: "device_deleted",
+                            details: { serial_number: device.serial_number, device_type: device.device_type } as unknown as Json,
+                            is_auto_logged: false,
+                          }]);
+                          onOpenChange(false);
+                        },
                       });
                     }}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
