@@ -1,20 +1,27 @@
 
 
-## Fix: Status Badge Clipping in Client Switcher Dropdown
+## Display Primary Contact Name in Client Portal Greeting
 
-### Problem
-In the admin client switcher dropdown, clients with long names (e.g., "Springhill Suites Orange Beach") cause the phase badge to be cut off at the right edge. The dropdown has a fixed width of 340px that cannot accommodate all content.
+### What Changes
+In the **client-facing** portal, the greeting will show the primary contact's first name (e.g., "Hi John") instead of the property name (e.g., "Langston Street Hotel LLC"). The **admin view** of the portal will continue showing the property name as it does today.
 
-### Solution
-Widen the dropdown and allow the client name to truncate instead of pushing the badge out of view. The badge and percentage should always remain fully visible since they convey critical status information.
+### How
 
-### Changes
+**File: `src/pages/Portal.tsx`**
 
-**File: `src/components/portal/AdminClientSwitcher.tsx`**
+1. Add a query to fetch the primary contact for the current client from the `client_contacts` table (where `is_primary = true`).
+2. Extract the contact's first name from the `name` field (split on space, take the first part).
+3. In the greeting heading, use the primary contact's first name when the user is a client, and fall back to the property name for admins or when no primary contact exists.
 
-1. Increase `SelectContent` width from `w-[340px]` to `w-[380px]`
-2. Ensure the client name uses `truncate` with a constrained width so the badge and percentage always have room
-3. Add `shrink-0` to the metadata container (percentage + badge) so it never gets compressed
+The greeting line changes from:
+- Client sees: "Langston Street Hotel LLC"
+- To: "Hi John" (primary contact's first name)
 
-This is a CSS-only fix in a single file -- no logic changes needed.
+Admin continues to see: "Langston Street Hotel LLC" (property name, unchanged)
 
+### Technical Detail
+
+- Query: `supabase.from("client_contacts").select("name").eq("client_id", clientId).eq("is_primary", true).maybeSingle()`
+- First name extraction: `contactName?.split(" ")[0]`
+- Conditional display: `isAdminViewingPortal ? client?.name : (primaryFirstName || "Partner")`
+- Single file change, no schema or migration needed
