@@ -50,7 +50,7 @@ export function ColorPaletteManager({
       <div className="flex items-center gap-2">
         <Label className="flex items-center gap-2">
           <Palette className="w-4 h-4" strokeWidth={1.5} />
-          Brand Color Palette
+          Color Palette
         </Label>
         <span className="text-xs text-muted-foreground">
           ({colors.length}/{maxColors})
