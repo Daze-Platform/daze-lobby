@@ -70,7 +70,7 @@ export function ClientLoginForm() {
           8000,
           "Session check timed out"
         );
-        const session = (sessionResult as any)?.data?.session ?? null;
+        const session = (sessionResult as { data: { session: unknown } })?.data?.session ?? null;
         if (session && !navigationAttemptedRef.current) {
           navigationAttemptedRef.current = true;
           navigate(postAuthPath, { replace: true });
@@ -124,7 +124,7 @@ export function ClientLoginForm() {
       } else {
         // Login flow
         const preSessionResult = await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out");
-        const preSession = (preSessionResult as any)?.data?.session ?? null;
+        const preSession = (preSessionResult as { data: { session: unknown } })?.data?.session ?? null;
         if (preSession && !navigationAttemptedRef.current) {
           navigationAttemptedRef.current = true;
           navigate(postAuthPath, { replace: true });
@@ -133,8 +133,8 @@ export function ClientLoginForm() {
 
         const result = await withTimeout(signIn(email, password), 15000, "Sign in timed out. Please try again.");
         const session =
-          (result as any)?.session ??
-          ((await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out")) as any)?.data?.session ??
+          (result as { session?: unknown })?.session ??
+          ((await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out")) as { data: { session: unknown } })?.data?.session ??
           null;
 
         if (session && !navigationAttemptedRef.current) {

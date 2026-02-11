@@ -38,11 +38,14 @@ export function useMessages(clientId: string | null) {
 
       if (error) throw error;
 
-      return (data || []).map((msg) => ({
-        ...msg,
-        sender_name: (msg.profiles as any)?.full_name || "Unknown",
-        sender_avatar: (msg.profiles as any)?.avatar_url || null,
-      })) as Message[];
+      return (data || []).map((msg) => {
+        const profile = msg.profiles as unknown as { full_name: string | null; avatar_url: string | null } | null;
+        return {
+          ...msg,
+          sender_name: profile?.full_name || "Unknown",
+          sender_avatar: profile?.avatar_url || null,
+        };
+      }) as Message[];
     },
   });
 }

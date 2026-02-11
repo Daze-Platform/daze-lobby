@@ -47,7 +47,7 @@ export function useAuth() {
     } finally {
       fetchInProgressRef.current = false;
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     isMountedRef.current = true;
