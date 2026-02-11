@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { SaveButton } from "@/components/ui/save-button";
 import { Label } from "@/components/ui/label";
 import { Plus, MapPin } from "lucide-react";
 import { VenueCard } from "./VenueCard";
 import { useVenueContext } from "@/contexts/VenueContext";
+import { toast } from "sonner";
 
 // Debounce helper
 function debounce<T extends (...args: Parameters<T>) => void>(
@@ -102,21 +104,35 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
       {/* Venue Cards Grid */}
       {venues.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          {venues.map((venue) => (
-            <VenueCard
-              key={venue.id}
-              venue={venue}
-              onNameChange={(name) => handleVenueNameChange(venue.id, name)}
-              onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
-              onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
-              onRemove={() => removeVenue(venue.id)}
-              isSaving={pendingUpdates.has(venue.id)}
-              isDeleting={isDeletingVenue}
-              isUploading={uploadingMenuIds.has(venue.id)}
-              isUploadingLogo={uploadingLogoIds.has(venue.id)}
-              autoFocus={venue.id === newlyAddedId}
-            />
-          ))}
+          <AnimatePresence mode="popLayout">
+            {venues.map((venue) => (
+              <motion.div
+                key={venue.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+                transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              >
+                <VenueCard
+                  venue={venue}
+                  onNameChange={(name) => handleVenueNameChange(venue.id, name)}
+                  onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
+                  onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
+                  onRemove={() => {
+                    const venueName = venue.name || "Venue";
+                    removeVenue(venue.id);
+                    toast.success(`"${venueName}" removed`);
+                  }}
+                  isSaving={pendingUpdates.has(venue.id)}
+                  isDeleting={isDeletingVenue}
+                  isUploading={uploadingMenuIds.has(venue.id)}
+                  isUploadingLogo={uploadingLogoIds.has(venue.id)}
+                  autoFocus={venue.id === newlyAddedId}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       ) : (
         <div className="text-center py-8 border-2 border-dashed rounded-lg">

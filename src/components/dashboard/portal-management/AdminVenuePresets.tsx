@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -177,28 +178,35 @@ export function AdminVenuePresets({ clientId }: AdminVenuePresetsProps) {
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
           ) : venues && venues.length > 0 ? (
-            venues.map((venue) => (
-              <div
-                key={venue.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50 group hover:bg-muted/70 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Store className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium">{venue.name}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                  onClick={() => deleteVenueMutation.mutate(venue.id)}
-                  disabled={deleteVenueMutation.isPending}
+            <AnimatePresence mode="popLayout">
+              {venues.map((venue) => (
+                <motion.div
+                  key={venue.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9, x: -20, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+                  transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50 group hover:bg-muted/70 transition-colors"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Store className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium">{venue.name}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    onClick={() => deleteVenueMutation.mutate(venue.id)}
+                    disabled={deleteVenueMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Store className="h-8 w-8 mx-auto mb-2 opacity-50" />
