@@ -63,6 +63,7 @@ export type Database = {
           reason: string
           resolved_at: string | null
           resolved_by_id: string | null
+          task_id: string | null
         }
         Insert: {
           auto_rule?: string | null
@@ -74,6 +75,7 @@ export type Database = {
           reason: string
           resolved_at?: string | null
           resolved_by_id?: string | null
+          task_id?: string | null
         }
         Update: {
           auto_rule?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           reason?: string
           resolved_at?: string | null
           resolved_by_id?: string | null
+          task_id?: string | null
         }
         Relationships: [
           {
@@ -92,6 +95,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocker_alerts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -567,6 +577,7 @@ export type Database = {
         Args: { _hotel_id: string; _user_id: string }
         Returns: boolean
       }
+      check_client_inactivity: { Args: never; Returns: Json }
       generate_slug: { Args: { input_text: string }; Returns: string }
       get_user_client_id: { Args: { _user_id: string }; Returns: string }
       get_user_hotel_id: { Args: { _user_id: string }; Returns: string }

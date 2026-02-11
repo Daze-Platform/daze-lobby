@@ -7,6 +7,7 @@ export interface ActiveBlocker {
   clientName: string;
   reason: string;
   blockerType: "manual" | "automatic";
+  autoRule: string | null;
   createdAt: string;
   completedTasks: number;
   totalTasks: number;
@@ -14,14 +15,37 @@ export interface ActiveBlocker {
   incompleteTaskKey: string | null;
 }
 
+/** Returns true if this blocker was created by the inactivity watchdog */
+export function isWatchdogBlocker(blocker: ActiveBlocker): boolean {
+  return blocker.blockerType === "automatic" && (blocker.autoRule?.startsWith("inactivity_watchdog") ?? false);
+}
+
+/** Extracts severity ('medium' | 'high') from a watchdog blocker's auto_rule */
+export function getWatchdogSeverity(blocker: ActiveBlocker): "medium" | "high" {
+  if (blocker.autoRule?.includes(":high")) return "high";
+  return "medium";
+}
+
+/**
+ * Runs the inactivity watchdog RPC to auto-create blockers for stale tasks.
+ * Call on dashboard mount to ensure the blocker list is fresh.
+ */
+export async function refreshInactivityBlockers() {
+  const { error } = await supabase.rpc("check_client_inactivity");
+  if (error) console.error("[Watchdog] Failed to refresh inactivity blockers:", error);
+}
+
 export function useActiveBlockers() {
   return useQuery({
     queryKey: ["active-blockers"],
     queryFn: async () => {
+      // Run watchdog check before fetching
+      await refreshInactivityBlockers();
+
       // Fetch unresolved blockers with client name
       const { data: blockers, error: blockersError } = await supabase
         .from("blocker_alerts")
-        .select("id, client_id, reason, blocker_type, created_at, clients(name)")
+        .select("id, client_id, reason, blocker_type, auto_rule, created_at, clients(name)")
         .is("resolved_at", null)
         .order("created_at", { ascending: false });
 
@@ -54,7 +78,6 @@ export function useActiveBlockers() {
 
       return blockers.map((b): ActiveBlocker => {
         const stats = taskStats.get(b.client_id) || { completed: 0, total: 5, firstIncompleteKey: null };
-        // clients is returned as an object (single FK relation)
         const clientObj = b.clients as unknown as { name: string } | null;
         return {
           id: b.id,
@@ -62,6 +85,7 @@ export function useActiveBlockers() {
           clientName: clientObj?.name ?? "Unknown Client",
           reason: b.reason,
           blockerType: b.blocker_type,
+          autoRule: b.auto_rule,
           createdAt: b.created_at,
           completedTasks: stats.completed,
           totalTasks: stats.total || 5,
