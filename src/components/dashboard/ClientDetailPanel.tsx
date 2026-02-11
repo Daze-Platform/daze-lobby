@@ -215,7 +215,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
 
-  const { data: clientDevices = [], isLoading: devicesLoading } = useQuery({
+  const { data: clientDevices = [], isLoading: devicesLoading, isError: devicesError } = useQuery({
     queryKey: ["client-devices", hotel?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -229,7 +229,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
     enabled: !!hotel?.id && open,
   });
 
-  const { data: contacts = [], isLoading: contactsLoading } = useQuery({
+  const { data: contacts = [], isLoading: contactsLoading, isError: contactsError } = useQuery({
     queryKey: ["client-contacts", hotel?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -243,7 +243,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
     enabled: !!hotel?.id && open,
   });
 
-  const { data: activityLogs = [], isLoading: activityLoading } = useActivityLogs(
+  const { data: activityLogs = [], isLoading: activityLoading, isError: activityError } = useActivityLogs(
     hotel?.id && open ? hotel.id : null
   );
 
@@ -354,6 +354,10 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
                   </div>
                 ))}
               </div>
+            ) : contactsError ? (
+              <div className="text-center py-8 text-destructive text-sm">
+                <p>Failed to load contacts</p>
+              </div>
             ) : contacts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -392,6 +396,10 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
             </div>
             {devicesLoading ? (
               <div className="text-center py-8 text-muted-foreground text-sm">Loading devices…</div>
+            ) : devicesError ? (
+              <div className="text-center py-8 text-destructive text-sm">
+                <p>Failed to load devices</p>
+              </div>
             ) : clientDevices.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 <Cpu className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -425,6 +433,10 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : activityError ? (
+              <div className="text-center py-8 text-destructive text-sm">
+                <p>Failed to load activity</p>
               </div>
             ) : activityLogs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">

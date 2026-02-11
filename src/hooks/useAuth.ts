@@ -89,7 +89,8 @@ export function useAuth() {
           ),
         ]);
 
-        const initialSession = (sessionResult as any)?.data?.session ?? null;
+        const result = sessionResult as { data: { session: Session | null } };
+        const initialSession = result.data.session;
 
         if (!isMountedRef.current) return;
 
