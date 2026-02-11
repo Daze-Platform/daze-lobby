@@ -1,1 +1,4 @@
 project_id = "lwbadgpvnynkixjnzmyp"
+
+[functions.check-inactivity]
+verify_jwt = false

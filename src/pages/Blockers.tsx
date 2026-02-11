@@ -27,7 +27,7 @@ import {
 } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useActiveBlockers, type ActiveBlocker } from "@/hooks/useActiveBlockers";
+import { useActiveBlockers, isWatchdogBlocker, getWatchdogSeverity, type ActiveBlocker } from "@/hooks/useActiveBlockers";
 import { useSendBlockerNotification } from "@/hooks/useSendBlockerNotification";
 
 // Task step mapping
@@ -110,7 +110,29 @@ export default function Blockers() {
                 <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
+                      {isWatchdogBlocker(blocker) ? (
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className={cn(
+                                "shrink-0 p-1 rounded-md",
+                                getWatchdogSeverity(blocker) === "high"
+                                  ? "bg-destructive/10 text-destructive"
+                                  : "bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400"
+                              )}>
+                                <Clock size={18} weight="duotone" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>
+                                Time-delay blocker ({getWatchdogSeverity(blocker) === "high" ? "120+ hrs" : "72+ hrs"} inactive)
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
+                      )}
                       <span className="truncate">{blocker.clientName}</span>
                     </CardTitle>
                     
