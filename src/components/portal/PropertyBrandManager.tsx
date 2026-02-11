@@ -40,8 +40,10 @@ export interface PropertyBrand {
   name: string;
   logos: Record<string, File>;
   logoUrls?: Record<string, string>;
+  logoFilenames?: Record<string, string>;
   colors: string[];
   paletteDocumentUrl?: string | null;
+  paletteDocumentFilename?: string | null;
   isExpanded?: boolean;
 }
 
@@ -289,6 +291,7 @@ export function PropertyBrandManager({
                       <MultiLogoUpload
                         onLogosChange={(logos) => handleLogosChange(property.id, logos)}
                         existingUrls={property.logoUrls}
+                        existingFilenames={property.logoFilenames}
                       />
 
                       {/* Brand Colors */}
@@ -300,9 +303,10 @@ export function PropertyBrandManager({
                           </p>
                         </div>
 
-                        <BrandDocumentUpload
+                      <BrandDocumentUpload
                           onUpload={(file) => handleDocumentUpload(property.id, file)}
                           existingUrl={property.paletteDocumentUrl}
+                          existingFilename={property.paletteDocumentFilename}
                           label="Upload Brand Guidelines"
                           description="PDF, PNG, or image with your official color palette"
                         />

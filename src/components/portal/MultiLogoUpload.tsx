@@ -18,6 +18,7 @@ interface LogoVariant {
 interface MultiLogoUploadProps {
   onLogosChange: (logos: Record<string, File>) => void;
   existingUrls?: Record<string, string>;
+  existingFilenames?: Record<string, string>;
 }
 
 const createInitialLogos = (existingUrls?: Record<string, string>): LogoVariant[] => [
@@ -26,7 +27,7 @@ const createInitialLogos = (existingUrls?: Record<string, string>): LogoVariant[
   { type: "icon", label: "Additional Logos", description: "For marketing materials & guest interfaces", existingUrl: existingUrls?.icon },
 ];
 
-export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUploadProps) {
+export function MultiLogoUpload({ onLogosChange, existingUrls, existingFilenames }: MultiLogoUploadProps) {
   const [logos, setLogos] = useState<LogoVariant[]>(() => createInitialLogos(existingUrls));
 
   // Sync existingUrls when they change (e.g., after data loads from DB)
@@ -160,9 +161,9 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
               </label>
               
               {/* Filename if uploaded */}
-              {logo.file && (
+              {(logo.file || (!logo.file && logo.existingUrl && existingFilenames?.[logo.type])) && (
                 <p className="text-xs text-muted-foreground truncate px-1">
-                  {logo.file.name}
+                  {logo.file?.name || existingFilenames?.[logo.type]}
                 </p>
               )}
             </div>
@@ -220,9 +221,9 @@ export function MultiLogoUpload({ onLogosChange, existingUrls }: MultiLogoUpload
               <p className="text-sm text-muted-foreground">
                 {iconVariant.description}
               </p>
-              {iconVariant.file && (
+              {(iconVariant.file || (!iconVariant.file && iconVariant.existingUrl && existingFilenames?.icon)) && (
                 <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {iconVariant.file.name}
+                  {iconVariant.file?.name || existingFilenames?.icon}
                 </p>
               )}
             </div>
