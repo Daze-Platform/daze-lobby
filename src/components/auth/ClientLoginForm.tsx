@@ -62,7 +62,7 @@ export function ClientLoginForm() {
     ? `/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
     : "/post-auth?origin=portal";
 
-  // Check for existing session on mount
+  // Check for existing session on mount — block admins immediately
   useEffect(() => {
     const checkExistingSession = async () => {
       try {
@@ -72,9 +72,26 @@ export function ClientLoginForm() {
           "Session check timed out"
         );
         const session = (sessionResult as { data: { session: unknown } })?.data?.session ?? null;
-        if (session && !navigationAttemptedRef.current) {
-          navigationAttemptedRef.current = true;
-          navigate(postAuthPath, { replace: true });
+        if (session) {
+          // Check if this is an admin user — sign them out immediately
+          const userId = (session as { user?: { id: string } })?.user?.id;
+          if (userId) {
+            const { data: roleData } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", userId)
+              .maybeSingle();
+            const userRole = roleData?.role;
+            if (userRole === "admin" || userRole === "ops_manager" || userRole === "support") {
+              await supabase.auth.signOut();
+              setError("This portal is for hotel partners only. Please sign in at the admin dashboard.");
+              return;
+            }
+          }
+          if (!navigationAttemptedRef.current) {
+            navigationAttemptedRef.current = true;
+            navigate(postAuthPath, { replace: true });
+          }
         }
       } catch (err) {
         console.error("[ClientLoginForm] Error checking session:", err);

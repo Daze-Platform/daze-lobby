@@ -80,9 +80,10 @@ export default function PortalBySlug() {
     );
   }
 
-  // Admin users should use /admin/portal/:slug
+  // Hard block: admins should never reach here (PortalRoute blocks them),
+  // but as a safety net, render nothing instead of portal content
   if (hasDashboardAccess(role)) {
-    return <Navigate to={`/admin/portal/${clientSlug}`} replace />;
+    return null;
   }
 
   // Resolving slug
