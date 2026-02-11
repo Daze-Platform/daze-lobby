@@ -26,6 +26,7 @@ export function BrandDocumentUpload({
 }: BrandDocumentUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -57,18 +58,20 @@ export function BrandDocumentUpload({
 
   const handleFile = (file: File) => {
     setSelectedFile(file);
+    setDismissed(false);
     onUpload(file);
   };
 
   const handleRemove = () => {
     setSelectedFile(null);
+    setDismissed(true);
     if (inputRef.current) {
       inputRef.current.value = "";
     }
     onRemove?.();
   };
 
-  const hasFile = selectedFile || existingUrl;
+  const hasFile = selectedFile || (existingUrl && !dismissed);
 
   return (
     <div className="space-y-2">
