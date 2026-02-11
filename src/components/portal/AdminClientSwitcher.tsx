@@ -94,11 +94,11 @@ export function AdminClientSwitcher() {
             </span>
           </div>
         </SelectTrigger>
-        <SelectContent align="end" className="w-[340px] z-[100]">
+        <SelectContent align="end" className="w-[380px] z-[100]">
           {allClients.map((c) => (
             <SelectItem key={c.id} value={c.id} className="py-2.5">
               <div className="flex items-center justify-between w-full gap-3">
-                <span className="truncate font-medium">{c.name}</span>
+                <span className="truncate flex-1 min-w-0 font-medium">{c.name}</span>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground">{c.onboarding_progress ?? 0}%</span>
                   <Badge 
