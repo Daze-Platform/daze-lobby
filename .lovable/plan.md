@@ -1,44 +1,43 @@
 
 
-## Fix Portal Greeting to Show Logged-in User's Name
+## Block Client Users from the Control Tower Login
 
 ### Problem
-The portal greeting ("Your Portal / [wave] Name") currently pulls from the `client_contacts` table (primary contact record), not from the logged-in user's profile. This means:
-- It shows "Brian Rodriguez" instead of "Andres Diaz" (the name he signed up with)
-- Any new user who signs up will see the primary contact's name, not their own
+The admin login page (`/auth`) currently allows any user to sign in, including client-role users like `brian.92rod@hotmail.com`. The client portal login (`/portal/login`) already blocks admin users, but the reverse guard is missing.
+
+### Solution
+Add a role check to `LoginForm.tsx` (the Control Tower login form) that mirrors the existing guard in `ClientLoginForm.tsx`. After a successful email/password sign-in, check the user's role -- if it's `client`, sign them out and show an error message directing them to the Partner Portal.
 
 ### Changes
 
-**1. Database: Update contact name**
+**File: `src/components/auth/LoginForm.tsx`**
 
-Update the existing primary contact record to reflect the correct name:
+After the `signIn()` call succeeds (around line 152), add a role check before proceeding with navigation:
 
-```sql
-UPDATE client_contacts 
-SET name = 'Andres Diaz' 
-WHERE id = '4db9aeb4-169c-45c5-8763-69afc931e446';
+```typescript
+// Check if user has a client role -- block them from Control Tower
+const userId = result?.user?.id;
+if (userId) {
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (roleData?.role === "client") {
+    await supabase.auth.signOut();
+    setError("This dashboard is for internal team members only. Please sign in at the Partner Portal.");
+    setLoading(false);
+    return;
+  }
+}
 ```
 
-**2. `src/pages/Portal.tsx` -- Use the logged-in user's profile name for the greeting**
+This is the same pattern already used in `ClientLoginForm.tsx` (lines 121-137) but in reverse -- blocking `client` role instead of blocking `admin`/`ops_manager`/`support` roles.
 
-Replace the `primaryContact` query and `primaryFirstName` logic with the user's own profile name. The `user` object from `useAuthContext()` already contains `fullName` (loaded from the `profiles` table).
+### What This Does NOT Change
+- Google OAuth flow on `/auth`: Already handled by `PostAuth.tsx` and `AuthRedirect.tsx` which detect role mismatches
+- The `/portal/login` page: Already has the reverse guard blocking admins
+- Brian can still use `brian@dazeapp.com` (admin role) to access the Control Tower
+- Brian can still use `brian.92rod@hotmail.com` (client role) to access the Partner Portal
 
-Change line 270 from:
-```
-{isAdminViewingPortal ? (client?.name || "Partner") : (primaryFirstName || "Partner")}
-```
-to:
-```
-{isAdminViewingPortal ? (client?.name || "Partner") : (user?.fullName?.split(" ")[0] || "Partner")}
-```
-
-Remove the now-unused `primaryContact` query (lines 56-69) and the `primaryFirstName` variable (line 71) to keep the code clean.
-
-### Result
-- Andres will see "Andres" in the greeting immediately
-- Any future client user who signs up with their name will see their own first name in the portal greeting, not the primary contact's name
-- Admin view continues showing the hotel/client name as before
-
-### Files Changed
-- `src/pages/Portal.tsx`
-- Database update (one row in `client_contacts`)
