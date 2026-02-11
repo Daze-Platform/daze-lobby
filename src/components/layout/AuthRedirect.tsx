@@ -1,8 +1,10 @@
-import { Navigate, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Navigate, useSearchParams, useNavigate } from "react-router-dom";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { hasDashboardAccess, isClient, forceCleanSession } from "@/lib/auth";
+import { hasDashboardAccess, isClient, forceCleanSession, signOut } from "@/lib/auth";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -10,34 +12,36 @@ interface AuthRedirectProps {
 
 /**
  * Wrapper for /auth and /portal/login that prevents logged-in users from seeing the login UI.
- * Now role-aware: if the wrong role is logged in for this login page, we sign them out
- * and show the login form instead of blindly redirecting.
+ * Role-aware: if the wrong role is logged in for this login page, we show a choice card
+ * instead of silently destroying their session.
  */
 export function AuthRedirect({ children }: AuthRedirectProps) {
-  const { isAuthenticated, loading, role } = useAuthContext();
+  const { isAuthenticated, loading, role, user } = useAuthContext();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // State for portal-login auto-clean (admin on portal login — keep existing behavior)
   const [cleaningSession, setCleaningSession] = useState(false);
   const [sessionCleaned, setSessionCleaned] = useState(false);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
   const isPortalLogin = window.location.pathname.startsWith("/portal/");
   const isAdminLogin = window.location.pathname === "/auth";
 
-  // If the wrong role is authenticated, force-clean the session
+  // Only auto-clean for admin users on portal login (existing behavior kept)
   useEffect(() => {
     if (loading || !isAuthenticated || cleaningSession || sessionCleaned) return;
 
-    const wrongRole =
-      (isAdminLogin && isClient(role)) ||
-      (isPortalLogin && hasDashboardAccess(role));
+    const adminOnPortalLogin = isPortalLogin && hasDashboardAccess(role);
 
-    if (wrongRole) {
+    if (adminOnPortalLogin) {
       setCleaningSession(true);
       forceCleanSession().finally(() => {
         setCleaningSession(false);
         setSessionCleaned(true);
       });
     }
-  }, [loading, isAuthenticated, role, isAdminLogin, isPortalLogin, cleaningSession, sessionCleaned]);
+  }, [loading, isAuthenticated, role, isPortalLogin, cleaningSession, sessionCleaned]);
 
   if (loading || cleaningSession) {
     return (
@@ -47,9 +51,62 @@ export function AuthRedirect({ children }: AuthRedirectProps) {
     );
   }
 
-  // After cleaning a wrong-role session, or if not authenticated, show login form
+  // After cleaning a wrong-role session (admin on portal), show login form
   if (sessionCleaned || !isAuthenticated) {
     return <>{children}</>;
+  }
+
+  // Client user visiting /auth — show choice card instead of silently destroying session
+  if (isAdminLogin && isClient(role)) {
+    const handleSwitchAccount = async () => {
+      setSwitchingAccount(true);
+      try {
+        await signOut();
+      } catch {
+        // signOut may throw if session already invalid
+      }
+      setSwitchingAccount(false);
+      // Page will re-render as unauthenticated and show login form
+    };
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-6 w-6 text-amber-500 shrink-0" />
+              <h2 className="text-lg font-semibold">Wrong account</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              You're signed in as <span className="font-medium text-foreground">{user?.email}</span> (Partner Portal account).
+            </p>
+            <p className="text-sm text-muted-foreground">
+              To access the dashboard, sign out and use your <span className="font-medium text-foreground">@dazeapp.com</span> email.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => navigate("/post-auth", { replace: true })}
+              >
+                Go to Partner Portal
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleSwitchAccount}
+                disabled={switchingAccount}
+              >
+                {switchingAccount ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Switch Account"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Authenticated with the correct role — redirect to post-auth
