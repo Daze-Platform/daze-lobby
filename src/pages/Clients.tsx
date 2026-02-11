@@ -145,6 +145,11 @@ export default function Clients() {
                         <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                           <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
                           <span className="truncate">{client.name}</span>
+                          {client.client_slug === "daze-downtown-hotel" && (
+                            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-2xs font-medium px-1.5 py-0">
+                              Test
+                            </Badge>
+                          )}
                           {/* Status icon */}
                           {isContracted ? (
                             <CheckCircle size={16} weight="duotone" className="text-emerald-500 shrink-0" />
