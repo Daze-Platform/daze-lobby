@@ -216,7 +216,7 @@ Pilot pricing is agreed separately below and does not establish precedent for lo
 
 Select one pricing model:
 
-${pNone} 5.1 No Fees — No fees apply during the Pilot Term.
+[ ] 5.1 No Fees — No fees apply during the Pilot Term. (Not available for Pilot)
 
 ${pSub} 5.2 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform and related services during the Pilot Term.
 
