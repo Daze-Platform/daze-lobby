@@ -1,8 +1,8 @@
 import { Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { hasDashboardAccess, isClient, forceCleanSession, signOut } from "@/lib/auth";
-import { useState, useEffect } from "react";
+import { hasDashboardAccess, isClient, signOut } from "@/lib/auth";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -12,38 +12,18 @@ interface AuthRedirectProps {
 
 /**
  * Wrapper for /auth and /portal/login that prevents logged-in users from seeing the login UI.
- * Role-aware: if the wrong role is logged in for this login page, we show a choice card
- * instead of silently destroying their session.
+ * Role-aware: admins on /portal/login are redirected to /admin/portal instead of destroying session.
  */
 export function AuthRedirect({ children }: AuthRedirectProps) {
   const { isAuthenticated, loading, role, user } = useAuthContext();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  // State for portal-login auto-clean (admin on portal login — keep existing behavior)
-  const [cleaningSession, setCleaningSession] = useState(false);
-  const [sessionCleaned, setSessionCleaned] = useState(false);
   const [switchingAccount, setSwitchingAccount] = useState(false);
 
   const isPortalLogin = window.location.pathname.startsWith("/portal/");
   const isAdminLogin = window.location.pathname === "/auth";
 
-  // Only auto-clean for admin users on portal login (existing behavior kept)
-  useEffect(() => {
-    if (loading || !isAuthenticated || cleaningSession || sessionCleaned) return;
-
-    const adminOnPortalLogin = isPortalLogin && hasDashboardAccess(role);
-
-    if (adminOnPortalLogin) {
-      setCleaningSession(true);
-      forceCleanSession().finally(() => {
-        setCleaningSession(false);
-        setSessionCleaned(true);
-      });
-    }
-  }, [loading, isAuthenticated, role, isPortalLogin, cleaningSession, sessionCleaned]);
-
-  if (loading || cleaningSession) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -51,9 +31,13 @@ export function AuthRedirect({ children }: AuthRedirectProps) {
     );
   }
 
-  // After cleaning a wrong-role session (admin on portal), show login form
-  if (sessionCleaned || !isAuthenticated) {
+  if (!isAuthenticated) {
     return <>{children}</>;
+  }
+
+  // Admin user on /portal/login — redirect to admin portal picker instead of destroying session
+  if (isPortalLogin && hasDashboardAccess(role)) {
+    return <Navigate to="/admin/portal" replace />;
   }
 
   // Client user visiting /auth — show choice card instead of silently destroying session
