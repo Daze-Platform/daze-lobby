@@ -1,52 +1,69 @@
 
+## AI-Powered Codebase Review with GPT 5.2
 
-## Warning System for Backward Phase Drags on Kanban Board
+### What This Does
+Adds a "Code Review" feature to the dashboard that sends your key source files to OpenAI's GPT 5.2 model (via Lovable AI) and returns a structured analysis covering code quality, security, performance, and architecture.
 
-### Problem
-Currently, dragging a client card backward on the Kanban board (e.g., from "Contracted" back to "Pilot Live") executes immediately without any warning. This can lead to accidental regressions in a client's lifecycle status.
+### How It Works
+1. A new "Code Review" page accessible from the dashboard sidebar
+2. Click "Run Review" to send the codebase to GPT 5.2
+3. The AI analyzes key areas: architecture, security (RLS, auth), performance, type safety, and patterns
+4. Results stream back in real-time and are displayed in categorized sections
 
-### Solution
-Add a confirmation dialog that appears when a card is dragged to a phase that is earlier in the lifecycle sequence. The drag will complete visually, but before committing the change, an AlertDialog will ask the admin to confirm the backward move with a clear warning message.
-
-### Phase Order (left to right)
+### User Flow
 ```text
-Onboarding (0) -> In Review (1) -> Pilot Live (2) -> Contracted (3)
+Dashboard Sidebar -> "Code Review" link -> Click "Run Review" -> Streaming results appear in cards
 ```
 
-Any move where the target phase index is lower than the current phase index is considered a "backward" move and will trigger the warning.
+### What Gets Reviewed
+The edge function will bundle and send the most impactful files for review:
+- **Hooks** (useClients, useDevices, useMessages, useAuth, etc.) -- core business logic
+- **Pages** (Dashboard, Clients, Devices, Blockers, Portal, Auth) -- routing and page structure
+- **Key components** (KanbanBoard, ActivityFeedPanel, modals) -- complex UI logic
+- **Contexts** (AuthContext, ClientContext, VenueContext) -- state management
+- **Types** (client, auth, task, venue) -- type definitions
+- **Utilities** (auth, utils, fileValidation) -- shared helpers
 
-### Behavior
-- **Forward moves** (e.g., Onboarding to In Review): Execute immediately as they do today
-- **Same column drops**: Ignored as they are today
-- **Backward moves** (e.g., Contracted to Pilot Live): Show a confirmation dialog with the current and target phase names. The user must confirm to proceed, or cancel to revert.
+Files like UI primitives (button, card, etc.) are excluded since they are standard shadcn components.
 
 ---
 
 ### Technical Details
 
-**File: `src/components/kanban/KanbanBoard.tsx`**
+**1. Edge Function: `supabase/functions/code-review/index.ts`**
+- Accepts a POST with `{ files: { path: string, content: string }[] }`
+- Constructs a system prompt instructing GPT 5.2 to act as a senior code reviewer
+- Sends to `https://ai.gateway.lovable.dev/v1/chat/completions` with model `openai/gpt-5.2`
+- Streams the response back as SSE for real-time display
+- Review categories: Architecture, Security, Performance, Type Safety, Error Handling, Best Practices
+- Handles 429/402 rate limit errors gracefully
 
-1. Create a `PHASE_ORDER` map to assign numeric indices to each phase for comparison:
-   ```
-   onboarding: 0, reviewing: 1, pilot_live: 2, contracted: 3
-   ```
+**2. Update `supabase/config.toml`**
+- Add `[functions.code-review]` with `verify_jwt = true` (admin-only)
 
-2. Add state for a pending backward move:
-   - `pendingBackwardMove: { clientId, clientName, fromPhase, toPhase } | null`
-   - `backwardWarningOpen: boolean`
+**3. New Page: `src/pages/CodeReview.tsx`**
+- "Run Review" button that collects key source files and sends them to the edge function
+- Streams tokens and renders the review in a readable format with markdown support
+- Shows loading state during analysis
+- Displays results in a clean card layout
 
-3. Modify `handleDragEnd`:
-   - After determining `targetPhase`, compare `PHASE_ORDER[targetPhase]` vs `PHASE_ORDER[activeClientData.phase]`
-   - If target index is lower (backward move), store the pending move in state and open the warning dialog instead of calling `updatePhase.mutate()` immediately
-   - If target index is higher or equal, proceed as normal
+**4. File Collection: `src/lib/codeReviewFiles.ts`**
+- A static list of file paths to include in the review
+- A function that reads their content by fetching from the project (or hardcoded content bundled at build time)
+- Since we cannot read files from the browser at runtime, the files will be imported as raw strings using Vite's `?raw` import suffix
 
-4. Add an `AlertDialog` for the backward move confirmation:
-   - Title: "Move client backward?"
-   - Description: "You are about to move **{clientName}** from **{fromPhaseLabel}** back to **{toPhaseLabel}**. This is an unusual action. Are you sure?"
-   - Cancel button: clears pending state, no mutation
-   - Confirm button: executes `updatePhase.mutate()` with the stored pending move data, then clears state
+**5. Sidebar Update: `src/components/layout/DashboardSidebar.tsx`**
+- Add a "Code Review" nav item under a new "TOOLS" section with a code icon
 
-5. Visual feedback during drag: The existing `isOver` highlight on columns will continue to work. No additional visual warning is needed during the drag itself -- the confirmation comes on drop.
+**6. Route: `src/App.tsx`**
+- Add `/code-review` route pointing to the new page, protected behind admin role
 
-### No other files need changes. The warning is fully contained within the KanbanBoard component.
+### Files to Create
+- `supabase/functions/code-review/index.ts`
+- `src/pages/CodeReview.tsx`
+- `src/lib/codeReviewFiles.ts`
 
+### Files to Modify
+- `supabase/config.toml` -- add function config
+- `src/components/layout/DashboardSidebar.tsx` -- add nav link
+- `src/App.tsx` -- add route
