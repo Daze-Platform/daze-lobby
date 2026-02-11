@@ -58,7 +58,7 @@ export function useAuth() {
     // CRITICAL: Set up listener FIRST, before checking session
     // This ensures we catch any auth events that fire during initialization
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log("[Auth] Auth event received:", event, currentSession?.user?.email);
         
         if (!isMountedRef.current) return;
@@ -67,34 +67,18 @@ export function useAuth() {
         setSession(currentSession);
 
         if (currentSession?.user) {
-          // Use setTimeout to avoid blocking the auth state update
-          // This ensures the session state is set before we fetch user profile
-          setTimeout(() => {
-            if (isMountedRef.current) {
-              fetchUser();
-            }
-          }, 0);
+          // Fire and forget for ongoing changes – don't control loading
+          if (initialLoadComplete) {
+            fetchUser();
+          }
         } else {
           setUser(null);
-        }
-
-        // After initial load, auth events should not reset loading
-        // But if we're still in initial load, mark it complete on SIGNED_IN
-        if (!initialLoadComplete && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-          initialLoadComplete = true;
-          if (isMountedRef.current && loading) {
-            // Small delay to allow user fetch to start
-            setTimeout(() => {
-              if (isMountedRef.current) {
-                setLoading(false);
-              }
-            }, 100);
-          }
         }
       }
     );
 
     // THEN check for existing session (listener is already ready to catch events)
+    // CRITICAL: Fetch role BEFORE setting loading to false to prevent redirect race
     const initializeAuth = async () => {
       console.log("[Auth] Checking for existing session...");
       try {
@@ -111,9 +95,9 @@ export function useAuth() {
 
         console.log("[Auth] Initial session check:", initialSession?.user?.email || "no session");
 
-        // Only set session if listener hasn't already done so
         if (initialSession) {
-          setSession((prev) => prev || initialSession);
+          setSession(initialSession);
+          // Await user+role fetch BEFORE marking load complete
           await fetchUser();
         }
       } catch (error) {
