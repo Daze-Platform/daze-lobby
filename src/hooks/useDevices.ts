@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface DeviceWithClient {
   id: string;
@@ -56,6 +57,27 @@ export function useDevices() {
         model: undefined,
         ipAddress: undefined,
       }));
+    },
+  });
+}
+
+export function useDeleteDevice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (deviceId: string) => {
+      const { error } = await supabase
+        .from("devices")
+        .delete()
+        .eq("id", deviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      toast.success("Device deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete device: " + error.message);
     },
   });
 }
