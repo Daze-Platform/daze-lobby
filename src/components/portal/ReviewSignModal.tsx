@@ -433,7 +433,7 @@ export function ReviewSignModal({
   const deferredEntity = useDeferredValue(currentEntity);
   const agreementText = useMemo(() => createAgreementText(deferredEntity), [deferredEntity]);
 
-  // Section A required, B-E optional
+  // All fields required
   const isFormValid = useMemo(() =>
     propertyName.trim().length > 0 &&
     legalEntityName.trim().length > 0 &&
@@ -442,8 +442,11 @@ export function ReviewSignModal({
     addressState.trim().length > 0 &&
     addressZip.trim().length > 0 &&
     authorizedSignerName.trim().length > 0 &&
-    authorizedSignerTitle.trim().length > 0,
-    [propertyName, legalEntityName, addressStreet, addressCity, addressState, addressZip, authorizedSignerName, authorizedSignerTitle]
+    authorizedSignerTitle.trim().length > 0 &&
+    contactEmail.trim().length > 0 &&
+    [outlet1, outlet2, outlet3, outlet4].some(o => o.trim().length > 0) &&
+    !!startDate,
+    [propertyName, legalEntityName, addressStreet, addressCity, addressState, addressZip, authorizedSignerName, authorizedSignerTitle, contactEmail, outlet1, outlet2, outlet3, outlet4, startDate]
   );
 
   const handleSignatureChange = (hasSig: boolean) => setHasSignature(hasSig);
@@ -549,7 +552,7 @@ export function ReviewSignModal({
                         <div className="space-y-1">
                           <Label className="text-[10px] sm:text-xs flex items-center gap-1.5">
                             <Mail className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
-                            Email
+                            Email <span className="text-destructive">*</span>
                           </Label>
                           <Input type="email" placeholder="contact@example.com" value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
                         </div>
@@ -559,7 +562,7 @@ export function ReviewSignModal({
                     {/* Section B: Pilot Scope */}
                     <FormSection title="B — Pilot Scope" icon={Store}>
                       <div className="space-y-2.5">
-                        <Label className="text-[10px] sm:text-xs text-muted-foreground">Covered Outlets (F&B Outlet & Service Area)</Label>
+                        <Label className="text-[10px] sm:text-xs text-muted-foreground">Covered Outlets (at least 1 required) <span className="text-destructive">*</span></Label>
                         {[
                           { val: outlet1, set: setOutlet1 },
                           { val: outlet2, set: setOutlet2 },
@@ -588,7 +591,7 @@ export function ReviewSignModal({
                     <FormSection title="C — Pilot Term" icon={Clock}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div className="space-y-1">
-                          <Label className="text-[10px] sm:text-xs text-muted-foreground">Start Date</Label>
+                          <Label className="text-[10px] sm:text-xs text-muted-foreground">Start Date <span className="text-destructive">*</span></Label>
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button variant="outline" className={cn("w-full h-8 sm:h-9 justify-start text-xs sm:text-sm font-normal", !startDate && "text-muted-foreground")}>

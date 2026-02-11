@@ -190,6 +190,7 @@ export function VenueCard({
           <Label className="text-sm text-muted-foreground flex items-center gap-2">
             <Image className="w-3.5 h-3.5" strokeWidth={1.5} />
             Venue Logo
+            <span className="text-destructive">*</span>
           </Label>
 
           <label
@@ -247,6 +248,7 @@ export function VenueCard({
           <Label className="text-sm text-muted-foreground flex items-center gap-2">
             <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
             Menu (PDF)
+            <span className="text-destructive">*</span>
           </Label>
 
           <label

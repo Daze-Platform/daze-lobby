@@ -84,7 +84,8 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     onStepComplete?.();
   };
 
-  const hasValidVenues = venues.length > 0 && venues.some(v => v.name.trim());
+  const hasValidVenues = venues.length > 0 && venues.every(v => v.name.trim() && (v.menuPdfUrl || v.menuFile) && (v.logoUrl || v.logoFile));
+  const hasMissingFields = venues.length > 0 && !hasValidVenues;
 
   return (
     <div className="space-y-4">
@@ -140,14 +141,21 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
       </Button>
 
       {venues.length > 0 && (
-        <SaveButton
-          onClick={handleCompleteStep}
-          disabled={!hasValidVenues || isUpdatingVenue}
-          className="w-full min-h-[44px]"
-          idleText="Complete Step"
-          loadingText="Completing..."
-          successText="Completed!"
-        />
+        <>
+          {hasMissingFields && (
+            <p className="text-xs text-amber-600 text-center">
+              Each venue requires a name, logo, and menu PDF to complete this step.
+            </p>
+          )}
+          <SaveButton
+            onClick={handleCompleteStep}
+            disabled={!hasValidVenues || isUpdatingVenue}
+            className="w-full min-h-[44px]"
+            idleText="Complete Step"
+            loadingText="Completing..."
+            successText="Completed!"
+          />
+        </>
       )}
     </div>
   );

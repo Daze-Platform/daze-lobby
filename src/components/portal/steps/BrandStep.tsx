@@ -170,10 +170,11 @@ export function BrandStep({
   };
 
   const hasAtLeastOneProperty = properties.length > 0;
-  const allPropertiesHaveBranding = properties.every(p => 
-    (Object.keys(p.logos).length > 0 || Object.keys(p.logoUrls || {}).length > 0) || 
-    p.colors.length > 0
+  const allPropertiesHaveLogo = properties.every(p => 
+    Object.keys(p.logos).length > 0 || Object.keys(p.logoUrls || {}).length > 0
   );
+  const allPropertiesHaveName = properties.every(p => p.name.trim().length > 0);
+  const canSave = hasAtLeastOneProperty && allPropertiesHaveLogo && allPropertiesHaveName;
 
   return (
     <AccordionItem 
@@ -210,12 +211,17 @@ export function BrandStep({
             onDocumentUpload={handleDocumentUpload}
           />
 
+          {hasAtLeastOneProperty && !canSave && (
+            <p className="text-xs text-amber-600 text-center">
+              Each property requires a name and at least one logo to save.
+            </p>
+          )}
           <SaveButton 
             onClick={handleSave}
             onSuccess={onStepComplete}
             className="w-full min-h-[44px]"
             idleText={hasAtLeastOneProperty ? "Save Brand Settings" : "Add a property first"}
-            disabled={!hasAtLeastOneProperty}
+            disabled={!canSave}
           />
         </div>
       </AccordionContent>
