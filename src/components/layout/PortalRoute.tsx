@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,7 @@ interface PortalRouteProps {
 export function PortalRoute({ children }: PortalRouteProps) {
   const { isAuthenticated, loading: authLoading, role } = useAuthContext();
   const { clientId, isLoading: clientLoading, error } = useClient();
+  const location = useLocation();
 
   const isAdmin = hasDashboardAccess(role);
 
@@ -43,7 +44,8 @@ export function PortalRoute({ children }: PortalRouteProps) {
 
   // Admins should use /admin/portal instead
   if (isAdmin) {
-    return <Navigate to="/admin/portal" replace />;
+    const slug = location.pathname.split("/portal/")[1];
+    return <Navigate to={slug ? `/admin/portal/${slug}` : "/admin/portal"} replace />;
   }
 
   // Must be a client role to access /portal
