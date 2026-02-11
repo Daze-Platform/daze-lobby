@@ -12,7 +12,7 @@ export default function PortalLogin() {
       </div>
 
       {/* Right Side - The Sketchy Art Panel (hidden on mobile/tablet) */}
-      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative min-h-screen">
         <SketchyArtPanel />
       </div>
 
