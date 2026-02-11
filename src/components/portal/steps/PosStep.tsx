@@ -471,7 +471,7 @@ export function PosStep({
                 {/* PMS Name Field */}
                 <div className="space-y-2">
                   <Label htmlFor="pms-name" className="text-xs sm:text-sm text-muted-foreground">
-                    What is the name of your Property Management System (PMS)?
+                    What is the name of your Property Management System (PMS)? <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="pms-name"
@@ -480,7 +480,11 @@ export function PosStep({
                     placeholder="e.g., Opera, Mews, Cloudbeds..."
                     className="h-12 bg-background"
                     maxLength={100}
+                    required
                   />
+                  {pmsName.trim().length === 0 && (
+                    <p className="text-xs text-muted-foreground">Required to proceed</p>
+                  )}
                 </div>
 
                 {/* Action buttons */}
@@ -509,7 +513,7 @@ export function PosStep({
                     <Button
                       variant="outline"
                       onClick={handleSentToIT}
-                      disabled={isSaving}
+                      disabled={isSaving || !pmsName.trim()}
                       className="flex-1 rounded-full min-h-[44px]"
                     >
                       Mark as Sent to IT
