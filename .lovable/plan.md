@@ -1,62 +1,59 @@
 
 
-## Fix Pilot Agreement Data Persistence
+## Fix: Pilot Agreement Fields Resetting on Every Render
 
-Two issues are causing data loss in the Pilot Agreement form:
+### Root Cause
 
-1. **No draft save** -- Closing the modal without signing discards all entered data. Users must complete the entire form in one session.
-2. **Incomplete pre-fill on reopen** -- When reopening the modal (signed or unsigned), only 4 fields load from the client record. The remaining ~12 fields (email, outlets, pricing, POS, dates) stored in the task's JSONB `data` are never passed back to the form.
+The pre-fill `useEffect` in `ReviewSignModal.tsx` (line 377) has `initialLegalEntity` in its dependency array. But `initialLegalEntity` is built as an inline object in `Portal.tsx` JSX -- meaning it's a **new object reference on every render**. Any parent re-render while the modal is open causes the effect to fire again, resetting all typed values back to the initial (possibly empty) data.
 
-### Fix 1: Merge task data into `initialLegalEntity`
+### Fix (2 files)
 
-**File: `src/pages/Portal.tsx`** (and/or `TaskAccordion.tsx`)
+**1. `src/components/portal/ReviewSignModal.tsx`**
 
-Currently `hotelLegalEntity` only passes client-table fields:
-```text
-hotelLegalEntity={{
-  legal_entity_name: client?.legal_entity_name,
-  billing_address: client?.billing_address,
-  authorized_signer_name: client?.authorized_signer_name,
-  authorized_signer_title: client?.authorized_signer_title,
-}}
+Change the `useEffect` so it only runs when the modal **transitions from closed to open** (not on every `initialLegalEntity` change). Use a ref to track the previous `open` state:
+
+```typescript
+const prevOpenRef = useRef(false);
+
+useEffect(() => {
+  // Only pre-fill when the modal is OPENING (false -> true)
+  if (open && !prevOpenRef.current && initialLegalEntity) {
+    const d = initialLegalEntity;
+    setPropertyName(d.property_name || "");
+    setLegalEntityName(d.legal_entity_name || "");
+    // ... rest of pre-fill logic stays the same
+  }
+  prevOpenRef.current = open;
+}, [open, initialLegalEntity]);
 ```
 
-Change this to merge the legal task's saved `data` (which already contains all extended fields after a previous sign or draft save):
-```text
-hotelLegalEntity={{
-  ...legalTaskData,  // all saved pilot agreement fields from task JSONB
-  legal_entity_name: client?.legal_entity_name || legalTaskData?.legal_entity_name,
-  billing_address: client?.billing_address || legalTaskData?.billing_address,
-  ...
-}}
+This ensures fields are populated once on open and never overwritten while the user is typing.
+
+**2. `src/pages/Portal.tsx`** (optional but good practice)
+
+Memoize the `hotelLegalEntity` object so it doesn't create a new reference on every render:
+
+```typescript
+const hotelLegalEntity = useMemo(() => {
+  const legalTaskData = formattedTasks.find(t => t.key === "legal")?.data as Record<string, unknown> || {};
+  return {
+    ...legalTaskData,
+    legal_entity_name: client?.legal_entity_name || legalTaskData?.legal_entity_name,
+    billing_address: client?.billing_address || legalTaskData?.billing_address,
+    authorized_signer_name: client?.authorized_signer_name || legalTaskData?.authorized_signer_name,
+    authorized_signer_title: client?.authorized_signer_title || legalTaskData?.authorized_signer_title,
+  } as PilotAgreementData;
+}, [formattedTasks, client]);
 ```
 
-This means extracting the legal task's `data` field and passing it through. The task data already stores `contact_email`, `covered_outlets`, `hardware_option`, `start_date`, `pilot_term_days`, `pricing_model`, `pricing_amount`, `pos_system`, `pos_version`, `pos_api_key`, `pos_contact`, and `dba_name`.
+Then pass `hotelLegalEntity={hotelLegalEntity}` in the JSX.
 
-### Fix 2: Add auto-draft save on modal close
+### Why This Fixes It
 
-**File: `src/components/portal/ReviewSignModal.tsx`**
+- The `useEffect` will only pre-fill form fields the moment the modal opens
+- While the modal is open, typing is never overwritten by stale data
+- Draft save on close still works unchanged
+- Pre-fill on next open still works because `initialLegalEntity` will have the saved data from the previous draft save
 
-When the modal closes (unsigned), save the current form state to the legal task's JSONB `data` using a spread-merge so it persists for next open.
-
-**File: `src/pages/Portal.tsx`**
-
-Add a `saveLegalDraft` handler that calls `updateTask` (or a new lightweight mutation) to persist the form fields without marking the task as completed. Pass this as a new prop to `LegalStep` and then to `ReviewSignModal`.
-
-### Fix 3: Wire draft save through LegalStep
-
-**File: `src/components/portal/steps/LegalStep.tsx`**
-
-Accept a new `onDraftSave` prop and pass it to `ReviewSignModal`.
-
-**File: `src/components/portal/ReviewSignModal.tsx`**
-
-Call `onDraftSave(currentEntity)` when the dialog closes and the form is dirty (not yet signed).
-
-### Technical Details
-
-- The `saveLegalDraft` will use a dedicated mutation (or reuse `saveLegalEntityMutation`) that updates both the `clients` table (4 core fields) and the `onboarding_tasks` `data` JSONB (all extended fields) without setting `is_completed = true`.
-- Uses the existing spread-merge strategy (`{...existingData, ...newData}`) to avoid overwriting signature data if already signed.
-- No database schema changes needed -- the task's JSONB `data` column already stores all fields.
-- Draft saves happen on modal close only (not on every keystroke) to keep it simple.
-
+### No other files affected
+The draft save logic in `Portal.tsx`, `LegalStep.tsx`, and `TaskAccordion.tsx` remains unchanged.
