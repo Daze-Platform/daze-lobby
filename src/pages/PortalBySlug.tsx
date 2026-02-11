@@ -5,7 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { hasDashboardAccess } from "@/lib/auth";
+
 import Portal from "./Portal";
 
 /**
@@ -78,12 +78,6 @@ export default function PortalBySlug() {
         replace
       />
     );
-  }
-
-  // Hard block: admins should never reach here (PortalRoute blocks them),
-  // but as a safety net, render nothing instead of portal content
-  if (hasDashboardAccess(role)) {
-    return null;
   }
 
   // Resolving slug
