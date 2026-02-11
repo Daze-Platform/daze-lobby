@@ -10,6 +10,7 @@ import {
   CaretRight,
   X,
   Plus,
+  Code,
   type Icon as PhosphorIcon
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -113,6 +114,16 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           href: "/devices",
           icon: DeviceMobile,
           badge: devicesCount ?? undefined,
+        },
+      ],
+    },
+    {
+      label: "TOOLS",
+      items: [
+        {
+          title: "Code Review",
+          href: "/code-review",
+          icon: Code,
         },
       ],
     },
