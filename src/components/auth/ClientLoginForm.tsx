@@ -9,7 +9,6 @@ import { Loader2, AlertCircle, Eye, EyeOff, Mail, CheckCircle } from "lucide-rea
 import { signIn, signUp } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { validatePassword } from "@/lib/passwordValidation";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
@@ -51,9 +50,7 @@ export function ClientLoginForm() {
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const navigationAttemptedRef = useRef(false);
   const navigate = useNavigate();
-  const { isAuthenticated, loading: authLoading } = useAuthContext();
 
   const passwordValidation = useMemo(() => validatePassword(password), [password]);
   const showStrengthIndicator = mode === "signup" && password.length > 0;
@@ -62,7 +59,8 @@ export function ClientLoginForm() {
     ? `/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
     : "/post-auth?origin=portal";
 
-  // Admin blocking is now handled by AuthRedirect (role-aware guard)
+  // Session detection and role-based redirects are handled by AuthRedirect (route wrapper).
+  // This form only handles submission logic.
 
   // Trigger shake animation on error
   useEffect(() => {
@@ -72,14 +70,6 @@ export function ClientLoginForm() {
       return () => clearTimeout(timer);
     }
   }, [error]);
-
-  // Navigate when auth state confirms login
-  useEffect(() => {
-    if (isAuthenticated && !authLoading && !navigationAttemptedRef.current) {
-      navigationAttemptedRef.current = true;
-      navigate(postAuthPath, { replace: true });
-    }
-  }, [isAuthenticated, authLoading, navigate, postAuthPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,14 +98,6 @@ export function ClientLoginForm() {
         setSignupSuccess(true);
       } else {
         // Login flow
-        const preSessionResult = await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out");
-        const preSession = (preSessionResult as { data: { session: unknown } })?.data?.session ?? null;
-        if (preSession && !navigationAttemptedRef.current) {
-          navigationAttemptedRef.current = true;
-          navigate(postAuthPath, { replace: true });
-          return;
-        }
-
         const result = await withTimeout(signIn(email, password), 15000, "Sign in timed out. Please try again.");
 
         // Check if user has an admin role — block them from client portal
@@ -141,8 +123,7 @@ export function ClientLoginForm() {
           ((await withTimeout(supabase.auth.getSession(), 8000, "Session check timed out")) as { data: { session: unknown } })?.data?.session ??
           null;
 
-        if (session && !navigationAttemptedRef.current) {
-          navigationAttemptedRef.current = true;
+        if (session) {
           navigate(postAuthPath, { replace: true });
           return;
         }
