@@ -30,14 +30,17 @@ interface VenueCardProps {
   onNameChange: (name: string) => void;
   onMenuUpload: (file: File) => void;
   onLogoUpload: (file: File) => void;
+  onAdditionalLogoUpload: (file: File) => void;
   onRemove: () => void;
   onMenuRemove?: (menuId: string) => void;
   onLogoRemove?: () => void;
+  onAdditionalLogoRemove?: () => void;
   onColorPaletteChange?: (colors: string[]) => void;
   isSaving?: boolean;
   isDeleting?: boolean;
   isUploading?: boolean;
   isUploadingLogo?: boolean;
+  isUploadingAdditionalLogo?: boolean;
   autoFocus?: boolean;
 }
 
@@ -45,15 +48,18 @@ export function VenueCard({
   venue, 
   onNameChange, 
   onMenuUpload,
-  onLogoUpload, 
+  onLogoUpload,
+  onAdditionalLogoUpload, 
   onRemove,
   onMenuRemove,
   onLogoRemove,
+  onAdditionalLogoRemove,
   onColorPaletteChange,
   isSaving,
   isDeleting,
   isUploading,
   isUploadingLogo,
+  isUploadingAdditionalLogo,
   autoFocus,
 }: VenueCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,6 +111,20 @@ export function VenueCard({
     onLogoUpload(file);
   };
 
+  const handleAdditionalLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validation = validateImageFile(file, 5);
+    if (!validation.isValid) {
+      toast.error(validation.error || "Invalid file");
+      e.target.value = '';
+      return;
+    }
+
+    onAdditionalLogoUpload(file);
+  };
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setLocalName(newName);
@@ -117,6 +137,7 @@ export function VenueCard({
   };
 
   const hasLogo = venue.logoFile || venue.logoUrl;
+  const hasAdditionalLogo = !!venue.additionalLogoUrl;
   const hasMenus = venue.menus.length > 0;
 
   return (
@@ -250,6 +271,73 @@ export function VenueCard({
               accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
               className="sr-only"
               onChange={handleLogoFileChange}
+            />
+          </label>
+        </div>
+
+        {/* Additional Logo Upload */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground flex items-center gap-2">
+            <Image className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Additional Logo
+          </Label>
+
+          <label
+            className={cn(
+              "flex items-center gap-3 p-3 border-2 border-dashed rounded-lg cursor-pointer transition-all",
+              hasAdditionalLogo 
+                ? "border-primary bg-primary/5" 
+                : "border-muted-foreground/30 hover:border-primary hover:bg-muted/50"
+            )}
+          >
+            {isUploadingAdditionalLogo ? (
+              <div className="flex items-center gap-2 w-full justify-center py-2">
+                <Loader2 className="w-5 h-5 text-primary animate-spin" strokeWidth={1.5} />
+                <span className="text-sm text-muted-foreground">Uploading...</span>
+              </div>
+            ) : hasAdditionalLogo ? (
+              <>
+                <div className="w-12 h-12 rounded-lg bg-white border border-border overflow-hidden flex items-center justify-center shrink-0">
+                  <img
+                    src={venue.additionalLogoUrl}
+                    alt={`${venue.name} additional logo`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-foreground flex items-center gap-1">
+                    <Check className="w-4 h-4 text-primary" strokeWidth={2} />
+                    Additional logo uploaded
+                  </span>
+                  <span className="text-xs text-muted-foreground">Click to replace</span>
+                </div>
+                {onAdditionalLogoRemove && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAdditionalLogoRemove(); }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Upload className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-muted-foreground">Upload additional logo</span>
+                  <span className="text-xs text-muted-foreground block">PNG, JPG, SVG (max 5MB)</span>
+                </div>
+              </div>
+            )}
+            <Input
+              type="file"
+              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+              className="sr-only"
+              onChange={handleAdditionalLogoFileChange}
             />
           </label>
         </div>

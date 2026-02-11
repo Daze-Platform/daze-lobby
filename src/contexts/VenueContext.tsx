@@ -18,6 +18,7 @@ interface VenueContextType {
   isDeletingVenue: boolean;
   uploadingMenuIds: Set<string>;
   uploadingLogoIds: Set<string>;
+  uploadingAdditionalLogoIds: Set<string>;
   
   // Actions
   addVenue: () => Promise<Venue | undefined>;
@@ -25,8 +26,10 @@ interface VenueContextType {
   removeVenue: (id: string) => Promise<void>;
   removeMenu: (menuId: string) => Promise<void>;
   removeLogo: (venueId: string) => Promise<void>;
+  removeAdditionalLogo: (venueId: string) => Promise<void>;
   uploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   uploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
+  uploadAdditionalLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   completeStep: () => Promise<void>;
 }
 
@@ -40,6 +43,7 @@ interface VenueProviderProps {
   onRemoveVenue: (id: string) => Promise<void>;
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   onUploadLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onUploadAdditionalLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   onDeleteMenu: (menuId: string) => Promise<void>;
   onCompleteStep: () => Promise<void>;
   isAddingVenue?: boolean;
@@ -55,6 +59,7 @@ export function VenueProvider({
   onRemoveVenue,
   onUploadMenu,
   onUploadLogo,
+  onUploadAdditionalLogo,
   onDeleteMenu,
   onCompleteStep,
   isAddingVenue = false,
@@ -64,6 +69,7 @@ export function VenueProvider({
   // Track individual upload states
   const [uploadingMenuIds, setUploadingMenuIds] = useState<Set<string>>(new Set());
   const [uploadingLogoIds, setUploadingLogoIds] = useState<Set<string>>(new Set());
+  const [uploadingAdditionalLogoIds, setUploadingAdditionalLogoIds] = useState<Set<string>>(new Set());
 
   // Wrap upload handlers to track per-venue loading state
   const uploadMenu = useCallback(async (venueId: string, venueName: string, file: File) => {
@@ -92,12 +98,29 @@ export function VenueProvider({
     }
   }, [onUploadLogo]);
 
+  const uploadAdditionalLogo = useCallback(async (venueId: string, venueName: string, file: File) => {
+    setUploadingAdditionalLogoIds(prev => new Set(prev).add(venueId));
+    try {
+      await onUploadAdditionalLogo(venueId, venueName, file);
+    } finally {
+      setUploadingAdditionalLogoIds(prev => {
+        const next = new Set(prev);
+        next.delete(venueId);
+        return next;
+      });
+    }
+  }, [onUploadAdditionalLogo]);
+
   const removeMenu = useCallback(async (menuId: string) => {
     await onDeleteMenu(menuId);
   }, [onDeleteMenu]);
 
   const removeLogo = useCallback(async (venueId: string) => {
     await onUpdateVenue(venueId, { logoUrl: null });
+  }, [onUpdateVenue]);
+
+  const removeAdditionalLogo = useCallback(async (venueId: string) => {
+    await onUpdateVenue(venueId, { additionalLogoUrl: null });
   }, [onUpdateVenue]);
 
   const value = useMemo<VenueContextType>(() => ({
@@ -107,13 +130,16 @@ export function VenueProvider({
     isDeletingVenue,
     uploadingMenuIds,
     uploadingLogoIds,
+    uploadingAdditionalLogoIds,
     addVenue: onAddVenue,
     updateVenue: onUpdateVenue,
     removeVenue: onRemoveVenue,
     removeMenu,
     removeLogo,
+    removeAdditionalLogo,
     uploadMenu,
     uploadLogo,
+    uploadAdditionalLogo,
     completeStep: onCompleteStep,
   }), [
     venues,
@@ -122,13 +148,16 @@ export function VenueProvider({
     isDeletingVenue,
     uploadingMenuIds,
     uploadingLogoIds,
+    uploadingAdditionalLogoIds,
     onAddVenue,
     onUpdateVenue,
     onRemoveVenue,
     removeMenu,
     removeLogo,
+    removeAdditionalLogo,
     uploadMenu,
     uploadLogo,
+    uploadAdditionalLogo,
     onCompleteStep,
   ]);
 

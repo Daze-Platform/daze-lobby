@@ -578,6 +578,70 @@ export function useClientPortal() {
     },
   });
 
+  // Upload additional venue logo
+  const uploadVenueAdditionalLogoMutation = useMutation({
+    mutationFn: async ({ 
+      venueId,
+      venueName,
+      file 
+    }: { 
+      venueId: string;
+      venueName: string;
+      file: File;
+    }) => {
+      if (!clientId) throw new Error("No client found");
+
+      const safeVenueName = venueName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const fileExt = file.name.split(".").pop() || "png";
+      const filePath = `${clientId}/${safeVenueName}/additional_logo_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("onboarding-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("onboarding-assets")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("venues")
+        .update({ additional_logo_url: urlData?.publicUrl })
+        .eq("id", venueId);
+
+      if (updateError) throw updateError;
+
+      return { path: filePath, url: urlData?.publicUrl, venueId };
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
+      const previous = queryClient.getQueryData<DbVenue[]>(["venues", clientId]);
+      return { previous };
+    },
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
+        old?.map(v => v.id === data.venueId ? { ...v, additional_logo_url: data.url ?? null } : v) ?? []
+      );
+      
+      logActivity.mutate({
+        action: "venue_additional_logo_uploaded",
+        details: { venue_name: variables.venueName },
+      });
+      
+      toast.success("Additional logo uploaded!");
+    },
+    onError: (error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["venues", clientId], context.previous);
+      }
+      toast.error("Failed to upload logo: " + error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+    },
+  });
+
   // Upload file (generic) - maintains client isolation
   const uploadFileMutation = useMutation({
     mutationFn: async ({ 
@@ -659,13 +723,14 @@ export function useClientPortal() {
 
   // Update single venue (name, menu_pdf_url, or logo_url)
   const updateVenueMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null; colorPalette?: string[] } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; menuPdfUrl?: string | null; logoUrl?: string | null; additionalLogoUrl?: string | null; colorPalette?: string[] } }) => {
       if (!clientId) throw new Error("No client found");
       
       const updateData: Record<string, unknown> = {};
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.menuPdfUrl !== undefined) updateData.menu_pdf_url = updates.menuPdfUrl;
       if (updates.logoUrl !== undefined) updateData.logo_url = updates.logoUrl;
+      if (updates.additionalLogoUrl !== undefined) updateData.additional_logo_url = updates.additionalLogoUrl;
       if (updates.colorPalette !== undefined) updateData.color_palette = updates.colorPalette;
       
       const { error } = await supabase
@@ -844,6 +909,7 @@ export function useClientPortal() {
       name: v.name,
       menuPdfUrl: v.menu_pdf_url || undefined,
       logoUrl: v.logo_url || undefined,
+      additionalLogoUrl: v.additional_logo_url || undefined,
       menus: menusMap.get(v.id) || [],
       colorPalette: (v.color_palette as string[] | null) || [],
     })),
@@ -867,6 +933,7 @@ export function useClientPortal() {
     uploadLogo: uploadLogoMutation.mutate,
     uploadVenueMenu: uploadVenueMenuMutation.mutate,
     uploadVenueLogo: uploadVenueLogoMutation.mutate,
+    uploadVenueAdditionalLogo: uploadVenueAdditionalLogoMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
     deleteVenueMenu: deleteVenueMenuMutation.mutateAsync,
     // Individual venue CRUD

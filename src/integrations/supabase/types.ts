@@ -566,6 +566,7 @@ export type Database = {
       }
       venues: {
         Row: {
+          additional_logo_url: string | null
           client_id: string
           color_palette: Json | null
           created_at: string
@@ -576,6 +577,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_logo_url?: string | null
           client_id: string
           color_palette?: Json | null
           created_at?: string
@@ -586,6 +588,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_logo_url?: string | null
           client_id?: string
           color_palette?: Json | null
           created_at?: string

@@ -32,14 +32,17 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     removeVenue,
     removeMenu,
     removeLogo,
+    removeAdditionalLogo,
     uploadMenu,
     uploadLogo,
+    uploadAdditionalLogo,
     completeStep,
     isAddingVenue,
     isUpdatingVenue,
     isDeletingVenue,
     uploadingMenuIds,
     uploadingLogoIds,
+    uploadingAdditionalLogoIds,
   } = useVenueContext();
 
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
@@ -91,6 +94,10 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     await uploadLogo(venueId, venueName, file);
   };
 
+  const handleAdditionalLogoUpload = async (venueId: string, venueName: string, file: File) => {
+    await uploadAdditionalLogo(venueId, venueName, file);
+  };
+
   const handleCompleteStep = async () => {
     await completeStep();
     onStepComplete?.();
@@ -129,8 +136,10 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   onNameChange={(name) => handleVenueNameChange(venue.id, name)}
                   onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
                   onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
+                  onAdditionalLogoUpload={(file) => handleAdditionalLogoUpload(venue.id, venue.name, file)}
                   onMenuRemove={(menuId) => removeMenu(menuId)}
                   onLogoRemove={() => removeLogo(venue.id)}
+                  onAdditionalLogoRemove={() => removeAdditionalLogo(venue.id)}
                   onColorPaletteChange={(colors) => debouncedColorPaletteUpdate(venue.id, colors)}
                   onRemove={() => {
                     const venueName = venue.name || "Venue";
@@ -141,6 +150,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   isDeleting={isDeletingVenue}
                   isUploading={uploadingMenuIds.has(venue.id)}
                   isUploadingLogo={uploadingLogoIds.has(venue.id)}
+                  isUploadingAdditionalLogo={uploadingAdditionalLogoIds.has(venue.id)}
                   autoFocus={venue.id === newlyAddedId}
                 />
               </motion.div>
