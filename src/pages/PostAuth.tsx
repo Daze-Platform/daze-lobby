@@ -49,7 +49,7 @@ export default function PostAuth() {
     enabled: isClient(role) && !!user?.id && !returnTo,
   });
 
-  const clientSlug = (clientLink?.clients as any)?.client_slug as string | undefined;
+  const clientSlug = (clientLink?.clients as { client_slug: string } | null)?.client_slug;
 
   const targetPath = useMemo(() => {
     if (!isAuthenticated) return isPortalOrigin ? "/portal/login" : "/auth";

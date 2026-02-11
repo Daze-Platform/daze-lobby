@@ -70,7 +70,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
           8000,
           "Session check timed out"
         );
-        const session = (sessionResult as any)?.data?.session ?? null;
+        const session = (sessionResult as { data: { session: unknown } })?.data?.session ?? null;
 
         if (session && !navigationAttemptedRef.current) {
           console.log("[LoginForm] Existing session found, redirecting immediately");
@@ -134,7 +134,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         8000,
         "Session check timed out"
       );
-      const preSession = (preSessionResult as any)?.data?.session ?? null;
+      const preSession = (preSessionResult as { data: { session: unknown } })?.data?.session ?? null;
 
       if (preSession && !navigationAttemptedRef.current) {
         console.log("[LoginForm] Session already present, redirecting");
@@ -151,12 +151,12 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
       console.log("[LoginForm] Supabase response received:", result.user?.email);
 
       const session =
-        (result as any)?.session ??
+        (result as { session?: unknown })?.session ??
         ((await withTimeout(
           supabase.auth.getSession(),
           8000,
           "Session check timed out"
-        )) as any)?.data?.session ??
+        )) as { data: { session: unknown } })?.data?.session ??
         null;
 
       if (session && !navigationAttemptedRef.current) {
