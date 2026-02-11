@@ -1,0 +1,1 @@
+ALTER TABLE public.venues ADD COLUMN additional_logo_url text DEFAULT NULL;

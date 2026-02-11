@@ -84,7 +84,7 @@ export default function Portal() {
   const { 
     tasks, venues, isLoading, progress, status,
     signLegal, updateTask, uploadFile,
-    uploadVenueMenu, uploadVenueLogo, deleteVenueMenu,
+    uploadVenueMenu, uploadVenueLogo, uploadVenueAdditionalLogo, deleteVenueMenu,
     addVenue, updateVenue, deleteVenue, completeVenueStep,
     isSigningLegal, isUpdating, isAddingVenue, isUpdatingVenue, isDeletingVenue,
   } = useClientPortal();
@@ -168,6 +168,10 @@ export default function Portal() {
   const handleUploadVenueLogo = useCallback(async (venueId: string, venueName: string, file: File) => {
     await uploadVenueLogo({ venueId, venueName, file });
   }, [uploadVenueLogo]);
+
+  const handleUploadVenueAdditionalLogo = useCallback(async (venueId: string, venueName: string, file: File) => {
+    await uploadVenueAdditionalLogo({ venueId, venueName, file });
+  }, [uploadVenueAdditionalLogo]);
 
   const handleCompleteVenueStep = useCallback(async () => {
     await completeVenueStep();
@@ -300,6 +304,7 @@ export default function Portal() {
                     onRemoveVenue={handleRemoveVenue}
                     onUploadMenu={handleUploadMenu}
                     onUploadVenueLogo={handleUploadVenueLogo}
+                    onUploadVenueAdditionalLogo={handleUploadVenueAdditionalLogo}
                     onCompleteVenueStep={handleCompleteVenueStep}
                     onDeleteVenueMenu={deleteVenueMenu}
                     isAddingVenue={isAddingVenue}
