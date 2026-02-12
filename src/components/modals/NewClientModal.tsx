@@ -264,7 +264,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden bg-card/95 backdrop-blur-xl border-border/50">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-border/40">
+        <DialogHeader className="px-8 pt-6 pb-4 border-b border-border/40">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
               {stepIcons[step]}
@@ -311,7 +311,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
         </DialogHeader>
 
         {/* Content */}
-        <div className="p-6 min-h-[320px]">
+        <div className="px-8 py-6 min-h-[320px]">
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
@@ -592,7 +592,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-6 pt-4 border-t border-border/40 flex items-center justify-between">
+        <div className="px-8 pb-6 pt-4 border-t border-border/40 flex items-center justify-between">
           {step === 1 && (
             <>
               <Button variant="ghost" onClick={handleClose}>
