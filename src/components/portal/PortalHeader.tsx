@@ -80,9 +80,22 @@ export function PortalHeader({
               </Badge>
             )}
             {isAdminViewing && !isPreview && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs px-2 py-0.5">
-                Admin
-              </Badge>
+              <>
+                <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs px-2 py-0.5">
+                  Admin
+                </Badge>
+                {onBackToDashboard && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-muted-foreground h-8 px-2.5"
+                    onClick={onBackToDashboard}
+                  >
+                    <ArrowLeft size={14} weight="regular" />
+                    <span className="hidden lg:inline text-xs">Dashboard</span>
+                  </Button>
+                )}
+              </>
             )}
           </div>
 
@@ -178,12 +191,6 @@ export function PortalHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdminViewing && !isPreview && onBackToDashboard && (
-                  <DropdownMenuItem onClick={onBackToDashboard} className="cursor-pointer">
-                    <ArrowLeft size={16} weight="regular" className="mr-2" />
-                    <span>Back to Dashboard</span>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
@@ -241,12 +248,6 @@ export function PortalHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdminViewing && !isPreview && onBackToDashboard && (
-                  <DropdownMenuItem onClick={onBackToDashboard} className="cursor-pointer">
-                    <ArrowLeft size={16} weight="regular" className="mr-2" />
-                    <span>Back to Dashboard</span>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
