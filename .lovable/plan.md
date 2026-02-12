@@ -1,36 +1,28 @@
 
 
-# Fix: Artwork Panel -- Remove Background Color, Use object-cover with Top Alignment
+# Fix: Persist Sidebar Collapsed State Across Navigation
 
 ## Problem
 
-The previous fix changed the image to `object-contain` and added a `bg-sky-300` background. This creates an ugly solid blue band around the artwork that doesn't match the actual image gradient. The image no longer fills its container edge-to-edge.
+The sidebar's collapsed/expanded state is stored as local state inside `DashboardSidebar` (`useState(false)`). When navigating between routes, this state resets, causing the sidebar to reopen after every tab click.
 
 ## Solution
 
-Revert to `object-cover` so the image fills the panel completely with no gaps, but use `object-top` to anchor the visible crop area to the top of the image. This ensures the tagline text ("A brighter day awaits" / "Effortless service, floating on air.") is always visible, while the bottom of the image (the sun) gets cropped on shorter viewports -- which is acceptable since the text is the priority.
-
-Remove the `bg-sky-300` background entirely since `object-cover` fills the container with no letterboxing.
+Lift the `isCollapsed` state up to `DashboardLayout` so it persists across route changes, and pass it down to `DashboardSidebar` as props.
 
 ## Changes
 
-### `src/components/auth/SketchyArtPanel.tsx`
+### 1. `src/components/layout/DashboardLayout.tsx`
 
-```tsx
-export function SketchyArtPanel() {
-  return (
-    <div className="h-full w-full">
-      <img 
-        src={authArtwork} 
-        alt="A brighter day awaits - Daze" 
-        className="h-full w-full object-cover object-top"
-      />
-    </div>
-  );
-}
-```
+- Add `isCollapsed` and `setIsCollapsed` state
+- Pass `isCollapsed` and `onToggleCollapse` as props to `DashboardSidebar`
 
-- `object-cover` -- image fills container edge-to-edge, no background gaps
-- `object-top` -- crops from the bottom, keeping the top text visible
-- Removed `bg-sky-300` -- no longer needed since there are no gaps to fill
+### 2. `src/components/layout/DashboardSidebar.tsx`
+
+- Add `isCollapsed` and `onToggleCollapse` to the props interface
+- Remove the internal `useState(false)` for `isCollapsed`
+- Use the props instead of local state for collapse behavior
+- Call `onToggleCollapse` from the toggle button instead of local `setIsCollapsed`
+
+This is a minimal 2-file change. The state now lives in `DashboardLayout`, which stays mounted across all dashboard route transitions, so the collapsed state persists until the user explicitly toggles it.
 
