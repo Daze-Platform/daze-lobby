@@ -226,7 +226,7 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         { type: "spacer" },
 
         { type: "sub-sub", text: "5.1 No Fees" },
-        { type: "checkbox", checked: false, text: "No fees apply during the Pilot Term. (Not available for Pilot)" },
+        { type: "checkbox", checked: false, text: "No fees apply during the Pilot Term." },
         { type: "spacer" },
 
         { type: "sub-sub", text: "5.2 Subscription Platform Fee" },
