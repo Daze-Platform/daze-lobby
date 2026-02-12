@@ -288,15 +288,15 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="w-full grid grid-cols-5 h-10">
-            <TabsTrigger value="portal" className="gap-1.5 text-xs">
+            <TabsTrigger value="portal" className="gap-1.5 text-xs w-full flex justify-center">
               <Settings2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Portal</span>
             </TabsTrigger>
-            <TabsTrigger value="contacts" className="gap-1.5 text-xs">
+            <TabsTrigger value="contacts" className="gap-1.5 text-xs w-full flex justify-center">
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Contacts</span>
             </TabsTrigger>
-            <TabsTrigger value="devices" className="gap-1.5 text-xs">
+            <TabsTrigger value="devices" className="gap-1.5 text-xs w-full flex justify-center">
               <Cpu className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Devices</span>
               {clientDevices.length > 0 && (
@@ -305,11 +305,11 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="activity" className="gap-1.5 text-xs">
+            <TabsTrigger value="activity" className="gap-1.5 text-xs w-full flex justify-center">
               <Activity className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-1.5 text-xs">
+            <TabsTrigger value="documents" className="gap-1.5 text-xs w-full flex justify-center">
               <FileText className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Docs</span>
             </TabsTrigger>
