@@ -524,7 +524,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                     Portal URL Slug <span className="text-destructive">*</span>
                   </Label>
                   <div className="flex items-center gap-0">
-                    <div className="flex items-center h-11 px-3 rounded-l-lg border border-r-0 border-border/50 bg-muted/70 text-sm text-muted-foreground font-mono whitespace-nowrap">
+                    <div className="flex items-center shrink-0 h-11 px-3 rounded-l-lg border border-r-0 border-border/50 bg-muted/70 text-sm text-muted-foreground font-mono whitespace-nowrap">
                       /portal/
                     </div>
                     <Input
@@ -535,7 +535,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                         setCustomSlug(val);
                         setSlugTouched(true);
                       }}
-                      className="h-11 rounded-l-none font-mono"
+                      className="h-11 min-w-0 rounded-l-none font-mono"
                       placeholder="my-property"
                     />
                   </div>
