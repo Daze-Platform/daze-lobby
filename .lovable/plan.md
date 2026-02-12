@@ -1,22 +1,19 @@
 
-# Fix "Open in Portal" Button Routing on Blockers Page
 
-## Problem
-The "Open in Portal" button on the Blockers page navigates to `/portal` (a generic route) instead of the client-specific admin portal URL `/admin/portal/:slug`. Since admins are viewing this page, it needs to route to the admin portal for the specific client.
+# Clean Up Last Orphaned Blocker
 
-## Solution
+## What Happened
 
-### 1. `src/hooks/useActiveBlockers.ts` -- Include `client_slug` in the query and type
+The blocker you see was created at 21:31:58 -- literally 10 seconds before the migration deployed at 21:32:08. When you navigated to the Blockers page, the old (unfixed) watchdog function ran one final time and created this alert. The updated function is now active and will not create blockers for clients with 0 completed tasks.
 
-- Add `clientSlug: string | null` to the `ActiveBlocker` interface
-- Update the Supabase query to also select `client_slug` from the joined `clients` table: `.select("id, client_id, reason, blocker_type, auto_rule, created_at, clients(name, client_slug)")`
-- Map `clientObj?.client_slug` into the returned `ActiveBlocker` object
+## Fix
 
-### 2. `src/pages/Blockers.tsx` -- Use the slug for navigation
+One database cleanup step:
 
-- Change line 206 from `onClick={() => navigate("/portal")}` to `onClick={() => navigate(\`/admin/portal/\${blocker.clientSlug}\`)}`
-- Add a guard so the button is disabled if `clientSlug` is null (unlikely but safe)
+```sql
+DELETE FROM blocker_alerts
+WHERE id = '30ee164d-d812-44c3-973c-16c1980e44b5';
+```
 
-### Files Modified
-- `src/hooks/useActiveBlockers.ts` -- Add `clientSlug` to query and type
-- `src/pages/Blockers.tsx` -- Route to `/admin/portal/:slug` using the client's slug
+This removes the single remaining orphaned blocker for "Springhill Suites Orange Beach." No code changes needed -- the RPC function is already fixed and will prevent this from recurring.
+
