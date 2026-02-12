@@ -27,22 +27,22 @@ const PHASE_COLORS: Record<Enums<"lifecycle_phase">, { bg: string; border: strin
   onboarding: {
     bg: "bg-blue-500",
     border: "border-blue-500/30",
-    icon: "bg-blue-500/10 text-blue-600",
+    icon: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
   },
   reviewing: {
     bg: "bg-purple-500",
     border: "border-purple-500/30",
-    icon: "bg-purple-500/10 text-purple-600",
+    icon: "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400",
   },
   pilot_live: {
     bg: "bg-amber-500",
     border: "border-amber-500/30",
-    icon: "bg-amber-500/10 text-amber-600",
+    icon: "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
   },
   contracted: {
     bg: "bg-emerald-500",
     border: "border-emerald-500/30",
-    icon: "bg-emerald-500/10 text-emerald-600",
+    icon: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
   },
 };
 

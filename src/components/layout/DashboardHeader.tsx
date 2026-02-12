@@ -72,7 +72,7 @@ export function DashboardHeader({ onMenuToggle, showMenuButton }: DashboardHeade
           )}
           
           <div className="flex items-center gap-2 sm:gap-3">
-            <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
+            <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain dark:brightness-110 dark:contrast-110" />
             <div className="flex flex-col">
               <span className="font-display text-base sm:text-lg font-semibold tracking-tight">Daze Lobby</span>
               <span className="hidden sm:block text-2xs text-muted-foreground font-medium uppercase tracking-wide">Control Tower</span>

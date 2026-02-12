@@ -94,7 +94,7 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
         className={cn(
           "group/card transition-all duration-200 border",
           hotel.hasBlocker 
-            ? "cursor-pointer border-destructive/30 bg-destructive/5 hover:border-destructive/50" 
+            ? "cursor-pointer border-destructive/30 bg-destructive/5 dark:bg-destructive/10 hover:border-destructive/50" 
             : "cursor-grab hover:shadow-md hover:border-border active:cursor-grabbing",
           isBeingDragged && "shadow-lg ring-2 ring-primary/30"
         )}
@@ -161,14 +161,14 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
                 )}
 
                 {formattedARR && (
-                  <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] text-emerald-600 bg-emerald-500/10">
+                  <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20">
                     <DollarSign className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                     <span className="font-semibold">{formattedARR}</span>
                   </div>
                 )}
 
                 {showDaysWarning && (
-                  <span className="text-[9px] sm:text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1 sm:px-1.5 py-0.5 rounded">
+                  <span className="text-[9px] sm:text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20 px-1 sm:px-1.5 py-0.5 rounded">
                     {daysInPhase}d
                   </span>
                 )}
