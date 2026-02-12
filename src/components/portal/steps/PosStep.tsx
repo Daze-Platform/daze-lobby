@@ -47,7 +47,7 @@ type PosProvider =
   | null;
 
 const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo: string }[] = [
-  { id: "toast", name: "Toast", logo: "/pos-logos/toast.svg" },
+  { id: "toast", name: "Toast", logo: "/pos-logos/toast.jpg" },
   { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.svg" },
   { id: "par_brink", name: "PAR Brink", logo: "" },
   { id: "dinerware", name: "Dinerware", logo: "" },
