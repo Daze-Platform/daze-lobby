@@ -1,36 +1,40 @@
 
 
-# Fix: Perfectly Center Portal Management Tab Triggers
+# Fix: Artwork Text Cut-Off on Portal Login Page
 
 ## Problem
 
-The Portal Management sub-tabs (Documents, Brand/POS, Venues) still appear offset within their grid cells. The root cause is that the base `TabsTrigger` component uses `inline-flex`, which prevents the element from fully stretching to fill its grid cell even when `w-full` is applied. The `inline-flex` display mode keeps the element sized to its content rather than its container.
+The right-side artwork panel on the login page uses `object-cover`, which crops the image to fill the container. This causes the tagline text at the top of the artwork ("Effortless service, floating on air.") to be cut off since the image is taller than the viewport.
 
 ## Solution
 
-Add `flex` alongside `w-full` and `justify-center` to each `TabsTrigger` in the Portal Management panel. The `flex` class overrides the base `inline-flex`, forcing the trigger to behave as a full block-level flex container that fills the grid cell and centers its children.
+Change the image positioning from `object-cover` to `object-contain` with a complementary background color so the artwork scales down to fit entirely within the panel without any cropping. The background color will match the sky tone in the artwork for a seamless look.
 
-For consistency, apply the same fix to the parent-level tabs in `ClientDetailPanel.tsx` as well.
+Alternatively, use `object-cover object-bottom` to anchor the crop at the bottom, pushing the visible area upward to reveal the text. However, `object-contain` is cleaner since it guarantees all artwork content is always visible regardless of viewport size.
 
 ## Changes
 
-### `src/components/dashboard/portal-management/PortalManagementPanel.tsx`
+**`src/components/auth/SketchyArtPanel.tsx`**
 
-Update each `TabsTrigger` className from:
-```
-className="text-xs gap-1.5 w-full"
-```
-to:
-```
-className="text-xs gap-1.5 w-full flex justify-center"
+Update the container to have a matching background color and switch the image to `object-contain` so the full artwork (including text) is always visible:
+
+```tsx
+export function SketchyArtPanel() {
+  return (
+    <div className="h-full w-full bg-sky-300">
+      <img 
+        src={authArtwork} 
+        alt="A brighter day awaits - Daze" 
+        className="h-full w-full object-contain object-top"
+      />
+    </div>
+  );
+}
 ```
 
-### `src/components/dashboard/ClientDetailPanel.tsx`
+- `object-contain` ensures the entire image (including the top text) is visible
+- `object-top` anchors the image to the top so the tagline appears first
+- `bg-sky-300` fills any letterbox gaps with a color that blends with the artwork's sky
 
-Apply the same treatment to the 5 parent-level `TabsTrigger` components for visual consistency:
-```
-className="gap-1.5 text-xs w-full flex justify-center"
-```
-
-This ensures both tab bars render identically: triggers stretch to fill their grid column and content is perfectly centered on all screen sizes.
+This is a single-file, 2-line change.
 
