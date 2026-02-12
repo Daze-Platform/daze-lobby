@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TwoFactorSetup } from "./TwoFactorSetup";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -52,6 +53,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [mfaEnrolled, setMfaEnrolled] = useState(false);
+  const [showMfaSetup, setShowMfaSetup] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
@@ -71,11 +75,27 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
 
   // Fetch profile data
+  const checkMfaStatus = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (error) throw error;
+      const verifiedFactors = data.totp.filter((f) => f.status === "verified");
+      setMfaEnrolled(verifiedFactors.length > 0);
+      setMfaFactorId(verifiedFactors[0]?.id ?? null);
+    } catch (err) {
+      console.error("Failed to check MFA status:", err);
+    }
+  }, []);
+
   useEffect(() => {
     if (open && user?.id) {
       fetchProfile();
+      checkMfaStatus();
     }
-  }, [open, user?.id]);
+    if (!open) {
+      setShowMfaSetup(false);
+    }
+  }, [open, user?.id, checkMfaStatus]);
 
   const fetchProfile = async () => {
     if (!user?.id) return;
@@ -361,13 +381,41 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-sm font-medium">Two-Factor Authentication</Label>
-                      <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                      <p className="text-xs text-muted-foreground">
+                        {mfaEnrolled ? "Enabled — your account is protected" : "Add an extra layer of security"}
+                      </p>
                     </div>
                     <Switch
-                      checked={profile.two_factor_enabled}
-                      onCheckedChange={(checked) => setProfile(prev => ({ ...prev, two_factor_enabled: checked }))}
+                      checked={mfaEnrolled}
+                      onCheckedChange={async (checked) => {
+                        if (checked) {
+                          setShowMfaSetup(true);
+                        } else if (mfaFactorId) {
+                          try {
+                            const { error } = await supabase.auth.mfa.unenroll({ factorId: mfaFactorId });
+                            if (error) throw error;
+                            setMfaEnrolled(false);
+                            setMfaFactorId(null);
+                            toast.success("Two-factor authentication disabled");
+                          } catch (err) {
+                            console.error("Failed to disable 2FA:", err);
+                            toast.error("Failed to disable 2FA");
+                          }
+                        }
+                      }}
+                      disabled={showMfaSetup}
                     />
                   </div>
+
+                  {showMfaSetup && !mfaEnrolled && (
+                    <TwoFactorSetup
+                      onComplete={() => {
+                        setShowMfaSetup(false);
+                        checkMfaStatus();
+                      }}
+                      onCancel={() => setShowMfaSetup(false)}
+                    />
+                  )}
                 </div>
               </section>
 
