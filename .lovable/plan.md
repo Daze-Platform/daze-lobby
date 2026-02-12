@@ -1,25 +1,30 @@
 
-# Add POS Provider Logos to New Client Modal Dropdown
+# Refine Auth Page: Sun Exposure, Centering, and No Scroll
 
-## What Changes
-The "New Client" modal's POS provider dropdown currently shows plain text names only. This update will add the corresponding logo icons next to each provider name, matching the visual treatment already used in the client portal and admin portal management views.
+## Changes
 
-## Implementation
+### 1. Regenerate auth-artwork.png with better sun exposure
+The current artwork image shows the sun barely peeking in at the bottom-right corner. The image will be regenerated using AI to reposition the sun so it's more prominently visible -- higher up and with better exposure/glow, while keeping the same blue sky, clouds, and text style.
 
-### File: `src/components/modals/NewClientModal.tsx`
+### 2. Center the auth card properly
+Currently the left-side form panel uses `min-h-screen` which can push content off-center. Both `Auth.tsx` and `PortalLogin.tsx` will be updated to use `h-screen` on the root container and remove `min-h-screen` from the form panel, ensuring the card is vertically centered within the viewport.
 
-1. **Replace the plain string array** `POS_PROVIDERS` with the same object-based structure used in the other interfaces, containing `id`, `name`, and `logo` fields.
+### 3. Disable scrolling on auth pages
+The root container on both auth pages will be set to `h-screen overflow-hidden` to lock the viewport and prevent any scrolling.
 
-2. **Update the Select dropdown** to render each provider with its logo image alongside the name. Each `SelectItem` will show a small logo (20x20px) next to the provider name, with a fallback to a Store icon when no logo is available (for "Other").
+## Files Modified
 
-3. **Update the selected value display** in the `SelectTrigger` to also show the logo when a provider is selected.
-
-4. **Adjust the mutation logic** to store the provider name (not the id) in the database notes field, maintaining backward compatibility with existing data.
+- **`src/assets/auth-artwork.png`** -- Regenerated with the sun more prominently exposed (higher position, better glow/warmth)
+- **`src/pages/Auth.tsx`** -- Root container changed from `min-h-screen` to `h-screen overflow-hidden`; form panel changed from `min-h-screen` to `h-full` for proper centering
+- **`src/pages/PortalLogin.tsx`** -- Same layout fixes as Auth.tsx
 
 ## Technical Details
 
-- The `POS_PROVIDERS` constant will be converted from a `string[]` to an array of `{ id, name, logo }` objects, reusing the exact same logo paths from `AdminBrandPosControls.tsx`
-- The `posProvider` state will store the provider `name` string to maintain compatibility with the existing database insert logic
-- Each `SelectItem` will use a flex layout with an `img` element (or Store icon fallback) and the provider name
-- Logo images will be sized at 20x20px with `object-contain` to handle different aspect ratios
-- The `Store` icon from lucide-react will be imported as the fallback for the "Other" option
+### Layout changes (Auth.tsx and PortalLogin.tsx)
+- Root `div`: `min-h-screen` becomes `h-screen overflow-hidden`
+- Left form panel: remove `min-h-screen lg:min-h-0`, use `h-full` instead
+- Right art panel: remove `min-h-screen` where present, use `h-full`
+- These changes lock the page to the viewport height and prevent scrolling while keeping the form card vertically centered via the existing `flex items-center justify-center`
+
+### Image regeneration
+- The existing `auth-artwork.png` will be edited via AI image generation to move the sun higher and make it more prominent with better exposure/warmth, while preserving the clouds, sky, and text overlay
