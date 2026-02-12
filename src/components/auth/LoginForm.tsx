@@ -161,7 +161,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     setError(null);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/post-auth`,
       });
       if (error) {
         const errorMessage = error.message || "Failed to sign in with Google";

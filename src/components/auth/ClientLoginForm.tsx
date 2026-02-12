@@ -151,8 +151,11 @@ export function ClientLoginForm() {
     setGoogleLoading(true);
     setError(null);
     try {
+      const redirectUrl = returnTo
+        ? `${window.location.origin}/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
+        : `${window.location.origin}/post-auth?origin=portal`;
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: redirectUrl,
       });
       if (error) {
         setError(error.message || "Failed to sign in with Google");
