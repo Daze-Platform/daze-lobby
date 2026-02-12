@@ -2,13 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, Palette, MapPin, Loader2, ExternalLink } from "lucide-react";
+import { FileText, Palette, MapPin, Loader2, ExternalLink, Link2, Copy, Check } from "lucide-react";
 import { AdminDocumentUpload } from "./AdminDocumentUpload";
 import { AdminBrandPosControls } from "./AdminBrandPosControls";
 import { AdminVenuePresets } from "./AdminVenuePresets";
+import { toast } from "sonner";
+import { useState } from "react";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface PortalManagementPanelProps {
   clientId: string;
+  clientSlug?: string;
+  primaryContact?: Tables<"client_contacts">;
   currentLogoUrl?: string | null;
   currentBrandPalette?: string[] | null;
   onNavigateToDocsTab?: () => void;
@@ -24,10 +29,14 @@ interface Document {
 
 export function PortalManagementPanel({
   clientId,
+  clientSlug,
+  primaryContact,
   currentLogoUrl,
   currentBrandPalette,
   onNavigateToDocsTab,
 }: PortalManagementPanelProps) {
+  const [copied, setCopied] = useState(false);
+
   // Fetch existing documents to check for pilot agreement and security docs
   const { data: documents, isLoading: isLoadingDocs } = useQuery({
     queryKey: ["admin-documents", clientId],
@@ -68,6 +77,23 @@ export function PortalManagementPanel({
 
   const isLoading = isLoadingDocs || isLoadingPos;
 
+  // Build invite URL
+  const inviteUrl = clientSlug
+    ? `${window.location.origin}/portal/${clientSlug}${primaryContact?.email ? `?email=${encodeURIComponent(primaryContact.email)}` : ""}`
+    : null;
+
+  const handleCopy = async () => {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      toast.success("Invite link copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -84,6 +110,40 @@ export function PortalManagementPanel({
           Prepopulate and manage this client's portal content
         </p>
       </div>
+
+      {/* Invite Link Card */}
+      {inviteUrl && (
+        <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium">Portal Invite Link</span>
+          </div>
+          <p className="text-xs font-mono text-muted-foreground truncate">
+            /portal/{clientSlug}
+          </p>
+          {primaryContact && (
+            <p className="text-xs text-muted-foreground">
+              For: {primaryContact.name}
+              {primaryContact.email && (
+                <span className="text-muted-foreground/70"> ({primaryContact.email})</span>
+              )}
+            </p>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs gap-1.5"
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-emerald-500" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copied ? "Copied!" : primaryContact?.email ? "Copy Invite Link" : "Copy Link (no email)"}
+          </Button>
+        </div>
+      )}
 
       <Tabs defaultValue="documents" className="w-full">
         <TabsList className="w-full grid grid-cols-3 h-11">

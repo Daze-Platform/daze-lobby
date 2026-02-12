@@ -381,6 +381,8 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
           <TabsContent value="portal" className="mt-4">
             <PortalManagementPanel
               clientId={hotel.id}
+              clientSlug={hotel.client_slug ?? undefined}
+              primaryContact={contacts.find(c => c.is_primary) ?? undefined}
               currentLogoUrl={hotel.logo_url}
               currentBrandPalette={hotel.brand_palette as string[] | null}
               onNavigateToDocsTab={() => setActiveTab("documents")}
