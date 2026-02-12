@@ -210,6 +210,18 @@ export function PortalHeader({
 
           {/* Mobile Menu Button - could be expanded later */}
           <div className="flex md:hidden items-center gap-2">
+            {/* Admin back to dashboard on mobile */}
+            {isAdminViewing && !isPreview && onBackToDashboard && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-muted-foreground h-8 px-2"
+                onClick={onBackToDashboard}
+              >
+                <ArrowLeft size={14} weight="regular" />
+                <span className="text-xs">Back</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"

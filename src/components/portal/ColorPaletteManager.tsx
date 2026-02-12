@@ -73,7 +73,7 @@ export function ColorPaletteManager({
       )}
 
       {/* Current Colors */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         {colors.map((color, index) => (
           <div
             key={index}

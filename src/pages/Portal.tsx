@@ -223,7 +223,7 @@ export default function Portal() {
   }
 
   return (
-    <div className="min-h-screen bg-ambient dark:bg-ambient-dark pb-24 sm:pb-20 md:pb-0">
+    <div className="min-h-screen bg-ambient dark:bg-ambient-dark pb-28 sm:pb-24 md:pb-0">
       {showTour && <WelcomeTour onComplete={completeTour} />}
 
       <PortalHeader
@@ -372,7 +372,7 @@ export default function Portal() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex items-center justify-around py-2 px-4">
           <Button
             variant={activeView === "onboarding" ? "secondary" : "ghost"}
@@ -412,15 +412,27 @@ export default function Portal() {
             )}
           </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
-            onClick={handleSignOut}
-          >
-            <LogOut className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px]">Sign Out</span>
-          </Button>
+          {isAdminViewingPortal ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+              onClick={() => navigate("/dashboard")}
+            >
+              <Target className="w-5 h-5" strokeWidth={1.5} />
+              <span className="text-[10px]">Dashboard</span>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-5 h-5" strokeWidth={1.5} />
+              <span className="text-[10px]">Sign Out</span>
+            </Button>
+          )}
         </div>
       </nav>
 

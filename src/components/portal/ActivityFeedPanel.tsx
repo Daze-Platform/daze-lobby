@@ -218,8 +218,8 @@ export function ActivityFeedPanel({ open, onClose, hotelId }: ActivityFeedPanelP
               ease: [0.32, 0.72, 0, 1] // Premium cubic-bezier
             }}
             className={cn(
-              "fixed right-0 top-0 bottom-0 z-50 w-80 max-w-[90vw]",
-              "bg-white/80 dark:bg-card/80 backdrop-blur-xl",
+              "fixed right-0 top-0 bottom-0 z-50 w-full md:w-80 md:max-w-[90vw]",
+              "bg-white/80 dark:bg-card/80 backdrop-blur-md md:backdrop-blur-xl",
               "border-l border-white/20 dark:border-border/50",
               "shadow-2xl shadow-slate-900/10"
             )}
