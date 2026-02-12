@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
 import dazeLogo from "@/assets/daze-logo.png";
+import { MFAChallengeForm } from "./MFAChallengeForm";
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -54,6 +55,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
   const [error, setError] = useState<string | null>(null);
   const [shouldShake, setShouldShake] = useState(false);
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
 
@@ -120,6 +122,17 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         null;
 
       if (session) {
+        // Check for enrolled MFA factors before redirecting
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const verifiedFactors = factors?.totp?.filter((f) => f.status === "verified") ?? [];
+
+        if (verifiedFactors.length > 0) {
+          console.log("[LoginForm] MFA factor found, showing challenge");
+          setMfaFactorId(verifiedFactors[0].id);
+          setLoading(false);
+          return;
+        }
+
         console.log("[LoginForm] Session confirmed, redirecting");
         navigate("/post-auth", { replace: true });
         return;
@@ -184,6 +197,19 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
       setGoogleLoading(false);
     }
   };
+
+  // If MFA challenge is needed, show the challenge form instead of the login form
+  if (mfaFactorId) {
+    return (
+      <MFAChallengeForm
+        factorId={mfaFactorId}
+        onCancel={async () => {
+          await supabase.auth.signOut();
+          setMfaFactorId(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div 
