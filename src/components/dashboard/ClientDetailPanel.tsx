@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactFormModal } from "@/components/modals/ContactFormModal";
@@ -34,7 +34,7 @@ import { PortalManagementPanel } from "./portal-management";
 import { NewDeviceModal } from "@/components/modals/NewDeviceModal";
 import { useActivityLogs, type ActivityLog } from "@/hooks/useActivityLogs";
 import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Client } from "@/hooks/useClients";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -218,6 +218,11 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
   const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const [logoUrl, setLogoUrl] = useState<string | null>(hotel?.logo_url ?? null);
+
+  useEffect(() => {
+    setLogoUrl(hotel?.logo_url ?? null);
+  }, [hotel?.logo_url]);
 
   const logoUpload = useMutation({
     mutationFn: async (file: File) => {
@@ -237,12 +242,13 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
       if (dbError) throw dbError;
       return publicUrl;
     },
-    onSuccess: () => {
+    onSuccess: (publicUrl) => {
+      setLogoUrl(publicUrl);
       queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
-      toast({ title: "Logo updated", description: "The client logo has been saved." });
+      toast.success("Logo updated");
     },
     onError: (error: Error) => {
-      toast({ title: "Failed to upload logo", description: error.message, variant: "destructive" });
+      toast.error("Failed to upload logo: " + error.message);
     },
   });
 
@@ -292,7 +298,7 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
           <div className="flex items-center gap-3">
             <div className="relative group/logo">
               <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                <AvatarImage src={hotel.logo_url || undefined} />
+                <AvatarImage src={logoUrl || undefined} />
                 <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>
