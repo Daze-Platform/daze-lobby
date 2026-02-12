@@ -1,102 +1,75 @@
 
 
-# Automated Document Analysis with GPT 5.2
+# Bulletproof Portal URL Routing in New Client Wizard
 
-## Overview
-Add an AI-powered document analysis feature that automatically reviews uploaded onboarding documents (Pilot Agreements, Security Documentation) for completeness and extracts key information. When an admin uploads a document, they can trigger an "Analyze" action that sends the document to GPT 5.2, which returns a structured completeness report and extracted data fields.
+## Problem
 
-## How It Works (User Perspective)
+The Portal Access step (Step 3) of the New Client wizard has several gaps that could cause routing failures or confusing errors:
 
-1. Admin uploads a document (e.g., Pilot Agreement) as they do today
-2. An "Analyze with AI" button appears next to each uploaded document
-3. Clicking it sends the document for analysis -- a loading state shows progress
-4. Results appear in an expandable panel showing:
-   - **Completeness Score** (e.g., 85%) with a visual progress ring
-   - **Missing Fields** flagged as warnings (e.g., "Billing address not found")
-   - **Extracted Data** showing key-value pairs parsed from the document (property name, legal entity, signer name, dates, pricing terms, etc.)
-5. Admins can review extracted data and optionally apply it to auto-populate client onboarding fields
+1. **No duplicate slug detection** -- The database enforces uniqueness on `client_slug`, but the UI doesn't check beforehand. If a slug is already taken, the user gets a generic "Failed to create client" error with no explanation.
+2. **No reserved word protection** -- A user could enter `login` as a slug, creating a client at `/portal/login` which conflicts with the actual login route.
+3. **Weak slug formatting** -- The current regex (`/^[a-z0-9-]+$/`) allows invalid patterns like `---`, `-my-hotel`, or `hotel-` (leading/trailing hyphens).
+4. **No availability feedback** -- Users cannot tell if a slug is available until they attempt submission.
+
+## Solution
+
+### 1. Real-Time Slug Uniqueness Check
+
+Add a debounced query that checks if the entered slug already exists in the `clients` table. Display inline feedback:
+- A green checkmark and "Available" label when the slug is unique
+- A red warning and "Already taken" label when it conflicts
+
+This uses a simple `supabase.from("clients").select("id").eq("client_slug", slug).maybeSingle()` call, debounced by ~500ms to avoid excessive queries while typing.
+
+### 2. Reserved Slug Blocklist
+
+Define a list of reserved words that conflict with existing routes:
+- `login`, `admin`, `signup`, `auth`, `settings`, `api`, `dashboard`, `post-auth`
+
+If the user enters a reserved slug, show a validation message: "This URL is reserved. Please choose a different slug."
+
+### 3. Stricter Slug Validation
+
+Tighten the regex to enforce proper formatting:
+- Must start and end with a letter or number (no leading/trailing hyphens)
+- No consecutive hyphens (`--`)
+- Minimum 3 characters, maximum 60 characters
+- Pattern: `/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/` (with length check)
+
+### 4. Better Error Handling on Insert Failure
+
+Catch the specific unique constraint violation error (`23505`) from the database and display a clear message: "This portal URL is already in use. Please choose a different one." This acts as a safety net in case the real-time check misses a race condition.
 
 ## Technical Details
 
-### 1. New Edge Function: `analyze-document`
-
-**File: `supabase/functions/analyze-document/index.ts`**
-
-- Accepts `{ documentId, clientId, documentType }` in the request body
-- Downloads the document from the `hotel-documents` storage bucket using the service role key
-- Converts the file content to base64 for PDF/image analysis (GPT 5.2 supports multimodal input)
-- Sends it to `https://ai.gateway.lovable.dev/v1/chat/completions` with `model: "openai/gpt-5.2"`
-- Uses **tool calling** to extract structured output (not raw JSON) with two tools:
-  - `analyze_pilot_agreement`: extracts fields matching `PilotAgreementData` type (property name, legal entity, signer, billing address, covered outlets, pricing, POS info, dates)
-  - `analyze_security_document`: extracts compliance areas, certifications, expiry dates, coverage gaps
-- Returns structured JSON with `{ completeness_score, missing_fields, extracted_data, summary }`
-- Handles 429/402 rate limit errors gracefully
-
-### 2. New Database Table: `document_analyses`
-
-Stores analysis results so they persist and don't need re-running:
-
-```text
-document_analyses
-- id (uuid, PK)
-- document_id (uuid, FK -> documents.id)
-- client_id (uuid, FK -> clients.id)
-- analysis_type (text: "pilot_agreement" | "security_docs")
-- completeness_score (integer, 0-100)
-- missing_fields (jsonb, array of field descriptions)
-- extracted_data (jsonb, key-value pairs)
-- summary (text, brief AI summary)
-- created_at (timestamptz)
-```
-
-RLS policies: only users with dashboard access (`has_dashboard_access`) can read/write.
-
-### 3. Update `supabase/config.toml`
-
-Add the new function entry:
-
-```text
-[functions.analyze-document]
-verify_jwt = true
-```
-
-### 4. New Component: `DocumentAnalysisPanel`
-
-**File: `src/components/dashboard/portal-management/DocumentAnalysisPanel.tsx`**
-
-- Sits below each `AdminDocumentUpload` card when a document exists
-- Shows an "Analyze with AI" button (with a sparkle/brain icon)
-- On click, calls the edge function via `supabase.functions.invoke('analyze-document', ...)`
-- Displays results in an expandable card:
-  - Completeness score as a colored badge (green >= 80, amber >= 50, red < 50)
-  - List of missing fields with warning icons
-  - Extracted data in a clean key-value grid
-  - Brief AI summary paragraph
-- If analysis already exists (from DB), shows cached results with a "Re-analyze" option
-- Loading state with skeleton animation during analysis
-
-### 5. Update `AdminDocumentUpload.tsx`
-
-- Import and render `DocumentAnalysisPanel` below the existing document display when `existingDocument` is present
-- Pass `documentId`, `clientId`, and `documentType` as props
-
-### 6. New Hook: `useDocumentAnalysis`
-
-**File: `src/hooks/useDocumentAnalysis.ts`**
-
-- `useQuery` to fetch existing analysis from `document_analyses` table
-- `useMutation` to trigger new analysis via the edge function
-- Handles loading, error, and success states
-- Invalidates cache on new analysis
-
-## Files Changed
+### Files Changed
 
 | File | Action |
 |------|--------|
-| `supabase/functions/analyze-document/index.ts` | Create -- new edge function |
-| `src/components/dashboard/portal-management/DocumentAnalysisPanel.tsx` | Create -- analysis results UI |
-| `src/hooks/useDocumentAnalysis.ts` | Create -- data fetching hook |
-| `src/components/dashboard/portal-management/AdminDocumentUpload.tsx` | Update -- integrate analysis panel |
-| `supabase/config.toml` | Update -- add function config |
-| Database migration | Create `document_analyses` table with RLS |
+| `src/components/modals/NewClientModal.tsx` | Update -- add slug validation, uniqueness check, reserved words, better error handling |
+
+### Changes to `NewClientModal.tsx`
+
+**Add constants at the top:**
+- `RESERVED_SLUGS` array containing route-conflicting words
+- Updated slug validation regex
+
+**Add a debounced uniqueness check:**
+- New state: `slugStatus` ("idle" / "checking" / "available" / "taken")
+- `useEffect` with a 500ms debounce that queries the database when `customSlug` changes and is valid
+- Query: `supabase.from("clients").select("id").eq("client_slug", customSlug).maybeSingle()`
+
+**Update the slug input UI (Step 3):**
+- Show a spinner icon while checking availability
+- Show a green check + "Available" when confirmed unique
+- Show a red X + "Already taken" when a conflict is found
+- Show "Reserved URL" warning for blocklisted slugs
+
+**Update validation logic:**
+- `isSlugValid` now also checks: not reserved, no leading/trailing hyphens, no consecutive hyphens, max length
+- "Create Client" button disabled when slug is taken, reserved, or still checking
+
+**Improve error handling in `createClientMutation`:**
+- In `onError`, check for Postgres error code `23505` (unique violation) and display a specific toast: "This portal URL is already in use"
+- Reset `slugStatus` to "taken" so the UI reflects the conflict
 
