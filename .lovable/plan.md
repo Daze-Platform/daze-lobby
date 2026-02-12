@@ -1,50 +1,37 @@
 
 
-# Fix: Sidebar Collapse State Truly Persisting Across Navigation
+# Fix: Remove "(Not available for Pilot)" from Section 5.1
 
-## Problem
+## Summary
 
-The previous fix lifted `isCollapsed` state to `DashboardLayout`, but each page (Dashboard, Clients, Blockers, Devices, Revenue) renders its **own instance** of `<DashboardLayout>`. When navigating between routes, React unmounts the entire old page component (including its `DashboardLayout`) and mounts a fresh one -- resetting `isCollapsed` back to `false`.
+After a complete line-by-line comparison of the uploaded official Pilot Agreement PDF against the code, the agreement is nearly a perfect match. Only one text discrepancy was found.
 
-## Solution
+## Discrepancy Found
 
-Use React Router's **layout route** pattern so that `DashboardLayout` is rendered **once** as a parent route and stays mounted across all dashboard child routes. The child pages render into an `<Outlet />` instead of wrapping themselves in `<DashboardLayout>`.
+**Section 5.1 No Fees** contains extra text not present in the official PDF:
+
+- Official PDF: "No fees apply during the Pilot Term."
+- Code: "No fees apply during the Pilot Term. **(Not available for Pilot)**"
+
+The parenthetical "(Not available for Pilot)" does not appear in the official document and must be removed from both locations.
 
 ## Changes
 
-### 1. `src/components/layout/DashboardLayout.tsx`
-- Import `Outlet` from `react-router-dom`
-- Remove the `children` prop
-- Render `<Outlet />` in place of `{children}`
+### 1. `src/components/portal/ReviewSignModal.tsx` (line ~219)
 
-### 2. `src/App.tsx`
-- Import `DashboardLayout` and wrap all admin routes in a parent layout route:
+Remove "(Not available for Pilot)" from the Section 5.1 No Fees line in the `createAgreementText` function.
 
-```text
-<Route element={<RoleBasedRoute ...><DashboardLayout /></RoleBasedRoute>}>
-  <Route path="/" element={<Dashboard />} />
-  <Route path="/dashboard" element={<Dashboard />} />
-  <Route path="/clients" element={<Clients />} />
-  <Route path="/blockers" element={<Blockers />} />
-  <Route path="/devices" element={<Devices />} />
-  <Route path="/revenue" element={<Revenue />} />
-  <Route path="/admin/portal" element={<PortalAdmin />} />
-  <Route path="/admin/portal/:clientSlug" element={<AdminPortalBySlug />} />
-</Route>
-```
+**Before:** `[ ] 5.1 No Fees — No fees apply during the Pilot Term. (Not available for Pilot)`
+**After:** `[ ] 5.1 No Fees — No fees apply during the Pilot Term.`
 
-### 3. Remove `<DashboardLayout>` wrapper from each page
-Each of these 7 files needs their `<DashboardLayout>` wrapper removed, keeping only the inner content:
+### 2. `src/lib/pdf/sections.ts` (line 229)
 
-- `src/pages/Dashboard.tsx` -- remove `<DashboardLayout>` wrapper, remove import
-- `src/pages/Clients.tsx` -- remove `<DashboardLayout>` wrapper, remove import
-- `src/pages/Blockers.tsx` -- remove `<DashboardLayout>` wrapper, remove import
-- `src/pages/Devices.tsx` -- remove `<DashboardLayout>` wrapper, remove import
-- `src/pages/Revenue.tsx` -- remove `<DashboardLayout>` wrapper, remove import
-- `src/pages/PortalAdmin.tsx` -- remove `<DashboardLayout>` wrapper if present
-- `src/pages/AdminPortalBySlug.tsx` -- remove `<DashboardLayout>` wrapper if present
+Remove "(Not available for Pilot)" from the checkbox text for Section 5.1 in the generated PDF.
 
-## Why This Works
+**Before:** `{ type: "checkbox", checked: false, text: "No fees apply during the Pilot Term. (Not available for Pilot)" }`
+**After:** `{ type: "checkbox", checked: false, text: "No fees apply during the Pilot Term." }`
 
-With a layout route, `DashboardLayout` is mounted once and React Router swaps only the `<Outlet />` content when the URL changes. The `isCollapsed` state lives in that single persistent component, so it survives all tab/route transitions.
+## Verification
+
+All other sections (1-13), including all bullet points, label-value fields, legal clauses, and the signature block, are identical to the official PDF. No other changes are needed.
 
