@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactFormModal } from "@/components/modals/ContactFormModal";
 import {
@@ -26,6 +26,7 @@ import {
   Settings2,
   Plus,
   Pencil,
+  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DocumentUploadSection } from "./DocumentUploadSection";
@@ -214,6 +215,31 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
   const [isNewDeviceOpen, setIsNewDeviceOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  const logoUpload = useMutation({
+    mutationFn: async (file: File) => {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `brands/${hotel!.id}/admin-logo-${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("onboarding-assets")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from("onboarding-assets")
+        .getPublicUrl(path);
+      const { error: dbError } = await supabase
+        .from("clients")
+        .update({ logo_url: publicUrl })
+        .eq("id", hotel!.id);
+      if (dbError) throw dbError;
+      return publicUrl;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
+    },
+  });
 
   const { data: clientDevices = [], isLoading: devicesLoading, isError: devicesError } = useQuery({
     queryKey: ["client-devices", hotel?.id],
@@ -259,12 +285,38 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
       >
         <SheetHeader className="pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-              <AvatarImage src={hotel.logo_url || undefined} />
-              <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative group/logo">
+              <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                <AvatarImage src={hotel.logo_url || undefined} />
+                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={logoUpload.isPending}
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity ring-2 ring-background hover:bg-primary/90 disabled:opacity-50"
+                aria-label="Change logo"
+              >
+                {logoUpload.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Pencil className="h-3 w-3" />
+                )}
+              </button>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) logoUpload.mutate(file);
+                  e.target.value = "";
+                }}
+              />
+            </div>
             <div className="flex-1 min-w-0">
               <SheetTitle className="text-lg truncate">{hotel.name}</SheetTitle>
               <SheetDescription className="flex items-center gap-2 mt-1">
