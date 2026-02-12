@@ -143,7 +143,8 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
             "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-card shadow-soft",
-            "hover:bg-muted transition-all hover:scale-110"
+            "hover:bg-muted transition-all hover:scale-110",
+            "dark:shadow-none dark:border-border/60"
           )}
         >
           {showCollapsed ? (

@@ -14,7 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const useSidebarSheet = useIsMobileOrTablet();
 
   return (
-    <div className="h-screen flex flex-col bg-muted/30 overflow-hidden">
+    <div className="h-screen flex flex-col bg-muted/30 dark:bg-background overflow-hidden">
       <DashboardHeader onMenuToggle={() => setSidebarOpen(true)} showMenuButton={useSidebarSheet} />
       <div className="flex-1 flex min-h-0">
         {/* Sidebar as Sheet on mobile and tablet */}

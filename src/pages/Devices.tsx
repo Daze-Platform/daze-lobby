@@ -111,7 +111,7 @@ function DeviceCard({
       )}
     >
       {/* Liquid Glass Overlay Effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 dark:from-white/[0.02] to-transparent pointer-events-none" />
       
       {/* Status Pulse Indicator + Delete */}
       <div className="absolute top-3 right-3 flex items-center gap-1.5">
