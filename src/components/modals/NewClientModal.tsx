@@ -1,10 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
+
+const RESERVED_SLUGS = [
+  "login", "admin", "signup", "auth", "settings", "api", "dashboard", "post-auth",
+  "portal", "no-hotel-assigned", "blockers", "clients", "devices", "revenue",
+];
+
+const SLUG_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+const CONSECUTIVE_HYPHENS = /--/;
+const SLUG_MIN = 3;
+const SLUG_MAX = 60;
+
+type SlugStatus = "idle" | "checking" | "available" | "taken" | "reserved" | "invalid";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +46,9 @@ import {
   Check,
   Store,
   Link,
-  Copy
+  Copy,
+  CircleAlert,
+  CircleCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -88,6 +102,8 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
 
   const [customSlug, setCustomSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const slugCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-sync slug from property name until manually edited
   useEffect(() => {
@@ -96,10 +112,52 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     }
   }, [generatedSlug, slugTouched]);
 
+  // Debounced slug uniqueness check
+  useEffect(() => {
+    if (slugCheckTimer.current) clearTimeout(slugCheckTimer.current);
+
+    // Basic validation first
+    if (!customSlug || customSlug.length < SLUG_MIN) {
+      setSlugStatus("idle");
+      return;
+    }
+    if (customSlug.length > SLUG_MAX || !SLUG_REGEX.test(customSlug) || CONSECUTIVE_HYPHENS.test(customSlug)) {
+      setSlugStatus("invalid");
+      return;
+    }
+    if (RESERVED_SLUGS.includes(customSlug)) {
+      setSlugStatus("reserved");
+      return;
+    }
+
+    setSlugStatus("checking");
+    slugCheckTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("client_slug", customSlug)
+          .maybeSingle();
+        setSlugStatus(data ? "taken" : "available");
+      } catch {
+        // On error, allow submission — DB constraint is the safety net
+        setSlugStatus("available");
+      }
+    }, 500);
+
+    return () => { if (slugCheckTimer.current) clearTimeout(slugCheckTimer.current); };
+  }, [customSlug]);
+
+  const isSlugValid = customSlug.length >= SLUG_MIN
+    && customSlug.length <= SLUG_MAX
+    && SLUG_REGEX.test(customSlug)
+    && !CONSECUTIVE_HYPHENS.test(customSlug)
+    && !RESERVED_SLUGS.includes(customSlug)
+    && slugStatus !== "taken"
+    && slugStatus !== "checking";
+
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [customRoleInput, setCustomRoleInput] = useState("");
-
-  const isSlugValid = customSlug.length >= 3 && /^[a-z0-9-]+$/.test(customSlug);
 
   const resetForm = () => {
     setStep(1);
@@ -107,6 +165,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     setPosProvider("");
     setCustomSlug("");
     setSlugTouched(false);
+    setSlugStatus("idle");
     setContacts([]);
     setCustomRoleInput("");
   };
@@ -204,9 +263,14 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       handleClose();
       navigate(`/clients?selected=${clientId}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Failed to create client:", error);
-      toast.error("Failed to create client. Please try again.");
+      if (error?.code === "23505") {
+        toast.error("This portal URL is already in use. Please choose a different one.");
+        setSlugStatus("taken");
+      } else {
+        toast.error("Failed to create client. Please try again.");
+      }
     },
   });
 
@@ -533,22 +597,68 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                     <div className="flex items-center shrink-0 h-11 px-3 rounded-l-lg border border-r-0 border-border/50 bg-muted/70 text-sm text-muted-foreground font-mono whitespace-nowrap">
                       /portal/
                     </div>
-                    <Input
-                      id="portalSlug"
-                      value={customSlug}
-                      onChange={(e) => {
-                        const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
-                        setCustomSlug(val);
-                        setSlugTouched(true);
-                      }}
-                      className="h-11 min-w-0 rounded-l-none font-mono"
-                      placeholder="my-property"
-                    />
+                    <div className="relative flex-1">
+                      <Input
+                        id="portalSlug"
+                        value={customSlug}
+                        onChange={(e) => {
+                          const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                          setCustomSlug(val);
+                          setSlugTouched(true);
+                        }}
+                        className={cn(
+                          "h-11 min-w-0 rounded-l-none font-mono pr-10",
+                          slugStatus === "available" && "ring-1 ring-green-500/50 focus-visible:ring-green-500",
+                          (slugStatus === "taken" || slugStatus === "reserved") && "ring-1 ring-destructive/50 focus-visible:ring-destructive",
+                        )}
+                        placeholder="my-property"
+                        maxLength={SLUG_MAX}
+                      />
+                      {/* Status indicator inside input */}
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {slugStatus === "checking" && (
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                        )}
+                        {slugStatus === "available" && (
+                          <CircleCheck className="w-4 h-4 text-green-500" />
+                        )}
+                        {slugStatus === "taken" && (
+                          <CircleAlert className="w-4 h-4 text-destructive" />
+                        )}
+                        {slugStatus === "reserved" && (
+                          <CircleAlert className="w-4 h-4 text-destructive" />
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {customSlug && !isSlugValid && (
-                    <p className="text-xs text-destructive">
-                      Slug must be at least 3 characters (lowercase letters, numbers, hyphens only)
+                  {/* Validation messages */}
+                  {slugStatus === "available" && (
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <CircleCheck className="w-3 h-3" /> Available
                     </p>
+                  )}
+                  {slugStatus === "taken" && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <CircleAlert className="w-3 h-3" /> Already taken — choose a different slug
+                    </p>
+                  )}
+                  {slugStatus === "reserved" && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <CircleAlert className="w-3 h-3" /> This URL is reserved
+                    </p>
+                  )}
+                  {slugStatus === "invalid" && customSlug && (
+                    <p className="text-xs text-destructive">
+                      Must be 3–{SLUG_MAX} chars, start/end with a letter or number, no consecutive hyphens
+                    </p>
+                  )}
+                  {customSlug && customSlug.length < SLUG_MIN && slugStatus === "idle" && (
+                    <p className="text-xs text-muted-foreground">
+                      Minimum {SLUG_MIN} characters
+                    </p>
+                  )}
+                  {slugStatus === "checking" && (
+                    <p className="text-xs text-muted-foreground">Checking availability…</p>
                   )}
                 </div>
 
