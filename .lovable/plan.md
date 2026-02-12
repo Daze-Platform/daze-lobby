@@ -1,59 +1,40 @@
 
 
-# Add Onboarding Timeline to Progress Card
+# Add Logo Edit Button to Client Detail Panel
 
-## Problem
-The progress card has significant empty space below the status badge and divider. Currently it shows a single "Next up: ..." line which feels sparse.
+## Overview
+Add a pencil icon overlay on the client's avatar in the detail panel header. Clicking it opens a file picker so admins can upload a new logo. The uploaded logo is already reflected on the kanban board since `HotelCard` reads `logo_url` from the same query cache.
 
-## Solution
-Replace the "Next up" text with a compact **vertical timeline** showing key onboarding dates. This gives the client a sense of momentum and timeline awareness.
+## Changes
+
+### `src/components/dashboard/ClientDetailPanel.tsx`
+
+1. **Add a hidden file input** (`useRef<HTMLInputElement>`) and a logo upload mutation (reusing the same pattern from `AdminBrandPosControls` -- upload to `onboarding-assets` storage, update `clients.logo_url`, invalidate `clients-with-details` query).
+
+2. **Wrap the existing Avatar (lines 262-267)** in a `relative` container and overlay a small pencil edit button on hover:
 
 ```text
-  +--------------------------------+
-  |  Progress Ring (existing)      |
-  |  Status Badge (existing)       |
-  |  ----------------------------  |
-  |                                |
-  |  o  Started                    |
-  |  |  Feb 10, 2026               |
-  |  |                             |
-  |  o  Next Milestone             |
-  |  |  Device Setup - Mar 1       |
-  |  |                             |
-  |  o  Target Launch              |
-  |     TBD                        |
-  |                                |
-  +--------------------------------+
+  +------------------+
+  |  [Avatar]        |
+  |        [Pencil]  |  <-- bottom-right corner, appears on hover
+  +------------------+
 ```
 
-- **Started**: The client's `created_at` date (when the admin created them)
-- **Next Milestone**: The `next_milestone` + `next_milestone_date` fields (admin-set via dashboard)
-- **Target Launch**: Derived from phase -- shows "In Review" when reviewing, "Live!" when launched, or "TBD" when still onboarding
+- The pencil button is a small circular icon button (absolute positioned, bottom-right of the avatar).
+- Clicking it triggers `logoInputRef.current?.click()` to open the native file picker.
+- On file selection, upload to `onboarding-assets/brands/{clientId}/`, get the public URL, update `clients.logo_url`, and invalidate the `clients-with-details` query.
+- Show a loading spinner on the pencil button while uploading.
 
-If all tasks are complete, the timeline reflects that with a "Submitted for review" label on the final node.
+3. **Imports to add**: `Loader2`, `Upload` from lucide-react; `useMutation`, `useQueryClient` from tanstack; `useRef` from react; `supabase` client (already imported indirectly through hooks).
 
-## Technical Changes
+### No other files need changes
+- `HotelCard.tsx` already renders `hotel.logo_url` via `AvatarImage` -- the kanban board will automatically reflect the new logo once the query cache is invalidated.
 
-### 1. Update `Client` interface in `src/contexts/ClientContext.tsx`
+## Technical Details
 
-Add three fields to the `Client` interface and all three select queries:
-- `created_at: string`
-- `next_milestone: string | null`
-- `next_milestone_date: string | null`
-
-### 2. Update `src/pages/Portal.tsx` (lines 276-282)
-
-Replace the simple "Next up" text block with a vertical timeline using three nodes:
-
-- Each node is a flex row with a dot/line connector and label + date
-- Dot styling: completed nodes get `bg-success`, current gets `bg-primary`, future gets `bg-muted-foreground/30`
-- Connecting lines use a thin vertical border between dots
-- Dates formatted with `date-fns` `format()` (already a dependency)
-- Falls back gracefully: if `next_milestone` is null, that row shows "Not set yet"; if `created_at` is unavailable, shows "In progress"
-
-No new components or dependencies needed. Uses existing `client` object from `useClient()` and `date-fns` for formatting.
-
-### Files Modified
-- **`src/contexts/ClientContext.tsx`**: Add `created_at`, `next_milestone`, `next_milestone_date` to the Client interface and all three select queries
-- **`src/pages/Portal.tsx`**: Replace lines 276-282 with the vertical timeline markup
+- Storage path: `brands/{clientId}/admin-logo-{uuid}.{ext}`
+- Storage bucket: `onboarding-assets` (already exists and used by `AdminBrandPosControls`)
+- DB update: `UPDATE clients SET logo_url = {publicUrl} WHERE id = {clientId}`
+- Query invalidation: `["clients-with-details"]` to refresh both the detail panel and kanban board
+- File accept filter: `image/*`
 
