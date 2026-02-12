@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClientProvider } from "@/contexts/ClientContext";
 import { RoleBasedRoute } from "@/components/layout/RoleBasedRoute";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AuthRedirect } from "@/components/layout/AuthRedirect";
 import { PortalRoute } from "@/components/layout/PortalRoute";
 import Dashboard from "./pages/Dashboard";
@@ -44,54 +45,21 @@ const App = () => (
                 } 
               />
               <Route path="/post-auth" element={<PostAuth />} />
+              {/* Dashboard layout route — single DashboardLayout stays mounted */}
               <Route
-                path="/"
                 element={
                   <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
-                    <Dashboard />
+                    <DashboardLayout />
                   </RoleBasedRoute>
                 }
-              />
-              <Route
-                path="/dashboard"
-                element={
-                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
-                    <Dashboard />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/clients"
-                element={
-                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
-                    <Clients />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/blockers"
-                element={
-                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
-                    <Blockers />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/devices"
-                element={
-                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
-                    <Devices />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/revenue"
-                element={
-                  <RoleBasedRoute allowedRoles={["admin", "ops_manager", "support"]}>
-                    <Revenue />
-                  </RoleBasedRoute>
-                }
-              />
+              >
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/blockers" element={<Blockers />} />
+                <Route path="/devices" element={<Devices />} />
+                <Route path="/revenue" element={<Revenue />} />
+              </Route>
               {/* Admin Portal - client picker */}
               <Route
                 path="/admin/portal"

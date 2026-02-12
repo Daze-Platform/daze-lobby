@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +44,6 @@ export default function Dashboard() {
   }, [clients]);
 
   return (
-    <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Stats Overview - 3 cards focused on onboarding velocity */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
@@ -73,7 +71,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Kanban Lifecycle Board - Entrance delayed (opacity-only to avoid DnD offset issues) */}
+        {/* Kanban Lifecycle Board */}
         <div className="space-y-3 sm:space-y-4 animate-fade-in" style={{ animationDelay: '320ms' }}>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg sm:text-xl font-semibold">Client Lifecycle</h2>
@@ -84,6 +82,5 @@ export default function Dashboard() {
           <KanbanBoard />
         </div>
       </div>
-    </DashboardLayout>
   );
 }
