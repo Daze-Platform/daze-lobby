@@ -37,9 +37,13 @@ const isBackendConfigured = () => {
 export function ClientLoginForm() {
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
+  const emailParam = searchParams.get("email");
+  const verifiedParam = searchParams.get("verified") === "true";
 
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">(
+    emailParam && !verifiedParam ? "signup" : "login"
+  );
+  const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,6 +55,8 @@ export function ClientLoginForm() {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+
+  const isEmailLocked = !!emailParam;
 
   const passwordValidation = useMemo(() => validatePassword(password), [password]);
   const showStrengthIndicator = mode === "signup" && password.length > 0;
@@ -91,10 +97,13 @@ export function ClientLoginForm() {
 
     try {
       if (mode === "signup") {
-        const redirectUrl = returnTo
-          ? `${window.location.origin}/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
-          : `${window.location.origin}/post-auth?origin=portal`;
-        await withTimeout(signUp(email, password, fullName, redirectUrl), 15000, "Sign up timed out. Please try again.");
+        // Build redirect URL that brings the user back to the portal login with email pre-filled
+        const portalSlug = returnTo || (emailParam ? window.location.pathname.replace("/portal/login", "") : "");
+        const returnPath = returnTo || (portalSlug ? `/portal${portalSlug}` : "");
+        const verifyRedirect = returnPath
+          ? `${window.location.origin}/portal/login?returnTo=${encodeURIComponent(returnPath)}&verified=true&email=${encodeURIComponent(email)}`
+          : `${window.location.origin}/portal/login?verified=true&email=${encodeURIComponent(email)}`;
+        await withTimeout(signUp(email, password, fullName, verifyRedirect), 15000, "Sign up timed out. Please try again.");
         setSignupSuccess(true);
       } else {
         // Login flow
@@ -216,6 +225,15 @@ export function ClientLoginForm() {
         onSubmit={handleSubmit}
         className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
       >
+        {verifiedParam && !error && (
+          <Alert className="border-0 bg-green-50 text-green-800 animate-fade-in-up">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Email verified! Sign in below to access your portal.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
             <AlertCircle className="h-4 w-4" />
@@ -259,10 +277,11 @@ export function ClientLoginForm() {
             type="email"
             placeholder="you@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => !isEmailLocked && setEmail(e.target.value)}
             required
             disabled={loading}
-            className={`rounded-xl ${error ? 'ring-destructive/50' : ''}`}
+            readOnly={isEmailLocked}
+            className={`rounded-xl ${error ? 'ring-destructive/50' : ''} ${isEmailLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
           />
         </div>
 
