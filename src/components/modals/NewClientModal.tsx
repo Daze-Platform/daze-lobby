@@ -31,26 +31,27 @@ import {
   ChevronRight, 
   ChevronLeft,
   Loader2,
-  Check
+  Check,
+  Store
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const POS_PROVIDERS = [
-  "Toast",
-  "NCR Aloha",
-  "PAR Brink",
-  "Dinerware",
-  "Micros Simphony",
-  "Micros 3700",
-  "POSitouch",
-  "Squirrel Systems",
-  "XPIENT",
-  "Maitre'D",
-  "NCR Cloud Connect",
-  "Simphony FE",
-  "SimphonyCloud",
-  "Other"
-] as const;
+  { id: "toast", name: "Toast", logo: "/pos-logos/toast.jpg" },
+  { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.png" },
+  { id: "par_brink", name: "PAR Brink", logo: "/pos-logos/par-brink.png" },
+  { id: "dinerware", name: "Dinerware", logo: "/pos-logos/dinerware.png" },
+  { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/micros.png" },
+  { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/micros.png" },
+  { id: "positouch", name: "POSitouch", logo: "/pos-logos/positouch.png" },
+  { id: "squirrel_systems", name: "Squirrel Systems", logo: "/pos-logos/squirrel-systems.webp" },
+  { id: "xpient", name: "XPIENT", logo: "/pos-logos/xpient.webp" },
+  { id: "maitred", name: "Maitre'D", logo: "/pos-logos/maitred.png" },
+  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "/pos-logos/ncr-cloud-connect.png" },
+  { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/micros.png" },
+  { id: "simphony_cloud", name: "SimphonyCloud", logo: "/pos-logos/micros.png" },
+  { id: "other", name: "Other", logo: "" },
+];
 const SUGGESTED_ROLES = ["General Manager", "F&B Director", "IT Director", "Controller"] as const;
 
 interface Contact {
@@ -304,12 +305,33 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                   </Label>
                   <Select value={posProvider} onValueChange={setPosProvider}>
                     <SelectTrigger id="posProvider" className="h-11">
-                      <SelectValue placeholder="Select POS system" />
+                      {posProvider ? (
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const selected = POS_PROVIDERS.find(p => p.name === posProvider);
+                            return selected?.logo ? (
+                              <img src={selected.logo} alt={selected.name} className="w-5 h-5 object-contain rounded-sm" />
+                            ) : (
+                              <Store className="w-5 h-5 text-muted-foreground" />
+                            );
+                          })()}
+                          <span>{posProvider}</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select POS system" />
+                      )}
                     </SelectTrigger>
                     <SelectContent>
                       {POS_PROVIDERS.map((provider) => (
-                        <SelectItem key={provider} value={provider}>
-                          {provider}
+                        <SelectItem key={provider.id} value={provider.name}>
+                          <div className="flex items-center gap-2">
+                            {provider.logo ? (
+                              <img src={provider.logo} alt={provider.name} className="w-5 h-5 object-contain rounded-sm" />
+                            ) : (
+                              <Store className="w-5 h-5 text-muted-foreground" />
+                            )}
+                            <span>{provider.name}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
