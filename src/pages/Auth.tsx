@@ -40,9 +40,9 @@ export default function Auth() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="h-screen overflow-hidden flex flex-col lg:flex-row">
       {/* Left Side - The Form (Clean White) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 lg:p-12 min-h-screen lg:min-h-0">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 lg:p-12 h-full">
         <div className="w-full max-w-md">
           {view === "login" && (
             <LoginForm 
@@ -63,7 +63,7 @@ export default function Auth() {
       </div>
 
       {/* Right Side - The Sketchy Art Panel (hidden on mobile/tablet, gradient fallback) */}
-      <div className="hidden lg:block lg:w-1/2 relative">
+      <div className="hidden lg:block lg:w-1/2 relative h-full">
         <SketchyArtPanel />
       </div>
 
