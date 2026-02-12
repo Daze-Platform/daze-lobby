@@ -1,22 +1,36 @@
 
 
-# Fix: Modal Horizontal Padding Consistency
+# Fix: Artwork Panel -- Remove Background Color, Use object-cover with Top Alignment
 
 ## Problem
 
-The "New Client" modal has visually unequal horizontal padding -- the left side appears to have more space than the right. This is caused by the content sections (header at `p-6`, body at `p-6`, footer at `p-6`) not accounting for the close button's `right-4` positioning, creating a visual imbalance. Additionally, the inner content could benefit from slightly more generous and consistent horizontal padding.
+The previous fix changed the image to `object-contain` and added a `bg-sky-300` background. This creates an ugly solid blue band around the artwork that doesn't match the actual image gradient. The image no longer fills its container edge-to-edge.
 
 ## Solution
 
-Increase the horizontal padding across all three sections (header, content, footer) from `p-6` to `px-8 py-6` to give more breathing room and ensure visual symmetry. This small bump from 24px to 32px horizontal padding will make the content feel properly centered and away from the close button.
+Revert to `object-cover` so the image fills the panel completely with no gaps, but use `object-top` to anchor the visible crop area to the top of the image. This ensures the tagline text ("A brighter day awaits" / "Effortless service, floating on air.") is always visible, while the bottom of the image (the sun) gets cropped on shorter viewports -- which is acceptable since the text is the priority.
+
+Remove the `bg-sky-300` background entirely since `object-cover` fills the container with no letterboxing.
 
 ## Changes
 
-**`src/components/modals/NewClientModal.tsx`**
+### `src/components/auth/SketchyArtPanel.tsx`
 
-1. **Header** (line 267): Change `p-6 pb-4` to `px-8 pt-6 pb-4`
-2. **Content body** (line 314): Change `p-6` to `px-8 py-6`
-3. **Footer** (line 595): Change `p-6 pt-4` to `px-8 pb-6 pt-4`
+```tsx
+export function SketchyArtPanel() {
+  return (
+    <div className="h-full w-full">
+      <img 
+        src={authArtwork} 
+        alt="A brighter day awaits - Daze" 
+        className="h-full w-full object-cover object-top"
+      />
+    </div>
+  );
+}
+```
 
-This ensures all three horizontal sections share the same `px-8` (32px) padding on both sides, creating a perfectly symmetrical layout with enough clearance from the dialog's close button.
+- `object-cover` -- image fills container edge-to-edge, no background gaps
+- `object-top` -- crops from the bottom, keeping the top text visible
+- Removed `bg-sky-300` -- no longer needed since there are no gaps to fill
 
