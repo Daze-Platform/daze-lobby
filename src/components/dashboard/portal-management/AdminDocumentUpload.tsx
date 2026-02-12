@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useLogActivity } from "@/hooks/useLogActivity";
+import { DocumentAnalysisPanel } from "./DocumentAnalysisPanel";
 
 interface AdminDocumentUploadProps {
   clientId: string;
@@ -234,16 +235,23 @@ export function AdminDocumentUpload({
         )}
 
         {existingDocument && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            <Upload className="h-3.5 w-3.5 mr-2" />
-            Replace Document
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <Upload className="h-3.5 w-3.5 mr-2" />
+              Replace Document
+            </Button>
+            <DocumentAnalysisPanel
+              documentId={existingDocument.id}
+              clientId={clientId}
+              documentType={documentType}
+            />
+          </>
         )}
       </CardContent>
     </Card>

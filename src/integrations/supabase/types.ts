@@ -272,6 +272,57 @@ export type Database = {
           },
         ]
       }
+      document_analyses: {
+        Row: {
+          analysis_type: string
+          client_id: string
+          completeness_score: number
+          created_at: string
+          document_id: string
+          extracted_data: Json
+          id: string
+          missing_fields: Json
+          summary: string | null
+        }
+        Insert: {
+          analysis_type: string
+          client_id: string
+          completeness_score?: number
+          created_at?: string
+          document_id: string
+          extracted_data?: Json
+          id?: string
+          missing_fields?: Json
+          summary?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          client_id?: string
+          completeness_score?: number
+          created_at?: string
+          document_id?: string
+          extracted_data?: Json
+          id?: string
+          missing_fields?: Json
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_analyses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_analyses_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string | null
