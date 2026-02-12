@@ -1,28 +1,50 @@
 
 
-# Fix: Persist Sidebar Collapsed State Across Navigation
+# Fix: Sidebar Collapse State Truly Persisting Across Navigation
 
 ## Problem
 
-The sidebar's collapsed/expanded state is stored as local state inside `DashboardSidebar` (`useState(false)`). When navigating between routes, this state resets, causing the sidebar to reopen after every tab click.
+The previous fix lifted `isCollapsed` state to `DashboardLayout`, but each page (Dashboard, Clients, Blockers, Devices, Revenue) renders its **own instance** of `<DashboardLayout>`. When navigating between routes, React unmounts the entire old page component (including its `DashboardLayout`) and mounts a fresh one -- resetting `isCollapsed` back to `false`.
 
 ## Solution
 
-Lift the `isCollapsed` state up to `DashboardLayout` so it persists across route changes, and pass it down to `DashboardSidebar` as props.
+Use React Router's **layout route** pattern so that `DashboardLayout` is rendered **once** as a parent route and stays mounted across all dashboard child routes. The child pages render into an `<Outlet />` instead of wrapping themselves in `<DashboardLayout>`.
 
 ## Changes
 
 ### 1. `src/components/layout/DashboardLayout.tsx`
+- Import `Outlet` from `react-router-dom`
+- Remove the `children` prop
+- Render `<Outlet />` in place of `{children}`
 
-- Add `isCollapsed` and `setIsCollapsed` state
-- Pass `isCollapsed` and `onToggleCollapse` as props to `DashboardSidebar`
+### 2. `src/App.tsx`
+- Import `DashboardLayout` and wrap all admin routes in a parent layout route:
 
-### 2. `src/components/layout/DashboardSidebar.tsx`
+```text
+<Route element={<RoleBasedRoute ...><DashboardLayout /></RoleBasedRoute>}>
+  <Route path="/" element={<Dashboard />} />
+  <Route path="/dashboard" element={<Dashboard />} />
+  <Route path="/clients" element={<Clients />} />
+  <Route path="/blockers" element={<Blockers />} />
+  <Route path="/devices" element={<Devices />} />
+  <Route path="/revenue" element={<Revenue />} />
+  <Route path="/admin/portal" element={<PortalAdmin />} />
+  <Route path="/admin/portal/:clientSlug" element={<AdminPortalBySlug />} />
+</Route>
+```
 
-- Add `isCollapsed` and `onToggleCollapse` to the props interface
-- Remove the internal `useState(false)` for `isCollapsed`
-- Use the props instead of local state for collapse behavior
-- Call `onToggleCollapse` from the toggle button instead of local `setIsCollapsed`
+### 3. Remove `<DashboardLayout>` wrapper from each page
+Each of these 7 files needs their `<DashboardLayout>` wrapper removed, keeping only the inner content:
 
-This is a minimal 2-file change. The state now lives in `DashboardLayout`, which stays mounted across all dashboard route transitions, so the collapsed state persists until the user explicitly toggles it.
+- `src/pages/Dashboard.tsx` -- remove `<DashboardLayout>` wrapper, remove import
+- `src/pages/Clients.tsx` -- remove `<DashboardLayout>` wrapper, remove import
+- `src/pages/Blockers.tsx` -- remove `<DashboardLayout>` wrapper, remove import
+- `src/pages/Devices.tsx` -- remove `<DashboardLayout>` wrapper, remove import
+- `src/pages/Revenue.tsx` -- remove `<DashboardLayout>` wrapper, remove import
+- `src/pages/PortalAdmin.tsx` -- remove `<DashboardLayout>` wrapper if present
+- `src/pages/AdminPortalBySlug.tsx` -- remove `<DashboardLayout>` wrapper if present
+
+## Why This Works
+
+With a layout route, `DashboardLayout` is mounted once and React Router swaps only the `<Outlet />` content when the URL changes. The `isCollapsed` state lives in that single persistent component, so it survives all tab/route transitions.
 
