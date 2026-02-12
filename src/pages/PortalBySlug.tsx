@@ -74,7 +74,7 @@ export default function PortalBySlug() {
   if (!isAuthenticated) {
     return (
       <Navigate
-        to={`/portal/login?returnTo=${encodeURIComponent(location.pathname)}`}
+        to={`/portal/login?returnTo=${encodeURIComponent(location.pathname + location.search)}${new URLSearchParams(location.search).get("email") ? `&email=${encodeURIComponent(new URLSearchParams(location.search).get("email")!)}` : ""}`}
         replace
       />
     );

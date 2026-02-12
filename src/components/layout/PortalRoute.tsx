@@ -30,8 +30,10 @@ export function PortalRoute({ children }: PortalRouteProps) {
 
   // Not authenticated
   if (!isAuthenticated) {
-    const currentPath = window.location.pathname;
-    return <Navigate to={`/portal/login?returnTo=${encodeURIComponent(currentPath)}`} replace />;
+    const currentPath = window.location.pathname + window.location.search;
+    const emailParam = new URLSearchParams(window.location.search).get("email");
+    const loginUrl = `/portal/login?returnTo=${encodeURIComponent(currentPath)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ""}`;
+    return <Navigate to={loginUrl} replace />;
   }
 
   // Check role - no role yet, resolve via post-auth
