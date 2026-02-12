@@ -1,27 +1,43 @@
 
 
-# Fix Client Logo Upload and Persistence
+# Fix Duplicate Blockers and Watchdog Logic
 
-## Problem
-The logo upload mutation in `ClientDetailPanel.tsx` has no error or success callbacks with user feedback. If the upload fails (e.g., due to file size, network issue, or storage policy), the error is silently swallowed -- the admin has no idea what happened. Additionally, there's no success toast to confirm the upload worked.
+## Problems Found
 
-## Root Cause
-The `logoUpload` mutation (lines 221-242) only has an `onSuccess` that invalidates the query cache, but:
-1. **No `onError` handler** -- upload/DB failures produce no toast or visual feedback
-2. **No success toast** -- even when the upload works, there's no confirmation message
-3. **No `onSettled` cleanup** -- the file input is cleared inline, but if the mutation errors, the loading state may linger
+### 1. Duplicate blockers (critical bug)
+The `check_client_inactivity` RPC function checks for existing unresolved blockers by matching `task_id`, but the INSERT never sets the `task_id` column. Since `NULL = NULL` is false in SQL, the duplicate check always passes, creating a new blocker every time the watchdog runs.
 
-## Fix
+### 2. Watchdog fires on brand-new clients
+The watchdog treats *all* incomplete tasks as candidates, even for clients who haven't started onboarding yet (0/5 tasks complete). A client created 3 days ago with zero activity shouldn't generate per-task blocker alerts -- they haven't even logged in.
 
-### `src/components/dashboard/ClientDetailPanel.tsx`
+### 3. "Legal Agreement" is misleading
+The watchdog doesn't respect task ordering. It flags "Legal Agreement" because that task's `updated_at` hasn't changed since creation, even though Legal is the *last* step and the client hasn't touched *any* steps yet.
 
-Add `onError` and update `onSuccess` on the `logoUpload` mutation:
+## Solution
 
-- **`onSuccess`**: Keep the existing `invalidateQueries` call and add `toast.success("Logo updated")`
-- **`onError`**: Add `toast.error("Failed to upload logo: " + error.message)` so admins see what went wrong
+### Step 1: Clean up existing duplicates (database migration)
 
-This matches the exact pattern already used by `AdminBrandPosControls.tsx` (lines 100-110) for the same logo upload flow.
+Delete the 4 duplicate blocker rows for this client, keeping none (since the client hasn't started onboarding, these blockers are noise).
+
+```sql
+DELETE FROM blocker_alerts
+WHERE client_id = '53bd0e70-b268-488e-a947-6d520f516f50'
+  AND blocker_type = 'automatic'
+  AND resolved_at IS NULL;
+```
+
+### Step 2: Fix the RPC function (database migration)
+
+Update `check_client_inactivity` with two fixes:
+
+1. **Include `task_id` in the INSERT** so the duplicate check actually works
+2. **Skip clients with 0 completed tasks** -- if a client hasn't completed any task, the watchdog shouldn't fire (they may not have logged in yet)
+
+The key changes to the SQL function:
+- Add a sub-query filter: only consider tasks belonging to clients that have at least 1 completed task (i.e., the client has actually started onboarding)
+- Set `task_id` in the INSERT to the stale task's ID so duplicate detection works
 
 ### Files Modified
-- **`src/components/dashboard/ClientDetailPanel.tsx`** -- Add toast feedback to the logo upload mutation's `onSuccess` and `onError` callbacks
+- **Database migration only** -- one migration with the cleanup DELETE and the updated `CREATE OR REPLACE FUNCTION`
 
+No application code changes needed.
