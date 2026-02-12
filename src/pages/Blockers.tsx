@@ -203,7 +203,8 @@ export default function Blockers() {
                           size="sm" 
                           variant="outline"
                           className="gap-1.5 text-primary hover:text-primary min-h-[44px] flex-1 sm:flex-none group/btn"
-                          onClick={() => navigate("/portal")}
+                          disabled={!blocker.clientSlug}
+                          onClick={() => navigate(`/admin/portal/${blocker.clientSlug}`)}
                         >
                           Open in Portal
                           <ArrowSquareOut size={14} weight="duotone" className="transition-transform group-hover/btn:scale-110" />

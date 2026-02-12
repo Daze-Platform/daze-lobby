@@ -13,6 +13,7 @@ export interface ActiveBlocker {
   totalTasks: number;
   /** The task_key of the first incomplete task, if any */
   incompleteTaskKey: string | null;
+  clientSlug: string | null;
 }
 
 /** Returns true if this blocker was created by the inactivity watchdog */
@@ -45,7 +46,7 @@ export function useActiveBlockers() {
       // Fetch unresolved blockers with client name
       const { data: blockers, error: blockersError } = await supabase
         .from("blocker_alerts")
-        .select("id, client_id, reason, blocker_type, auto_rule, created_at, clients(name)")
+        .select("id, client_id, reason, blocker_type, auto_rule, created_at, clients(name, client_slug)")
         .is("resolved_at", null)
         .order("created_at", { ascending: false });
 
@@ -78,7 +79,7 @@ export function useActiveBlockers() {
 
       return blockers.map((b): ActiveBlocker => {
         const stats = taskStats.get(b.client_id) || { completed: 0, total: 5, firstIncompleteKey: null };
-        const clientObj = b.clients as unknown as { name: string } | null;
+        const clientObj = b.clients as unknown as { name: string; client_slug: string | null } | null;
         return {
           id: b.id,
           clientId: b.client_id,
@@ -90,6 +91,7 @@ export function useActiveBlockers() {
           completedTasks: stats.completed,
           totalTasks: stats.total || 5,
           incompleteTaskKey: stats.firstIncompleteKey,
+          clientSlug: clientObj?.client_slug ?? null,
         };
       });
     },
