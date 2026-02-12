@@ -1,75 +1,64 @@
 
 
-# Bulletproof Portal URL Routing in New Client Wizard
+# Fix: Preserve Email Parameter Through Portal Auth Redirects
 
-## Problem
+## What's Wrong
 
-The Portal Access step (Step 3) of the New Client wizard has several gaps that could cause routing failures or confusing errors:
+When Matt Sutherland visits `/portal/springhill-suites-orange-beach?email=msutherland@vistahost.com`, the `?email=...` query parameter is silently dropped during the authentication redirect. This means:
 
-1. **No duplicate slug detection** -- The database enforces uniqueness on `client_slug`, but the UI doesn't check beforehand. If a slug is already taken, the user gets a generic "Failed to create client" error with no explanation.
-2. **No reserved word protection** -- A user could enter `login` as a slug, creating a client at `/portal/login` which conflicts with the actual login route.
-3. **Weak slug formatting** -- The current regex (`/^[a-z0-9-]+$/`) allows invalid patterns like `---`, `-my-hotel`, or `hotel-` (leading/trailing hyphens).
-4. **No availability feedback** -- Users cannot tell if a slug is available until they attempt submission.
+- He sees a blank login form instead of a pre-filled signup form
+- If he types a different email address, his account won't auto-link to Springhill Suites
+- He'd land on a "No hotel assigned" error page
 
-## Solution
+## What's Already Confirmed Working
 
-### 1. Real-Time Slug Uniqueness Check
+- Client record exists: "Springhill Suites Orange Beach" with correct slug
+- Contact record exists: Matt Sutherland (`msutherland@vistahost.com`) marked as primary
+- The `handle_new_user` database trigger correctly auto-links users by email match
+- The login form already supports email pre-fill and locking when the parameter is present
+- PostAuth correctly resolves `returnTo` destinations
 
-Add a debounced query that checks if the entered slug already exists in the `clients` table. Display inline feedback:
-- A green checkmark and "Available" label when the slug is unique
-- A red warning and "Already taken" label when it conflicts
+## The Fix (2 files, ~6 lines each)
 
-This uses a simple `supabase.from("clients").select("id").eq("client_slug", slug).maybeSingle()` call, debounced by ~500ms to avoid excessive queries while typing.
+### 1. `src/components/layout/PortalRoute.tsx` (line 33-34)
 
-### 2. Reserved Slug Blocklist
+Preserve query parameters and forward the email explicitly:
 
-Define a list of reserved words that conflict with existing routes:
-- `login`, `admin`, `signup`, `auth`, `settings`, `api`, `dashboard`, `post-auth`
+```
+Before: const currentPath = window.location.pathname;
 
-If the user enters a reserved slug, show a validation message: "This URL is reserved. Please choose a different slug."
+After:  const currentPath = window.location.pathname + window.location.search;
+        const emailParam = new URLSearchParams(window.location.search).get("email");
+        const loginUrl = `/portal/login?returnTo=${encodeURIComponent(currentPath)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ""}`;
+```
 
-### 3. Stricter Slug Validation
+### 2. `src/pages/PortalBySlug.tsx` (line 77)
 
-Tighten the regex to enforce proper formatting:
-- Must start and end with a letter or number (no leading/trailing hyphens)
-- No consecutive hyphens (`--`)
-- Minimum 3 characters, maximum 60 characters
-- Pattern: `/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/` (with length check)
+Same pattern -- preserve the full URL in the redirect:
 
-### 4. Better Error Handling on Insert Failure
+```
+Before: encodeURIComponent(location.pathname)
 
-Catch the specific unique constraint violation error (`23505`) from the database and display a clear message: "This portal URL is already in use. Please choose a different one." This acts as a safety net in case the real-time check misses a race condition.
+After:  encodeURIComponent(location.pathname + location.search)
+        + email param forwarding
+```
 
-## Technical Details
+## Matt's Experience After the Fix
 
-### Files Changed
+1. Opens the link -- sees the Daze Partner Portal login
+2. Email field shows `msutherland@vistahost.com` (locked, cannot change)
+3. Form defaults to "Create your account" (signup mode)
+4. He enters his name and password, clicks "Create Account"
+5. Gets a verification email, clicks the link
+6. Returns to the login page with a green "Email verified!" banner and email pre-filled
+7. Signs in with his password
+8. Auto-linked to Springhill Suites via the database trigger
+9. Lands directly on his onboarding portal with all 5 steps ready
 
-| File | Action |
+## Files Changed
+
+| File | Change |
 |------|--------|
-| `src/components/modals/NewClientModal.tsx` | Update -- add slug validation, uniqueness check, reserved words, better error handling |
-
-### Changes to `NewClientModal.tsx`
-
-**Add constants at the top:**
-- `RESERVED_SLUGS` array containing route-conflicting words
-- Updated slug validation regex
-
-**Add a debounced uniqueness check:**
-- New state: `slugStatus` ("idle" / "checking" / "available" / "taken")
-- `useEffect` with a 500ms debounce that queries the database when `customSlug` changes and is valid
-- Query: `supabase.from("clients").select("id").eq("client_slug", customSlug).maybeSingle()`
-
-**Update the slug input UI (Step 3):**
-- Show a spinner icon while checking availability
-- Show a green check + "Available" when confirmed unique
-- Show a red X + "Already taken" when a conflict is found
-- Show "Reserved URL" warning for blocklisted slugs
-
-**Update validation logic:**
-- `isSlugValid` now also checks: not reserved, no leading/trailing hyphens, no consecutive hyphens, max length
-- "Create Client" button disabled when slug is taken, reserved, or still checking
-
-**Improve error handling in `createClientMutation`:**
-- In `onError`, check for Postgres error code `23505` (unique violation) and display a specific toast: "This portal URL is already in use"
-- Reset `slugStatus` to "taken" so the UI reflects the conflict
+| `src/components/layout/PortalRoute.tsx` | Preserve query params + forward email in redirect |
+| `src/pages/PortalBySlug.tsx` | Preserve query params + forward email in redirect |
 
