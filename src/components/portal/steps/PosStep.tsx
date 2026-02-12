@@ -50,7 +50,7 @@ const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo: string }[
   { id: "toast", name: "Toast", logo: "/pos-logos/toast.jpg" },
   { id: "ncr_aloha", name: "NCR Aloha", logo: "/pos-logos/ncr-aloha.png" },
   { id: "par_brink", name: "PAR Brink", logo: "" },
-  { id: "dinerware", name: "Dinerware", logo: "" },
+  { id: "dinerware", name: "Dinerware", logo: "/pos-logos/dinerware.png" },
   { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/micros.png" },
   { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/micros.png" },
   { id: "positouch", name: "POSitouch", logo: "" },
