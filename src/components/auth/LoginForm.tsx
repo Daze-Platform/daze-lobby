@@ -194,8 +194,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     >
       {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
-        <div className="flex flex-col items-center justify-center mb-3 sm:mb-4">
-          <img src={dazeLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 object-contain mb-2 sm:mb-3" />
+        <div className="flex flex-row items-center justify-center gap-2 mb-3 sm:mb-4">
+          <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
           <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
         </div>
         <h1 className="font-display text-lg sm:text-xl font-semibold text-slate-900">Welcome back</h1>
