@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, Building2, Calendar } from "lucide-react";
@@ -13,7 +12,6 @@ const totalARR = mockRevenue.reduce((sum, r) => sum + r.arr, 0);
 
 export default function Revenue() {
   return (
-    <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Responsive header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -93,8 +91,7 @@ export default function Revenue() {
               ))}
             </div>
           </CardContent>
-        </Card>
+      </Card>
       </div>
-    </DashboardLayout>
   );
 }
