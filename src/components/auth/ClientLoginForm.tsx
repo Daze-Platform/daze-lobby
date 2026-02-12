@@ -12,7 +12,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
 import { validatePassword } from "@/lib/passwordValidation";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
-import dazeLogo from "@/assets/daze-logo.png";
+import dazeLogo from "@/assets/daze-cloud-logo.png";
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
