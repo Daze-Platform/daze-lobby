@@ -53,8 +53,13 @@ export default function PostAuth() {
 
   const targetPath = useMemo(() => {
     if (!isAuthenticated) return isPortalOrigin ? "/portal/login" : "/auth";
-    // Block admin users who arrived via the client portal
-    if (isPortalOrigin && hasDashboardAccess(role)) return "__portal_blocked__";
+    // Admin users who arrived via the client portal — redirect to admin portal view
+    if (isPortalOrigin && hasDashboardAccess(role)) {
+      const pathParts = returnTo?.split("/").filter(Boolean) || [];
+      const slugIdx = pathParts.indexOf("portal");
+      const slug = slugIdx !== -1 && pathParts[slugIdx + 1] ? pathParts[slugIdx + 1] : null;
+      return slug ? `/admin/portal/${slug}` : "/admin/portal";
+    }
     // If there's a valid returnTo, use it regardless of role
     if (returnTo) return returnTo;
     // Client users: resolve their slug-based portal directly
@@ -89,45 +94,10 @@ export default function PostAuth() {
       return;
     }
 
-    // Block admin users from the portal — sign them out
-    if (targetPath === "__portal_blocked__") {
-      signOut().catch(() => {});
-      return; // render the rejection card below
-    }
-
     if (targetPath) {
       navigate(targetPath, { replace: true });
     }
   }, [isAuthenticated, loading, location, navigate, targetPath]);
-
-  // Show rejection card for admin users who tried to log in via the portal
-  if (targetPath === "__portal_blocked__") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Wrong login page</CardTitle>
-            <CardDescription>
-              This portal is for hotel partners only. Please use the admin dashboard to sign in.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <Button onClick={() => navigate("/auth", { replace: true })}>
-              Go to Admin Login
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={async () => {
-                try { await signOut(); } finally { navigate("/portal/login", { replace: true }); }
-              }}
-            >
-              Sign out
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (loading || !isAuthenticated || (isAuthenticated && (targetPath !== null || !showRoleMissing))) {
     return (
