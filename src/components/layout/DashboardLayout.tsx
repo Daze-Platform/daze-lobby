@@ -10,6 +10,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   // Use Sheet for both mobile AND tablet (< 1024px)
   const useSidebarSheet = useIsMobileOrTablet();
 
@@ -25,7 +26,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SheetContent>
           </Sheet>
         ) : (
-          <DashboardSidebar />
+          <DashboardSidebar isCollapsed={isCollapsed} onToggleCollapse={() => setIsCollapsed(prev => !prev)} />
         )}
         <main className="flex-1 overflow-auto">
           {children}

@@ -33,10 +33,11 @@ interface NavGroup {
 interface DashboardSidebarProps {
   isMobile?: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function DashboardSidebar({ isMobile = false, onClose, isCollapsed = false, onToggleCollapse }: DashboardSidebarProps) {
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
 
   // Fetch clients count
@@ -140,7 +141,7 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => onToggleCollapse?.()}
           className={cn(
             "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-card shadow-soft",
             "hover:bg-muted transition-all hover:scale-110",
