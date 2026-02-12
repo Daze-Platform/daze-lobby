@@ -1,64 +1,56 @@
 
 
-# Fix: Preserve Email Parameter Through Portal Auth Redirects
+# Add "Copy Invite Link" to Client Detail Panel
 
-## What's Wrong
+## Overview
 
-When Matt Sutherland visits `/portal/springhill-suites-orange-beach?email=msutherland@vistahost.com`, the `?email=...` query parameter is silently dropped during the authentication redirect. This means:
+Add a one-click "Copy Invite Link" button in the Portal Management section of the Client Detail slide-over panel. This generates the full portal URL with the primary contact's email pre-filled, ready to send to the GM.
 
-- He sees a blank login form instead of a pre-filled signup form
-- If he types a different email address, his account won't auto-link to Springhill Suites
-- He'd land on a "No hotel assigned" error page
+## Where It Goes
 
-## What's Already Confirmed Working
+Inside `PortalManagementPanel.tsx`, above the existing Documents/Brand/Venues tabs -- a small card with:
+- The generated portal URL displayed as a preview (truncated)
+- A "Copy Invite Link" button that copies the full URL to clipboard
+- Auto-includes the primary contact's email as the `?email=` parameter
+- A fallback "Copy URL (no email)" if no primary contact exists
 
-- Client record exists: "Springhill Suites Orange Beach" with correct slug
-- Contact record exists: Matt Sutherland (`msutherland@vistahost.com`) marked as primary
-- The `handle_new_user` database trigger correctly auto-links users by email match
-- The login form already supports email pre-fill and locking when the parameter is present
-- PostAuth correctly resolves `returnTo` destinations
+## Example Output
 
-## The Fix (2 files, ~6 lines each)
-
-### 1. `src/components/layout/PortalRoute.tsx` (line 33-34)
-
-Preserve query parameters and forward the email explicitly:
-
+Clicking the button copies:
 ```
-Before: const currentPath = window.location.pathname;
-
-After:  const currentPath = window.location.pathname + window.location.search;
-        const emailParam = new URLSearchParams(window.location.search).get("email");
-        const loginUrl = `/portal/login?returnTo=${encodeURIComponent(currentPath)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ""}`;
+https://onboarding.dazeapp.com/portal/springhill-suites-orange-beach?email=msutherland@vistahost.com
 ```
 
-### 2. `src/pages/PortalBySlug.tsx` (line 77)
+## Technical Details
 
-Same pattern -- preserve the full URL in the redirect:
-
-```
-Before: encodeURIComponent(location.pathname)
-
-After:  encodeURIComponent(location.pathname + location.search)
-        + email param forwarding
-```
-
-## Matt's Experience After the Fix
-
-1. Opens the link -- sees the Daze Partner Portal login
-2. Email field shows `msutherland@vistahost.com` (locked, cannot change)
-3. Form defaults to "Create your account" (signup mode)
-4. He enters his name and password, clicks "Create Account"
-5. Gets a verification email, clicks the link
-6. Returns to the login page with a green "Email verified!" banner and email pre-filled
-7. Signs in with his password
-8. Auto-linked to Springhill Suites via the database trigger
-9. Lands directly on his onboarding portal with all 5 steps ready
-
-## Files Changed
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/layout/PortalRoute.tsx` | Preserve query params + forward email in redirect |
-| `src/pages/PortalBySlug.tsx` | Preserve query params + forward email in redirect |
+| `src/components/dashboard/portal-management/PortalManagementPanel.tsx` | Add invite link section with copy button |
+
+### Implementation
+
+1. **Fetch client slug and primary contact email** -- Add a query for the client's `client_slug` and primary contact email (or accept them as props from the parent `ClientDetailPanel` which already fetches contacts).
+
+2. **Add an "Invite Link" card** above the tabs section:
+   - Display the slug-based URL in a monospace preview
+   - Show the primary contact name/email if available
+   - "Copy Invite Link" button using `navigator.clipboard.writeText()`
+   - Toast confirmation: "Invite link copied to clipboard"
+
+3. **Props approach**: Pass `clientSlug` from `ClientDetailPanel` (which has access to `hotel.client_slug`) and `primaryContactEmail` (from the already-fetched contacts list) into `PortalManagementPanel`.
+
+### UI Layout
+
+```text
++------------------------------------------+
+| Portal Invite Link                       |
+| portal/springhill-suites-orange-beach     |
+| For: Matt Sutherland (msutherland@...)   |
+|                          [Copy Link]     |
++------------------------------------------+
+| [Documents] [Brand/POS] [Venues]         |
+| ...                                      |
+```
 
