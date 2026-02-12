@@ -24,7 +24,7 @@ const POS_PROVIDERS = [
   { id: "dinerware", name: "Dinerware", logo: "/pos-logos/dinerware.png" },
   { id: "micros_simphony", name: "Micros Simphony", logo: "/pos-logos/micros.png" },
   { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/micros.png" },
-  { id: "positouch", name: "POSitouch", logo: "" },
+  { id: "positouch", name: "POSitouch", logo: "/pos-logos/positouch.png" },
   { id: "squirrel_systems", name: "Squirrel Systems", logo: "" },
   { id: "xpient", name: "XPIENT", logo: "" },
   { id: "maitred", name: "Maitre'D", logo: "" },
