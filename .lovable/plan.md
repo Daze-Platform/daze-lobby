@@ -1,56 +1,64 @@
 
 
-## Fix: Admin Users Can Seamlessly View Client Portal URLs
+## Finalize Auth Segregation Between `/admin/portal` and `/portal`
 
-### The Core Problem
+### Current State (What Already Works)
 
-Brian wants to be logged into `brian@dazeapp.com` (admin) in one tab and `brian.92rod@hotmail.com` (client) in another tab, both on `onboarding.dazeapp.com`. **This is technically impossible** — browsers share cookies and storage per domain, so only one authentication session can exist at a time. Signing into one account immediately replaces the other.
+The route-wrapper layer is correctly segregated:
 
-### The Right Solution
+- `PortalRoute` redirects admin users from `/portal/:slug` to `/admin/portal/:slug`
+- `RoleBasedRoute` blocks client users from `/dashboard` and admin routes with a "Wrong account" card
+- `AuthRedirect` redirects admin users from `/portal/login` to `/admin/portal`
+- `AuthRedirect` shows a "Wrong account" card for client users on `/auth`
+- `LoginForm` blocks non-`@dazeapp.com` emails after form submission
+- `ClientLoginForm` blocks admin-role users after form submission
 
-Brian doesn't actually need two accounts running simultaneously. The platform already has `/admin/portal/:slug` routes that render the **exact same Portal UI** using the admin session. The fix is simple:
+### Issues Found
 
-**When an admin visits `/portal/daze-downtown-hotel`, automatically redirect them to `/admin/portal/daze-downtown-hotel`.**
+**1. Google OAuth on Portal Login sends clients to the wrong place**
 
-This means:
-- Brian stays logged in as `brian@dazeapp.com` (admin) everywhere
-- Tab 1: `/dashboard` works normally
-- Tab 2: `/portal/daze-downtown-hotel` silently becomes `/admin/portal/daze-downtown-hotel` — same portal view, no session conflict
-- No "Wrong account" card, no sign-out, no friction
+`ClientLoginForm` sets `redirect_uri: window.location.origin` (the site root `/`). After Google OAuth, a client user lands on `/` which is a dashboard route. `RoleBasedRoute` catches them and shows a "Wrong account" card, forcing them to manually click through to their portal.
 
-### Changes
+**Fix:** Change `redirect_uri` to `${window.location.origin}/post-auth?origin=portal` so PostAuth resolves them to their assigned portal automatically.
 
-**1. `src/components/layout/PortalRoute.tsx` — Redirect admins to `/admin/portal/:slug`**
+**2. Google OAuth on Admin Login bypasses the `@dazeapp.com` domain check**
 
-Replace the "Wrong account" card for admin users with a `Navigate` redirect. Extract the slug from the current URL path and send them to `/admin/portal/:slug`.
+`LoginForm` also sets `redirect_uri: window.location.origin`. After Google OAuth, the user lands on `/` directly, bypassing the `@dazeapp.com` email domain check that exists in the form's `handleSubmit`. A user with a personal Gmail could sign in via Google and briefly reach the dashboard before `RoleBasedRoute` catches their `client` role.
 
-- Remove the card UI, `switchingAccount` state, `Button`/`Card`/`AlertTriangle` imports
-- Add: parse the slug from `window.location.pathname` and render `<Navigate to="/admin/portal/${slug}" replace />`
-- If no slug (bare `/portal`), redirect to `/admin/portal`
+**Fix:** Change `redirect_uri` to `${window.location.origin}/post-auth` so PostAuth becomes the single routing resolver for all auth flows.
 
-**2. `src/components/layout/AuthRedirect.tsx` — Redirect admins on `/portal/login` to `/admin/portal`**
+**3. PostAuth destroys admin sessions when `origin=portal`**
 
-Replace the `forceCleanSession()` auto-clean for admin users visiting `/portal/login` with a redirect to `/admin/portal` (the admin client picker). This prevents their admin session from being destroyed.
+When an admin arrives at PostAuth with `origin=portal` (e.g., they clicked a portal link that went through the auth flow), PostAuth calls `signOut()` and shows a rejection card. This is inconsistent with the new redirect-based approach — `PortalRoute` and `AuthRedirect` now silently redirect admins to `/admin/portal` without destroying their session.
 
-- Remove `forceCleanSession` import and the `useEffect` that calls it
-- Remove `cleaningSession`, `sessionCleaned` state
-- For admin users on portal login, render `<Navigate to="/admin/portal" replace />`
+**Fix:** Instead of signing out and showing the rejection card, redirect to `/admin/portal`. If a `returnTo` parameter contains a slug (e.g., `/portal/daze-downtown-hotel`), extract the slug and redirect to `/admin/portal/daze-downtown-hotel`.
 
-**3. `src/pages/PortalBySlug.tsx` — Remove the admin hard-block**
+### Technical Details
 
-Remove the `hasDashboardAccess(role)` check (lines 85-87) that returns `null` for admins. This is now unnecessary since `PortalRoute` redirects admins before this component renders.
+**File: `src/components/auth/ClientLoginForm.tsx`**
+- Line 154: Change `redirect_uri` from `window.location.origin` to `${window.location.origin}/post-auth?origin=portal`
+- If `returnTo` is available, append it: `${window.location.origin}/post-auth?origin=portal&returnTo=${encodeURIComponent(returnTo)}`
 
-- Remove `hasDashboardAccess` import
+**File: `src/components/auth/LoginForm.tsx`**
+- Line 163: Change `redirect_uri` from `window.location.origin` to `${window.location.origin}/post-auth`
 
-### What This Achieves
+**File: `src/pages/PostAuth.tsx`**
+- Lines 57, 93-96, 104-130: Replace the `__portal_blocked__` sign-out flow with a redirect
+- When `isPortalOrigin && hasDashboardAccess(role)`:
+  - If `returnTo` contains a slug (e.g., `/portal/daze-downtown-hotel`), extract `daze-downtown-hotel` and redirect to `/admin/portal/daze-downtown-hotel`
+  - Otherwise, redirect to `/admin/portal`
+- Remove the rejection card UI entirely
 
-- Brian signs in once as admin and can access both `/dashboard` and any `/portal/:slug` URL
-- Portal links can be freely shared — admins get redirected to the admin view, clients see the client view
-- No session conflicts, no "wrong account" cards on portal routes, no accidental sign-outs
-- The "Wrong account" card on admin routes (`RoleBasedRoute`) stays — if a client-role user visits `/dashboard`, they still see the informational card with options
+### What This Does NOT Change
+
+- `PortalRoute.tsx` — already correctly redirects admins to `/admin/portal/:slug`
+- `AuthRedirect.tsx` — already correctly handles role conflicts at the route-wrapper level
+- `RoleBasedRoute.tsx` — already correctly blocks client users from admin routes
+- The `@dazeapp.com` domain restriction on admin form login (form submit guard stays)
+- The admin-role block on portal form login (form submit guard stays)
+- Database triggers for auto-role assignment
 
 ### Files Changed
-- `src/components/layout/PortalRoute.tsx`
-- `src/components/layout/AuthRedirect.tsx`
-- `src/pages/PortalBySlug.tsx`
-
+- `src/components/auth/ClientLoginForm.tsx`
+- `src/components/auth/LoginForm.tsx`
+- `src/pages/PostAuth.tsx`
