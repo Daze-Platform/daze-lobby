@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +32,9 @@ import {
   ChevronLeft,
   Loader2,
   Check,
-  Store
+  Store,
+  Link,
+  Copy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -73,7 +75,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [propertyName, setPropertyName] = useState("");
   const [posProvider, setPosProvider] = useState("");
 
@@ -83,13 +85,28 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-");
+
+  const [customSlug, setCustomSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+
+  // Auto-sync slug from property name until manually edited
+  useEffect(() => {
+    if (!slugTouched) {
+      setCustomSlug(generatedSlug);
+    }
+  }, [generatedSlug, slugTouched]);
+
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [customRoleInput, setCustomRoleInput] = useState("");
+
+  const isSlugValid = customSlug.length >= 3 && /^[a-z0-9-]+$/.test(customSlug);
 
   const resetForm = () => {
     setStep(1);
     setPropertyName("");
     setPosProvider("");
+    setCustomSlug("");
+    setSlugTouched(false);
     setContacts([]);
     setCustomRoleInput("");
   };
@@ -99,22 +116,28 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     setTimeout(resetForm, 300);
   };
 
+  const portalBaseUrl = `${window.location.origin}/portal/`;
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(`${portalBaseUrl}${customSlug}`);
+    toast.success("Portal URL copied to clipboard");
+  };
+
   const createClientMutation = useMutation({
     mutationFn: async () => {
-      // 1. Create the client
       const { data: client, error: clientError } = await supabase
         .from("clients")
         .insert({
           name: propertyName.trim(),
           phase: "onboarding",
           notes: posProvider ? `POS Provider: ${posProvider}` : null,
+          client_slug: customSlug,
         })
         .select("id")
         .single();
 
       if (clientError) throw clientError;
 
-      // 2. Create onboarding tasks for the new client
       const taskKeys = [
         { key: "legal", name: "Legal Agreement" },
         { key: "brand", name: "Brand Identity" },
@@ -137,7 +160,6 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
 
       if (tasksError) throw tasksError;
 
-      // 3. Insert contacts if any
       const validContacts = contacts.filter((c) => c.firstName.trim() || c.lastName.trim() || c.email.trim() || c.phone.trim());
       
       if (validContacts.length > 0) {
@@ -162,7 +184,6 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     onSuccess: async (clientId) => {
       queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
       queryClient.invalidateQueries({ queryKey: ["all-clients-admin"] });
-      // Log new client creation
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("activity_logs").insert([{
@@ -221,6 +242,24 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const usedRoles = contacts.map((c) => c.role);
   const availableRoles = SUGGESTED_ROLES.filter((r) => !usedRoles.includes(r));
 
+  const stepIcons = {
+    1: <Building2 className="w-5 h-5 text-primary" />,
+    2: <Users className="w-5 h-5 text-primary" />,
+    3: <Link className="w-5 h-5 text-primary" />,
+  };
+
+  const stepTitles = {
+    1: "Property Identity",
+    2: "Team Contacts",
+    3: "Portal Access",
+  };
+
+  const stepDescriptions = {
+    1: "Enter the property name and POS system",
+    2: "Add contacts for this property (optional)",
+    3: "Customize the portal URL for your client",
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden bg-card/95 backdrop-blur-xl border-border/50">
@@ -228,25 +267,19 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
         <DialogHeader className="p-6 pb-4 border-b border-border/40">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
-              {step === 1 ? (
-                <Building2 className="w-5 h-5 text-primary" />
-              ) : (
-                <Users className="w-5 h-5 text-primary" />
-              )}
+              {stepIcons[step]}
             </div>
             <div>
               <DialogTitle className="text-lg font-semibold">
-                {step === 1 ? "Property Identity" : "Team Contacts"}
+                {stepTitles[step]}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                {step === 1
-                  ? "Enter the property name and POS system"
-                  : "Add contacts for this property (optional)"}
+                {stepDescriptions[step]}
               </DialogDescription>
             </div>
           </div>
           
-          {/* Step Indicator */}
+          {/* Step Indicator - 3 steps */}
           <div className="flex items-center gap-2 mt-4">
             <div className={cn(
               "flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-colors",
@@ -262,7 +295,17 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
               "flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-colors",
               step >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}>
-              2
+              {step > 2 ? <Check className="w-4 h-4" /> : "2"}
+            </div>
+            <div className={cn(
+              "flex-1 h-1 rounded-full transition-colors",
+              step >= 3 ? "bg-primary" : "bg-muted"
+            )} />
+            <div className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-colors",
+              step >= 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              3
             </div>
           </div>
         </DialogHeader>
@@ -270,7 +313,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
         {/* Content */}
         <div className="p-6 min-h-[320px]">
           <AnimatePresence mode="wait">
-            {step === 1 ? (
+            {step === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: -20 }}
@@ -341,7 +384,9 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                   </p>
                 </div>
               </motion.div>
-            ) : (
+            )}
+
+            {step === 2 && (
               <motion.div
                 key="step2"
                 initial={{ opacity: 0, x: 20 }}
@@ -460,12 +505,95 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                 </div>
               </motion.div>
             )}
+
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    Customize the portal URL that will be shared with your client for platform access.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="portalSlug" className="text-sm font-medium">
+                    Portal URL Slug <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="flex items-center gap-0">
+                    <div className="flex items-center h-11 px-3 rounded-l-lg border border-r-0 border-border/50 bg-muted/70 text-sm text-muted-foreground font-mono whitespace-nowrap">
+                      /portal/
+                    </div>
+                    <Input
+                      id="portalSlug"
+                      value={customSlug}
+                      onChange={(e) => {
+                        const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                        setCustomSlug(val);
+                        setSlugTouched(true);
+                      }}
+                      className="h-11 rounded-l-none font-mono"
+                      placeholder="my-property"
+                    />
+                  </div>
+                  {customSlug && !isSlugValid && (
+                    <p className="text-xs text-destructive">
+                      Slug must be at least 3 characters (lowercase letters, numbers, hyphens only)
+                    </p>
+                  )}
+                </div>
+
+                {/* Full URL preview */}
+                {customSlug && isSlugValid && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Full Portal URL
+                    </Label>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/40">
+                      <p className="text-sm font-mono text-foreground truncate flex-1">
+                        {portalBaseUrl}{customSlug}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyUrl}
+                        className="h-8 px-2 shrink-0"
+                      >
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {slugTouched && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="px-0 text-xs text-muted-foreground"
+                    onClick={() => {
+                      setSlugTouched(false);
+                      setCustomSlug(generatedSlug);
+                    }}
+                  >
+                    Reset to auto-generated slug
+                  </Button>
+                )}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
         {/* Footer */}
         <div className="p-6 pt-4 border-t border-border/40 flex items-center justify-between">
-          {step === 1 ? (
+          {step === 1 && (
             <>
               <Button variant="ghost" onClick={handleClose}>
                 Cancel
@@ -479,15 +607,31 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </>
-          ) : (
+          )}
+          {step === 2 && (
             <>
               <Button variant="ghost" onClick={() => setStep(1)} className="gap-2">
                 <ChevronLeft className="w-4 h-4" />
                 Back
               </Button>
               <Button
+                onClick={() => setStep(3)}
+                className="gap-2"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <Button variant="ghost" onClick={() => setStep(2)} className="gap-2">
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </Button>
+              <Button
                 onClick={() => createClientMutation.mutate()}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isSlugValid}
                 className="gap-2 min-w-[140px]"
               >
                 {isSubmitting ? (
