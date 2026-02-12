@@ -34,6 +34,7 @@ import { PortalManagementPanel } from "./portal-management";
 import { NewDeviceModal } from "@/components/modals/NewDeviceModal";
 import { useActivityLogs, type ActivityLog } from "@/hooks/useActivityLogs";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 import type { Client } from "@/hooks/useClients";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -238,6 +239,10 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients-with-details"] });
+      toast({ title: "Logo updated", description: "The client logo has been saved." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to upload logo", description: error.message, variant: "destructive" });
     },
   });
 
