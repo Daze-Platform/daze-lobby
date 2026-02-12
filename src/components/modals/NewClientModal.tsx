@@ -668,20 +668,30 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                     <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Full Portal URL
                     </Label>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/40">
-                      <p className="text-sm font-mono text-foreground truncate flex-1">
-                        {portalBaseUrl}{customSlug}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopyUrl}
-                        className="h-8 px-2 shrink-0"
-                      >
-                        <Copy className="w-4 h-4 mr-1" />
-                        Copy
-                      </Button>
+                    <div className="p-3 rounded-lg bg-muted/50 border border-border/40 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-mono text-foreground truncate flex-1">
+                          {portalBaseUrl}{customSlug}
+                          {contacts[0]?.email?.trim() && (
+                            <span className="text-muted-foreground">?email={contacts[0].email.trim()}</span>
+                          )}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCopyUrl}
+                          className="h-8 px-2 shrink-0"
+                        >
+                          <Copy className="w-4 h-4 mr-1" />
+                          {contacts[0]?.email?.trim() ? "Copy Invite Link" : "Copy"}
+                        </Button>
+                      </div>
+                      {contacts[0]?.email?.trim() && (
+                        <p className="text-xs text-muted-foreground">
+                          For: {contacts[0]?.firstName} {contacts[0]?.lastName} ({contacts[0]?.email})
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
