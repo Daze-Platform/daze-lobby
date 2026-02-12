@@ -1,36 +1,44 @@
 
 
-# Fix: Tab Trigger Alignment in Portal Management Grid
+# Fix: Portal Access Step Padding and Spacing
 
 ## Problem
 
-The active tab trigger inside the Portal Management `TabsList` does not sit centered within its grid cell. The "Documents" active state appears to have uneven padding -- more on some sides than others. This is caused by conflicting sizing: the `TabsList` is `h-9` with `p-1` internal padding, but the `TabsTrigger` uses fixed `py-1.5` and `px-3` instead of stretching to fill the available cell height.
-
-## Root Cause
-
-The `TabsTrigger` in `tabs.tsx` uses `inline-flex` with fixed padding. When placed inside a CSS grid (`grid-cols-3`), the trigger does not stretch vertically to fill the cell. The result is the active background highlight floats inside the cell rather than filling it edge-to-edge (minus the list's `p-1` padding).
+The "Portal Access" step (step 3) of the New Client Modal has unbalanced internal spacing:
+- The description text sits in an unnecessary `space-y-1` wrapper div that adds no value
+- The outer container uses `space-y-6` which creates large gaps between few elements
+- Combined with the `min-h-[320px]` content area, the content clusters toward the top leaving excess whitespace at the bottom
+- The result is an unpolished, unbalanced layout compared to steps 1 and 2
 
 ## Solution
 
-Update the `TabsTrigger` base styles in `src/components/ui/tabs.tsx` to use `h-full` so triggers always stretch to fill the parent grid/flex cell height. This is a one-line change in the shared component that fixes it everywhere.
+Refine step 3's internal spacing to create a more balanced, professional layout:
 
-## Technical Details
+### File: `src/components/modals/NewClientModal.tsx`
 
-### File: `src/components/ui/tabs.tsx` (line 30)
+1. **Remove the unnecessary wrapper div** around the description paragraph (lines 518-522). The `<p>` tag can sit directly in the `space-y` flow without a redundant container.
 
-Add `h-full` to the `TabsTrigger` default className so it stretches vertically within any grid or flex parent.
+2. **Adjust spacing** from `space-y-6` to `space-y-5` on the step 3 motion div (line 516) to match step 1's spacing pattern, creating tighter, more balanced gaps between the description, slug input, and URL preview sections.
 
-**Before:**
+**Before (step 3 content):**
 ```
-"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ..."
+<motion.div className="space-y-6">
+  <div className="space-y-1">
+    <p className="text-sm text-muted-foreground">
+      Customize the portal URL...
+    </p>
+  </div>
+  ...
 ```
 
 **After:**
 ```
-"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium h-full ..."
+<motion.div className="space-y-5">
+  <p className="text-sm text-muted-foreground">
+    Customize the portal URL...
+  </p>
+  ...
 ```
 
-This single addition ensures the trigger fills the grid cell height, and the `p-1` on `TabsList` provides equal padding on all four sides around the active highlight.
-
-No changes needed in `PortalManagementPanel.tsx` -- the fix is at the component library level.
+This aligns step 3 with step 1's `space-y-5` pattern and removes the extra wrapper, resulting in consistent padding and a cleaner vertical rhythm.
 
