@@ -580,6 +580,17 @@ export function ReviewSignModal({
     ? format(new Date(signedAt), "MMMM d, yyyy 'at' h:mm a")
     : null;
 
+  // Shared agreement content renderer
+  const agreementContent = (
+    <div className="p-3 sm:p-4 bg-white dark:bg-background border rounded-lg text-xs sm:text-sm leading-relaxed">
+      {agreementText.split('\n\n').map((paragraph, index) => (
+        <p key={index} className="whitespace-pre-wrap mb-2 sm:mb-3 last:mb-0">
+          <HighlightedText text={paragraph} entity={deferredEntity} />
+        </p>
+      ))}
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen && !isSigned && onDraftSave) {
@@ -608,12 +619,11 @@ export function ReviewSignModal({
         </DialogHeader>
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden min-h-0">
-          {/* Left Panel: Form + Agreement Text */}
+          {/* Left Panel: Form inputs only */}
           <div className="border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 overflow-hidden">
             <ScrollArea className="flex-1">
               <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
-                {/* Entity Information Form */}
-                {!isSigned && (
+                {!isSigned ? (
                   <div className="space-y-2.5 sm:space-y-3">
                     {/* Section A: Client Identity (always open) */}
                     <FormSection title="A — Client Identity" icon={Building2} defaultOpen>
@@ -767,10 +777,24 @@ export function ReviewSignModal({
                       </div>
                     </FormSection>
                   </div>
+                ) : (
+                  /* Signed state: show entity summary in left panel */
+                  <div className="space-y-4">
+                    {initialLegalEntity && (
+                      <div className="p-4 bg-muted/30 rounded-lg space-y-2 text-sm">
+                        {initialLegalEntity.property_name && (
+                          <p><span className="text-muted-foreground">Property:</span> <span className="font-medium">{initialLegalEntity.property_name}</span></p>
+                        )}
+                        <p><span className="text-muted-foreground">Entity:</span> <span className="font-medium">{initialLegalEntity.legal_entity_name}</span></p>
+                        <p><span className="text-muted-foreground">Address:</span> <span className="font-medium">{initialLegalEntity.billing_address}</span></p>
+                        <p><span className="text-muted-foreground">Signed by:</span> <span className="font-medium">{initialLegalEntity.authorized_signer_name}, {initialLegalEntity.authorized_signer_title}</span></p>
+                      </div>
+                    )}
+                  </div>
                 )}
 
-                {/* Agreement Document */}
-                <div>
+                {/* Agreement Document — mobile only (stacked below form) */}
+                <div className="lg:hidden">
                   <div className="flex items-center justify-between mb-2 sm:mb-3">
                     <p className="text-xs sm:text-sm font-medium text-muted-foreground">Agreement</p>
                     <Button
@@ -784,7 +808,7 @@ export function ReviewSignModal({
                       <span className="sm:hidden">PDF</span>
                     </Button>
                   </div>
-                  <div className="p-3 sm:p-4 bg-white dark:bg-background border rounded-lg text-xs sm:text-sm leading-relaxed max-h-[200px] sm:max-h-none overflow-y-auto">
+                  <div className="p-3 sm:p-4 bg-white dark:bg-background border rounded-lg text-xs sm:text-sm leading-relaxed max-h-[200px] overflow-y-auto">
                     {agreementText.split('\n\n').map((paragraph, index) => (
                       <p key={index} className="whitespace-pre-wrap mb-2 sm:mb-3 last:mb-0">
                         <HighlightedText text={paragraph} entity={deferredEntity} />
@@ -796,73 +820,81 @@ export function ReviewSignModal({
             </ScrollArea>
           </div>
 
-          {/* Right Panel: Signature */}
+          {/* Right Panel: Agreement Document + Signature */}
           <div className="flex flex-col min-h-0 overflow-hidden">
-            <div className="px-3 sm:px-4 py-2 bg-muted/50 border-b shrink-0">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                {isSigned ? "Digital Signature" : "Your Signature"}
-              </p>
-            </div>
-            <div className="flex-1 p-3 sm:p-6 flex flex-col min-h-0 overflow-auto">
-              {isSigned ? (
-                <div className="space-y-6">
-                  <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/10 text-success mb-2">
-                      <Check className="w-6 h-6" strokeWidth={1.5} />
-                    </div>
-                    <h3 className="font-semibold text-foreground">Agreement Signed</h3>
-                    <p className="text-sm text-muted-foreground">
-                      This document has been digitally signed and is legally binding.
-                    </p>
-                  </div>
-
-                  {initialLegalEntity && (
-                    <div className="p-4 bg-muted/30 rounded-lg space-y-2 text-sm">
-                      {initialLegalEntity.property_name && (
-                        <p><span className="text-muted-foreground">Property:</span> <span className="font-medium">{initialLegalEntity.property_name}</span></p>
-                      )}
-                      <p><span className="text-muted-foreground">Entity:</span> <span className="font-medium">{initialLegalEntity.legal_entity_name}</span></p>
-                      <p><span className="text-muted-foreground">Address:</span> <span className="font-medium">{initialLegalEntity.billing_address}</span></p>
-                      <p><span className="text-muted-foreground">Signed by:</span> <span className="font-medium">{initialLegalEntity.authorized_signer_name}, {initialLegalEntity.authorized_signer_title}</span></p>
-                    </div>
-                  )}
-
-                  <div className="border rounded-lg p-4 bg-white dark:bg-background">
-                    <p className="text-xs text-muted-foreground mb-2">Signature:</p>
-                    <div className="border-b-2 border-muted pb-2">
-                      <img
-                        src={existingSignatureUrl}
-                        alt="Digital Signature"
-                        className="h-[100px] w-auto mx-auto object-contain"
-                      />
-                    </div>
-                    {formattedSignedDate && (
-                      <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-muted-foreground">
-                        <CalendarIcon className="w-3 h-3" strokeWidth={1.5} />
-                        <span>Digitally Signed on {formattedSignedDate}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-muted/50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-muted-foreground">
-                      This signature is securely stored and timestamped.
-                      The document cannot be modified after signing.
-                    </p>
-                  </div>
+            {/* Agreement Document — desktop only (hidden on mobile since it's in left panel) */}
+            <div className="hidden lg:flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex items-center justify-between px-3 sm:px-5 py-2 bg-muted/50 border-b shrink-0">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Agreement</p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleDownload}
+                  className="h-6 sm:h-7 gap-1 sm:gap-1.5 text-[10px] sm:text-xs bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium px-2 sm:px-3"
+                >
+                  <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" strokeWidth={1.5} />
+                  Download
+                </Button>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-3 sm:p-5">
+                  {agreementContent}
                 </div>
-              ) : (
-                <>
-                  <div className="flex-1 flex flex-col min-h-0">
+              </ScrollArea>
+            </div>
+
+            {/* Signature section — pinned at bottom on desktop */}
+            <div className="shrink-0 border-t flex flex-col">
+              <div className="px-3 sm:px-4 py-2 bg-muted/50 border-b shrink-0 lg:border-b-0">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  {isSigned ? "Digital Signature" : "Your Signature"}
+                </p>
+              </div>
+              <div className="p-3 sm:p-4 flex flex-col min-h-0">
+                {isSigned ? (
+                  <div className="space-y-4">
+                    <div className="text-center space-y-2">
+                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-success/10 text-success mb-1">
+                        <Check className="w-5 h-5" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="font-semibold text-sm text-foreground">Agreement Signed</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Digitally signed and legally binding.
+                      </p>
+                    </div>
+
+                    <div className="border rounded-lg p-3 bg-white dark:bg-background">
+                      <p className="text-[10px] text-muted-foreground mb-1.5">Signature:</p>
+                      <div className="border-b-2 border-muted pb-2">
+                        <img
+                          src={existingSignatureUrl}
+                          alt="Digital Signature"
+                          className="h-[80px] w-auto mx-auto object-contain"
+                        />
+                      </div>
+                      {formattedSignedDate && (
+                        <div className="flex items-center justify-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
+                          <CalendarIcon className="w-3 h-3" strokeWidth={1.5} />
+                          <span>Signed on {formattedSignedDate}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-[10px] text-center text-muted-foreground">
+                      Securely stored and timestamped. Cannot be modified after signing.
+                    </p>
+                  </div>
+                ) : (
+                  <>
                     {!isFormValid && (
-                      <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
-                        <p className="text-xs text-warning font-medium">
-                          Complete all required fields in Section A to enable signing.
+                      <div className="mb-3 p-2.5 bg-warning/10 border border-warning/30 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-warning font-medium">
+                          Complete all required fields to enable signing.
                         </p>
                       </div>
                     )}
-                    <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
-                      By signing, you agree to the terms on behalf of <span className="font-semibold text-foreground">{legalEntityName || "[Your Entity]"}</span>.
+                    <p className="text-xs text-muted-foreground mb-2">
+                      By signing, you agree on behalf of <span className="font-semibold text-foreground">{legalEntityName || "[Your Entity]"}</span>.
                     </p>
                     <div className={cn(
                       "transition-opacity",
@@ -873,43 +905,43 @@ export function ReviewSignModal({
                         onSignatureChange={handleSignatureChange}
                       />
                     </div>
-                  </div>
 
-                  <div className="mt-auto pt-3 sm:pt-4 space-y-2 sm:space-y-3 border-t shrink-0">
-                    <div className="flex gap-2 sm:gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleClear}
-                        disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="flex-1 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm"
-                      >
-                        Clear
-                      </Button>
-                      <Button
-                        onClick={handleConfirmSign}
-                        disabled={!hasSignature || isSubmitting || !isFormValid}
-                        className="flex-[2] gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                            Signing...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            Sign
-                          </>
-                        )}
-                      </Button>
+                    <div className="pt-3 space-y-2 border-t mt-3 shrink-0">
+                      <div className="flex gap-2 sm:gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleClear}
+                          disabled={!hasSignature || isSubmitting || !isFormValid}
+                          className="flex-1 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm"
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          onClick={handleConfirmSign}
+                          disabled={!hasSignature || isSubmitting || !isFormValid}
+                          className="flex-[2] gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                              Signing...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                              Sign
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
+                        Signature is securely stored and timestamped
+                      </p>
                     </div>
-                    <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
-                      Signature is securely stored and timestamped
-                    </p>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
