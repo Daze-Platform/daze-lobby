@@ -87,15 +87,15 @@ export function PortalManagementPanel({
 
       <Tabs defaultValue="documents" className="w-full">
         <TabsList className="w-full grid grid-cols-3 h-9">
-          <TabsTrigger value="documents" className="text-xs gap-1.5">
+          <TabsTrigger value="documents" className="text-xs gap-1.5 w-full">
             <FileText className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Documents</span>
           </TabsTrigger>
-          <TabsTrigger value="brand-pos" className="text-xs gap-1.5">
+          <TabsTrigger value="brand-pos" className="text-xs gap-1.5 w-full">
             <Palette className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Brand/POS</span>
           </TabsTrigger>
-          <TabsTrigger value="venues" className="text-xs gap-1.5">
+          <TabsTrigger value="venues" className="text-xs gap-1.5 w-full">
             <MapPin className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Venues</span>
           </TabsTrigger>
