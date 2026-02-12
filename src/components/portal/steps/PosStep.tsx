@@ -57,7 +57,7 @@ const PROVIDERS: { id: Exclude<PosProvider, null>; name: string; logo: string }[
   { id: "squirrel_systems", name: "Squirrel Systems", logo: "" },
   { id: "xpient", name: "XPIENT", logo: "" },
   { id: "maitred", name: "Maitre'D", logo: "" },
-  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "/pos-logos/ncr-aloha.png" },
+  { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "/pos-logos/ncr-cloud-connect.png" },
   { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/micros.png" },
   { id: "simphonycloud", name: "SimphonyCloud", logo: "/pos-logos/micros.png" },
   { id: "other", name: "Other", logo: "" },
