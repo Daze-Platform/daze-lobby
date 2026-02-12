@@ -1,30 +1,36 @@
 
-# Refine Auth Page: Sun Exposure, Centering, and No Scroll
 
-## Changes
+# Resize and Reposition Daze Logo on Auth Forms
 
-### 1. Regenerate auth-artwork.png with better sun exposure
-The current artwork image shows the sun barely peeking in at the bottom-right corner. The image will be regenerated using AI to reposition the sun so it's more prominently visible -- higher up and with better exposure/glow, while keeping the same blue sky, clouds, and text style.
+## What Changes
 
-### 2. Center the auth card properly
-Currently the left-side form panel uses `min-h-screen` which can push content off-center. Both `Auth.tsx` and `PortalLogin.tsx` will be updated to use `h-screen` on the root container and remove `min-h-screen` from the form panel, ensuring the card is vertically centered within the viewport.
+Make the Daze logo smaller and place it inline to the left of "Daze Lobby" text (instead of stacked above it) across all auth form headers.
 
-### 3. Disable scrolling on auth pages
-The root container on both auth pages will be set to `h-screen overflow-hidden` to lock the viewport and prevent any scrolling.
+## Current Layout
 
-## Files Modified
+```text
+    [  Logo (64px)  ]
+      Daze Lobby
+```
 
-- **`src/assets/auth-artwork.png`** -- Regenerated with the sun more prominently exposed (higher position, better glow/warmth)
-- **`src/pages/Auth.tsx`** -- Root container changed from `min-h-screen` to `h-screen overflow-hidden`; form panel changed from `min-h-screen` to `h-full` for proper centering
-- **`src/pages/PortalLogin.tsx`** -- Same layout fixes as Auth.tsx
+## New Layout
 
-## Technical Details
+```text
+  [Logo (28px)] Daze Lobby
+```
 
-### Layout changes (Auth.tsx and PortalLogin.tsx)
-- Root `div`: `min-h-screen` becomes `h-screen overflow-hidden`
-- Left form panel: remove `min-h-screen lg:min-h-0`, use `h-full` instead
-- Right art panel: remove `min-h-screen` where present, use `h-full`
-- These changes lock the page to the viewport height and prevent scrolling while keeping the form card vertically centered via the existing `flex items-center justify-center`
+## Files to Update
 
-### Image regeneration
-- The existing `auth-artwork.png` will be edited via AI image generation to move the sun higher and make it more prominent with better exposure/warmth, while preserving the clouds, sky, and text overlay
+### 1. `src/components/auth/LoginForm.tsx` (lines 197-200)
+- Change the header from `flex-col` (vertical stack) to `flex-row` (horizontal inline)
+- Reduce logo size from `h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16` to `h-7 w-7 sm:h-8 sm:w-8`
+- Remove bottom margin (`mb-2 sm:mb-3`) from the logo
+- Add a small horizontal gap (`gap-2`) between logo and text
+
+### 2. `src/components/auth/SignUpForm.tsx` (lines 110-113)
+- Same changes: horizontal layout, smaller logo (`h-8 w-8`), remove vertical margin
+
+### 3. `src/components/auth/ForgotPasswordForm.tsx` (lines 48-50)
+- Same changes: horizontal layout, smaller logo, remove vertical margin
+
+All three forms will use the same consistent inline logo + text pattern, matching the style already used in the DashboardHeader.
