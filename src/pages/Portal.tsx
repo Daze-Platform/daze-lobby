@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -273,13 +274,74 @@ export default function Portal() {
                   </div>
                   <StatusBadge status={status} />
                   <div className="w-full border-t border-border/50" />
-                  <div className="w-full text-center">
-                    <p className="text-sm text-muted-foreground">
-                      {formattedTasks.every(t => t.isCompleted)
-                        ? "All tasks complete — awaiting review"
-                        : `Next up: ${formattedTasks.find(t => !t.isCompleted)?.name ?? "—"}`}
-                    </p>
-                  </div>
+                   {/* Onboarding Timeline */}
+                   <div className="w-full space-y-0">
+                     {(() => {
+                       const allComplete = formattedTasks.every(t => t.isCompleted);
+                       const phase = client?.phase ?? "onboarding";
+                       const startedDate = client?.created_at
+                         ? format(new Date(client.created_at), "MMM d, yyyy")
+                         : "In progress";
+                       const milestoneLabel = client?.next_milestone ?? "Not set yet";
+                       const milestoneDate = client?.next_milestone_date
+                         ? format(new Date(client.next_milestone_date), "MMM d")
+                         : null;
+                       const launchLabel = allComplete
+                         ? "Submitted for review"
+                         : phase === "reviewing"
+                           ? "In Review"
+                           : phase === "pilot_live" || phase === "contracted"
+                             ? "Live!"
+                             : "TBD";
+
+                       const nodes = [
+                         { label: "Started", detail: startedDate, done: true },
+                         {
+                           label: "Next Milestone",
+                           detail: milestoneDate ? `${milestoneLabel} — ${milestoneDate}` : milestoneLabel,
+                           done: allComplete,
+                           active: !allComplete,
+                         },
+                         { label: "Target Launch", detail: launchLabel, done: phase === "pilot_live" || phase === "contracted" },
+                       ];
+
+                       return nodes.map((node, i) => (
+                         <div key={node.label} className="flex items-start gap-3">
+                           {/* Dot + line connector */}
+                           <div className="flex flex-col items-center">
+                             <div
+                               className={cn(
+                                 "w-2.5 h-2.5 rounded-full mt-1 shrink-0",
+                                 node.done
+                                   ? "bg-success"
+                                   : node.active
+                                     ? "bg-primary"
+                                     : "bg-muted-foreground/30"
+                               )}
+                             />
+                             {i < nodes.length - 1 && (
+                               <div className="w-px h-6 bg-border/60" />
+                             )}
+                           </div>
+                           {/* Label + date */}
+                           <div className="pb-1">
+                             <p className={cn(
+                               "text-xs font-medium leading-tight",
+                               node.done ? "text-muted-foreground" : node.active ? "text-foreground" : "text-muted-foreground/60"
+                             )}>
+                               {node.label}
+                             </p>
+                             <p className={cn(
+                               "text-[11px] leading-tight",
+                               node.done ? "text-muted-foreground/70" : node.active ? "text-primary" : "text-muted-foreground/40"
+                             )}>
+                               {node.detail}
+                             </p>
+                           </div>
+                         </div>
+                       ));
+                     })()}
+                   </div>
                   <ConfettiCelebration trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
                 </CardContent>
               </Card>
