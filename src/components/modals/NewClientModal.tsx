@@ -513,13 +513,11 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-6"
+                className="space-y-5"
               >
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
-                    Customize the portal URL that will be shared with your client for platform access.
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Customize the portal URL that will be shared with your client for platform access.
+                </p>
 
                 <div className="space-y-2">
                   <Label htmlFor="portalSlug" className="text-sm font-medium">
