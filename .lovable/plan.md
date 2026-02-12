@@ -1,37 +1,36 @@
 
 
-# Fix: Remove "(Not available for Pilot)" from Section 5.1
+# Fix: Tab Trigger Alignment in Portal Management Grid
 
-## Summary
+## Problem
 
-After a complete line-by-line comparison of the uploaded official Pilot Agreement PDF against the code, the agreement is nearly a perfect match. Only one text discrepancy was found.
+The active tab trigger inside the Portal Management `TabsList` does not sit centered within its grid cell. The "Documents" active state appears to have uneven padding -- more on some sides than others. This is caused by conflicting sizing: the `TabsList` is `h-9` with `p-1` internal padding, but the `TabsTrigger` uses fixed `py-1.5` and `px-3` instead of stretching to fill the available cell height.
 
-## Discrepancy Found
+## Root Cause
 
-**Section 5.1 No Fees** contains extra text not present in the official PDF:
+The `TabsTrigger` in `tabs.tsx` uses `inline-flex` with fixed padding. When placed inside a CSS grid (`grid-cols-3`), the trigger does not stretch vertically to fill the cell. The result is the active background highlight floats inside the cell rather than filling it edge-to-edge (minus the list's `p-1` padding).
 
-- Official PDF: "No fees apply during the Pilot Term."
-- Code: "No fees apply during the Pilot Term. **(Not available for Pilot)**"
+## Solution
 
-The parenthetical "(Not available for Pilot)" does not appear in the official document and must be removed from both locations.
+Update the `TabsTrigger` base styles in `src/components/ui/tabs.tsx` to use `h-full` so triggers always stretch to fill the parent grid/flex cell height. This is a one-line change in the shared component that fixes it everywhere.
 
-## Changes
+## Technical Details
 
-### 1. `src/components/portal/ReviewSignModal.tsx` (line ~219)
+### File: `src/components/ui/tabs.tsx` (line 30)
 
-Remove "(Not available for Pilot)" from the Section 5.1 No Fees line in the `createAgreementText` function.
+Add `h-full` to the `TabsTrigger` default className so it stretches vertically within any grid or flex parent.
 
-**Before:** `[ ] 5.1 No Fees — No fees apply during the Pilot Term. (Not available for Pilot)`
-**After:** `[ ] 5.1 No Fees — No fees apply during the Pilot Term.`
+**Before:**
+```
+"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ..."
+```
 
-### 2. `src/lib/pdf/sections.ts` (line 229)
+**After:**
+```
+"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium h-full ..."
+```
 
-Remove "(Not available for Pilot)" from the checkbox text for Section 5.1 in the generated PDF.
+This single addition ensures the trigger fills the grid cell height, and the `p-1` on `TabsList` provides equal padding on all four sides around the active highlight.
 
-**Before:** `{ type: "checkbox", checked: false, text: "No fees apply during the Pilot Term. (Not available for Pilot)" }`
-**After:** `{ type: "checkbox", checked: false, text: "No fees apply during the Pilot Term." }`
-
-## Verification
-
-All other sections (1-13), including all bullet points, label-value fields, legal clauses, and the signature block, are identical to the official PDF. No other changes are needed.
+No changes needed in `PortalManagementPanel.tsx` -- the fix is at the component library level.
 
