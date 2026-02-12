@@ -1,27 +1,22 @@
 
 
-# Fix Logo Display and Toast in Client Detail Panel
+# Compress Portal Access Content in New Client Modal
 
 ## Problem
-When an admin uploads a logo via the pencil icon on the client detail panel header, two issues occur:
-1. The avatar does not visually update until the panel is closed and reopened, because it reads directly from the `hotel` prop which may not re-render immediately after cache invalidation.
-2. The toast notification uses the Radix toast system (`@/hooks/use-toast`) instead of the project-standard `sonner`, which may not display visibly depending on which `<Toaster>` is mounted.
+The Portal Access (Step 3) content in the New Client modal sits too close to the right edge of the dialog, creating a cramped appearance -- especially the full URL preview row.
 
-## Changes
+## Solution
+Reduce the horizontal padding on the content area and footer from `px-8` (32px) to `px-6` (24px) for the entire modal, giving the inner content more breathing room relative to the container edges. This affects the header, content area, and footer uniformly so the layout remains balanced.
 
-### `src/components/dashboard/ClientDetailPanel.tsx`
+## Technical Details
 
-**Toast fix:**
-- Replace `import { toast } from "@/hooks/use-toast"` (line 37) with `import { toast } from "sonner"`
-- Update `onSuccess` toast call from `toast({ title: "...", description: "..." })` to `toast.success("Logo updated")`
-- Update `onError` toast call to `toast.error("Failed to upload logo")`
+**File: `src/components/modals/NewClientModal.tsx`**
 
-**Instant avatar update:**
-- Add a local `logoUrl` state initialized from `hotel.logo_url`
-- Sync it via `useEffect` when `hotel.logo_url` changes (covers cache refresh)
-- In `logoUpload.onSuccess`, set local state immediately with the returned `publicUrl` for instant feedback
-- Replace `hotel.logo_url` in the `<AvatarImage>` with the local `logoUrl` state
+- Line 273 (header): Change `px-8` to `px-6`
+- Line 320 (content area): Change `px-8` to `px-6`  
+- Line 599 (footer): Change `px-8` to `px-6`
 
-### No other files need changes
-The `AdminBrandPosControls` component already uses sonner and invalidates the correct query key.
+This gives approximately 12px more horizontal space to the content on each side, preventing the slug input and full URL preview from feeling pressed against the container boundary.
+
+Alternatively, if you prefer keeping the wider padding on steps 1 and 2, we can scope the change to only step 3's motion.div by adding a negative margin or reducing padding just for that step. But uniform `px-6` is the cleaner approach and matches standard dialog padding conventions.
 
