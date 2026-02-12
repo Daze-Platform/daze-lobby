@@ -1,40 +1,22 @@
 
 
-# Fix: Artwork Text Cut-Off on Portal Login Page
+# Fix: Modal Horizontal Padding Consistency
 
 ## Problem
 
-The right-side artwork panel on the login page uses `object-cover`, which crops the image to fill the container. This causes the tagline text at the top of the artwork ("Effortless service, floating on air.") to be cut off since the image is taller than the viewport.
+The "New Client" modal has visually unequal horizontal padding -- the left side appears to have more space than the right. This is caused by the content sections (header at `p-6`, body at `p-6`, footer at `p-6`) not accounting for the close button's `right-4` positioning, creating a visual imbalance. Additionally, the inner content could benefit from slightly more generous and consistent horizontal padding.
 
 ## Solution
 
-Change the image positioning from `object-cover` to `object-contain` with a complementary background color so the artwork scales down to fit entirely within the panel without any cropping. The background color will match the sky tone in the artwork for a seamless look.
-
-Alternatively, use `object-cover object-bottom` to anchor the crop at the bottom, pushing the visible area upward to reveal the text. However, `object-contain` is cleaner since it guarantees all artwork content is always visible regardless of viewport size.
+Increase the horizontal padding across all three sections (header, content, footer) from `p-6` to `px-8 py-6` to give more breathing room and ensure visual symmetry. This small bump from 24px to 32px horizontal padding will make the content feel properly centered and away from the close button.
 
 ## Changes
 
-**`src/components/auth/SketchyArtPanel.tsx`**
+**`src/components/modals/NewClientModal.tsx`**
 
-Update the container to have a matching background color and switch the image to `object-contain` so the full artwork (including text) is always visible:
+1. **Header** (line 267): Change `p-6 pb-4` to `px-8 pt-6 pb-4`
+2. **Content body** (line 314): Change `p-6` to `px-8 py-6`
+3. **Footer** (line 595): Change `p-6 pt-4` to `px-8 pb-6 pt-4`
 
-```tsx
-export function SketchyArtPanel() {
-  return (
-    <div className="h-full w-full bg-sky-300">
-      <img 
-        src={authArtwork} 
-        alt="A brighter day awaits - Daze" 
-        className="h-full w-full object-contain object-top"
-      />
-    </div>
-  );
-}
-```
-
-- `object-contain` ensures the entire image (including the top text) is visible
-- `object-top` anchors the image to the top so the tagline appears first
-- `bg-sky-300` fills any letterbox gaps with a color that blends with the artwork's sky
-
-This is a single-file, 2-line change.
+This ensures all three horizontal sections share the same `px-8` (32px) padding on both sides, creating a perfectly symmetrical layout with enough clearance from the dialog's close button.
 
