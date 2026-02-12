@@ -1,52 +1,56 @@
 
 
-# Fix: Portal URL Slug Input Field Visibility
+# Side-by-Side Form and Agreement Layout
 
-## Problem
+## Current Layout
 
-When typing a long slug in the "Portal Access" step, the input text gets pushed to the right and becomes invisible. The `/portal/` prefix and the input field compete for space inside a flex container without proper overflow constraints, causing the text cursor to scroll out of view.
+The ReviewSignModal currently stacks the form fields AND the agreement text in the **left panel**, while the **right panel** is reserved solely for the signature pad. This forces users to scroll past all form sections before they can see the agreement document, making it hard to verify their inputs in context.
 
-## Root Cause
+## Proposed Layout
 
-Two issues in the flex layout at line 526-541 of `NewClientModal.tsx`:
+Restructure the two-column grid so that:
 
-1. The `/portal/` prefix div lacks `shrink-0`, so the browser may try to shrink it
-2. The `Input` component inherits `w-full` from the shared component but lacks `min-w-0`, which is required for flex children to properly constrain their width and allow text to scroll within the input rather than expanding the container
+- **Left Panel**: Form input sections (A through E) -- scrollable independently
+- **Right Panel**: Live agreement document (with highlighted values) -- scrollable independently
+- **Signature Section**: Moves below the agreement in the right panel, or into a sticky footer area
 
-## Changes
+On mobile (single column), the layout falls back to the current stacked behavior.
 
-### File: `src/components/modals/NewClientModal.tsx` (lines 526-541)
+## Technical Changes
 
-1. Add `shrink-0` to the `/portal/` prefix div so it never collapses
-2. Add `min-w-0` to the `Input` className so it respects the flex container boundaries and keeps typed text visible within the field
+### File: `src/components/portal/ReviewSignModal.tsx`
 
-**Before:**
-```tsx
-<div className="flex items-center gap-0">
-  <div className="flex items-center h-11 px-3 rounded-l-lg border border-r-0 border-border/50 bg-muted/70 text-sm text-muted-foreground font-mono whitespace-nowrap">
-    /portal/
-  </div>
-  <Input
-    ...
-    className="h-11 rounded-l-none font-mono"
-    ...
-  />
-</div>
+1. **Left panel (form only)**: Keep the form sections (A-E) in the left column with their own `ScrollArea`. Remove the agreement text from this panel.
+
+2. **Right panel (agreement + signature)**: Move the agreement document into the right panel. When unsigned, show the live agreement text at the top (scrollable) with the signature pad and action buttons pinned at the bottom. When signed, show the signed agreement view and signature confirmation as it does today.
+
+3. **Sticky signature footer**: Inside the right panel, use a flex layout where the agreement text is `flex-1 overflow-auto` and the signature section is `shrink-0` pinned at the bottom, so users always have access to sign without scrolling.
+
+4. **Mobile fallback**: On small screens (`grid-cols-1`), keep the stacked order: form first, then agreement, then signature -- matching current behavior.
+
+### Structural sketch (desktop, unsigned state)
+
+```text
++-------------------------------+-------------------------------+
+|  LEFT PANEL (scrollable)      |  RIGHT PANEL                  |
+|                               |                               |
+|  Section A: Client Identity   |  Agreement Document           |
+|  Section B: Pilot Scope       |  (live-updating, scrollable)  |
+|  Section C: Pilot Term        |                               |
+|  Section D: Pricing           |                               |
+|  Section E: POS Integration   |                               |
+|                               |-------------------------------|
+|                               |  Signature Pad + Sign Button  |
+|                               |  (pinned at bottom)           |
++-------------------------------+-------------------------------+
 ```
 
-**After:**
-```tsx
-<div className="flex items-center gap-0">
-  <div className="flex items-center shrink-0 h-11 px-3 rounded-l-lg border border-r-0 border-border/50 bg-muted/70 text-sm text-muted-foreground font-mono whitespace-nowrap">
-    /portal/
-  </div>
-  <Input
-    ...
-    className="h-11 min-w-0 rounded-l-none font-mono"
-    ...
-  />
-</div>
-```
+### Key details
 
-This is a two-word fix (`shrink-0` and `min-w-0`) that ensures the prefix stays fixed and the input field properly contains its text within the available space.
+- The agreement text already uses `HighlightedText` to highlight user-entered values in real-time -- this stays as-is and becomes immediately visible alongside the form
+- The `useDeferredValue` optimization for the agreement text remains to keep typing responsive
+- The Download PDF button stays with the agreement header in the right panel
+- The "Complete all required fields" warning moves to the right panel above the signature pad
+- No changes to form logic, validation, or data flow -- purely a layout restructure
+- The `max-h-[200px]` constraint on the agreement text (currently used on mobile) will be removed for the right panel view since it gets its own scrollable area; a similar constraint stays for mobile stacked view
 
