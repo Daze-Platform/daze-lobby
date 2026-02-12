@@ -119,7 +119,13 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const portalBaseUrl = `${window.location.origin}/portal/`;
 
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(`${portalBaseUrl}${customSlug}`);
+    // Include primary contact email in the URL if available
+    const primaryContact = contacts.find((_, idx) => idx === 0);
+    const contactEmail = primaryContact?.email?.trim();
+    const url = contactEmail
+      ? `${portalBaseUrl}${customSlug}?email=${encodeURIComponent(contactEmail)}`
+      : `${portalBaseUrl}${customSlug}`;
+    navigator.clipboard.writeText(url);
     toast.success("Portal URL copied to clipboard");
   };
 
