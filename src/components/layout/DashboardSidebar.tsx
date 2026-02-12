@@ -134,20 +134,6 @@ export function DashboardSidebar({ isMobile = false, onClose }: DashboardSidebar
         isMobile ? "w-full" : (showCollapsed ? "w-[68px]" : "w-60")
       )}
     >
-      {/* Mobile close button */}
-      {isMobile && onClose && (
-        <div className="flex items-center justify-end p-3 border-b border-border/40">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-10 w-10"
-          >
-            <X size={20} weight="regular" />
-            <span className="sr-only">Close menu</span>
-          </Button>
-        </div>
-      )}
 
       {/* Collapse Toggle - only on desktop */}
       {!isMobile && (
