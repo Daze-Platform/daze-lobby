@@ -26,7 +26,7 @@ const POS_PROVIDERS = [
   { id: "micros_3700", name: "Micros 3700", logo: "/pos-logos/micros.png" },
   { id: "positouch", name: "POSitouch", logo: "/pos-logos/positouch.png" },
   { id: "squirrel_systems", name: "Squirrel Systems", logo: "" },
-  { id: "xpient", name: "XPIENT", logo: "" },
+  { id: "xpient", name: "XPIENT", logo: "/pos-logos/xpient.webp" },
   { id: "maitred", name: "Maitre'D", logo: "" },
   { id: "ncr_cloud_connect", name: "NCR Cloud Connect", logo: "/pos-logos/ncr-cloud-connect.png" },
   { id: "simphony_fe", name: "Simphony FE", logo: "/pos-logos/micros.png" },
