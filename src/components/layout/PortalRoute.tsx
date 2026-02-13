@@ -55,18 +55,25 @@ export function PortalRoute({ children }: PortalRouteProps) {
     return <Navigate to="/portal/login" replace />;
   }
 
-  // Client role - check if client is assigned
-  if (clientLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // For slug-based routes (/portal/:slug), skip the client-loading gate
+  // because PortalBySlug resolves the client independently by slug.
+  const pathSegments = window.location.pathname.split("/").filter(Boolean);
+  const isSlugRoute = pathSegments.length >= 2 && pathSegments[0] === "portal";
 
-  // No client assigned - show error page
-  if (error === "no_client_assigned" || !clientId) {
-    return <NoHotelAssigned />;
+  if (!isSlugRoute) {
+    // Bare /portal route - must wait for ClientContext to resolve
+    if (clientLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    // No client assigned - show error page
+    if (error === "no_client_assigned" || !clientId) {
+      return <NoHotelAssigned />;
+    }
   }
 
   return <>{children}</>;

@@ -46,19 +46,19 @@ export async function getCurrentUser(): Promise<UserWithRole | null> {
   
   if (!user) return null;
 
-  // Get user's role
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  // Get user's profile
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("full_name, avatar_url")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  // Fetch role and profile in parallel to reduce waterfall
+  const [{ data: roleData }, { data: profileData }] = await Promise.all([
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
 
   return {
     id: user.id,
