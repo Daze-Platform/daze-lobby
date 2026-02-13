@@ -1,27 +1,51 @@
 
 
-## Allow PNG/JPG Uploads for Document Uploads
+## Fix Activity Feed Document Upload Labels
 
-### What Changes
+### Problem
+When admins upload documents, the activity log stores the UI card title (e.g., "Upload Document") as the `title` in details. This shows up in the activity feed as "uploaded Upload Document" instead of a meaningful label.
 
-Only one file needs updating. The admin document upload component (`AdminDocumentUpload.tsx`) currently restricts uploads to `.pdf,.doc,.docx`. The client portal document viewer already supports image preview.
+### Logic
+- Documents with specific types (`pilot_agreement`, `security_docs`) have known titles: "Pilot Agreement Document" and "Security Documentation"
+- Any document that doesn't match these specific titles should display as "additional documents"
 
-### File Change
+### Changes
 
-**`src/components/dashboard/portal-management/AdminDocumentUpload.tsx` (line 189)**
+**1. `src/components/dashboard/portal-management/AdminDocumentUpload.tsx` (line 103)**
 
-Change the `accept` attribute from:
+Change the logged title to use the proper display name instead of the raw `title` prop:
+
+```ts
+// Before:
+logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title } });
+
+// After:
+const logTitle = documentType === "pilot_agreement" 
+  ? "Pilot Agreement Document" 
+  : documentType === "security_docs" 
+    ? "Security Documentation" 
+    : "additional documents";
+logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title: logTitle } });
 ```
-accept=".pdf,.doc,.docx"
-```
-to:
-```
-accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+
+**2. `src/components/portal/ActivityFeedPanel.tsx` (line 96)**
+
+Update the `document_uploaded` format to handle any title that isn't a recognized specific document type as "additional documents":
+
+```ts
+// Before:
+document_uploaded: `uploaded ${(details?.title as string) || "a document"}`,
+
+// After - apply fallback logic for display:
+document_uploaded: (() => {
+  const t = details?.title as string;
+  if (t === "Pilot Agreement Document" || t === "Security Documentation") return `uploaded ${t}`;
+  return "uploaded additional documents";
+})(),
 ```
 
-This applies to all admin document upload slots (Pilot Agreement, Security Docs, and Additional Documents), allowing admins to upload images alongside traditional document formats. The client portal's document library already detects image MIME types and shows the Preview button for them, so no changes are needed on the client side.
-
-### What Already Works
-- **Client portal view** (`PortalDocuments.tsx`): Already handles image preview via `isPreviewable()` which checks for `image/*` MIME types
-- **Internal client detail uploads** (`DocumentUploadSection.tsx`): Already accepts `.png,.jpg,.jpeg`
+This ensures:
+- Past logs with "Upload Document" as title will also render correctly as "uploaded additional documents"
+- New uploads will log the correct title going forward
+- "Pilot Agreement Document" and "Security Documentation" continue showing their specific names
 
