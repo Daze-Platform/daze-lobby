@@ -28,8 +28,10 @@ export function PortalRoute({ children }: PortalRouteProps) {
 
   if (!isAuthenticated) {
     const currentPath = window.location.pathname + window.location.search;
-    const emailParam = new URLSearchParams(window.location.search).get("email");
-    const loginUrl = `/portal/login?returnTo=${encodeURIComponent(currentPath)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ""}`;
+    const searchParams = new URLSearchParams(window.location.search);
+    const emailParam = searchParams.get("email");
+    const nameParam = searchParams.get("name");
+    const loginUrl = `/portal/login?returnTo=${encodeURIComponent(currentPath)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ""}${nameParam ? `&name=${encodeURIComponent(nameParam)}` : ""}`;
     return <Navigate to={loginUrl} replace />;
   }
 
