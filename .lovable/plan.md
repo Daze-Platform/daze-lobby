@@ -1,57 +1,45 @@
 
 
-# Fix: Clients Sidebar Link Not Working in Recently Deleted View
+# Fix Checkbox Markers in Pilot Agreement PDF
 
 ## Problem
 
-When viewing "Recently Deleted" on the Clients page, clicking the "Clients" sidebar link does nothing because:
-- You're already on `/clients`
-- React Router's NavLink skips navigation to the current route
-- The `showDeleted` state is local React state, so it stays `true`
+The PDF checkbox renderer uses a Unicode checkmark character (`✓`) via `pdf.text()`. jsPDF's built-in Helvetica font does not support this glyph, so it renders as an empty or garbled marker in the generated PDF. The screenshot confirms this -- checked items like "Client Revenue Share Fee" appear unchecked.
 
 ## Solution
 
-Move `showDeleted` from local `useState` to a URL search parameter (`?view=deleted`). This way:
-- Clicking "Clients" in the sidebar navigates to `/clients` (no query param), which naturally exits the deleted view
-- The deleted view becomes bookmarkable and shareable
-- Browser back/forward works correctly with the toggle
+Replace the `pdf.text("✓", ...)` call with manually drawn X lines using `pdf.line()`. This is font-independent and renders crisply at any zoom level.
 
 ## Changes
 
-### File: `src/pages/Clients.tsx`
+### File: `src/lib/pdf/renderers.ts` (lines 114-120)
 
-- Replace `useState(false)` for `showDeleted` with `useSearchParams`
-- Derive `showDeleted` from `searchParams.get("view") === "deleted"`
-- Update the "Recently Deleted" toggle button to set/clear the `?view=deleted` search param instead of calling `setShowDeleted`
+Replace the checkmark text rendering with two diagonal lines drawn inside the checkbox box:
 
-**Before:**
 ```
-const [showDeleted, setShowDeleted] = useState(false);
-```
-
-**After:**
-```
-const [searchParams, setSearchParams] = useSearchParams();
-const showDeleted = searchParams.get("view") === "deleted";
-```
-
-Toggle button update:
-```
-onClick={() => {
-  if (showDeleted) {
-    searchParams.delete("view");
-  } else {
-    searchParams.set("view", "deleted");
+Before:
+  if (checked) {
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
+    pdf.text("✓", boxX + 0.3, ctx.y - 0.2);
   }
-  setSearchParams(searchParams);
-}}
+
+After:
+  if (checked) {
+    const inset = 0.7;
+    pdf.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
+    pdf.setLineWidth(0.5);
+    pdf.line(boxX + inset, boxY + inset, boxX + boxSize - inset, boxY + boxSize - inset);
+    pdf.line(boxX + boxSize - inset, boxY + inset, boxX + inset, boxY + boxSize - inset);
+  }
 ```
 
-No other files need changes -- the sidebar already links to `/clients` which will naturally clear the param.
+This draws a bold X in the brand primary color inside the checkbox bounds, which is universally readable and font-independent.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/Clients.tsx` | Replace local `showDeleted` state with URL search param `?view=deleted` |
+| `src/lib/pdf/renderers.ts` | Replace Unicode checkmark text with drawn X lines in `renderCheckbox` |
 
