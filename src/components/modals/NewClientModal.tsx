@@ -669,29 +669,27 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                       Full Portal URL
                     </Label>
                     <div className="p-3 rounded-lg bg-muted/50 border border-border/40 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-mono text-foreground truncate flex-1">
-                          {portalBaseUrl}{customSlug}
-                          {contacts[0]?.email?.trim() && (
-                            <span className="text-muted-foreground">?email={contacts[0].email.trim()}</span>
-                          )}
-                        </p>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleCopyUrl}
-                          className="h-8 px-2 shrink-0"
-                        >
-                          <Copy className="w-4 h-4 mr-1" />
-                          {contacts[0]?.email?.trim() ? "Copy Invite Link" : "Copy"}
-                        </Button>
-                      </div>
+                      <p className="text-xs font-mono text-foreground break-all">
+                        {portalBaseUrl}{customSlug}
+                        {contacts[0]?.email?.trim() && (
+                          <span className="text-muted-foreground">?email={contacts[0].email.trim()}</span>
+                        )}
+                      </p>
                       {contacts[0]?.email?.trim() && (
                         <p className="text-xs text-muted-foreground">
                           For: {contacts[0]?.firstName} {contacts[0]?.lastName} ({contacts[0]?.email})
                         </p>
                       )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyUrl}
+                        className="w-full text-xs gap-1.5"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        {contacts[0]?.email?.trim() ? "Copy Invite Link" : "Copy"}
+                      </Button>
                     </div>
                   </div>
                 )}
