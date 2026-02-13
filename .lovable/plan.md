@@ -1,25 +1,34 @@
 
 
-# Exclude Deleted Clients from Admin Portal Switcher
+# Show Admin Initials and Avatar in Control Tower Header
 
-## Problem
+## What Changes
 
-The `ClientContext` query for admin users (line 93-96 in `src/contexts/ClientContext.tsx`) fetches all clients without filtering out soft-deleted ones. This means deleted clients still appear in the admin portal's client switcher dropdown.
+The profile button in the Control Tower header currently shows a generic person icon for all users. This update will replace it with:
 
-## Fix
+1. **User initials** displayed in a styled circle (matching the portal header pattern)
+2. **Profile photo** shown automatically if the admin has uploaded one via Settings
 
-### File: `src/contexts/ClientContext.tsx` (line 96)
+No new upload flow is needed -- avatar upload already exists in the Founder Settings dialog, and the auth system already loads `avatarUrl` from the database. We just need to wire it into the header.
 
-Add `.is("deleted_at", null)` to the admin all-clients query, right before `.order(...)`:
+## Technical Details
 
-```
-// Before:
-.order("name", { ascending: true });
+### File: `src/components/layout/DashboardHeader.tsx`
 
-// After:
-.is("deleted_at", null)
-.order("name", { ascending: true });
-```
+- Replace the `User` (Lucide) icon import with `Avatar`, `AvatarImage`, `AvatarFallback` from the existing avatar component
+- Add a helper function to derive initials from the user's name or email (same pattern used in `PortalHeader` and `SettingsDialog`)
+- Replace the generic icon circle (lines 87-89) with an `Avatar` component that:
+  - Shows the user's uploaded profile photo if `user.avatarUrl` exists
+  - Falls back to styled initials derived from `user.fullName` or `user.email`
+- Remove the unused `User` import from lucide-react
 
-This ensures only active (non-deleted) clients appear in the admin client switcher, consistent with the main Clients list behavior.
+### Visual Result
+
+- When no photo is uploaded: A circle with the admin's initials (e.g., "AT" for Angelo Thomas) in the brand's primary color scheme
+- When a photo is uploaded via Settings: The photo replaces the initials automatically
+- Consistent with the portal header's avatar treatment
+
+### No Database or Backend Changes Required
+
+The `avatarUrl` field is already fetched by the auth system and available via `useAuthContext()`. The avatar upload feature already exists in Settings and stores images in the `profile-avatars` storage bucket.
 
