@@ -179,7 +179,7 @@ export function TaskAccordion({
     handleStepComplete("venue");
   };
 
-  const handlePosUpdate = (data: { provider: string; status: string }) => {
+  const handlePosUpdate = (data: { provider: string; status: string; pms_name?: string }) => {
     onTaskUpdate("pos", data);
   };
 
