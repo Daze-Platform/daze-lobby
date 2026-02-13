@@ -1,25 +1,25 @@
 
+## Fix Daze Lobby Auth Card Legibility and Logo Placement
 
-## Fix: Auth Card Styles Not Applying
+### Issues Identified (from screenshot)
 
-### Root Cause
+1. **"Daze Lobby" title** is barely readable -- uses `text-slate-900` but appears washed out against the white card
+2. **"Welcome back" heading** is nearly invisible -- same contrast issue
+3. **Logo placement** -- currently inline (side-by-side) with "Daze Lobby" text; user wants it stacked vertically (logo on top, text below)
+4. **Input text** is hard to read when filled in (placeholder and typed text both appear faint)
 
-The `Input` component (`src/components/ui/input.tsx`) has these base classes:
-- `border-0` -- removes all borders
-- `bg-secondary/50` -- grey background fill
-- `ring-1 ring-inset ring-border/50` -- faint ring instead of border
+### Changes
 
-When `LoginForm` and `SignUpForm` add `bg-white border border-border` in the className prop, Tailwind does **not** guarantee that later classes override earlier ones. The base `border-0` cancels out `border`, and `bg-secondary/50` competes with `bg-white`. The result: nothing visually changes.
+**1. `src/components/auth/LoginForm.tsx`**
 
-### Fix
+- **Logo layout**: Change from `flex-row` to `flex-col` so the Daze Cloud logo sits above the "Daze Lobby" text
+- **Logo asset**: Switch from `daze-logo.png` to `daze-cloud-logo.png` (the preferred branded logo used on the Partner Portal)
+- **Logo size**: Bump to `h-12 w-12 sm:h-14 sm:w-14` for better visual presence
+- **Text contrast**: Change "Daze Lobby" and "Welcome back" from `text-slate-900` to explicit dark color using style prop (`color: '#1e293b'`) to guarantee visibility regardless of theme variable resolution
+- **Input text**: Add `!text-foreground placeholder:!text-muted-foreground` to ensure typed text and placeholders are legible
 
-Use Tailwind's `!important` modifier to ensure the overrides take effect:
+**2. `src/components/auth/SignUpForm.tsx`**
 
-**`src/components/auth/LoginForm.tsx`** (2 inputs)
-- Change `bg-white border border-border` to `!bg-white !border !border-border`
+- Apply the exact same logo, layout, and contrast fixes for consistency
 
-**`src/components/auth/SignUpForm.tsx`** (3 inputs)
-- Same change on all Input className props
-
-This is a minimal, targeted fix -- no functional or structural changes.
-
+### No functional changes -- purely visual refinement.
