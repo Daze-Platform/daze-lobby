@@ -12,6 +12,7 @@ interface Client {
   brand_palette: string[] | null;
   logo_url: string | null;
   client_code: string | null;
+  client_slug: string | null;
   created_at: string;
   next_milestone: string | null;
   next_milestone_date: string | null;
@@ -65,6 +66,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
             brand_palette,
             logo_url,
             client_code,
+            client_slug,
             created_at,
             next_milestone,
             next_milestone_date,
@@ -92,7 +94,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-.select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, created_at, next_milestone, next_milestone_date, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
+.select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, client_slug, created_at, next_milestone, next_milestone_date, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .is("deleted_at", null)
         .order("name", { ascending: true });
 
@@ -113,7 +115,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
       
       const { data, error } = await supabase
         .from("clients")
-.select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, created_at, next_milestone, next_milestone_date, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
+.select("id, name, phase, onboarding_progress, brand_palette, logo_url, client_code, client_slug, created_at, next_milestone, next_milestone_date, legal_entity_name, billing_address, authorized_signer_name, authorized_signer_title")
         .eq("id", selectedClientId)
         .single();
 

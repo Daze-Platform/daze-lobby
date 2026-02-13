@@ -43,7 +43,7 @@ export function BrandStep({
   isJustCompleted,
   isUnlocking,
 }: BrandStepProps) {
-  const { clientId } = useClient();
+  const { clientId, client } = useClient();
   const logActivity = useLogActivity(clientId);
 
   // Derive badge status
@@ -143,6 +143,16 @@ export function BrandStep({
         paletteDocumentUrl: getPaletteDocumentUrl("property-default", 0, data),
         paletteDocumentUrls: [0, 1, 2].map(i => getPaletteDocumentUrl("property-default", i, data)),
         paletteDocumentFilenames: [0, 1, 2].map(i => getPaletteDocumentFilename("property-default", i, data)),
+        isExpanded: true,
+      }];
+    }
+    // Pre-fill for known clients
+    if (client?.client_slug === "springhill-suites-orange-beach") {
+      return [{
+        id: "property-default",
+        name: "SpringHill Suites by Marriott Orange Beach Gulf Shores",
+        logos: {},
+        colors: ["#3B82F6"],
         isExpanded: true,
       }];
     }
