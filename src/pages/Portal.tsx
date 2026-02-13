@@ -71,7 +71,7 @@ export default function Portal() {
 
   const { 
     tasks, venues, isLoading, progress, status,
-    signLegal, updateTask, uploadFile,
+    signLegal, updateTask, uploadFile, removeTaskKeys,
     uploadVenueMenu, uploadVenueLogo, uploadVenueAdditionalLogo, deleteVenueMenu,
     addVenue, updateVenue, deleteVenue, completeVenueStep,
     isSigningLegal, isUpdating, isAddingVenue, isUpdatingVenue, isDeletingVenue,
@@ -145,20 +145,14 @@ export default function Portal() {
         .eq("id", clientId);
       if (clientError) throw clientError;
 
-      // Save all fields to legal task JSONB (spread-merge to preserve signature data)
-      const { data: freshTask } = await supabase
-        .from("onboarding_tasks")
-        .select("data")
-        .eq("client_id", clientId)
-        .eq("task_key", "legal")
-        .maybeSingle();
-      const existingData = (freshTask?.data as Record<string, unknown>) || {};
-
-      const { error: taskError } = await supabase
-        .from("onboarding_tasks")
-        .update({ data: { ...existingData, ...draftData } } as never)
-        .eq("client_id", clientId)
-        .eq("task_key", "legal");
+      // Atomic merge at DB level — prevents race conditions with concurrent signature saves
+      const { error: taskError } = await supabase.rpc("merge_task_data", {
+        p_client_id: clientId,
+        p_task_key: "legal",
+        p_merge_data: draftData as unknown as import("@/integrations/supabase/types").Json,
+        p_remove_keys: [],
+        p_mark_completed: false,
+      });
       if (taskError) throw taskError;
 
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
@@ -412,6 +406,7 @@ export default function Portal() {
                     isSigningLegal={isSigningLegal}
                     isUpdating={isUpdating}
                     onSaveLegalDraft={handleSaveLegalDraft}
+                    onRemoveTaskKeys={removeTaskKeys}
                     hotelLegalEntity={hotelLegalEntity}
                   />
                 </CardContent>
