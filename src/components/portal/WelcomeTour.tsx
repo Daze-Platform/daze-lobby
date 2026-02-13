@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronLeft, Utensils, Upload, Rocket } from "lucide-react";
+import { ArrowRight, ChevronLeft, Utensils, Upload, Rocket, ClipboardList } from "lucide-react";
 
 interface WelcomeTourProps {
   onComplete: () => void;
@@ -20,6 +20,11 @@ const TOUR_SLIDES = [
     headline: "Welcome to a brighter day.",
     subtext: "Daze transforms your venue into a seamless digital experience. No waiting, just ordering.",
     icon: Utensils,
+  },
+  {
+    headline: "Your path to going live.",
+    subtext: "Complete five simple steps — share your brand, set up your venues, connect your POS, confirm your devices, and sign off on the agreement. We handle the rest.",
+    icon: ClipboardList,
   },
   {
     headline: "Effortless service, floating on air.",
