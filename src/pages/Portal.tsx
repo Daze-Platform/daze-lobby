@@ -163,8 +163,8 @@ export default function Portal() {
     }
   }, [clientId]);
 
-  const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>) => {
-    updateTask({ taskKey, data });
+  const handleTaskUpdate = (taskKey: string, data: Record<string, unknown>, markCompleted?: boolean) => {
+    updateTask({ taskKey, data, markCompleted });
   };
 
   const handleFileUpload = (taskKey: string, file: File, fieldName: string) => {

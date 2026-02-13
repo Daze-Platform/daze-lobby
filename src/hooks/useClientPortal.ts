@@ -381,10 +381,12 @@ export function useClientPortal() {
   const updateTaskMutation = useMutation({
     mutationFn: async ({ 
       taskKey, 
-      data 
+      data,
+      markCompleted = false,
     }: { 
       taskKey: string; 
-      data: Record<string, unknown> 
+      data: Record<string, unknown>;
+      markCompleted?: boolean;
     }) => {
       if (!clientId) throw new Error("No client found");
 
@@ -394,7 +396,7 @@ export function useClientPortal() {
         p_task_key: taskKey,
         p_merge_data: data as unknown as import("@/integrations/supabase/types").Json,
         p_remove_keys: [],
-        p_mark_completed: true,
+        p_mark_completed: markCompleted,
       });
 
       if (error) throw error;
@@ -402,15 +404,17 @@ export function useClientPortal() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
       
-      // Log activity
-      logActivity.mutate({
-        action: "task_completed",
-        details: {
-          task_key: variables.taskKey,
-        },
-      });
-      
-      toast.success("Task updated successfully!");
+      if (variables.markCompleted) {
+        // Log activity only on explicit completion
+        logActivity.mutate({
+          action: "task_completed",
+          details: {
+            task_key: variables.taskKey,
+          },
+        });
+        
+        toast.success("Task updated successfully!");
+      }
     },
     onError: (error) => {
       toast.error("Failed to update task: " + error.message);
