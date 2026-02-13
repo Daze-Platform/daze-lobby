@@ -242,7 +242,9 @@ export function VenueCard({
                     <Check className="w-4 h-4 text-primary" strokeWidth={2} />
                     Logo uploaded
                   </span>
-                  <span className="text-xs text-muted-foreground">Click to replace</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px] block">
+                    {venue.logoFile?.name || venue.logoFileName || "Click to replace"}
+                  </span>
                 </div>
                 {onLogoRemove && (
                   <Button
@@ -309,7 +311,9 @@ export function VenueCard({
                     <Check className="w-4 h-4 text-primary" strokeWidth={2} />
                     Additional logo uploaded
                   </span>
-                  <span className="text-xs text-muted-foreground">Click to replace</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px] block">
+                    {venue.additionalLogoFileName || "Click to replace"}
+                  </span>
                 </div>
                 {onAdditionalLogoRemove && (
                   <Button
