@@ -1,36 +1,47 @@
 
 
-## Cap Pilot Term Days Input to 90
+## Allow Users to Choose Between Daze and Client Revenue Share
 
 ### Problem
-The "Pilot Term (days)" input in the Legal step accepts any number (e.g., 200), which shouldn't be allowed. It needs a maximum of 90 days.
+The pricing section (Section D) in the Pilot Agreement form is hardcoded to "Daze Revenue Share" at 10%. Users cannot select "Client Revenue Share" as an alternative, even though the PDF document renders both options (sections 5.3 and 5.4) with checkbox indicators.
 
-### Changes
+### Solution
+Replace the static pricing display with interactive radio buttons letting users choose between "Daze Revenue Share" and "Client Revenue Share," plus an editable percentage input.
 
-**File: `src/components/portal/ReviewSignModal.tsx`** (line 721)
-- Add `max="90"` to the existing `<Input type="number">` element
-- Add an `onChange` handler that clamps values: if the user types a number greater than 90, it gets capped to 90
-- Keep `min="1"` as-is
+### Technical Changes
 
-The updated input will look like:
-```tsx
-<Input
-  type="number"
-  min="1"
-  max="90"
-  placeholder="90"
-  value={pilotTermDays}
-  onChange={e => {
-    const val = e.target.value;
-    if (val === "") { setPilotTermDays(""); return; }
-    const num = parseInt(val, 10);
-    if (!isNaN(num)) setPilotTermDays(String(Math.min(num, 90)));
-  }}
-  className="h-8 sm:h-9 text-xs sm:text-sm"
-/>
+**File: `src/components/portal/ReviewSignModal.tsx`**
+
+1. **Convert hardcoded constants to state** (lines 450-452):
+   - Change `const pricingModel = "daze_rev_share" as const;` to `const [pricingModel, setPricingModel] = useState<"daze_rev_share" | "client_rev_share">("daze_rev_share");`
+   - Change `const pricingAmount = "10";` to `const [pricingAmount, setPricingAmount] = useState("10");`
+
+2. **Replace the static display with a form** (lines 726-733):
+   - Add two radio options using the existing `RadioGroup` component:
+     - **Daze Revenue Share** — "Daze retains a % of gross transaction value"
+     - **Client Revenue Share** — "Client pays Daze a % of gross food & beverage sales"
+   - Add a percentage input field (number, min 1, max 100) below the radio selection
+   - Style consistently with the rest of the form sections
+
+3. **Update `useMemo` dependency array** (line 526):
+   - Since `pricingModel` and `pricingAmount` are now state, they're already reactive — just ensure they stay in the dependency array
+
+### UI Layout (Section D)
+
 ```
+D -- Pricing
+  ( ) Daze Revenue Share
+      Daze retains a % of gross transaction value
+  ( ) Client Revenue Share
+      Client pays Daze a % of gross food & beverage sales
+
+  Revenue Share %: [10]
+```
+
+### What Changes in the PDF
+The correct checkbox (`[X]`) will appear next to whichever option the user selected (5.3 or 5.4), and the entered percentage fills the blank. This already works via the existing `pSub`/`pDaze`/`pClient` logic in the agreement text builder.
 
 | File | Change |
 |------|--------|
-| `src/components/portal/ReviewSignModal.tsx` | Add `max="90"` and clamp logic to pilot term days input |
+| `src/components/portal/ReviewSignModal.tsx` | Convert pricing to state; replace static display with radio group + % input |
 
