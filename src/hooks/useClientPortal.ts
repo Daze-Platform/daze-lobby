@@ -388,24 +388,14 @@ export function useClientPortal() {
     }) => {
       if (!clientId) throw new Error("No client found");
 
-      // Fetch fresh data from DB to avoid stale cache race conditions
-      const { data: freshTask } = await supabase
-        .from("onboarding_tasks")
-        .select("data")
-        .eq("client_id", clientId)
-        .eq("task_key", taskKey)
-        .maybeSingle();
-      const existingData = (freshTask?.data as Record<string, unknown>) || {};
-
-      const { error } = await supabase
-        .from("onboarding_tasks")
-        .update({ 
-          data: { ...existingData, ...data } as unknown as Record<string, unknown>,
-          is_completed: true,
-          completed_at: new Date().toISOString(),
-        } as never)
-        .eq("client_id", clientId)
-        .eq("task_key", taskKey);
+      // Atomic merge at DB level — prevents race conditions with concurrent uploads
+      const { error } = await supabase.rpc("merge_task_data", {
+        p_client_id: clientId,
+        p_task_key: taskKey,
+        p_merge_data: data as unknown as import("@/integrations/supabase/types").Json,
+        p_remove_keys: [],
+        p_mark_completed: true,
+      });
 
       if (error) throw error;
     },
@@ -454,7 +444,8 @@ export function useClientPortal() {
         .from("onboarding-assets")
         .getPublicUrl(filePath);
 
-      // Fetch fresh data from DB to avoid stale cache race conditions
+      // Read existing logos sub-object (shallow merge needed for nested object)
+      // Safe: uploadLogoMutation is the only writer of the logos/logoFilenames keys
       const { data: freshTask } = await supabase
         .from("onboarding_tasks")
         .select("data")
@@ -463,26 +454,19 @@ export function useClientPortal() {
         .maybeSingle();
       const existingData = (freshTask?.data as Record<string, unknown>) || {};
       const existingLogos = (existingData.logos || {}) as Record<string, string>;
-
       const existingLogoFilenames = (existingData.logoFilenames || {}) as Record<string, string>;
 
-      const { error: updateError } = await supabase
-        .from("onboarding_tasks")
-        .update({ 
-          data: { 
-            ...existingData, 
-            logos: { 
-              ...existingLogos, 
-              [variant]: urlData?.publicUrl 
-            },
-            logoFilenames: {
-              ...existingLogoFilenames,
-              [variant]: file.name,
-            },
-          },
-        } as never)
-        .eq("client_id", clientId)
-        .eq("task_key", "brand");
+      // Atomic merge at DB level
+      const { error: updateError } = await supabase.rpc("merge_task_data", {
+        p_client_id: clientId,
+        p_task_key: "brand",
+        p_merge_data: {
+          logos: { ...existingLogos, [variant]: urlData?.publicUrl },
+          logoFilenames: { ...existingLogoFilenames, [variant]: file.name },
+        } as unknown as import("@/integrations/supabase/types").Json,
+        p_remove_keys: [],
+        p_mark_completed: false,
+      });
 
       if (updateError) throw updateError;
 
@@ -742,23 +726,14 @@ export function useClientPortal() {
 
       if (uploadError) throw uploadError;
 
-      // Fetch fresh data from DB to avoid stale cache race conditions
-      const { data: freshTask } = await supabase
-        .from("onboarding_tasks")
-        .select("data")
-        .eq("client_id", clientId)
-        .eq("task_key", taskKey)
-        .maybeSingle();
-      const existingData = (freshTask?.data as Record<string, unknown>) || {};
-
-      // Update task with file reference and original filename
-      const { error: updateError } = await supabase
-        .from("onboarding_tasks")
-        .update({ 
-          data: { ...existingData, [fieldName]: filePath, [`${fieldName}_filename`]: file.name },
-        } as never)
-        .eq("client_id", clientId)
-        .eq("task_key", taskKey);
+      // Atomic merge at DB level — prevents race conditions with concurrent form saves
+      const { error: updateError } = await supabase.rpc("merge_task_data", {
+        p_client_id: clientId,
+        p_task_key: taskKey,
+        p_merge_data: { [fieldName]: filePath, [`${fieldName}_filename`]: file.name } as unknown as import("@/integrations/supabase/types").Json,
+        p_remove_keys: [],
+        p_mark_completed: false,
+      });
 
       if (updateError) throw updateError;
     },
@@ -851,6 +826,37 @@ export function useClientPortal() {
     },
     onError: (error) => {
       toast.error("Failed to remove venue: " + error.message);
+    },
+  });
+
+  // Remove specific keys from task data atomically (for logo/document removal)
+  const removeTaskKeysMutation = useMutation({
+    mutationFn: async ({
+      taskKey,
+      mergeData,
+      removeKeys,
+    }: {
+      taskKey: string;
+      mergeData: Record<string, unknown>;
+      removeKeys: string[];
+    }) => {
+      if (!clientId) throw new Error("No client found");
+
+      const { error } = await supabase.rpc("merge_task_data", {
+        p_client_id: clientId,
+        p_task_key: taskKey,
+        p_merge_data: mergeData as unknown as import("@/integrations/supabase/types").Json,
+        p_remove_keys: removeKeys,
+        p_mark_completed: false,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update: " + error.message);
     },
   });
 
@@ -1012,6 +1018,7 @@ export function useClientPortal() {
     uploadVenueLogo: uploadVenueLogoMutation.mutate,
     uploadVenueAdditionalLogo: uploadVenueAdditionalLogoMutation.mutate,
     uploadFile: uploadFileMutation.mutate,
+    removeTaskKeys: removeTaskKeysMutation.mutateAsync,
     deleteVenueMenu: deleteVenueMenuMutation.mutateAsync,
     // Individual venue CRUD
     addVenue: addVenueMutation.mutateAsync,

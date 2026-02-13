@@ -715,6 +715,16 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_client: { Args: { _user_id: string }; Returns: boolean }
+      merge_task_data: {
+        Args: {
+          p_client_id: string
+          p_mark_completed?: boolean
+          p_merge_data: Json
+          p_remove_keys?: string[]
+          p_task_key: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "ops_manager" | "support" | "client"

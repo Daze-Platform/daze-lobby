@@ -19,6 +19,7 @@ interface TaskAccordionProps {
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
   onSaveLegalDraft?: (data: Record<string, unknown>) => Promise<void>;
+  onRemoveTaskKeys?: (args: { taskKey: string; mergeData: Record<string, unknown>; removeKeys: string[] }) => Promise<void>;
   // Venue CRUD handlers (passed to VenueProvider)
   venues: Venue[];
   onAddVenue: () => Promise<Venue | undefined>;
@@ -59,7 +60,8 @@ export function TaskAccordion({
   isSigningLegal,
   isUpdating,
   hotelLegalEntity,
-  onSaveLegalDraft
+  onSaveLegalDraft,
+  onRemoveTaskKeys
 }: TaskAccordionProps) {
   const [accordionValue, setAccordionValue] = useState<string | undefined>();
   const [recentlyCompleted, setRecentlyCompleted] = useState<string | null>(null);
@@ -128,7 +130,9 @@ export function TaskAccordion({
   };
 
   const handleLogoRemove = async (propertyId: string, variant: string) => {
-    // Remove logo variant from task data (logos and logoFilenames maps)
+    if (!onRemoveTaskKeys) return;
+    
+    // Read current logos/logoFilenames to rebuild without the removed variant
     const brandTask = tasks.find(t => t.key === "brand");
     const existingData = (brandTask?.data || {}) as Record<string, unknown>;
     const logos = { ...((existingData.logos || {}) as Record<string, string>) };
@@ -140,23 +144,25 @@ export function TaskAccordion({
     delete logoFilenames[variant];
     delete logoFilenames[`logo_${propertyId}_${variant}`];
     
-    // Remove top-level key
     const topLevelKey = `logo_${propertyId}_${variant}`;
-    const cleaned: Record<string, unknown> = { ...existingData, logos, logoFilenames };
-    delete cleaned[topLevelKey];
-    delete cleaned[`${topLevelKey}_filename`];
     
-    onTaskUpdate("brand", cleaned);
+    await onRemoveTaskKeys({
+      taskKey: "brand",
+      mergeData: { logos, logoFilenames },
+      removeKeys: [topLevelKey, `${topLevelKey}_filename`],
+    });
   };
 
   const handleDocumentRemove = async (propertyId: string, slotIndex: number) => {
-    const brandTask = tasks.find(t => t.key === "brand");
-    const existingData = (brandTask?.data || {}) as Record<string, unknown>;
-    const cleaned: Record<string, unknown> = { ...existingData };
+    if (!onRemoveTaskKeys) return;
+    
     const fieldKey = slotIndex === 0 ? `palette_document_${propertyId}` : `palette_document_${propertyId}_${slotIndex}`;
-    delete cleaned[fieldKey];
-    delete cleaned[`${fieldKey}_filename`];
-    onTaskUpdate("brand", cleaned);
+    
+    await onRemoveTaskKeys({
+      taskKey: "brand",
+      mergeData: {},
+      removeKeys: [fieldKey, `${fieldKey}_filename`],
+    });
   };
 
   const handleLegalSign = (signatureDataUrl: string, legalEntityData: PilotAgreementData) => {
