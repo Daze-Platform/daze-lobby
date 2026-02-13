@@ -12,7 +12,7 @@ import { DocumentAnalysisPanel } from "./DocumentAnalysisPanel";
 
 interface AdminDocumentUploadProps {
   clientId: string;
-  documentType: "pilot_agreement" | "security_docs";
+  documentType: "pilot_agreement" | "security_docs" | "general";
   title: string;
   description: string;
   existingDocument?: {
@@ -21,6 +21,9 @@ interface AdminDocumentUploadProps {
     file_path: string;
     created_at: string;
   } | null;
+  /** For general type: custom display name provided by admin */
+  customDisplayName?: string;
+  onCustomDisplayNameChange?: (name: string) => void;
 }
 
 export function AdminDocumentUpload({
@@ -29,6 +32,8 @@ export function AdminDocumentUpload({
   title,
   description,
   existingDocument,
+  customDisplayName,
+  onCustomDisplayNameChange,
 }: AdminDocumentUploadProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,19 +43,21 @@ export function AdminDocumentUpload({
   const categoryMap = {
     pilot_agreement: "Contract",
     security_docs: "Legal",
+    general: "General",
   };
 
   const displayNameMap = {
     pilot_agreement: "Pilot Agreement",
     security_docs: "Security Documentation",
+    general: "Additional Document",
   };
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       setIsUploading(true);
       
-      // Delete existing document if present
-      if (existingDocument) {
+      // Delete existing document if present (not for general type which supports multiple)
+      if (existingDocument && documentType !== "general") {
         await supabase.storage
           .from("hotel-documents")
           .remove([existingDocument.file_path]);
@@ -76,7 +83,9 @@ export function AdminDocumentUpload({
       // Insert document record
       const { error: dbError } = await supabase.from("documents").insert({
         client_id: clientId,
-        display_name: displayNameMap[documentType],
+        display_name: documentType === "general" 
+          ? (customDisplayName?.trim() || file.name.replace(/\.[^/.]+$/, ""))
+          : displayNameMap[documentType],
         file_name: file.name,
         file_path: filePath,
         file_size: file.size,
@@ -92,7 +101,11 @@ export function AdminDocumentUpload({
       queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
       logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title } });
-      toast.success(`${title} uploaded successfully`);
+      const uploadedName = documentType === "general" && customDisplayName ? customDisplayName : title;
+      toast.success(`${uploadedName} uploaded successfully`);
+      if (documentType === "general" && onCustomDisplayNameChange) {
+        onCustomDisplayNameChange("");
+      }
     },
     onError: (error: Error) => {
       toast.error(`Failed to upload: ${error.message}`);
