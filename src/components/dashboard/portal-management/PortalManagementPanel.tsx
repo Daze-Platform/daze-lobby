@@ -2,13 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, Palette, MapPin, Loader2, ExternalLink, Link2, Copy, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FileText, Palette, MapPin, Loader2, ExternalLink, Link2, Copy, Check, Trash2, Plus } from "lucide-react";
 import { AdminDocumentUpload } from "./AdminDocumentUpload";
 import { AdminBrandPosControls } from "./AdminBrandPosControls";
 import { AdminVenuePresets } from "./AdminVenuePresets";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
+import { format } from "date-fns";
 
 interface PortalManagementPanelProps {
   clientId: string;
@@ -36,7 +39,8 @@ export function PortalManagementPanel({
   onNavigateToDocsTab,
 }: PortalManagementPanelProps) {
   const [copied, setCopied] = useState(false);
-
+  const [generalDocName, setGeneralDocName] = useState("");
+  const queryClient = useQueryClient();
   // Fetch existing documents to check for pilot agreement and security docs
   const { data: documents, isLoading: isLoadingDocs } = useQuery({
     queryKey: ["admin-documents", clientId],
@@ -74,6 +78,21 @@ export function PortalManagementPanel({
   const securityDocs = documents?.find(
     (d) => d.display_name === "Security Documentation" || d.category === "Legal"
   );
+
+  const generalDocs = documents?.filter((d) => d.category === "General") || [];
+
+  const deleteGeneralDoc = useMutation({
+    mutationFn: async (doc: Document) => {
+      await supabase.storage.from("hotel-documents").remove([doc.file_path]);
+      await supabase.from("documents").delete().eq("id", doc.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
+      toast.success("Document removed");
+    },
+    onError: () => toast.error("Failed to remove document"),
+  });
 
   const isLoading = isLoadingDocs || isLoadingPos;
 
@@ -183,7 +202,69 @@ export function PortalManagementPanel({
             description="Upload security compliance documents"
             existingDocument={securityDocs}
           />
-          
+
+          {/* General Documents Section */}
+          <div className="rounded-lg border border-border/50 p-4 space-y-3">
+            <div>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Plus className="h-4 w-4 text-primary" />
+                Additional Documents
+              </h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Upload any other documents to share with this client
+              </p>
+            </div>
+
+            {/* List of existing general docs */}
+            {generalDocs.length > 0 && (
+              <div className="space-y-1.5">
+                {generalDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border/40"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{doc.display_name}</p>
+                        <p className="text-2xs text-muted-foreground">
+                          {format(new Date(doc.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
+                      onClick={() => deleteGeneralDoc.mutate(doc)}
+                      disabled={deleteGeneralDoc.isPending}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Custom name input + upload */}
+            <div className="space-y-2">
+              <Input
+                placeholder="Document name (optional)"
+                value={generalDocName}
+                onChange={(e) => setGeneralDocName(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <AdminDocumentUpload
+                clientId={clientId}
+                documentType="general"
+                title="Upload Document"
+                description=""
+                customDisplayName={generalDocName}
+                onCustomDisplayNameChange={setGeneralDocName}
+              />
+            </div>
+          </div>
+
           {onNavigateToDocsTab && (
             <Button
               variant="outline"

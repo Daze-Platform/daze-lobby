@@ -17,7 +17,7 @@ interface DocumentAnalysis {
 interface AnalyzeParams {
   documentId: string;
   clientId: string;
-  documentType: "pilot_agreement" | "security_docs";
+  documentType: "pilot_agreement" | "security_docs" | "general";
 }
 
 export function useDocumentAnalysis(documentId: string | undefined) {

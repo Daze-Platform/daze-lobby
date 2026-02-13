@@ -30,6 +30,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Brand: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   Guidelines: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
   Financial: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  General: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300",
   Other: "bg-muted text-muted-foreground",
 };
 
