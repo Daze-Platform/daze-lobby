@@ -3,7 +3,7 @@ import { DraggableHotelCard } from "./HotelCard";
 import type { Client } from "@/hooks/useClients";
 import type { Enums } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
-import { Rocket, Play, CheckCircle2, type LucideIcon } from "lucide-react";
+import { RocketLaunch, Play, CheckCircle, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 interface KanbanColumnProps {
   phase: Enums<"lifecycle_phase">;
@@ -16,11 +16,11 @@ interface KanbanColumnProps {
   onCardClick?: (client: Client) => void;
 }
 
-const PHASE_ICONS: Record<Enums<"lifecycle_phase">, LucideIcon> = {
-  onboarding: Rocket,
-  reviewing: Rocket,
+const PHASE_ICONS: Record<Enums<"lifecycle_phase">, PhosphorIcon> = {
+  onboarding: RocketLaunch,
+  reviewing: RocketLaunch,
   pilot_live: Play,
-  contracted: CheckCircle2,
+  contracted: CheckCircle,
 };
 
 const PHASE_COLORS: Record<Enums<"lifecycle_phase">, { bg: string; border: string; icon: string }> = {
@@ -76,7 +76,7 @@ export function KanbanColumn({
               "flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-[10px]",
               colors.icon
             )}>
-              <PhaseIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={1.5} />
+              <PhaseIcon size={16} weight="duotone" />
             </div>
             
             <div>
@@ -115,7 +115,7 @@ export function KanbanColumn({
               "flex flex-col items-center justify-center py-8 sm:py-12 text-center",
               "text-muted-foreground"
             )}>
-              <PhaseIcon className="h-8 w-8 sm:h-10 sm:w-10 opacity-20 mb-2 sm:mb-3" strokeWidth={1} />
+              <PhaseIcon size={40} weight="duotone" className="opacity-20 mb-2 sm:mb-3" />
               <p className="text-xs sm:text-sm font-medium">
                 {isActive ? "Drop here" : "No clients"}
               </p>

@@ -20,7 +20,8 @@ import { PortalDocuments } from "@/components/portal/PortalDocuments";
 import { useUnreadNotificationCount } from "@/hooks/useUnreadNotificationCount";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, LogOut, ClipboardList, FileText, Clock, Target } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { ClipboardText, FileText, Clock, Target, SignOut } from "@phosphor-icons/react";
 import { signOut, hasDashboardAccess } from "@/lib/auth";
 import { toast } from "sonner";
 import type { Venue } from "@/types/venue";
@@ -442,7 +443,7 @@ export default function Portal() {
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
             onClick={() => setActiveView("onboarding")}
           >
-            <ClipboardList className="w-5 h-5" strokeWidth={1.5} />
+            <ClipboardText size={20} weight="duotone" />
             <span className="text-[10px]">Onboarding</span>
           </Button>
 
@@ -452,7 +453,7 @@ export default function Portal() {
             className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
             onClick={() => setActiveView("documents")}
           >
-            <FileText className="w-5 h-5" strokeWidth={1.5} />
+            <FileText size={20} weight="duotone" />
             <span className="text-[10px]">Documents</span>
           </Button>
           
@@ -465,7 +466,7 @@ export default function Portal() {
               setShowActivityFeed(true);
             }}
           >
-            <Clock className="w-5 h-5" strokeWidth={1.5} />
+            <Clock size={20} weight="duotone" />
             <span className="text-[10px]">Activity</span>
             {unreadCount > 0 && (
               <span className="absolute top-1 right-2 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-medium rounded-full flex items-center justify-center animate-pulse">
@@ -481,7 +482,7 @@ export default function Portal() {
               className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
               onClick={() => navigate("/dashboard")}
             >
-              <Target className="w-5 h-5" strokeWidth={1.5} />
+              <Target size={20} weight="duotone" />
               <span className="text-[10px]">Dashboard</span>
             </Button>
           ) : (
@@ -491,7 +492,7 @@ export default function Portal() {
               className="flex-col gap-1 h-auto py-2 min-h-[56px] min-w-[64px]"
               onClick={handleSignOut}
             >
-              <LogOut className="w-5 h-5" strokeWidth={1.5} />
+              <SignOut size={20} weight="duotone" />
               <span className="text-[10px]">Sign Out</span>
             </Button>
           )}
