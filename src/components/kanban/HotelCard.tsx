@@ -2,7 +2,7 @@ import * as React from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle, Cpu, GripVertical, Lock, DollarSign } from "lucide-react";
+import { WarningCircle, Cpu, DotsSixVertical, Lock, CurrencyDollar } from "@phosphor-icons/react";
 import type { Client } from "@/hooks/useClients";
 import { cn } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
@@ -112,9 +112,9 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
                 : "text-muted-foreground/40 group-hover/card:text-muted-foreground"
             )}>
               {hotel.hasBlocker ? (
-                <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Lock size={16} weight="duotone" />
               ) : (
-                <GripVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <DotsSixVertical size={16} weight="duotone" />
               )}
             </div>
 
@@ -141,28 +141,28 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
                   {hotel.name}
                 </span>
                 {hotel.hasBlocker && (
-                  <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive shrink-0" />
+                  <WarningCircle size={16} weight="duotone" className="text-destructive shrink-0" />
                 )}
               </div>
 
               <div className="flex items-center gap-1 sm:gap-1.5 mt-1 sm:mt-1.5 flex-wrap">
                 {hotel.hasBlocker && (
                   <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium bg-destructive/10 text-destructive">
-                    <AlertTriangle className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                    <WarningCircle size={10} weight="duotone" />
                     <span className="hidden sm:inline">Blocked</span>
                   </div>
                 )}
 
                 {hotel.dazeDeviceCount > 0 && (
                   <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] text-muted-foreground bg-muted">
-                    <Cpu className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                    <span>{hotel.dazeDeviceCount}</span>
+                     <Cpu size={10} weight="duotone" />
+                     <span>{hotel.dazeDeviceCount}</span>
                   </div>
                 )}
 
                 {formattedARR && (
                   <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20">
-                    <DollarSign className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                    <CurrencyDollar size={10} weight="duotone" />
                     <span className="font-semibold">{formattedARR}</span>
                   </div>
                 )}
@@ -216,7 +216,7 @@ export function HotelCardOverlay({ hotel }: { hotel: Client }) {
         <CardContent className="p-3">
           <div className="flex items-start gap-3">
             <div className="mt-1 text-primary">
-              <GripVertical className="h-4 w-4" />
+              <DotsSixVertical size={16} weight="duotone" className="text-primary" />
             </div>
 
             <Avatar className={cn(
@@ -238,28 +238,28 @@ export function HotelCardOverlay({ hotel }: { hotel: Client }) {
                 )}
                 <span className="font-semibold text-sm truncate">{hotel.name}</span>
                 {hotel.hasBlocker && (
-                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  <WarningCircle size={16} weight="duotone" className="text-destructive shrink-0" />
                 )}
               </div>
 
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                 {hotel.hasBlocker && (
                   <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-destructive/10 text-destructive">
-                    <AlertTriangle className="h-2.5 w-2.5" />
+                    <WarningCircle size={10} weight="duotone" />
                     <span>Blocked</span>
                   </div>
                 )}
 
                 {hotel.dazeDeviceCount > 0 && (
                   <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-muted-foreground bg-muted">
-                    <Cpu className="h-2.5 w-2.5" />
-                    <span>{hotel.dazeDeviceCount}</span>
+                     <Cpu size={10} weight="duotone" />
+                     <span>{hotel.dazeDeviceCount}</span>
                   </div>
                 )}
 
                 {formattedARR && (
                   <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-emerald-600 bg-emerald-500/10">
-                    <DollarSign className="h-2.5 w-2.5" />
+                    <CurrencyDollar size={10} weight="duotone" />
                     <span className="font-semibold">{formattedARR}</span>
                   </div>
                 )}

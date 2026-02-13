@@ -64,8 +64,18 @@ export default function Blockers() {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Active Blockers</h1>
             <p className="text-xs sm:text-sm text-muted-foreground">Incomplete tasks preventing phase transitions</p>
           </div>
-          <Badge variant="destructive" className="gap-1.5 self-start sm:self-auto">
-            <Warning size={14} weight="duotone" />
+          <Badge 
+            variant={blockers.length > 0 ? "destructive" : "secondary"} 
+            className={cn(
+              "gap-1.5 self-start sm:self-auto",
+              blockers.length === 0 && "text-muted-foreground"
+            )}
+          >
+            {blockers.length > 0 ? (
+              <Warning size={14} weight="duotone" />
+            ) : (
+              <CheckCircle size={14} weight="duotone" />
+            )}
             {blockers.length} Active
           </Badge>
         </div>
