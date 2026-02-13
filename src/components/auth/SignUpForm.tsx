@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { signUp } from "@/lib/auth";
 import { lovable } from "@/integrations/lovable";
-import dazeLogo from "@/assets/daze-logo.png";
+import dazeCloudLogo from "@/assets/daze-cloud-logo.png";
 import { validatePassword } from "@/lib/passwordValidation";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 import { OrDivider } from "@/components/ui/or-divider";
@@ -108,12 +108,12 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
     >
       {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
-        <div className="flex flex-row items-center justify-center gap-2 mb-4">
-          <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
-          <span className="font-display text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
+        <div className="flex flex-col items-center gap-2 mb-4">
+          <img src={dazeCloudLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
+          <span className="font-display text-2xl font-bold tracking-tight" style={{ color: '#1e293b' }}>Daze Lobby</span>
         </div>
-        <h1 className="font-display text-xl font-semibold text-slate-900">Create an account</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <h1 className="font-display text-xl font-semibold" style={{ color: '#1e293b' }}>Create an account</h1>
+        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
           Join the Control Tower operations team
         </p>
       </div>
@@ -137,8 +137,8 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
             onChange={(e) => setFullName(e.target.value)}
             required
             disabled={loading}
-className="rounded-xl !bg-white !border !border-border"
-          />
+className="rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
+           />
         </div>
         
         <div className="space-y-2">
@@ -151,7 +151,7 @@ className="rounded-xl !bg-white !border !border-border"
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="rounded-xl !bg-white !border !border-border"
+            className="rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
           />
         </div>
         
@@ -167,7 +167,7 @@ className="rounded-xl !bg-white !border !border-border"
               required
               minLength={8}
               disabled={loading}
-              className="rounded-xl pr-10 !bg-white !border !border-border"
+              className="rounded-xl pr-10 !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
             />
             <button
               type="button"
