@@ -718,7 +718,7 @@ export function ReviewSignModal({
                         </div>
                         <div className="space-y-1">
                           <Label className="text-[10px] sm:text-xs text-muted-foreground">Pilot Term (days)</Label>
-                          <Input type="number" min="1" placeholder="90" value={pilotTermDays} onChange={e => setPilotTermDays(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                          <Input type="number" min="1" max="90" placeholder="90" value={pilotTermDays} onChange={e => { const val = e.target.value; if (val === "") { setPilotTermDays(""); return; } const num = parseInt(val, 10); if (!isNaN(num)) setPilotTermDays(String(Math.min(num, 90))); }} className="h-8 sm:h-9 text-xs sm:text-sm" />
                         </div>
                       </div>
                     </FormSection>
