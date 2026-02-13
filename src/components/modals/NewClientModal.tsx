@@ -669,11 +669,8 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                       Full Portal URL
                     </Label>
                     <div className="p-3 rounded-lg bg-muted/50 border border-border/40 space-y-2">
-                      <p className="text-xs font-mono text-foreground break-all">
-                        {portalBaseUrl}{customSlug}
-                        {contacts[0]?.email?.trim() && (
-                          <span className="text-muted-foreground">?email={contacts[0].email.trim()}</span>
-                        )}
+                      <p className="text-xs font-mono text-muted-foreground truncate">
+                        /portal/{customSlug}
                       </p>
                       {contacts[0]?.email?.trim() && (
                         <p className="text-xs text-muted-foreground">
