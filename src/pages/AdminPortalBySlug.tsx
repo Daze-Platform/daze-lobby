@@ -1,5 +1,5 @@
 import { useParams, Navigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
@@ -36,14 +36,46 @@ export default function AdminPortalBySlug() {
     enabled: !!clientSlug && isAuthenticated,
   });
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (client?.id) {
       setSelectedClientId(client.id);
+
+      // Prefetch core portal data so useClientPortal finds warm cache
+      queryClient.prefetchQuery({
+        queryKey: ["onboarding-tasks", client.id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from("onboarding_tasks")
+            .select("*")
+            .eq("client_id", client.id)
+            .order("created_at", { ascending: true });
+          if (error) throw error;
+          return (data || []).map((task) => ({
+            ...task,
+            data: task.data as Record<string, unknown>,
+          }));
+        },
+      });
+
+      queryClient.prefetchQuery({
+        queryKey: ["venues", client.id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from("venues")
+            .select("*")
+            .eq("client_id", client.id)
+            .order("created_at", { ascending: true });
+          if (error) throw error;
+          return data || [];
+        },
+      });
     }
     return () => {
       setSelectedClientId(null);
     };
-  }, [client?.id, setSelectedClientId]);
+  }, [client?.id, setSelectedClientId, queryClient]);
 
   if (authLoading) {
     return (

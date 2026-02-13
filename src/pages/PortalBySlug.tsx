@@ -1,5 +1,5 @@
 import { useParams, Navigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useClient } from "@/contexts/ClientContext";
@@ -40,16 +40,48 @@ export default function PortalBySlug() {
     enabled: !!clientSlug && isAuthenticated,
   });
 
+  const queryClient = useQueryClient();
+
   // When the client resolves, set it as the selected client in context
+  // and prefetch portal data to overlap with React re-render cycle
   useEffect(() => {
     if (client?.id) {
       setSelectedClientId(client.id);
+
+      // Prefetch core portal data so useClientPortal finds warm cache
+      queryClient.prefetchQuery({
+        queryKey: ["onboarding-tasks", client.id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from("onboarding_tasks")
+            .select("*")
+            .eq("client_id", client.id)
+            .order("created_at", { ascending: true });
+          if (error) throw error;
+          return (data || []).map((task) => ({
+            ...task,
+            data: task.data as Record<string, unknown>,
+          }));
+        },
+      });
+
+      queryClient.prefetchQuery({
+        queryKey: ["venues", client.id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from("venues")
+            .select("*")
+            .eq("client_id", client.id)
+            .order("created_at", { ascending: true });
+          if (error) throw error;
+          return data || [];
+        },
+      });
     }
     return () => {
-      // Clean up when leaving the slug route
       setSelectedClientId(null);
     };
-  }, [client?.id, setSelectedClientId]);
+  }, [client?.id, setSelectedClientId, queryClient]);
 
   // Set browser tab title based on resolved client name
   useEffect(() => {
