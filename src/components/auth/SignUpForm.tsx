@@ -9,6 +9,7 @@ import { lovable } from "@/integrations/lovable";
 import dazeLogo from "@/assets/daze-logo.png";
 import { validatePassword } from "@/lib/passwordValidation";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
+import { OrDivider } from "@/components/ui/or-divider";
 
 interface SignUpFormProps {
   onSwitchToLogin: () => void;
@@ -100,13 +101,13 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
 
   return (
     <div 
-      className="w-full bg-white rounded-[2rem] p-8"
+      className="w-full bg-white rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 md:p-8 animate-fade-in-up"
       style={{
         boxShadow: "0 10px 40px -10px rgba(14, 165, 233, 0.3)",
       }}
     >
       {/* Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-4 sm:mb-6">
         <div className="flex flex-row items-center justify-center gap-2 mb-4">
           <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
           <span className="font-display text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
@@ -127,7 +128,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+          <Label htmlFor="fullName" className="text-sm font-medium text-foreground">Full Name</Label>
           <Input
             id="fullName"
             type="text"
@@ -136,12 +137,12 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
             onChange={(e) => setFullName(e.target.value)}
             required
             disabled={loading}
-            className="rounded-xl"
+            className="rounded-xl bg-white border border-border"
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+          <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
           <Input
             id="email"
             type="email"
@@ -150,12 +151,12 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="rounded-xl"
+            className="rounded-xl bg-white border border-border"
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+          <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
           <div className="relative">
             <Input
               id="password"
@@ -166,7 +167,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
               required
               minLength={8}
               disabled={loading}
-              className="rounded-xl pr-10"
+              className="rounded-xl pr-10 bg-white border border-border"
             />
             <button
               type="button"
@@ -197,21 +198,13 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
           Create Account
         </Button>
 
-        {/* Divider */}
-        <div className="relative my-2">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
-          </div>
-        </div>
+        <OrDivider />
 
         {/* Google Sign Up */}
         <Button
           type="button"
           variant="outline"
-          className="w-full rounded-xl gap-2"
+          className="w-full rounded-xl gap-2 min-h-[44px] border-border/80"
           onClick={handleGoogleSignIn}
           disabled={loading || googleLoading}
         >
