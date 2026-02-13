@@ -137,7 +137,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
             onChange={(e) => setFullName(e.target.value)}
             required
             disabled={loading}
-            className="rounded-xl bg-white border border-border"
+className="rounded-xl !bg-white !border !border-border"
           />
         </div>
         
@@ -151,7 +151,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="rounded-xl bg-white border border-border"
+            className="rounded-xl !bg-white !border !border-border"
           />
         </div>
         
@@ -167,7 +167,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
               required
               minLength={8}
               disabled={loading}
-              className="rounded-xl pr-10 bg-white border border-border"
+              className="rounded-xl pr-10 !bg-white !border !border-border"
             />
             <button
               type="button"
