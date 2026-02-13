@@ -100,7 +100,6 @@ const createAgreementText = (d: PilotAgreementData) => {
   const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
   const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
 
-  const pNone = d.pricing_model === "none" ? "[X]" : "[ ]";
   const pSub = d.pricing_model === "subscription" ? "[X]" : "[ ]";
   const pDaze = d.pricing_model === "daze_rev_share" ? "[X]" : "[ ]";
   const pClient = d.pricing_model === "client_rev_share" ? "[X]" : "[ ]";
@@ -212,15 +211,13 @@ Pilot pricing is agreed separately below and does not establish precedent for lo
 
 Select one pricing model:
 
-[ ] 5.1 No Fees — No fees apply during the Pilot Term.
+${pSub} 5.1 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform and related services during the Pilot Term.
 
-${pSub} 5.2 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform and related services during the Pilot Term.
-
-${pDaze} 5.3 Daze Revenue Share Fee — During the Pilot Term, Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform. The remaining net proceeds, including applicable food and beverage revenue and tips, shall be remitted to Client in accordance with Section 6.
+${pDaze} 5.2 Daze Revenue Share Fee — During the Pilot Term, Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform. The remaining net proceeds, including applicable food and beverage revenue and tips, shall be remitted to Client in accordance with Section 6.
 
 Daze acts solely as a payment facilitation agent and does not purchase, resell, or take ownership of any food, beverage, or tip amounts.
 
-${pClient} 5.4 Client Revenue Share Fee — During the Pilot Term, Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order processed through the platform. Such revenue-share fees shall be borne solely by Client and shall not be presented to or charged to guests.
+${pClient} 5.3 Client Revenue Share Fee — During the Pilot Term, Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order processed through the platform. Such revenue-share fees shall be borne solely by Client and shall not be presented to or charged to guests.
 
 Daze acts strictly as a technology provider and payment facilitation agent and does not purchase, resell, or take ownership of any food, beverage, or tip amounts. All guest payments represent the Client's food and beverage sales.
 
