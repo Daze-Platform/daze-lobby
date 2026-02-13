@@ -79,7 +79,7 @@ export async function generateAgreementPdfBlob(options: GeneratePdfOptions): Pro
     const signedY = ctx.y + 16;
     pdf.text("SIGNED", signedTextX, signedY, { align: "right" });
     // Draw a small checkmark to the left of "SIGNED"
-    const checkX = signedTextX - pdf.getTextWidth("SIGNED") - 3;
+    const checkX = signedTextX - pdf.getTextWidth("SIGNED") - 5;
     pdf.setDrawColor(34, 197, 94);
     pdf.setLineWidth(0.5);
     pdf.line(checkX, signedY - 1, checkX + 1.2, signedY + 0.5);
