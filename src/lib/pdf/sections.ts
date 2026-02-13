@@ -224,7 +224,7 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         {
           type: "checkbox",
           checked: false,
-          text: "Not applicable during this Pilot.",
+          text: "No fees apply during the Pilot Term.",
         },
         { type: "spacer" },
 
