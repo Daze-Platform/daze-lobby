@@ -190,8 +190,6 @@ export function useClientPortal() {
         contact_email: legalEntityData?.contact_email,
         covered_outlets: legalEntityData?.covered_outlets,
         hardware_option: legalEntityData?.hardware_option,
-        num_tablets: legalEntityData?.num_tablets,
-        mounts_stands: legalEntityData?.mounts_stands,
         start_date: legalEntityData?.start_date,
         pilot_term_days: legalEntityData?.pilot_term_days,
         pricing_model: legalEntityData?.pricing_model,
