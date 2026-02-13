@@ -11,6 +11,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
 import dazeLogo from "@/assets/daze-logo.png";
 import { MFAChallengeForm } from "./MFAChallengeForm";
+import { OrDivider } from "@/components/ui/or-divider";
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -256,7 +257,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+          <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
           <Input
             id="email"
             type="email"
@@ -265,13 +266,13 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className={`rounded-xl ${error ? 'ring-destructive/50' : ''}`}
+            className={`rounded-xl bg-white border border-border ${error ? 'ring-destructive/50' : ''}`}
           />
         </div>
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
             <button
               type="button"
               onClick={onForgotPassword}
@@ -290,7 +291,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              className={`rounded-xl pr-10 ${error ? 'ring-destructive/50' : ''}`}
+              className={`rounded-xl pr-10 bg-white border border-border ${error ? 'ring-destructive/50' : ''}`}
             />
             <button
               type="button"
@@ -317,21 +318,13 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
           Sign In
         </Button>
 
-        {/* Divider */}
-        <div className="relative my-2">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
-          </div>
-        </div>
+        <OrDivider />
 
         {/* Google Sign In */}
         <Button
           type="button"
           variant="outline"
-          className="w-full rounded-xl gap-2 min-h-[44px]"
+          className="w-full rounded-xl gap-2 min-h-[44px] border-border/80"
           onClick={handleGoogleSignIn}
           disabled={loading || googleLoading}
         >
