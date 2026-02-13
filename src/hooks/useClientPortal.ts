@@ -66,6 +66,24 @@ export function useClientPortal() {
     enabled: !!clientId,
   });
 
+  // Subscribe to realtime venue changes
+  useEffect(() => {
+    if (!clientId) return;
+
+    const channel = supabase
+      .channel(`venues-realtime-${clientId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "venues", filter: `client_id=eq.${clientId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [clientId, queryClient]);
+
   // Fetch venue menus for all venues
   const venueIds = useMemo(() => (venuesData || []).map(v => v.id), [venuesData]);
   const { data: venueMenusData } = useQuery({
