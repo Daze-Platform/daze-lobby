@@ -68,7 +68,7 @@ interface PosStepProps {
   isLocked: boolean;
   isActive?: boolean;
   data?: Record<string, unknown>;
-  onUpdate: (data: { provider: string; status: string; pms_name?: string }) => void;
+  onUpdate: (data: { provider: string; status: string; pms_name?: string }, markCompleted?: boolean) => void;
   isSaving?: boolean;
   onStepComplete?: () => void;
   isJustCompleted?: boolean;
@@ -246,10 +246,11 @@ export function PosStep({
 
   const handleProviderSelect = (providerId: PosProvider) => {
     setSelectedProvider(providerId);
+    setPmsName(""); // Clear stale PMS name when switching providers
 
-    // Persist immediately
+    // Persist immediately — clear old pms_name
     if (providerId) {
-      onUpdate({ provider: providerId, status: "selected" });
+      onUpdate({ provider: providerId, status: "selected", pms_name: "" });
 
       logActivity.mutate({
         action: "pos_provider_selected",
@@ -264,9 +265,13 @@ export function PosStep({
   };
 
   const handleBack = () => {
+    // Persist cleared state to database
+    onUpdate({ provider: "", status: "", pms_name: "" });
+    
     setShowInstructions(false);
     setTimeout(() => {
       setSelectedProvider(null);
+      setPmsName("");
     }, 300);
   };
 
@@ -305,7 +310,7 @@ export function PosStep({
       provider: selectedProvider, 
       status: "pending_it",
       pms_name: pmsName.trim() || undefined,
-    });
+    }, true);
     
     // Log activity
     logActivity.mutate({
@@ -335,7 +340,7 @@ export function PosStep({
       provider: selectedProvider,
       status: "it_verified",
       pms_name: pmsName.trim() || undefined,
-    });
+    }, true);
 
     logActivity.mutate({
       action: "pos_it_verified",

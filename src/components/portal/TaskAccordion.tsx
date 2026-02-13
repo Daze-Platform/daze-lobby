@@ -16,7 +16,7 @@ interface OnboardingTask {
 interface TaskAccordionProps {
   tasks: OnboardingTask[];
   onLegalSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
-  onTaskUpdate: (taskKey: string, data: Record<string, unknown>) => void;
+  onTaskUpdate: (taskKey: string, data: Record<string, unknown>, markCompleted?: boolean) => void;
   onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
   onSaveLegalDraft?: (data: Record<string, unknown>) => Promise<void>;
   onRemoveTaskKeys?: (args: { taskKey: string; mergeData: Record<string, unknown>; removeKeys: string[] }) => Promise<void>;
@@ -117,7 +117,7 @@ export function TaskAccordion({
       ...p,
       logos: {},  // File objects can't be serialized; URLs are stored separately via uploadLogoMutation
     }));
-    onTaskUpdate("brand", { properties: cleanProperties });
+    onTaskUpdate("brand", { properties: cleanProperties }, true);
   };
 
   const handleLogoUpload = (propertyId: string, file: File, variant: string) => {
@@ -179,8 +179,8 @@ export function TaskAccordion({
     handleStepComplete("venue");
   };
 
-  const handlePosUpdate = (data: { provider: string; status: string; pms_name?: string }) => {
-    onTaskUpdate("pos", data);
+  const handlePosUpdate = (data: { provider: string; status: string; pms_name?: string }, markCompleted?: boolean) => {
+    onTaskUpdate("pos", data, markCompleted);
   };
 
   const handlePosComplete = () => {
@@ -188,7 +188,7 @@ export function TaskAccordion({
   };
 
   const handleDevicesUpdate = (data: { use_daze_tablets: boolean; tablet_count?: number }) => {
-    onTaskUpdate("devices", data);
+    onTaskUpdate("devices", data, true);
   };
 
   const handleDevicesComplete = () => {
