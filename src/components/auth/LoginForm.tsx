@@ -9,7 +9,7 @@ import { signIn } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
-import dazeLogo from "@/assets/daze-logo.png";
+import dazeCloudLogo from "@/assets/daze-cloud-logo.png";
 import { MFAChallengeForm } from "./MFAChallengeForm";
 import { OrDivider } from "@/components/ui/or-divider";
 
@@ -221,12 +221,12 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
     >
       {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
-        <div className="flex flex-row items-center justify-center gap-2 mb-3 sm:mb-4">
-          <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
+        <div className="flex flex-col items-center gap-2 mb-3 sm:mb-4">
+          <img src={dazeCloudLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
+          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight" style={{ color: '#1e293b' }}>Daze Lobby</span>
         </div>
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-slate-900">Welcome back</h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+        <h1 className="font-display text-lg sm:text-xl font-semibold" style={{ color: '#1e293b' }}>Welcome back</h1>
+        <p className="text-xs sm:text-sm mt-1" style={{ color: '#64748b' }}>
           Sign in to access the Control Tower
         </p>
       </div>
@@ -266,7 +266,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className={`rounded-xl !bg-white !border !border-border ${error ? 'ring-destructive/50' : ''}`}
+            className={`rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground ${error ? 'ring-destructive/50' : ''}`}
           />
         </div>
         
@@ -291,7 +291,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              className={`rounded-xl pr-10 !bg-white !border !border-border ${error ? 'ring-destructive/50' : ''}`}
+              className={`rounded-xl pr-10 !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground ${error ? 'ring-destructive/50' : ''}`}
             />
             <button
               type="button"
