@@ -60,11 +60,41 @@ export function AdminBrandPosControls({
 
   // Sync state when props change
   useEffect(() => {
-    
     setPosInstructions(currentPosInstructions || "");
     setLogoPreview(currentLogoUrl || null);
     setSelectedPosProvider(currentPosProvider || "");
   }, [currentPosInstructions, currentLogoUrl, currentPosProvider]);
+
+  // Auto-save POS provider when selection changes
+  const saveProviderMutation = useMutation({
+    mutationFn: async (provider: string) => {
+      const { data: task, error: fetchError } = await supabase
+        .from("onboarding_tasks")
+        .select("id, data")
+        .eq("client_id", clientId)
+        .eq("task_key", "pos")
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
+
+      if (task) {
+        const existingData = (task.data as Record<string, unknown>) || {};
+        const { error } = await supabase
+          .from("onboarding_tasks")
+          .update({ data: { ...existingData, provider } })
+          .eq("id", task.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-tasks", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-pos-task", clientId] });
+      toast.success("POS provider saved");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to save provider: ${error.message}`);
+    },
+  });
 
   
 
@@ -190,7 +220,7 @@ export function AdminBrandPosControls({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Select value={selectedPosProvider} onValueChange={setSelectedPosProvider}>
+          <Select value={selectedPosProvider} onValueChange={(val) => { setSelectedPosProvider(val); saveProviderMutation.mutate(val); }}>
             <SelectTrigger className="h-10 bg-background">
               <SelectValue placeholder="Select POS provider" />
             </SelectTrigger>
