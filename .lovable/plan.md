@@ -1,37 +1,96 @@
 
 
-## Fix: Persist POS Provider and PMS Name Inputs
+## Fix: Ensure Edited Data Persists Over Previous Inputs
 
-### Problem
-When a client selects a POS provider and types their PMS name, neither value is saved to the database until they click "Mark as Sent to IT." If the user navigates away, collapses the accordion, or refreshes the page, both inputs are lost and must be re-entered.
+### Problems Found
 
-### Root Cause
-- `handleProviderSelect` in PosStep only updates local state -- it never calls `onUpdate` to persist the selection
-- The PMS name input only saves on "Mark as Sent to IT" click, not on change
-- The `handlePosUpdate` handler in TaskAccordion has a narrow type that excludes `pms_name`
+**1. POS provider change leaves stale PMS name in database**
+When a user selects a provider, types a PMS name, then goes back and picks a different provider, the old PMS name stays in the database. On reload, the old PMS name shows up under the new provider because the merge operation only adds/overwrites keys -- it never removes the old `pms_name`.
+
+**2. Every intermediate save incorrectly marks the task as "completed"**
+The `updateTaskMutation` in `useClientPortal.ts` always calls `merge_task_data` with `p_mark_completed: true`. This means:
+- The POS debounce auto-save (from the last fix) marks POS as complete every time the user types in the PMS field
+- A "Task updated successfully!" toast fires on every keystroke debounce, spamming the user
+- The step progress indicator incorrectly shows POS as done before the user clicks "Mark as Sent to IT"
+
+**3. POS "Back to providers" doesn't persist the cleared selection**
+Clicking back only clears local state but doesn't update the database. If the user navigates away before picking a new provider, the old selection remains.
 
 ### Solution
-1. Save the provider to the database immediately when selected (before animating to instructions)
-2. Auto-save the PMS name with a debounce (e.g., 800ms after the user stops typing) so it persists without requiring a button click
-3. Fix the type signature in TaskAccordion to pass `pms_name` through
 
-### Technical Changes
-
-**File: `src/components/portal/steps/PosStep.tsx`**
-- In `handleProviderSelect`: call `onUpdate({ provider: providerId, status: "selected" })` to persist the selection immediately
-- Add a `useEffect` with debounce on `pmsName` state: after 800ms of no typing, call `onUpdate` with the current provider, status, and `pms_name`
-- This ensures both values survive page refreshes and accordion collapses
+**File: `src/hooks/useClientPortal.ts`**
+- Add an optional `markCompleted` flag to `updateTaskMutation` (default: `false`)
+- Only show "Task updated successfully!" toast when the task is actually being marked complete
+- This separates "save draft data" from "complete the step"
 
 **File: `src/components/portal/TaskAccordion.tsx`**
-- Update `handlePosUpdate` type to include the optional `pms_name` field: `(data: { provider: string; status: string; pms_name?: string })`
+- Split POS handling into two paths:
+  - `handlePosUpdate`: for intermediate saves (provider select, PMS name debounce) -- passes `markCompleted: false`
+  - `handlePosSave` (existing completion handlers): for "Sent to IT" -- passes `markCompleted: true`
+- Add a new `onSaveTask` prop (or modify `onTaskUpdate`) that accepts a `markCompleted` option
 
-### What Users Will See
-- Select a POS provider -- it saves instantly; reopen the step and the provider is still selected with instructions showing
-- Type a PMS name -- it auto-saves after a brief pause; refresh the page and the name is still there
-- No change to existing "Mark as Sent to IT" or "IT Verification" flows
+**File: `src/components/portal/steps/PosStep.tsx`**
+- When selecting a new provider, also clear `pms_name` from the persisted data
+- When going back to provider list, persist the cleared state to the database
+- Remove PMS name from local state when switching providers
+
+### Technical Details
+
+The core change is in `useClientPortal.ts`:
+
+```typescript
+// Before: always marks complete
+const updateTaskMutation = useMutation({
+  mutationFn: async ({ taskKey, data }) => {
+    await supabase.rpc("merge_task_data", {
+      ...
+      p_mark_completed: true,  // BUG: always true
+    });
+  },
+  onSuccess: () => {
+    toast.success("Task updated successfully!");  // spams on every debounce
+  },
+});
+
+// After: caller decides
+const updateTaskMutation = useMutation({
+  mutationFn: async ({ taskKey, data, markCompleted = false }) => {
+    await supabase.rpc("merge_task_data", {
+      ...
+      p_mark_completed: markCompleted,
+    });
+  },
+  onSuccess: (_data, variables) => {
+    if (variables.markCompleted) {
+      toast.success("Task updated successfully!");
+    }
+  },
+});
+```
+
+In `PosStep.tsx`, the provider select and back handlers will include all relevant fields:
+
+```typescript
+// Provider select: clears old PMS name
+onUpdate({ provider: providerId, status: "selected", pms_name: "" });
+
+// Back: clears selection in DB
+onUpdate({ provider: "", status: "", pms_name: "" });
+```
+
+In `TaskAccordion.tsx`, add a `markCompleted` option to `onTaskUpdate`:
+
+```typescript
+onTaskUpdate: (taskKey: string, data: Record<string, unknown>, markCompleted?: boolean) => void;
+```
+
+Explicit completion actions (Brand Save, POS "Sent to IT", Devices confirm) will pass `markCompleted: true`. All other saves (debounce, provider select) will pass `markCompleted: false` or omit it.
+
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/portal/steps/PosStep.tsx` | Persist provider on select; debounce-save PMS name |
-| `src/components/portal/TaskAccordion.tsx` | Fix `handlePosUpdate` type to include `pms_name` |
+| `src/hooks/useClientPortal.ts` | Add `markCompleted` flag to `updateTaskMutation`, suppress toast on draft saves |
+| `src/components/portal/TaskAccordion.tsx` | Thread `markCompleted` option through `onTaskUpdate` |
+| `src/components/portal/steps/PosStep.tsx` | Clear stale PMS name on provider switch; persist cleared state on "Back" |
 
