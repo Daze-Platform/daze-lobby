@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { HotelDetailPanel } from "@/components/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +64,8 @@ const phaseLabels: Record<string, string> = {
 type PhaseFilter = "onboarding" | "reviewing" | "pilot_live" | "contracted";
 
 export default function Clients() {
-  const [showDeleted, setShowDeleted] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showDeleted = searchParams.get("view") === "deleted";
   const { data: clients, isLoading } = useClients(showDeleted);
   const navigate = useNavigate();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -153,7 +154,15 @@ export default function Clients() {
               variant={showDeleted ? "destructive" : "outline"}
               size="sm"
               className="gap-1.5 text-xs h-7"
-              onClick={() => setShowDeleted(!showDeleted)}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                if (showDeleted) {
+                  next.delete("view");
+                } else {
+                  next.set("view", "deleted");
+                }
+                setSearchParams(next);
+              }}
             >
               <Trash size={14} weight="duotone" />
               Recently Deleted
