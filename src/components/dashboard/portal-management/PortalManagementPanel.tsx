@@ -78,9 +78,16 @@ export function PortalManagementPanel({
   const isLoading = isLoadingDocs || isLoadingPos;
 
   // Build invite URL
-  const inviteUrl = clientSlug
-    ? `${window.location.origin}/portal/${clientSlug}${primaryContact?.email ? `?email=${encodeURIComponent(primaryContact.email)}` : ""}`
-    : null;
+  const inviteUrl = (() => {
+    if (!clientSlug) return null;
+    const params = new URLSearchParams();
+    if (primaryContact?.email) params.set("email", primaryContact.email);
+    if (primaryContact?.name) params.set("name", primaryContact.name);
+    const query = params.toString();
+    return query
+      ? `${window.location.origin}/portal/${clientSlug}?${query}`
+      : `${window.location.origin}/portal/${clientSlug}`;
+  })();
 
   const handleCopy = async () => {
     if (!inviteUrl) return;

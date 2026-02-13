@@ -38,6 +38,7 @@ export function ClientLoginForm() {
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
   const emailParam = searchParams.get("email");
+  const nameParam = searchParams.get("name");
   const verifiedParam = searchParams.get("verified") === "true";
 
   const [mode, setMode] = useState<"login" | "signup">(
@@ -45,7 +46,7 @@ export function ClientLoginForm() {
   );
   const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(nameParam || "");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -57,6 +58,7 @@ export function ClientLoginForm() {
   const navigate = useNavigate();
 
   const isEmailLocked = !!emailParam;
+  const isNameLocked = !!nameParam;
 
   const passwordValidation = useMemo(() => validatePassword(password), [password]);
   const showStrengthIndicator = mode === "signup" && password.length > 0;
@@ -262,10 +264,11 @@ export function ClientLoginForm() {
               type="text"
               placeholder="Jane Smith"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              onChange={(e) => !isNameLocked && setFullName(e.target.value)}
               required
               disabled={loading}
-              className="rounded-xl"
+              readOnly={isNameLocked}
+              className={`rounded-xl ${isNameLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
             />
           </div>
         )}
