@@ -100,7 +100,12 @@ export function AdminDocumentUpload({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", clientId] });
       queryClient.invalidateQueries({ queryKey: ["admin-documents", clientId] });
-      logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title } });
+      const logTitle = documentType === "pilot_agreement" 
+        ? "Pilot Agreement Document" 
+        : documentType === "security_docs" 
+          ? "Security Documentation" 
+          : "additional documents";
+      logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title: logTitle } });
       const uploadedName = documentType === "general" && customDisplayName ? customDisplayName : title;
       toast.success(`${uploadedName} uploaded successfully`);
       if (documentType === "general" && onCustomDisplayNameChange) {

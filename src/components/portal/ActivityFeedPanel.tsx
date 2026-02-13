@@ -93,7 +93,11 @@ export function formatAction(log: ActivityLog): { userName: string; actionText: 
     blocker_created: `flagged a blocker: ${(details?.reason as string)?.substring(0, 30) || "issue detected"}`,
     blocker_force_cleared: "manually cleared a blocker",
     blocker_notification: `sent a notification: "${(details?.message as string) || (details?.blocker_reason as string) || "Action required"}"`,
-    document_uploaded: `uploaded ${(details?.title as string) || "a document"}`,
+    document_uploaded: (() => {
+      const t = details?.title as string;
+      if (t === "Pilot Agreement Document" || t === "Security Documentation") return `uploaded ${t}`;
+      return "uploaded additional documents";
+    })(),
     document_deleted: `removed ${(details?.title as string) || "a document"}`,
     client_deleted: `deleted client "${(details?.client_name as string) || "a client"}"`,
     client_restored: `restored client "${(details?.client_name as string) || "a client"}"`,
