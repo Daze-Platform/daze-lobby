@@ -1,34 +1,74 @@
 
 
-# Show Admin Initials and Avatar in Control Tower Header
+# Faster, Smoother Drag-and-Drop with Haptic Feedback
 
 ## What Changes
 
-The profile button in the Control Tower header currently shows a generic person icon for all users. This update will replace it with:
+Three improvements to make card transfers feel snappier and more tactile:
 
-1. **User initials** displayed in a styled circle (matching the portal header pattern)
-2. **Profile photo** shown automatically if the admin has uploaded one via Settings
-
-No new upload flow is needed -- avatar upload already exists in the Founder Settings dialog, and the auth system already loads `avatarUrl` from the database. We just need to wire it into the header.
+1. **Faster drop animation** -- Reduce the `DragOverlay` drop duration from 200ms to 150ms for a crisper settle
+2. **Haptic feedback** -- Use the browser Vibration API to provide a subtle buzz on drag start, column hover, and drop. This works on supported mobile devices and is silently ignored on desktop
+3. **Smoother card exit/enter transitions** -- Add a quick opacity+scale transition on the source card placeholder so the layout shift feels intentional rather than abrupt
 
 ## Technical Details
 
-### File: `src/components/layout/DashboardHeader.tsx`
+### 1. `src/components/kanban/KanbanBoard.tsx`
 
-- Replace the `User` (Lucide) icon import with `Avatar`, `AvatarImage`, `AvatarFallback` from the existing avatar component
-- Add a helper function to derive initials from the user's name or email (same pattern used in `PortalHeader` and `SettingsDialog`)
-- Replace the generic icon circle (lines 87-89) with an `Avatar` component that:
-  - Shows the user's uploaded profile photo if `user.avatarUrl` exists
-  - Falls back to styled initials derived from `user.fullName` or `user.email`
-- Remove the unused `User` import from lucide-react
+**Drop animation speed** (around line 224):
+```
+// Before
+dropAnimation={{ duration: 200, easing: '...' }}
 
-### Visual Result
+// After
+dropAnimation={{ duration: 150, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' }}
+```
 
-- When no photo is uploaded: A circle with the admin's initials (e.g., "AT" for Angelo Thomas) in the brand's primary color scheme
-- When a photo is uploaded via Settings: The photo replaces the initials automatically
-- Consistent with the portal header's avatar treatment
+**Haptic on drag start** (inside `handleDragStart`):
+```typescript
+// Trigger a short vibration pulse when picking up a card
+if (navigator.vibrate) navigator.vibrate(15);
+```
 
-### No Database or Backend Changes Required
+**Haptic on column change** (inside `handleDragOver`, when `overColumnId` changes to a new valid column):
+```typescript
+// Light tap when hovering over a new column
+if (navigator.vibrate) navigator.vibrate(10);
+```
 
-The `avatarUrl` field is already fetched by the auth system and available via `useAuthContext()`. The avatar upload feature already exists in Settings and stores images in the `profile-avatars` storage bucket.
+**Haptic on drop** (inside `handleDragEnd`, after a successful phase change):
+```typescript
+// Confirm vibration on successful drop
+if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+```
+
+### 2. `src/components/kanban/HotelCard.tsx`
+
+**Smoother placeholder transition** (on the dragged card's wrapper `div`, around line 79-83):
+
+Replace the instant `opacity: 0` hide with a CSS transition so the card fades out smoothly when picked up:
+```typescript
+style={{
+  opacity: isBeingDragged ? 0 : 1,
+  transform: isBeingDragged ? 'scale(0.95)' : 'scale(1)',
+  transition: 'opacity 120ms ease, transform 120ms ease',
+  pointerEvents: isBeingDragged ? "none" : undefined,
+}}
+```
+
+### 3. `src/components/kanban/KanbanColumn.tsx`
+
+**Faster column highlight transition** (line 106):
+```
+// Before
+"transition-all duration-200"
+
+// After  
+"transition-all duration-150"
+```
+
+## Notes
+
+- `navigator.vibrate()` is a no-op on iOS Safari and desktop browsers -- it just returns `false` gracefully, so no feature detection guards are needed beyond the null check
+- The easing change to `cubic-bezier(0.25, 1, 0.5, 1)` gives an "ease-out-quint" feel -- fast start, gentle settle
+- No new dependencies required
 
