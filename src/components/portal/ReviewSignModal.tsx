@@ -211,13 +211,15 @@ Pilot pricing is agreed separately below and does not establish precedent for lo
 
 Select one pricing model:
 
-${pSub} 5.1 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $${pAmt} for access and use of the Daze platform and related services during the Pilot Term.
+[ ] 5.1 No Fees — Not applicable during this Pilot.
 
-${pDaze} 5.2 Daze Revenue Share Fee — During the Pilot Term, Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform. The remaining net proceeds, including applicable food and beverage revenue and tips, shall be remitted to Client in accordance with Section 6.
+[ ] 5.2 Subscription Platform Fee — Client agrees to pay Daze a platform subscription fee of $________ for access and use of the Daze platform and related services during the Pilot Term.
+
+${pDaze} 5.3 Daze Revenue Share Fee — During the Pilot Term, Daze shall retain a fee equal to ${pAmt}% of the gross transaction value of each completed order processed through the platform. The remaining net proceeds, including applicable food and beverage revenue and tips, shall be remitted to Client in accordance with Section 6.
 
 Daze acts solely as a payment facilitation agent and does not purchase, resell, or take ownership of any food, beverage, or tip amounts.
 
-${pClient} 5.3 Client Revenue Share Fee — During the Pilot Term, Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order processed through the platform. Such revenue-share fees shall be borne solely by Client and shall not be presented to or charged to guests.
+${pClient} 5.4 Client Revenue Share Fee — During the Pilot Term, Client shall pay Daze a revenue-share fee equal to ${pAmt}% of the gross food and beverage sales value of each completed order processed through the platform. Such revenue-share fees shall be borne solely by Client and shall not be presented to or charged to guests.
 
 Daze acts strictly as a technology provider and payment facilitation agent and does not purchase, resell, or take ownership of any food, beverage, or tip amounts. All guest payments represent the Client's food and beverage sales.
 
@@ -279,6 +281,8 @@ Both parties agree to maintain the confidentiality of non-public information dis
 Either party may terminate this Agreement upon fourteen (14) days' written notice to the other party.
 
 Upon termination: (a) Client shall immediately cease use of the platform; (b) Daze shall provide final settlement within fourteen (14) days; (c) each party shall return or destroy the other's Confidential Information.
+
+Sections 4.3 (Hardware & Physical Materials), 6 (Settlement, Tips, and Chargebacks), 8 (Data, Security, and Confidentiality), 10 (Indemnification), 11 (Limitation of Liability), and 13 (Miscellaneous) shall survive termination.
 
 10. INDEMNIFICATION
 
