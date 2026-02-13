@@ -103,7 +103,7 @@ export function KanbanColumn({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex-1 p-2 sm:p-3 rounded-b-xl border border-t-0 transition-all duration-200",
+          "flex-1 p-2 sm:p-3 rounded-b-xl border border-t-0 transition-all duration-150",
           "bg-muted/30",
           isActive && "bg-primary/5 border-primary/40 ring-2 ring-primary/20"
         )}

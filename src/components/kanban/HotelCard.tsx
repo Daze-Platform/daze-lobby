@@ -87,6 +87,8 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
       )}
       style={{
         opacity: isBeingDragged ? 0 : 1,
+        transform: isBeingDragged ? 'scale(0.95)' : 'scale(1)',
+        transition: 'opacity 120ms ease, transform 120ms ease',
         pointerEvents: isBeingDragged ? "none" : undefined,
       }}
     >
