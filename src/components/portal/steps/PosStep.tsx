@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AccordionContent,
@@ -220,19 +220,43 @@ export function PosStep({
         ? "locked"
         : "pending";
 
+  // Debounce PMS name auto-save
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const initialLoadRef = useRef(true);
+
+  useEffect(() => {
+    // Skip the initial render to avoid saving on mount
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    if (!selectedProvider) return;
+
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onUpdate({
+        provider: selectedProvider,
+        status: isPendingIT ? "pending_it" : isITVerified ? "it_verified" : "selected",
+        pms_name: pmsName.trim() || undefined,
+      });
+    }, 800);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [pmsName]);
+
   const handleProviderSelect = (providerId: PosProvider) => {
     setSelectedProvider(providerId);
-    
-    // Log activity
+
+    // Persist immediately
     if (providerId) {
+      onUpdate({ provider: providerId, status: "selected" });
+
       logActivity.mutate({
         action: "pos_provider_selected",
-        details: {
-          provider: providerId,
-        },
+        details: { provider: providerId },
       });
     }
-    
+
     // Animate to instructions after a brief delay
     setTimeout(() => {
       setShowInstructions(true);
