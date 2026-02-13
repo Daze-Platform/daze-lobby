@@ -447,9 +447,9 @@ export function ReviewSignModal({
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [pilotTermDays, setPilotTermDays] = useState("90");
 
-  // Section D: Pricing — hardcoded to 10% Daze Revenue Share
-  const pricingModel = "daze_rev_share" as const;
-  const pricingAmount = "10";
+  // Section D: Pricing
+  const [pricingModel, setPricingModel] = useState<"daze_rev_share" | "client_rev_share">("daze_rev_share");
+  const [pricingAmount, setPricingAmount] = useState("10");
 
   // Section E: POS
   const [posSystem, setPosSystem] = useState("");
@@ -723,12 +723,50 @@ export function ReviewSignModal({
                       </div>
                     </FormSection>
 
-                    {/* Section D: Pricing — hardcoded 10% Daze Revenue Share */}
+                    {/* Section D: Pricing */}
                     <FormSection title="D — Pricing" icon={DollarSign}>
-                      <div className="p-3 rounded-lg bg-muted/30">
-                        <p className="text-xs font-medium">Daze Revenue Share</p>
-                        <p className="text-lg font-semibold">10%</p>
-                        <p className="text-[10px] text-muted-foreground">of gross transaction value</p>
+                      <RadioGroup
+                        value={pricingModel}
+                        onValueChange={(val) => setPricingModel(val as "daze_rev_share" | "client_rev_share")}
+                        className="space-y-2.5"
+                      >
+                        <label className={cn(
+                          "flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors",
+                          pricingModel === "daze_rev_share" ? "border-primary bg-primary/5" : "border-border/50 bg-muted/30 hover:bg-muted/50"
+                        )}>
+                          <RadioGroupItem value="daze_rev_share" className="mt-0.5" />
+                          <div>
+                            <p className="text-xs font-medium">Daze Revenue Share</p>
+                            <p className="text-[10px] text-muted-foreground">Daze retains a % of gross transaction value</p>
+                          </div>
+                        </label>
+                        <label className={cn(
+                          "flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors",
+                          pricingModel === "client_rev_share" ? "border-primary bg-primary/5" : "border-border/50 bg-muted/30 hover:bg-muted/50"
+                        )}>
+                          <RadioGroupItem value="client_rev_share" className="mt-0.5" />
+                          <div>
+                            <p className="text-xs font-medium">Client Revenue Share</p>
+                            <p className="text-[10px] text-muted-foreground">Client pays Daze a % of gross food & beverage sales</p>
+                          </div>
+                        </label>
+                      </RadioGroup>
+                      <div className="space-y-1 mt-3">
+                        <Label className="text-[10px] sm:text-xs text-muted-foreground">Revenue Share %</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="100"
+                          placeholder="10"
+                          value={pricingAmount}
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val === "") { setPricingAmount(""); return; }
+                            const num = parseInt(val, 10);
+                            if (!isNaN(num)) setPricingAmount(String(Math.min(num, 100)));
+                          }}
+                          className="h-8 sm:h-9 text-xs sm:text-sm w-24"
+                        />
                       </div>
                     </FormSection>
 
