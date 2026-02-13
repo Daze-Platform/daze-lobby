@@ -79,6 +79,10 @@ export function PortalHeader({
                 Preview
               </Badge>
             )}
+            {/* Mobile active view indicator */}
+            <span className="md:hidden text-xs font-medium text-muted-foreground capitalize">
+              {activeView === "onboarding" ? "Onboarding" : "Documents"}
+            </span>
             {isAdminViewing && !isPreview && (
               <>
                 <Badge variant="secondary" className="bg-warning/10 text-warning border-0 font-bold uppercase tracking-wide text-2xs px-2 py-0.5">

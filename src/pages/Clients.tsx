@@ -335,7 +335,7 @@ export default function Clients() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      className="h-10 w-10 sm:h-8 sm:w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(`/admin/portal/${client.client_slug}`);
@@ -352,10 +352,10 @@ export default function Clients() {
                             <TooltipProvider delayDuration={0}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-10 w-10 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setDeleteClientTarget(client);
@@ -376,7 +376,7 @@ export default function Clients() {
                                       variant="ghost"
                                       size="icon"
                                       className={cn(
-                                        "h-8 w-8",
+                                        "h-10 w-10 sm:h-8 sm:w-8",
                                         client.hasRecentReminder
                                           ? "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                                           : "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
