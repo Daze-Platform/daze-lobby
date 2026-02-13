@@ -1,51 +1,47 @@
 
 
-## Fix Activity Feed Document Upload Labels
+## Add Real-Time Venue Sync Between Admin and Client Portal
 
-### Problem
-When admins upload documents, the activity log stores the UI card title (e.g., "Upload Document") as the `title` in details. This shows up in the activity feed as "uploaded Upload Document" instead of a meaningful label.
-
-### Logic
-- Documents with specific types (`pilot_agreement`, `security_docs`) have known titles: "Pilot Agreement Document" and "Security Documentation"
-- Any document that doesn't match these specific titles should display as "additional documents"
+When an admin creates a venue preset in Portal Management, it currently only appears in the client portal after a manual page refresh. This plan adds real-time sync so changes appear instantly.
 
 ### Changes
 
-**1. `src/components/dashboard/portal-management/AdminDocumentUpload.tsx` (line 103)**
+**1. Database Migration -- Enable Realtime on `venues` table**
 
-Change the logged title to use the proper display name instead of the raw `title` prop:
+Run a migration to add the `venues` table to the Supabase realtime publication:
 
-```ts
-// Before:
-logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title } });
-
-// After:
-const logTitle = documentType === "pilot_agreement" 
-  ? "Pilot Agreement Document" 
-  : documentType === "security_docs" 
-    ? "Security Documentation" 
-    : "additional documents";
-logActivity.mutate({ action: "document_uploaded", details: { type: documentType, title: logTitle } });
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.venues;
 ```
 
-**2. `src/components/portal/ActivityFeedPanel.tsx` (line 96)**
+**2. `src/hooks/useClientPortal.ts` (~line 52, after the venues query)**
 
-Update the `document_uploaded` format to handle any title that isn't a recognized specific document type as "additional documents":
+Add a Supabase Realtime subscription that listens for INSERT, UPDATE, and DELETE events on the `venues` table (filtered to the current `client_id`). When any change is detected, invalidate the `["venues", clientId]` query so the UI refreshes automatically.
 
 ```ts
-// Before:
-document_uploaded: `uploaded ${(details?.title as string) || "a document"}`,
+// Subscribe to realtime venue changes
+useEffect(() => {
+  if (!clientId) return;
 
-// After - apply fallback logic for display:
-document_uploaded: (() => {
-  const t = details?.title as string;
-  if (t === "Pilot Agreement Document" || t === "Security Documentation") return `uploaded ${t}`;
-  return "uploaded additional documents";
-})(),
+  const channel = supabase
+    .channel(`venues-realtime-${clientId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "venues", filter: `client_id=eq.${clientId}` },
+      () => {
+        queryClient.invalidateQueries({ queryKey: ["venues", clientId] });
+      }
+    )
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
+}, [clientId, queryClient]);
 ```
 
-This ensures:
-- Past logs with "Upload Document" as title will also render correctly as "uploaded additional documents"
-- New uploads will log the correct title going forward
-- "Pilot Agreement Document" and "Security Documentation" continue showing their specific names
+This is placed inside `useClientPortal` so both the admin preview (via `AdminPortalBySlug`) and the client portal benefit from live updates.
+
+### What stays the same
+- All existing venue CRUD logic and optimistic updates remain untouched
+- The `AdminVenuePresets` component continues writing to the same `venues` table
+- No UI component changes needed -- the query invalidation triggers a re-render automatically
 
