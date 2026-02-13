@@ -220,15 +220,23 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         { type: "paragraph", text: "Select one pricing model:" },
         { type: "spacer" },
 
-        { type: "sub-sub", text: "5.1 Subscription Platform Fee" },
+        { type: "sub-sub", text: "5.1 No Fees" },
         {
           type: "checkbox",
-          checked: pm === "subscription",
-          text: `Client agrees to pay Daze a platform subscription fee of $${pm === "subscription" ? pAmt : "________"} for access and use of the Daze platform and related services during the Pilot Term.`,
+          checked: false,
+          text: "Not applicable during this Pilot.",
         },
         { type: "spacer" },
 
-        { type: "sub-sub", text: "5.2 Daze Revenue Share Fee" },
+        { type: "sub-sub", text: "5.2 Subscription Platform Fee" },
+        {
+          type: "checkbox",
+          checked: false,
+          text: "Client agrees to pay Daze a platform subscription fee of $________ for access and use of the Daze platform and related services during the Pilot Term.",
+        },
+        { type: "spacer" },
+
+        { type: "sub-sub", text: "5.3 Daze Revenue Share Fee" },
         {
           type: "checkbox",
           checked: pm === "daze_rev_share",
@@ -240,7 +248,7 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         },
         { type: "spacer" },
 
-        { type: "sub-sub", text: "5.3 Client Revenue Share Fee" },
+        { type: "sub-sub", text: "5.4 Client Revenue Share Fee" },
         {
           type: "checkbox",
           checked: pm === "client_rev_share",
@@ -392,6 +400,10 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         {
           type: "paragraph",
           text: "Upon termination: (a) Client shall immediately cease use of the platform; (b) Daze shall provide final settlement within fourteen (14) days; (c) each party shall return or destroy the other's Confidential Information.",
+        },
+        {
+          type: "paragraph",
+          text: "Sections 4.3 (Hardware & Physical Materials), 6 (Settlement, Tips, and Chargebacks), 8 (Data, Security, and Confidentiality), 10 (Indemnification), 11 (Limitation of Liability), and 13 (Miscellaneous) shall survive termination.",
         },
       ],
     },
