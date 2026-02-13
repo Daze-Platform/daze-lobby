@@ -55,7 +55,7 @@ export default function Dashboard() {
               onClick={() => navigate(stat.route)}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 pt-3 sm:pt-4 px-4 sm:px-6">
-                <span className="label-micro text-[9px] sm:text-[10px]">{stat.label}</span>
+                <span className="label-micro text-[8px] sm:text-[10px] break-words">{stat.label}</span>
                 <stat.icon size={16} weight="duotone" className="text-muted-foreground" />
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-3 sm:pb-4">
