@@ -154,6 +154,7 @@ export function KanbanBoard() {
     const client = clients?.find((c) => c.id === active.id);
     setActiveClient(client || null);
     document.body.style.cursor = 'grabbing';
+    if (navigator.vibrate) navigator.vibrate(15);
   }, [clients]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
@@ -163,10 +164,12 @@ export function KanbanBoard() {
       return;
     }
     
-    // Since columns are the only droppables, over.id is always a phase
     const columnPhase = COLUMNS.find((col) => col.phase === over.id)?.phase;
+    if (columnPhase && columnPhase !== overColumnId) {
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
     setOverColumnId(columnPhase || null);
-  }, []);
+  }, [overColumnId]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -202,6 +205,7 @@ export function KanbanBoard() {
       setTimeout(triggerMiniConfetti, 200);
     }
 
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
     updatePhase.mutate({
       clientId: active.id as string,
       newPhase: targetPhase,
@@ -302,8 +306,8 @@ export function KanbanBoard() {
       {createPortal(
         <DragOverlay 
           dropAnimation={{
-            duration: 200,
-            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+            duration: 150,
+            easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
           }}
           style={{ zIndex: 9999 }}
         >
