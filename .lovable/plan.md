@@ -1,25 +1,32 @@
 
-## Fix Daze Lobby Auth Card Legibility and Logo Placement
 
-### Issues Identified (from screenshot)
+## Add Onboarding Summary Slide to Welcome Tour
 
-1. **"Daze Lobby" title** is barely readable -- uses `text-slate-900` but appears washed out against the white card
-2. **"Welcome back" heading** is nearly invisible -- same contrast issue
-3. **Logo placement** -- currently inline (side-by-side) with "Daze Lobby" text; user wants it stacked vertically (logo on top, text below)
-4. **Input text** is hard to read when filled in (placeholder and typed text both appear faint)
+### Goal
+Expand the Welcome Tour with an additional slide that explains what the platform does and summarizes the onboarding steps clients need to complete to go live.
 
-### Changes
+### Current State
+The tour has 3 slides:
+1. "Welcome to a brighter day." -- intro to Daze
+2. "Effortless service, floating on air." -- upload menus/branding, hardware, training
+3. "Ready for Takeoff?" -- CTA to start the 3 setup tasks
 
-**1. `src/components/auth/LoginForm.tsx`**
+### Proposed Change
+Insert a new slide at position 2 (between the current slides 1 and 2) that acts as a platform overview and onboarding roadmap. The new 4-slide sequence:
 
-- **Logo layout**: Change from `flex-row` to `flex-col` so the Daze Cloud logo sits above the "Daze Lobby" text
-- **Logo asset**: Switch from `daze-logo.png` to `daze-cloud-logo.png` (the preferred branded logo used on the Partner Portal)
-- **Logo size**: Bump to `h-12 w-12 sm:h-14 sm:w-14` for better visual presence
-- **Text contrast**: Change "Daze Lobby" and "Welcome back" from `text-slate-900` to explicit dark color using style prop (`color: '#1e293b'`) to guarantee visibility regardless of theme variable resolution
-- **Input text**: Add `!text-foreground placeholder:!text-muted-foreground` to ensure typed text and placeholders are legible
+1. **"Welcome to a brighter day."** (unchanged)
+2. **NEW -- "Your path to going live."** -- Summarizes the 5 onboarding steps: Brand Identity, Venues, POS Integration, Devices, and Legal. Frames it as a simple checklist so clients know exactly what to expect.
+3. **"Effortless service, floating on air."** (unchanged -- explains Daze handles hardware/training)
+4. **"Ready for Takeoff?"** (unchanged -- CTA)
 
-**2. `src/components/auth/SignUpForm.tsx`**
+### Technical Details
 
-- Apply the exact same logo, layout, and contrast fixes for consistency
+**File: `src/components/portal/WelcomeTour.tsx`**
 
-### No functional changes -- purely visual refinement.
+- Add a new entry to the `TOUR_SLIDES` array at index 1 with:
+  - `headline`: "Your path to going live."
+  - `subtext`: A concise summary like "Complete five simple steps -- share your brand, set up your venues, connect your POS, confirm your devices, and sign off on the agreement. We handle the rest."
+  - `icon`: `ClipboardList` from lucide-react (fits the checklist/roadmap concept)
+- Update the `ClipboardList` import from `lucide-react`
+- No other files need changes -- the tour already dynamically renders dots and navigation based on the array length
+
