@@ -1,47 +1,64 @@
 
 
-## Add General Document Upload Slot in Portal Management
+## Pre-populate Property Name for Springhill Suites Orange Beach + Admin Property Preset Feature
 
-### What This Does
+### Part 1: Hardcoded Pre-fill for Springhill Suites Orange Beach
 
-Adds a third document upload card in the Control Tower's Documents tab -- an open-ended "Additional Documents" uploader that lets admins upload any file (PDF, DOCX) with a custom display name. These documents will automatically appear in the client's portal Documents library alongside the Pilot Agreement and Security Docs.
+The brand task for this client currently has empty data (`{}`). When the client opens the Brand Identity step, they see no properties and must add one manually. We'll pre-populate the property name so it's ready when they arrive.
 
-### Changes
+**File: `src/components/portal/steps/BrandStep.tsx`**
 
-**File: `src/components/dashboard/portal-management/PortalManagementPanel.tsx`**
+In the `useState` initializer for `properties` (around line 113-149), after the check for saved properties and legacy data returns empty, add a fallback that checks the client name from context. Specifically, if the client slug is `springhill-suites-orange-beach` (or we can match by client name), initialize with one property named **"SpringHill Suites by Marriott Orange Beach Gulf Shores"** instead of returning an empty array.
 
-- Add a third `AdminDocumentUpload` component below the Security Documentation card, using a new document type `"general"` with:
-  - Title: "Additional Document"
-  - Description: "Upload any other document to share with this client"
-- Filter existing documents to find any with category `"General"` to populate the existing document slot
-- Since the current `AdminDocumentUpload` replaces a single file per type, we'll add a **multi-upload variant**: a small list of all `"General"` category documents already uploaded, plus an upload button to add more
-
-**File: `src/components/dashboard/portal-management/AdminDocumentUpload.tsx`**
-
-- Add `"general"` to the `categoryMap` (mapped to `"General"`) and `displayNameMap`
-- For the `general` type specifically, add a text input so the admin can provide a custom display name before uploading (defaulting to the file name)
-- This way each uploaded general document gets its own meaningful name in the client's document library
-
-**File: `src/components/portal/PortalDocuments.tsx`**
-
-- No changes needed -- it already queries all documents for the client and displays them with their category badge, so any new `"General"` category docs will appear automatically
-
-### Technical Detail
-
-```text
-AdminDocumentUpload receives documentType="general"
-  --> Shows optional "Document Name" text input above the upload button
-  --> On upload: inserts into documents table with:
-       display_name = custom name or file name
-       category = "General"
-       client_id, file_path, etc. as usual
-  --> Client portal PortalDocuments already lists all documents
+This is a simple conditional at line ~149:
+```
+// If no saved data, check for known pre-fills
+if (clientSlug === "springhill-suites-orange-beach") {
+  return [{
+    id: "property-default",
+    name: "SpringHill Suites by Marriott Orange Beach Gulf Shores",
+    logos: {},
+    colors: ["#3B82F6"],
+    isExpanded: true,
+  }];
+}
+return [];
 ```
 
-The category color for "General" is not yet mapped in `PortalDocuments`, so we'll add a color entry: a neutral blue/gray badge style.
+This requires importing `useClient` (already imported) and reading the client slug. We'll pull the slug from `ClientContext`.
 
-### Summary of File Changes
+**File: `src/contexts/ClientContext.tsx`** -- Verify that `client_slug` is available in the context. If not, add it so BrandStep can read it.
 
-1. **AdminDocumentUpload.tsx** -- support `"general"` document type with optional custom name input
-2. **PortalManagementPanel.tsx** -- add the third upload card for general documents, show list of already-uploaded general docs with delete capability
-3. **PortalDocuments.tsx** -- add `"General"` to the category color map (one line)
+### Part 2: Admin Property Name Pre-fill from Control Tower
+
+Currently, the Admin Venue Presets panel lets admins pre-add **venue** names. For **property/brand** names (used in Brand Identity step), there is no admin pre-fill mechanism yet.
+
+**How to pre-fill today (manual approach):**
+You can pre-fill the property name directly in the database. Run this in the backend SQL editor:
+
+```sql
+UPDATE onboarding_tasks 
+SET data = jsonb_build_object(
+  'properties', jsonb_build_array(
+    jsonb_build_object(
+      'id', 'property-' || floor(extract(epoch from now()) * 1000)::text,
+      'name', 'SpringHill Suites by Marriott Orange Beach Gulf Shores',
+      'logos', '{}'::jsonb,
+      'colors', '["#3B82F6"]'::jsonb,
+      'isExpanded', true
+    )
+  )
+)
+WHERE client_id = '53bd0e70-b268-488e-a947-6d520f516f50' 
+  AND task_key = 'brand';
+```
+
+**For a UI-based approach (future enhancement):**
+We could add an "Admin Property Presets" section in the Portal Management panel (similar to AdminVenuePresets) that lets admins pre-add property names which get written into the brand task data. This would be a separate feature if you'd like it built.
+
+### Summary of Code Changes
+
+1. **`src/contexts/ClientContext.tsx`** -- Expose `client_slug` in the context if not already available
+2. **`src/components/portal/steps/BrandStep.tsx`** -- Add a pre-fill fallback for `springhill-suites-orange-beach` that initializes the property name to "SpringHill Suites by Marriott Orange Beach Gulf Shores"
+
+This is a minimal, targeted change. The client will see the property name pre-populated when they open Brand Identity for the first time, but can still edit it.
