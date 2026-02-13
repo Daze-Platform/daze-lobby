@@ -462,8 +462,19 @@ export function PosStep({
                 </div>
 
                 {/* Code block preview */}
-                <div className="relative">
-                  <pre className="bg-muted text-muted-foreground text-xs p-4 rounded-xl overflow-x-auto max-h-[160px] overflow-y-auto border">
+                <div className="relative group">
+                  <button
+                    onClick={handleCopyInstructions}
+                    className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-muted-foreground/10 hover:bg-muted-foreground/20 transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="Copy instructions"
+                  >
+                    {copied ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                  </button>
+                  <pre className="bg-muted text-muted-foreground text-xs p-4 rounded-xl overflow-x-auto max-h-[320px] overflow-y-auto border">
                     <code>{instructions?.copyText}</code>
                   </pre>
                 </div>
