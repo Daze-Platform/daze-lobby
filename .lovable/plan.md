@@ -1,77 +1,50 @@
 
-# Speed Up Portal Share Link Loading
+
+# Fix: Admin Session Hijacks Share Links Meant for Other Users
 
 ## Problem
 
-When a user clicks a share link (`/portal/{slug}`), they see up to **4 sequential loading spinners** before content appears. Each gate blocks the next in a waterfall:
+When you copy a share link from Control Tower (e.g., `/portal/daze-beach-resort?email=angelothomas09@gmail.com`) and open it on your phone, the phone's browser already has an active session for `angelo@dazeapp.com` (admin). `PortalRoute` sees `hasDashboardAccess(role) === true` on line 45 and immediately redirects to `/admin/portal/daze-beach-resort`, dropping the `?email=` parameter. The intended recipient never gets the signup/login prompt.
 
-1. **Auth initialization** (~1-2s) -- `useAuth` calls `getSession()` then `getCurrentUser()` (which makes 2 more DB calls: `user_roles` + `profiles`)
-2. **PortalRoute client gate** (~0.5-1s) -- Waits for `ClientContext` to finish querying `user_clients` join before rendering children
-3. **PortalBySlug slug resolution** (~0.5s) -- Queries `clients` table by slug (redundant for client-role users since step 2 already resolved their client)
-4. **Portal data loading** (~0.5-1s) -- `useClientPortal` fetches tasks, venues, menus, document count
+## Fix
 
-Total perceived delay: **2-4 seconds** of stacked spinners.
+### File: `src/components/layout/PortalRoute.tsx`
 
-## Root Causes
+Before the admin redirect on line 45, check if the URL's `?email=` parameter belongs to a **different user** than the one currently signed in. If so, show a "This link is for someone else" interstitial card with two options:
 
-1. **Redundant client gate in PortalRoute**: For slug-based routes (`/portal/:slug`), `PortalRoute` blocks rendering until `ClientContext` finishes its `user_clients` query. But `PortalBySlug` resolves the client independently by slug -- the `ClientContext` result is never used. This adds ~0.5-1s of unnecessary waiting.
+1. **"Switch Account"** -- Signs out the current admin session and redirects to `/portal/login` with `returnTo` and `email` params preserved, so the intended user can sign up or sign in with the pre-filled email
+2. **"Continue as Admin"** -- Proceeds to `/admin/portal/:slug` as it does today
 
-2. **Sequential auth profile fetch**: `getCurrentUser()` makes 3 serial DB calls (`getUser`, `user_roles`, `profiles`). These could run in parallel.
+If there is no `?email=` param, or the email matches the signed-in user, behavior remains unchanged (redirect to admin portal).
 
-3. **No data prefetching**: Once the slug resolves to a `clientId`, we could start fetching portal data (tasks, venues) immediately, but instead we wait for context propagation and component mounting.
+### Logic Flow
 
-## Fixes
+```text
+Admin visits /portal/:slug?email=someone@example.com
 
-### 1. Skip client-loading gate in PortalRoute for slug routes (biggest win)
-
-**File: `src/components/layout/PortalRoute.tsx`**
-
-The `clientLoading` and `clientId` checks (lines 58-69) are only needed for a bare `/portal` route (no slug). For `/portal/:slug`, the slug component handles resolution.
-
-- Detect if the current path matches `/portal/:slug` (has a second path segment)
-- If so, skip the `clientLoading` spinner and `clientId` check -- render children immediately after auth/role validation
-- This eliminates one full loading spinner from the waterfall
-
-### 2. Parallelize auth profile queries (moderate win)
-
-**File: `src/lib/auth.ts`** -- `getCurrentUser()`
-
-Currently:
-```
-const user = await getUser();       // call 1
-const role = await user_roles...    // call 2 (waits for call 1)
-const profile = await profiles...   // call 3 (waits for call 1)
+  Is ?email present?
+    No  --> Redirect to /admin/portal/:slug (current behavior)
+    Yes --> Does email match current user?
+      Yes --> Redirect to /admin/portal/:slug (current behavior)
+      No  --> Show interstitial card:
+              "This link was created for someone@example.com.
+               You're signed in as angelo@dazeapp.com."
+              [Switch Account]  [Continue as Admin]
 ```
 
-Change calls 2 and 3 to run in parallel with `Promise.all`:
-```
-const user = await getUser();
-const [roleData, profileData] = await Promise.all([
-  supabase.from("user_roles")...,
-  supabase.from("profiles")...,
-]);
-```
+### Interstitial Card Design
 
-This saves ~200-400ms by overlapping the two DB queries.
+Reuses the same visual pattern as the existing "Wrong account" card in `AuthRedirect.tsx`:
+- Warning icon with heading
+- Shows who the link is for and who is currently signed in
+- Two side-by-side action buttons
 
-### 3. Prefetch portal data during slug resolution (moderate win)
+### Technical Details
 
-**File: `src/pages/PortalBySlug.tsx`**
-
-Once the slug query resolves a `clientId`, prefetch the portal's core data (tasks, venues) into the React Query cache so `useClientPortal` finds warm cache entries instead of making fresh requests:
-
-- In the `useEffect` that calls `setSelectedClientId`, also call `queryClient.prefetchQuery` for `["onboarding-tasks", clientId]` and `["venues", clientId]`
-- This overlaps data fetching with React's re-render cycle, shaving ~300-500ms off the final loading step
-
-### 4. Same fix for AdminPortalBySlug
-
-**File: `src/pages/AdminPortalBySlug.tsx`**
-
-Apply the same prefetch pattern for admin portal slug resolution.
-
-## Expected Result
-
-- Eliminates 1 full loading spinner (PortalRoute client gate)
-- Reduces auth init time by ~200-400ms (parallel queries)
-- Overlaps portal data loading with context propagation
-- Net improvement: **~1-1.5 seconds faster** perceived load time
+- Import `useState` from React, `useNavigate` from react-router, `signOut` from `@/lib/auth`, and `Button`/`Card` UI components
+- Extract `email` from `new URLSearchParams(window.location.search).get("email")`
+- Case-insensitive comparison against `user.email` from `useAuthContext()`
+- "Switch Account" calls `signOut()`, then navigates to `/portal/login?returnTo=/portal/:slug&email=...`
+- "Continue as Admin" navigates to `/admin/portal/:slug`
+- No database or backend changes required
+- Only one file modified: `PortalRoute.tsx`
