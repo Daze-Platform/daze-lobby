@@ -34,7 +34,9 @@ export interface Venue {
   menuPdfUrl?: string;
   logoFile?: File;
   logoUrl?: string;
+  logoFileName?: string;
   additionalLogoUrl?: string;
+  additionalLogoFileName?: string;
   menus: VenueMenu[];
   colorPalette: string[];
 }
