@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { LogOut, Settings, User, Menu } from "lucide-react";
+import { LogOut, Settings, Menu } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -84,9 +85,14 @@ export function DashboardHeader({ onMenuToggle, showMenuButton }: DashboardHeade
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2 hover:bg-muted/50 min-h-[44px] px-2 sm:px-3">
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary" />
-                </div>
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border/50">
+                  {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.fullName || user.email} />}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {user?.fullName
+                      ? user.fullName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                      : user?.email?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="hidden md:flex flex-col items-start">
                   <span className="text-sm font-medium truncate max-w-[120px] lg:max-w-[200px]">{user?.fullName || user?.email}</span>
                   <span className="text-2xs text-muted-foreground">{formatRole(role)}</span>
