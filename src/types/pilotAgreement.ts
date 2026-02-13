@@ -19,7 +19,7 @@ export interface PilotAgreementData {
   pilot_term_days?: number;
 
   // Pricing
-  pricing_model?: "none" | "subscription" | "daze_rev_share" | "client_rev_share";
+  pricing_model?: "subscription" | "daze_rev_share" | "client_rev_share";
   pricing_amount?: string;
 
   // POS Integration
