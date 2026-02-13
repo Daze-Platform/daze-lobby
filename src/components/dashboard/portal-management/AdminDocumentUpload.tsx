@@ -186,7 +186,7 @@ export function AdminDocumentUpload({
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
           onChange={handleFileSelect}
         />
 
