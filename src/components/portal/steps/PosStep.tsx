@@ -249,8 +249,13 @@ export function PosStep({
   const handleCopyInstructions = async () => {
     if (!selectedProvider) return;
     
-    const instructions = PROVIDER_INSTRUCTIONS[selectedProvider];
-    await navigator.clipboard.writeText(instructions.copyText);
+    const providerInstr = PROVIDER_INSTRUCTIONS[selectedProvider];
+    const fallback = {
+      ...DEFAULT_INSTRUCTIONS,
+      headline: `Next Steps for ${PROVIDERS.find(p => p.id === selectedProvider)?.name || "Integration"}`,
+    };
+    const instr = providerInstr || fallback;
+    await navigator.clipboard.writeText(instr.copyText);
     setCopied(true);
     
     // Log activity
