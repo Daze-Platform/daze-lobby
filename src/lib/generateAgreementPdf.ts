@@ -75,7 +75,15 @@ export async function generateAgreementPdfBlob(options: GeneratePdfOptions): Pro
   if (isSigned) {
     pdf.setTextColor(34, 197, 94);
     pdf.setFont("helvetica", "bold");
-    pdf.text("✓ SIGNED", pageWidth - margin, ctx.y + 16, { align: "right" });
+    const signedTextX = pageWidth - margin;
+    const signedY = ctx.y + 16;
+    pdf.text("SIGNED", signedTextX, signedY, { align: "right" });
+    // Draw a small checkmark to the left of "SIGNED"
+    const checkX = signedTextX - pdf.getTextWidth("SIGNED") - 3;
+    pdf.setDrawColor(34, 197, 94);
+    pdf.setLineWidth(0.5);
+    pdf.line(checkX, signedY - 1, checkX + 1.2, signedY + 0.5);
+    pdf.line(checkX + 1.2, signedY + 0.5, checkX + 3.5, signedY - 2.5);
   } else {
     pdf.setTextColor(245, 158, 11);
     pdf.setFont("helvetica", "bold");
