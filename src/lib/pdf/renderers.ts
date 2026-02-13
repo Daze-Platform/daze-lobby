@@ -112,11 +112,11 @@ function renderCheckbox(ctx: RenderContext, checked: boolean, text: string): voi
   pdf.rect(boxX, boxY, boxSize, boxSize);
 
   if (checked) {
-    // Checkmark
-    pdf.setFontSize(9);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
-    pdf.text("✓", boxX + 0.3, ctx.y - 0.2);
+    const inset = 0.7;
+    pdf.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
+    pdf.setLineWidth(0.5);
+    pdf.line(boxX + inset, boxY + inset, boxX + boxSize - inset, boxY + boxSize - inset);
+    pdf.line(boxX + boxSize - inset, boxY + inset, boxX + inset, boxY + boxSize - inset);
   }
 
   // Text next to checkbox
