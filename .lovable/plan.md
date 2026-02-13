@@ -1,45 +1,38 @@
 
 
-# Fix Checkbox Markers in Pilot Agreement PDF
+# Remove Tablets/Mounts Fields from Section 2.3
 
-## Problem
+## Summary
 
-The PDF checkbox renderer uses a Unicode checkmark character (`✓`) via `pdf.text()`. jsPDF's built-in Helvetica font does not support this glyph, so it renders as an empty or garbled marker in the generated PDF. The screenshot confirms this -- checked items like "Client Revenue Share Fee" appear unchecked.
-
-## Solution
-
-Replace the `pdf.text("✓", ...)` call with manually drawn X lines using `pdf.line()`. This is font-independent and renders crisply at any zoom level.
+Strip out the "Number of Tablets" and "Mounts/Stands" fields from the Pilot Agreement. Section 2.3 will remain as a simple binary choice: "No Daze Hardware Required" or "Daze-Provided Hardware."
 
 ## Changes
 
-### File: `src/lib/pdf/renderers.ts` (lines 114-120)
+### 1. `src/types/pilotAgreement.ts`
+- Remove `num_tablets` and `mounts_stands` properties from the `PilotAgreementData` interface
 
-Replace the checkmark text rendering with two diagonal lines drawn inside the checkbox box:
+### 2. `src/lib/pdf/sections.ts`
+- Remove the conditional bullet-list block (lines 116-118) that renders "Number of Tablets" and "Mounts/Stands" under the Daze-Provided checkbox
+- Remove the `numTablets` and `mountsStands` variables (lines 21-22)
 
-```
-Before:
-  if (checked) {
-    pdf.setFontSize(9);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
-    pdf.text("✓", boxX + 0.3, ctx.y - 0.2);
-  }
+### 3. `src/components/portal/ReviewSignModal.tsx`
+- Remove `numTablets` / `mountsStands` variable declarations (lines 99-100)
+- Remove `numTablets` / `mountsStands` state hooks (lines 448-449)
+- Remove hydration of those fields from saved data (lines 497-498)
+- Remove them from the collected agreement data object (lines 525-526)
+- Remove them from the `useMemo` dependency array (line 535)
+- Remove the two form input fields (lines 709-716) for tablets and mounts
+- Remove the bullet-list lines from the agreement text template (lines 160-161)
 
-After:
-  if (checked) {
-    const inset = 0.7;
-    pdf.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
-    pdf.setLineWidth(0.5);
-    pdf.line(boxX + inset, boxY + inset, boxX + boxSize - inset, boxY + boxSize - inset);
-    pdf.line(boxX + boxSize - inset, boxY + inset, boxX + inset, boxY + boxSize - inset);
-  }
-```
-
-This draws a bold X in the brand primary color inside the checkbox bounds, which is universally readable and font-independent.
+### 4. `src/hooks/useClientPortal.ts`
+- Remove `num_tablets` and `mounts_stands` from the data mapping (lines 193-194)
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/lib/pdf/renderers.ts` | Replace Unicode checkmark text with drawn X lines in `renderCheckbox` |
+| `src/types/pilotAgreement.ts` | Remove `num_tablets` and `mounts_stands` from interface |
+| `src/lib/pdf/sections.ts` | Remove bullet-list and associated variables |
+| `src/components/portal/ReviewSignModal.tsx` | Remove state, inputs, text template lines, and dependencies |
+| `src/hooks/useClientPortal.ts` | Remove field mapping |
 
