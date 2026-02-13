@@ -18,8 +18,6 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
     : ["_______________", "_______________", "_______________", "_______________"];
 
   const hwDaze = d.hardware_option === "daze_provided";
-  const numTablets = blank(d.num_tablets, "__________");
-  const mountsStands = blank(d.mounts_stands, "____________");
 
   const startDate = d.start_date ? format(new Date(d.start_date), "MMMM d, yyyy") : "_______________";
   const termDays = d.pilot_term_days != null ? String(d.pilot_term_days) : "________";
@@ -113,9 +111,6 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         { type: "subsection", text: "2.3 Hardware Selection" },
         { type: "checkbox", checked: !hwDaze, text: "No Daze Hardware Required" },
         { type: "checkbox", checked: hwDaze, text: "Daze-Provided Hardware. Daze shall provide the following physical materials as a bailment under Section 4.3" },
-        ...(hwDaze ? [
-          { type: "bullet-list" as const, items: [`Number of Tablets: ${numTablets}`, `Mounts/Stands: ${mountsStands}`] },
-        ] : []),
         { type: "spacer" },
 
         { type: "subsection", text: "2.4 Enabled Capabilities" },
