@@ -1,22 +1,25 @@
 
 
-# Improve Checkmark-to-SIGNED Spacing
+# Exclude Deleted Clients from Admin Portal Switcher
 
-## Change
+## Problem
 
-Increase the gap between the drawn checkmark and the "SIGNED" text by adjusting the offset from `3` to `5` mm on line 82.
+The `ClientContext` query for admin users (line 93-96 in `src/contexts/ClientContext.tsx`) fetches all clients without filtering out soft-deleted ones. This means deleted clients still appear in the admin portal's client switcher dropdown.
 
-## Technical Detail
+## Fix
 
-### File: `src/lib/generateAgreementPdf.ts` (line 82)
+### File: `src/contexts/ClientContext.tsx` (line 96)
+
+Add `.is("deleted_at", null)` to the admin all-clients query, right before `.order(...)`:
 
 ```
-Before:
-const checkX = signedTextX - pdf.getTextWidth("SIGNED") - 3;
+// Before:
+.order("name", { ascending: true });
 
-After:
-const checkX = signedTextX - pdf.getTextWidth("SIGNED") - 5;
+// After:
+.is("deleted_at", null)
+.order("name", { ascending: true });
 ```
 
-This moves the checkmark 2mm further left, giving cleaner visual separation from the text.
+This ensures only active (non-deleted) clients appear in the admin client switcher, consistent with the main Clients list behavior.
 
