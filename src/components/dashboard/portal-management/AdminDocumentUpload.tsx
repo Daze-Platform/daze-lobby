@@ -9,6 +9,16 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { useLogActivity } from "@/hooks/useLogActivity";
 import { DocumentAnalysisPanel } from "./DocumentAnalysisPanel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface AdminDocumentUploadProps {
   clientId: string;
@@ -38,6 +48,7 @@ export function AdminDocumentUpload({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const logActivity = useLogActivity(clientId);
 
   const categoryMap = {
@@ -221,7 +232,7 @@ export function AdminDocumentUpload({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-destructive hover:text-destructive"
-                onClick={() => deleteMutation.mutate()}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={deleteMutation.isPending}
               >
                 <Trash2 className="h-4 w-4" />
@@ -271,6 +282,29 @@ export function AdminDocumentUpload({
             />
           </>
         )}
+
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete "{existingDocument?.display_name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This document will be permanently removed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  deleteMutation.mutate();
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
