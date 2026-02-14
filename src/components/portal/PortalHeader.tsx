@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -11,8 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SignOut, Clock, ClipboardText, FileText, ArrowLeft, ArrowClockwise } from "@phosphor-icons/react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SignOut, Clock, ClipboardText, FileText, ArrowLeft, ArrowClockwise, Key } from "@phosphor-icons/react";
 import { AdminClientSwitcher } from "./AdminClientSwitcher";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import dazeLogo from "@/assets/daze-logo.png";
 
 export type PortalView = "onboarding" | "documents";
@@ -66,6 +72,36 @@ export function PortalHeader({
 }: PortalHeaderProps) {
   // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
   const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
+
+  // Change password state
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handlePasswordUpdate = async () => {
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Password updated successfully");
+      setShowPasswordDialog(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update password");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
   
   return (
     <header className="glass-header entrance-header">
@@ -195,6 +231,12 @@ export function PortalHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {!isPreview && (
+                  <DropdownMenuItem onClick={() => setShowPasswordDialog(true)} className="cursor-pointer">
+                    <Key size={16} weight="duotone" className="mr-2" />
+                    <span>Change Password</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
@@ -264,6 +306,12 @@ export function PortalHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {!isPreview && (
+                  <DropdownMenuItem onClick={() => setShowPasswordDialog(true)} className="cursor-pointer">
+                    <Key size={16} weight="duotone" className="mr-2" />
+                    <span>Change Password</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
@@ -282,6 +330,49 @@ export function PortalHeader({
           </div>
         </div>
       </div>
+
+      {/* Change Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={(open) => {
+        setShowPasswordDialog(open);
+        if (!open) { setNewPassword(""); setConfirmPassword(""); }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>Enter a new password for your account.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Min 8 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(false)} disabled={isUpdating}>
+              Cancel
+            </Button>
+            <Button onClick={handlePasswordUpdate} disabled={isUpdating || !newPassword}>
+              {isUpdating ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }
