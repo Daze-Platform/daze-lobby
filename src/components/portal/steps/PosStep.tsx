@@ -106,28 +106,30 @@ const PROVIDER_INSTRUCTIONS: Partial<Record<Exclude<PosProvider, null>, {
   copyText: string;
 }>> = {
   toast: {
-    headline: "Next Steps for Toast",
+    headline: "Toast POS: Custom Integration Setup",
     steps: [
-      "1. Contact your Toast Account Representative",
-      "2. Request API Token access for third-party integration",
-      "3. Ask for the Restaurant GUID and API credentials",
-      "4. Share the credentials securely with Daze support",
+      "1. Log in to the Toast Web Dashboard (pos.toasttab.com) → Integrations. If \"Toast API Access\" isn't visible, enable \"Standard API Access\" from the Toast Shop.",
+      "2. Go to Integrations → Toast API Access → + Create New Integration. Name: \"Daze Platform\" | Developer Email: angelo@dazeapp.com | Scopes: Menus: Read & Orders: Read → Save.",
+      "3. Copy and paste the Client ID, Client Secret, and Location GUID (found under Integrations → Manage Group/Location IDs) into your secure onboarding portal.",
     ],
-    copyText: `TOAST POS INTEGRATION REQUEST
+    copyText: `TOAST POS: CUSTOM INTEGRATION SETUP
 
-Hi [Toast Rep Name],
+1. Activate Standard API Access
+   • Log in to the Toast Web Dashboard (pos.toasttab.com).
+   • Navigate to Integrations in the left-hand sidebar.
+   • Note: If "Toast API Access" is not visible, visit the Toast Shop and enable "Standard API Access".
 
-We are integrating with Daze for our F&B ordering system and need API access configured.
+2. Generate Daze Platform Credentials
+   • Navigate to Integrations > Toast API Access and click + Create New Integration.
+   • Name: Daze Platform | Developer Email: angelo@dazeapp.com
+   • Scopes: Check both Menus: Read and Orders: Read.
+   • Click Save to generate your unique security keys.
 
-Required Items:
-• Restaurant GUID
-• API Token for third-party integration
-• Menu API read access
-• Order API write access
-
-Please provide credentials at your earliest convenience.
-
-Thank you!`,
+3. Link to Daze Lobby
+   • Copy and paste the following values into your secure onboarding portal:
+     - Client ID
+     - Client Secret
+     - Location GUID (Found under Integrations > Manage Group/Location IDs)`,
   },
   micros_simphony: {
     headline: "Next Steps for Micros Simphony",
