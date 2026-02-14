@@ -535,7 +535,7 @@ export function PosStep({
                         // Split into segments and colorize URLs, emails, bold markers
                         const parts: React.ReactNode[] = [];
                         // Pattern: URLs, emails, **bold**, quoted terms
-                        const regex = /(https?:\/\/[^\s,)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|\*\*[^*]+\*\*|"[^"]+"|'[^']+')/g;
+                        const regex = /(https?:\/\/[^\s,)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|\*\*[^*]+\*\*|"[^"]+"|'[^']+'|Client ID|Client Secret|Location GUID)/g;
                         let lastIndex = 0;
                         let match;
                         let partKey = 0;
@@ -544,7 +544,9 @@ export function PosStep({
                             parts.push(<span key={partKey++} className="text-zinc-300">{text.slice(lastIndex, match.index)}</span>);
                           }
                           const token = match[0];
-                          if (token.startsWith('**') && token.endsWith('**')) {
+                          if (token === 'Client ID' || token === 'Client Secret' || token === 'Location GUID') {
+                            parts.push(<span key={partKey++} className="text-orange-400 font-semibold">{token}</span>);
+                          } else if (token.startsWith('**') && token.endsWith('**')) {
                             parts.push(<strong key={partKey++} className="text-white font-bold">{token.slice(2, -2)}</strong>);
                           } else if (token.includes('@') && !token.startsWith('http')) {
                             parts.push(<span key={partKey++} className="text-emerald-400">{token}</span>);
