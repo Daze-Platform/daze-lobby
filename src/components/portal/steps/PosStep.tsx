@@ -597,7 +597,7 @@ export function PosStep({
                     <Label className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
                       🔑 Toast API Credentials
                     </Label>
-                    <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4">
+                <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4" autoCapitalize="off">
                       <div className="space-y-1.5">
                         <Label htmlFor="toast-client-id" className="text-xs text-muted-foreground">
                           Client ID <span className="text-destructive">*</span>
@@ -609,6 +609,8 @@ export function PosStep({
                           placeholder="e.g., abc123..."
                           className="h-10 bg-background font-mono text-sm"
                           maxLength={200}
+                          autoComplete="off"
+                          name="toast-cid-nofill"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -623,6 +625,8 @@ export function PosStep({
                           placeholder="e.g., xyz789..."
                           className="h-10 bg-background font-mono text-sm"
                           maxLength={200}
+                          autoComplete="new-password"
+                          name="toast-cs-nofill"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -636,6 +640,8 @@ export function PosStep({
                           placeholder="e.g., 12345678-abcd-..."
                           className="h-10 bg-background font-mono text-sm"
                           maxLength={200}
+                          autoComplete="off"
+                          name="toast-lg-nofill"
                         />
                       </div>
                     </div>
