@@ -1,29 +1,38 @@
 
 
-## Replace Generic POS Instructions with Toast-Specific Instructions
+## Replace Generic POS Code Block with Copyable Email Template
 
-### Current State
+### Problem
+The code block area (lines 501-517 in PosStep.tsx) currently shows the old generic "POS INTEGRATION REQUEST" text for all providers. The user wants this replaced with the new Order Injection email template that includes a proper copy button -- the same pattern already implemented for Toast below it.
 
-The Toast-specific 3-step instructions were already added in the previous update. When a user selects "Toast" as their POS provider, they should see:
+### Changes
 
-1. Activate Standard API Access (Toast Web Dashboard)
-2. Generate Daze Platform Credentials (Create New Integration)
-3. Link to Daze Lobby (Client ID, Client Secret, Location GUID)
+**File: `src/components/portal/steps/PosStep.tsx`**
 
-The screenshot you shared shows the **generic fallback** instructions ("Next Steps for Integration" with 4 generic steps). These only appear when a provider **other than Toast** is selected (or no provider-specific instructions exist).
+1. **Update `DEFAULT_INSTRUCTIONS.copyText`** (line 86-100) -- Replace the generic "POS INTEGRATION REQUEST" text with the Order Injection email template, using `[Property Name]` as placeholder (will be dynamically replaced at render time).
 
-### What Needs to Happen
+2. **Replace the code block section** (lines 501-517) with the email template card pattern that already exists for Toast (lines 519-575). This means:
+   - Remove the raw `<pre><code>` block
+   - Replace it with a styled email template card showing Subject line, body paragraphs, and a copy button with hover-reveal behavior
+   - Use the client name from `useClient()` context to dynamically populate the property name
+   - Reuse the existing `copied` state and `handleCopyInstructions` function for the copy button
 
-If you are seeing the old 4-step generic instructions when Toast is selected, the most likely cause is that the POS provider data for this client is not saved as `"toast"` in the database, so the fallback is being used. We should:
+3. **Remove the duplicate Toast-only email section** (lines 519-575) since the email template will now render for all providers in the main section. The Toast provider will use its own `copyText` (Order Injection specific), while other providers use the default template.
 
-1. **Verify Toast is rendering correctly** -- Navigate to the portal with Toast selected and confirm the new instructions appear.
-2. **If the issue persists**, check the admin-set provider value in the database matches `"toast"` exactly (the `onboarding_tasks` table, `task_key = "pos"`, `data->provider`).
+4. **Update `DEFAULT_INSTRUCTIONS` content** to match the Order Injection email format:
+   - Subject: `Action Required: Enable Order Injection for [Client Name]`
+   - Body: mobile ordering pilot, API credentials, Order Injection Write Access request
+   - Sign-off: `[Management Name]` + client name
 
-### No Code Changes Needed
+### Result
+- All providers show a styled email template card with a copy button instead of the raw code block
+- Toast uses its own customized email text; other providers use the default
+- The copy button copies the full email text to clipboard with a success toast
+- Client name is dynamically inserted from context
 
-The implementation from the previous update already ensures that selecting Toast shows the new 3-step instructions instead of the generic 4-step fallback. The generic fallback remains for all other POS providers (NCR Aloha, Micros, etc.) which is correct behavior.
-
-### Recommended Next Step
-
-Test this by navigating to the portal, selecting Toast as the POS provider, and confirming you see "Toast POS: Custom Integration Setup" with the 3 detailed steps plus the email template below it.
+### Technical Details
+- `emailCopied` state is already available (added in previous update)
+- `client` is already extracted from `useClient()` 
+- The email card UI pattern is already proven from the Toast-only section -- just needs to be promoted to the shared rendering path
+- The `handleCopyInstructions` function will be updated to copy the email template text with the dynamic client name substituted in
 
