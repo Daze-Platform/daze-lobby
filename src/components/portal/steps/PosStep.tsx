@@ -490,13 +490,85 @@ export function PosStep({
                   <h3 className="font-semibold text-lg">{instructions?.headline}</h3>
                 </div>
 
-                {/* Steps list */}
-                <div className="bg-muted/50 rounded-xl p-4 space-y-2">
-                  {instructions?.steps.map((step, index) => (
-                    <p key={index} className="text-sm text-muted-foreground">
-                      {step}
-                    </p>
-                  ))}
+                {/* Steps list - Rich markdown-inspired dark card */}
+                <div className="rounded-xl overflow-hidden border border-zinc-700/50">
+                  {/* Header bar */}
+                  <div className="flex items-center justify-between px-4 py-2 bg-zinc-800 dark:bg-zinc-900 border-b border-zinc-700/50">
+                    <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Instructions</span>
+                    <button
+                      onClick={async () => {
+                        const copyText = instructions?.steps.join('\n') || '';
+                        await navigator.clipboard.writeText(copyText);
+                        toast.success("Instructions copied!");
+                      }}
+                      className="p-1 rounded hover:bg-zinc-700/50 transition-colors"
+                      aria-label="Copy instructions"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-zinc-400" />
+                    </button>
+                  </div>
+                  {/* Content */}
+                  <div className="bg-zinc-900 dark:bg-zinc-950 p-4 space-y-1.5 font-mono text-xs leading-relaxed max-h-[320px] overflow-y-auto">
+                    {instructions?.steps.map((step, index) => {
+                      // Render each step with rich formatting
+                      const renderRichLine = (text: string) => {
+                        // Split into segments and colorize URLs, emails, bold markers
+                        const parts: React.ReactNode[] = [];
+                        // Pattern: URLs, emails, **bold**, quoted terms
+                        const regex = /(https?:\/\/[^\s,)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|\*\*[^*]+\*\*|"[^"]+"|'[^']+')/g;
+                        let lastIndex = 0;
+                        let match;
+                        let partKey = 0;
+                        while ((match = regex.exec(text)) !== null) {
+                          if (match.index > lastIndex) {
+                            parts.push(<span key={partKey++} className="text-zinc-300">{text.slice(lastIndex, match.index)}</span>);
+                          }
+                          const token = match[0];
+                          if (token.startsWith('**') && token.endsWith('**')) {
+                            parts.push(<strong key={partKey++} className="text-white font-bold">{token.slice(2, -2)}</strong>);
+                          } else if (token.includes('@') && !token.startsWith('http')) {
+                            parts.push(<span key={partKey++} className="text-emerald-400">{token}</span>);
+                          } else if (token.startsWith('http')) {
+                            parts.push(<span key={partKey++} className="text-emerald-400">{token}</span>);
+                          } else {
+                            parts.push(<span key={partKey++} className="text-amber-300">{token}</span>);
+                          }
+                          lastIndex = match.index + token.length;
+                        }
+                        if (lastIndex < text.length) {
+                          parts.push(<span key={partKey++} className="text-zinc-300">{text.slice(lastIndex)}</span>);
+                        }
+                        return parts.length > 0 ? parts : <span className="text-zinc-300">{text}</span>;
+                      };
+
+                      // Detect numbered steps, bullets, or plain text
+                      const trimmed = step.trim();
+                      const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+                      const bulletMatch = trimmed.match(/^[-*•]\s+(.*)/);
+
+                      if (numberedMatch) {
+                        return (
+                          <div key={index} className={`${index > 0 ? 'mt-3' : ''}`}>
+                            <span className="text-orange-400 font-bold">{numberedMatch[1]}.</span>{' '}
+                            <span className="text-white font-bold text-sm">{renderRichLine(numberedMatch[2])}</span>
+                          </div>
+                        );
+                      } else if (bulletMatch) {
+                        return (
+                          <div key={index} className="pl-4 flex gap-1.5">
+                            <span className="text-orange-400 flex-shrink-0">•</span>
+                            <span>{renderRichLine(bulletMatch[1])}</span>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div key={index}>
+                            {renderRichLine(trimmed)}
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
                 </div>
 
                 {/* Email Template */}
