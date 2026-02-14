@@ -1,39 +1,45 @@
 
 
-## Add Dark Mode Toggle to Client Portal Profile Menu
+## Add "Forgot Password?" Flow to Client Portal Login
 
 ### What Changes
-Add a "Dark Mode" toggle switch to the user profile dropdown in the portal header (both desktop and mobile). This reuses the existing `next-themes` infrastructure already powering the admin dashboard's dark mode.
 
-### Files Changed
+Three files need updating to give portal clients a complete password-reset experience:
 
-| File | Change |
-|------|--------|
-| `src/components/portal/PortalHeader.tsx` | Add dark mode toggle item to both desktop and mobile profile dropdowns |
+1. **`src/components/auth/ClientLoginForm.tsx`** -- Add a "Forgot Password?" link and a built-in forgot-password / reset-password view so clients never leave the portal login page.
+2. **`src/components/auth/ResetPasswordForm.tsx`** -- Accept an optional `redirectTo` prop so it redirects portal clients back to `/portal/login` instead of always going to `/`.
+3. **`src/pages/PortalLogin.tsx`** -- Detect the `?reset=1` query param and recovery hash tokens, and render the `ResetPasswordForm` instead of `ClientLoginForm` when a client arrives via a reset link.
 
-### Implementation Details
-
-**`src/components/portal/PortalHeader.tsx`**
-
-1. **Import `useTheme`** from `next-themes` and the `Moon`/`Sun` icon from `@phosphor-icons/react`
-2. **Get theme state**: `const { theme, setTheme } = useTheme();`
-3. **Add a toggle row** in both desktop and mobile `DropdownMenuContent`, placed between "Change Password" and "Sign Out":
-   - Uses a `DropdownMenuItem` styled as a flex row with a label ("Dark Mode") on the left and a `Switch` component on the right
-   - The `Switch` is checked when `theme === "dark"` and toggles between `"dark"` and `"light"`
-   - Uses `onSelect={(e) => e.preventDefault()}` on the menu item to prevent the dropdown from closing when toggling
-   - Uses the `Moon` icon for visual consistency
-
-4. **No layout concerns**: The app already has full dark mode CSS support via Tailwind's `dark:` variants and the `ThemeProvider` wrapping the entire app. The portal pages use semantic color tokens (`bg-muted/30`, `text-foreground`, `bg-popover`, etc.) which automatically adapt to theme changes.
-
-### UI in the Dropdown
+### How It Works
 
 ```
-[Avatar] User Name
-         user@email.com
-─────────────────────────
-  Key    Change Password
-  Moon   Dark Mode         [toggle]
-─────────────────────────
-  Exit   Sign Out
+Client clicks "Forgot Password?"
+  --> ClientLoginForm switches to "forgot" mode (inline)
+  --> Sends reset email with redirect to /portal/login?reset=1
+  --> Client clicks email link
+  --> PortalLogin detects reset=1 / recovery hash
+  --> Shows ResetPasswordForm (with portal branding)
+  --> On success, redirects to /portal/login (not /dashboard)
 ```
+
+### Detailed File Changes
+
+**`src/components/auth/ClientLoginForm.tsx`**
+
+- Add a new `mode` value: `"forgot"` (alongside existing `"login"` | `"signup"`)
+- When `mode === "forgot"`, render a simple email input form that calls `supabase.auth.resetPasswordForEmail` with `redirectTo: window.location.origin + "/portal/login?reset=1"`
+- Add a "Forgot Password?" text button below the password field (login mode only), which sets mode to `"forgot"`
+- Include a "Back to Sign In" link in the forgot view
+
+**`src/components/auth/ResetPasswordForm.tsx`**
+
+- Add an optional `redirectTo?: string` prop (defaults to `"/"`)
+- After successful password update, redirect to the provided path instead of always `/`
+
+**`src/pages/PortalLogin.tsx`**
+
+- Import `ResetPasswordForm` and add `useSearchParams`
+- Check for `?reset=1` query param or `#type=recovery` hash fragment
+- When detected, render `<ResetPasswordForm redirectTo="/portal/login" />` instead of `<ClientLoginForm />`
+- Uses the same split-screen layout with `SketchyArtPanel`
 
