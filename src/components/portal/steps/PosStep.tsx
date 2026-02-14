@@ -204,9 +204,15 @@ export function PosStep({
   const savedProvider = data?.provider as PosProvider | undefined;
   const savedStatus = data?.status as string | undefined;
   const savedPmsName = data?.pms_name as string | undefined;
+  const savedClientId = data?.toast_client_id as string | undefined;
+  const savedClientSecret = data?.toast_client_secret as string | undefined;
+  const savedLocationGuid = data?.toast_location_guid as string | undefined;
   
   const [selectedProvider, setSelectedProvider] = useState<PosProvider>(savedProvider || null);
   const [pmsName, setPmsName] = useState(savedPmsName || "");
+  const [toastClientId, setToastClientId] = useState(savedClientId || "");
+  const [toastClientSecret, setToastClientSecret] = useState(savedClientSecret || "");
+  const [toastLocationGuid, setToastLocationGuid] = useState(savedLocationGuid || "");
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
@@ -236,23 +242,32 @@ export function PosStep({
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      onUpdate({
+      const payload: Record<string, unknown> = {
         provider: selectedProvider,
         status: isPendingIT ? "pending_it" : isITVerified ? "it_verified" : "selected",
         pms_name: pmsName.trim() || undefined,
-      });
+      };
+      if (selectedProvider === "toast") {
+        payload.toast_client_id = toastClientId.trim() || undefined;
+        payload.toast_client_secret = toastClientSecret.trim() || undefined;
+        payload.toast_location_guid = toastLocationGuid.trim() || undefined;
+      }
+      onUpdate(payload as Parameters<typeof onUpdate>[0]);
     }, 800);
 
     return () => clearTimeout(debounceRef.current);
-  }, [pmsName]);
+  }, [pmsName, toastClientId, toastClientSecret, toastLocationGuid]);
 
   const handleProviderSelect = (providerId: PosProvider) => {
     setSelectedProvider(providerId);
     setPmsName(""); // Clear stale PMS name when switching providers
+    setToastClientId("");
+    setToastClientSecret("");
+    setToastLocationGuid("");
 
-    // Persist immediately — clear old pms_name
+    // Persist immediately — clear old data
     if (providerId) {
-      onUpdate({ provider: providerId, status: "selected", pms_name: "" });
+      onUpdate({ provider: providerId, status: "selected", pms_name: "" } as Parameters<typeof onUpdate>[0]);
 
       logActivity.mutate({
         action: "pos_provider_selected",
@@ -267,13 +282,16 @@ export function PosStep({
   };
 
   const handleBack = () => {
-    // Persist cleared state to database
-    onUpdate({ provider: "", status: "", pms_name: "" });
+    // Persist cleared state to database (including toast fields)
+    onUpdate({ provider: "", status: "", pms_name: "" } as Parameters<typeof onUpdate>[0]);
     
     setShowInstructions(false);
     setTimeout(() => {
       setSelectedProvider(null);
       setPmsName("");
+      setToastClientId("");
+      setToastClientSecret("");
+      setToastLocationGuid("");
     }, 300);
   };
 
@@ -310,11 +328,17 @@ export function PosStep({
     if (!selectedProvider) return;
     
     setIsPendingIT(true);
-    onUpdate({ 
+    const payload: Record<string, unknown> = {
       provider: selectedProvider, 
       status: "pending_it",
       pms_name: pmsName.trim() || undefined,
-    }, true);
+    };
+    if (selectedProvider === "toast") {
+      payload.toast_client_id = toastClientId.trim();
+      payload.toast_client_secret = toastClientSecret.trim();
+      payload.toast_location_guid = toastLocationGuid.trim();
+    }
+    onUpdate(payload as Parameters<typeof onUpdate>[0], true);
     
     // Log activity
     logActivity.mutate({
@@ -571,6 +595,57 @@ export function PosStep({
                   </div>
                 </div>
 
+                {/* Toast API Credentials */}
+                {selectedProvider === "toast" && (
+                  <div className="space-y-3">
+                    <Label className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                      🔑 Toast API Credentials
+                    </Label>
+                    <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="toast-client-id" className="text-xs text-muted-foreground">
+                          Client ID <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="toast-client-id"
+                          value={toastClientId}
+                          onChange={(e) => setToastClientId(e.target.value)}
+                          placeholder="e.g., abc123..."
+                          className="h-10 bg-background font-mono text-sm"
+                          maxLength={200}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="toast-client-secret" className="text-xs text-muted-foreground">
+                          Client Secret <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="toast-client-secret"
+                          type="password"
+                          value={toastClientSecret}
+                          onChange={(e) => setToastClientSecret(e.target.value)}
+                          placeholder="e.g., xyz789..."
+                          className="h-10 bg-background font-mono text-sm"
+                          maxLength={200}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="toast-location-guid" className="text-xs text-muted-foreground">
+                          Location GUID <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="toast-location-guid"
+                          value={toastLocationGuid}
+                          onChange={(e) => setToastLocationGuid(e.target.value)}
+                          placeholder="e.g., 12345678-abcd-..."
+                          className="h-10 bg-background font-mono text-sm"
+                          maxLength={200}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Email Template */}
                 {(() => {
                   const clientName = client?.name || "[Property Name]";
@@ -660,7 +735,7 @@ export function PosStep({
                     <Button
                       variant="outline"
                       onClick={handleSentToIT}
-                      disabled={isSaving || !pmsName.trim()}
+                      disabled={isSaving || !pmsName.trim() || (selectedProvider === "toast" && (!toastClientId.trim() || !toastClientSecret.trim() || !toastLocationGuid.trim()))}
                       className="flex-1 rounded-full min-h-[44px]"
                     >
                       Mark as Sent to IT
