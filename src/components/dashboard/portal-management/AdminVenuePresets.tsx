@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Plus, Trash2, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface AdminVenuePresetsProps {
   clientId: string;
@@ -23,6 +33,7 @@ interface Venue {
 export function AdminVenuePresets({ clientId }: AdminVenuePresetsProps) {
   const queryClient = useQueryClient();
   const [newVenueName, setNewVenueName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Venue | null>(null);
 
   // Fetch existing venues
   const { data: venues, isLoading } = useQuery({
@@ -221,15 +232,15 @@ export function AdminVenuePresets({ clientId }: AdminVenuePresetsProps) {
                     </div>
                     <span className="text-sm font-medium">{venue.name}</span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                    onClick={() => deleteVenueMutation.mutate(venue.id)}
-                    disabled={deleteVenueMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                      onClick={() => setDeleteTarget(venue)}
+                      disabled={deleteVenueMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -248,6 +259,34 @@ export function AdminVenuePresets({ clientId }: AdminVenuePresetsProps) {
           </p>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This venue preset will be removed from the client's portal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) {
+                  deleteVenueMutation.mutate(deleteTarget.id);
+                  setDeleteTarget(null);
+                }
+              }}
+            >
+              {deleteVenueMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

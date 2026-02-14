@@ -34,6 +34,16 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DocumentUploadSectionProps {
   clientId: string;
@@ -78,6 +88,7 @@ export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [deleteDocTarget, setDeleteDocTarget] = useState<Document | null>(null);
 
   // Fetch documents
   const { data: documents, isLoading } = useQuery({
@@ -486,7 +497,7 @@ export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) 
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => deleteMutation.mutate(doc)}
+                            onClick={() => setDeleteDocTarget(doc)}
                             disabled={deleteMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -506,6 +517,31 @@ export function DocumentUploadSection({ clientId }: DocumentUploadSectionProps) 
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteDocTarget} onOpenChange={(open) => !open && setDeleteDocTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteDocTarget?.display_name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This document will be permanently removed from storage.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteDocTarget) {
+                  deleteMutation.mutate(deleteDocTarget);
+                  setDeleteDocTarget(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
