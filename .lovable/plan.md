@@ -1,38 +1,41 @@
 
 
-## Replace Generic POS Code Block with Copyable Email Template
+## Make POS Instructions More Colorful and Rich
 
-### Problem
-The code block area (lines 501-517 in PosStep.tsx) currently shows the old generic "POS INTEGRATION REQUEST" text for all providers. The user wants this replaced with the new Order Injection email template that includes a proper copy button -- the same pattern already implemented for Toast below it.
-
-### Changes
+### What Changes
 
 **File: `src/components/portal/steps/PosStep.tsx`**
 
-1. **Update `DEFAULT_INSTRUCTIONS.copyText`** (line 86-100) -- Replace the generic "POS INTEGRATION REQUEST" text with the Order Injection email template, using `[Property Name]` as placeholder (will be dynamically replaced at render time).
+Transform the plain-text steps list (currently a light `bg-muted/50` card with `text-sm text-muted-foreground` paragraphs) into a richer, markdown-inspired dark card with colored elements, matching the screenshot reference.
 
-2. **Replace the code block section** (lines 501-517) with the email template card pattern that already exists for Toast (lines 519-575). This means:
-   - Remove the raw `<pre><code>` block
-   - Replace it with a styled email template card showing Subject line, body paragraphs, and a copy button with hover-reveal behavior
-   - Use the client name from `useClient()` context to dynamically populate the property name
-   - Reuse the existing `copied` state and `handleCopyInstructions` function for the copy button
+### Visual Updates
 
-3. **Remove the duplicate Toast-only email section** (lines 519-575) since the email template will now render for all providers in the main section. The Toast provider will use its own `copyText` (Order Injection specific), while other providers use the default template.
+**Steps container** (lines 494-500):
+- Change from `bg-muted/50` to a dark card: `bg-zinc-900 dark:bg-zinc-950 text-zinc-100` with `rounded-xl` and `font-mono text-xs`
+- Add a header bar at the top with a "Markdown" label and the existing copy button (moved here)
 
-4. **Update `DEFAULT_INSTRUCTIONS` content** to match the Order Injection email format:
-   - Subject: `Action Required: Enable Order Injection for [Client Name]`
-   - Body: mobile ordering pilot, API credentials, Order Injection Write Access request
-   - Sign-off: `[Management Name]` + client name
+**Step content rendering**:
+- Replace plain `<p>` tags with a rich rendering function that parses each step string to apply:
+  - **Bold text**: Wrap text between `**` markers in `<strong className="text-white font-bold">`
+  - **Orange bullet points**: Use `*` markers styled with `text-orange-400`
+  - **Green highlights**: For URLs and email addresses, render in `text-emerald-400`
+  - **Step numbers**: Render numbered headings (e.g., "1. Activate...") in `font-bold text-white text-sm` with extra top margin
+  - **Sub-bullets**: Indented items with colored dash/bullet markers
+
+**New helper function** `renderRichStep(step: string)`:
+- Splits the step text and applies inline formatting
+- Detects patterns like URLs (`pos.toasttab.com`), emails (`angelo@dazeapp.com`), and quoted terms to apply accent colors
+- Numbers at the start of lines get bold white treatment
+- Bullet items (`-`, `*`) get orange-colored markers
 
 ### Result
-- All providers show a styled email template card with a copy button instead of the raw code block
-- Toast uses its own customized email text; other providers use the default
-- The copy button copies the full email text to clipboard with a success toast
-- Client name is dynamically inserted from context
+- Instructions look like the colorful markdown preview in the screenshot
+- Dark background with syntax-highlighted text (white bold, orange bullets, green links)
+- Copy button in the header bar for easy copying
+- Professional, developer-friendly aesthetic matching the reference image
 
 ### Technical Details
-- `emailCopied` state is already available (added in previous update)
-- `client` is already extracted from `useClient()` 
-- The email card UI pattern is already proven from the Toast-only section -- just needs to be promoted to the shared rendering path
-- The `handleCopyInstructions` function will be updated to copy the email template text with the dynamic client name substituted in
-
+- Only the rendering changes -- the underlying data structure (`steps[]`, `copyText`) stays the same
+- The copy button functionality remains identical, just repositioned into the card header
+- Dark styling uses Tailwind classes (`bg-zinc-900`, `text-zinc-100`, etc.) that work in both light and dark mode
+- The rich text parsing is done at render time with a small inline function, no external markdown library needed
