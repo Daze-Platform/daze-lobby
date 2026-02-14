@@ -83,21 +83,20 @@ const DEFAULT_INSTRUCTIONS = {
     "3. Obtain the necessary credentials (API key, store ID, etc.)",
     "4. Share the credentials securely with Daze support",
   ],
-  copyText: `POS INTEGRATION REQUEST
+  copyText: `Subject: Action Required: Enable Order Injection for [Property Name]
 
-Hi,
+Hi [Rep Name],
 
-We are integrating with Daze for our F&B ordering system and need API access configured.
+We are launching a mobile ordering pilot at [Property Name] using a custom integration built on the Daze Platform.
 
-Required Items:
-• API credentials for third-party integration
-• Store/Location ID
-• Menu API access
-• Order API access
+We have already generated our API credentials, but we need you to manually enable "Order Injection" (Write Access) for our API Client ID: [Insert Your Client ID].
 
-Please provide credentials at your earliest convenience.
+This is a property-specific requirement to allow guests to fire orders directly to our KDS and process room charges. Please confirm once this is toggled on so we can begin live testing.
 
-Thank you!`,
+Best regards,
+
+[Management Name]
+[Property Name]`,
 };
 
 const PROVIDER_INSTRUCTIONS: Partial<Record<Exclude<PosProvider, null>, {
@@ -287,7 +286,9 @@ export function PosStep({
       headline: `Next Steps for ${PROVIDERS.find(p => p.id === selectedProvider)?.name || "Integration"}`,
     };
     const instr = providerInstr || fallback;
-    await navigator.clipboard.writeText(instr.copyText);
+    const clientName = client?.name || "[Property Name]";
+    const textToCopy = instr.copyText.replace(/\[Property Name\]/g, clientName);
+    await navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     
     // Log activity
@@ -498,41 +499,10 @@ export function PosStep({
                   ))}
                 </div>
 
-                {/* Code block preview */}
-                <div className="relative group">
-                  <button
-                    onClick={handleCopyInstructions}
-                    className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-muted-foreground/10 hover:bg-muted-foreground/20 transition-colors opacity-0 group-hover:opacity-100"
-                    aria-label="Copy instructions"
-                  >
-                    {copied ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                    )}
-                  </button>
-                  <pre className="bg-muted text-muted-foreground text-xs p-4 rounded-xl overflow-x-auto max-h-[320px] overflow-y-auto border">
-                    <code>{instructions?.copyText}</code>
-                  </pre>
-                </div>
-
-                {/* Email Template - Toast only */}
-                {selectedProvider === "toast" && (() => {
+                {/* Email Template */}
+                {(() => {
                   const clientName = client?.name || "[Property Name]";
-                  const emailText = `Subject: Action Required: Enable Order Injection for ${clientName}
-
-Hi [Rep Name],
-
-We are launching a mobile ordering pilot at ${clientName} using a custom integration built on the Daze Platform.
-
-We have already generated our API credentials, but we need you to manually enable "Order Injection" (Write Access) for our API Client ID: [Insert Your Client ID].
-
-This is a property-specific requirement to allow guests to fire orders directly to our KDS and process room charges. Please confirm once this is toggled on so we can begin live testing.
-
-Best regards,
-
-[Management Name]
-${clientName}`;
+                  const emailText = (instructions?.copyText || "").replace(/\[Property Name\]/g, clientName);
 
                   return (
                     <div className="space-y-2">
@@ -546,7 +516,7 @@ ${clientName}`;
                             setEmailCopied(true);
                             logActivity.mutate({
                               action: "pos_email_template_copied",
-                              details: { provider: "toast" },
+                              details: { provider: selectedProvider },
                             });
                             toast.success("Email template copied!");
                             setTimeout(() => setEmailCopied(false), 2000);
@@ -573,7 +543,6 @@ ${clientName}`;
                     </div>
                   );
                 })()}
-
                 {/* PMS Name Field */}
                 <div className="space-y-2">
                   <Label htmlFor="pms-name" className="text-xs sm:text-sm text-muted-foreground">
