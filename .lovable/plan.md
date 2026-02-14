@@ -1,28 +1,29 @@
 
 
-## Fix: Browser Autofill Pre-Populating Toast Credential Fields
+## Highlight Credential Terms in Orange in POS Instructions
 
-### Root Cause
-
-The code is correct -- fields initialize as empty strings. The issue is **browser autofill**. The browser's password manager recognizes the field names ("client-id", "client-secret") and the `type="password"` attribute, then automatically fills them with saved credentials.
-
-### Solution
-
-Add `autoComplete="off"` to all three Toast credential inputs to prevent browser autofill from populating them.
-
-### Changes
+### What Changes
 
 **File: `src/components/portal/steps/PosStep.tsx`**
 
-1. **Client ID input** (~line 605): Add `autoComplete="off"` attribute
-2. **Client Secret input** (~line 618): Add `autoComplete="new-password"` attribute (stronger than "off" for password-type fields, as browsers may ignore "off" on password inputs)
-3. **Location GUID input** (~line 632): Add `autoComplete="off"` attribute
+Update the `renderRichLine` regex and rendering logic to recognize and highlight the specific credential terms -- "Client ID", "Client Secret", and "Location GUID" -- in a readable orange color within the dark instruction card.
 
-Additionally, wrap the three inputs in a `<form>` tag (or add `autoComplete="off"` to the parent `<div>`) to reinforce the browser hint.
+### Approach
+
+1. **Expand the regex** (~line 538): Add a new pattern to match the exact phrases `Client ID`, `Client Secret`, and `Location GUID` as additional capture groups.
+
+   Updated regex adds: `|Client ID|Client Secret|Location GUID`
+
+2. **Add a rendering branch** (~line 546-555): When a matched token is one of these three credential terms, render it with `text-orange-400 font-semibold` styling so it stands out clearly against the dark background and matches the existing orange accent color used for step numbers and bullets.
+
+### Result
+
+Step 3's text will render as:
+- "Copy and paste the **Client ID**, **Client Secret**, and **Location GUID** (found under...)" with those three terms in orange, making it immediately clear which fields the client needs to locate and enter.
 
 ### Technical Detail
 
-- `autoComplete="new-password"` is specifically designed to tell browsers "this is a new credential, do not autofill" -- it works more reliably than `autoComplete="off"` on password-type fields
-- `autoComplete="off"` works for standard text inputs
-- No functional or data persistence changes -- just autofill prevention
+- No data or persistence changes -- purely a visual formatting update
+- The orange color (`text-orange-400`) is consistent with the existing step-number and bullet styling in the instruction card
+- Only exact-match phrases are highlighted, so no risk of false positives elsewhere in the text
 
