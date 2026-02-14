@@ -204,15 +204,11 @@ export function PosStep({
   const savedProvider = data?.provider as PosProvider | undefined;
   const savedStatus = data?.status as string | undefined;
   const savedPmsName = data?.pms_name as string | undefined;
-  const savedClientId = data?.toast_client_id as string | undefined;
-  const savedClientSecret = data?.toast_client_secret as string | undefined;
-  const savedLocationGuid = data?.toast_location_guid as string | undefined;
-  
   const [selectedProvider, setSelectedProvider] = useState<PosProvider>(savedProvider || null);
   const [pmsName, setPmsName] = useState(savedPmsName || "");
-  const [toastClientId, setToastClientId] = useState(savedClientId || "");
-  const [toastClientSecret, setToastClientSecret] = useState(savedClientSecret || "");
-  const [toastLocationGuid, setToastLocationGuid] = useState(savedLocationGuid || "");
+  const [toastClientId, setToastClientId] = useState("");
+  const [toastClientSecret, setToastClientSecret] = useState("");
+  const [toastLocationGuid, setToastLocationGuid] = useState("");
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
