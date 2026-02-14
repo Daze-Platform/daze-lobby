@@ -1,13 +1,22 @@
+import { useSearchParams } from "react-router-dom";
 import { ClientLoginForm } from "@/components/auth/ClientLoginForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { SketchyArtPanel } from "@/components/auth/SketchyArtPanel";
 
 export default function PortalLogin() {
+  const [searchParams] = useSearchParams();
+  const isReset = searchParams.get("reset") === "1" || window.location.hash.includes("type=recovery");
+
   return (
     <div className="h-screen overflow-hidden flex flex-col lg:flex-row">
-      {/* Left Side - The Client Login Form (Clean White) */}
+      {/* Left Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 lg:p-12 h-full" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="w-full max-w-md">
-          <ClientLoginForm />
+          {isReset ? (
+            <ResetPasswordForm redirectTo="/portal/login" />
+          ) : (
+            <ClientLoginForm />
+          )}
         </div>
       </div>
 
