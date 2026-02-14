@@ -10,7 +10,11 @@ import dazeLogo from "@/assets/daze-logo.png";
 import { validatePassword } from "@/lib/passwordValidation";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 
-export function ResetPasswordForm() {
+interface ResetPasswordFormProps {
+  redirectTo?: string;
+}
+
+export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,9 +49,9 @@ export function ResetPasswordForm() {
       if (error) throw error;
       setSuccess(true);
       
-      // Redirect to dashboard after a short delay
+      // Redirect after a short delay
       setTimeout(() => {
-        navigate("/");
+        navigate(redirectTo);
       }, 2000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to reset password");

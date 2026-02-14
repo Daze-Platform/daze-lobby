@@ -41,9 +41,10 @@ export function ClientLoginForm() {
   const nameParam = searchParams.get("name");
   const verifiedParam = searchParams.get("verified") === "true";
 
-  const [mode, setMode] = useState<"login" | "signup">(
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(
     emailParam && !verifiedParam ? "signup" : "login"
   );
+  const [forgotSuccess, setForgotSuccess] = useState(false);
   const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState(nameParam || "");
@@ -78,6 +79,23 @@ export function ClientLoginForm() {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const redirectTo = `${window.location.origin}/portal/login?reset=1`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      setForgotSuccess(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,107 +231,170 @@ export function ClientLoginForm() {
             Partner Portal
           </span>
         </div>
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-          {mode === "signup" ? "Create your account" : "Sign in to your portal"}
+      <h1 className="font-display text-lg sm:text-xl font-semibold text-foreground">
+          {mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your account" : "Sign in to your portal"}
         </h1>
         <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          {mode === "signup" ? "Sign up to access your onboarding portal" : "Enter your credentials to continue"}
+          {mode === "forgot" ? "Enter your email and we'll send a reset link" : mode === "signup" ? "Sign up to access your onboarding portal" : "Enter your credentials to continue"}
         </p>
       </div>
 
-      {/* Form */}
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
-      >
-        {verifiedParam && !error && (
-          <Alert className="border-0 bg-green-50 text-green-800 animate-fade-in-up">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              Email verified! Sign in below to access your portal.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {error && (
-          <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {error}
-              {showSignUpPrompt && (
+      {/* Forgot password mode */}
+      {mode === "forgot" ? (
+        <form onSubmit={handleForgotPassword} className="space-y-4">
+          {forgotSuccess ? (
+              <Alert className="border-0 bg-green-50 text-green-800 animate-fade-in-up">
+                <Mail className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Check your email for a password reset link.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                {error && (
+                  <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="rounded-xl"
+                  />
+                </div>
                 <Button
-                  type="button"
-                  variant="link"
-                  className="ml-1 p-0 h-auto text-destructive underline underline-offset-2"
-                  onClick={() => { setShowSignUpPrompt(false); setError(null); setMode("signup"); }}
+                  type="submit"
+                  className="w-full rounded-xl min-h-[44px] bg-accent text-accent-foreground hover:bg-accent/90"
+                  disabled={loading}
                 >
-                  Back to Sign Up
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Send Reset Link
                 </Button>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Full Name - signup only */}
-        {mode === "signup" && (
-          <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="Jane Smith"
-              value={fullName}
-              onChange={(e) => !isNameLocked && setFullName(e.target.value)}
-              required
-              disabled={loading}
-              readOnly={isNameLocked}
-              className={`rounded-xl ${isNameLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
-            />
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => !isEmailLocked && setEmail(e.target.value)}
-            required
-            disabled={loading}
-            readOnly={isEmailLocked}
-            className={`rounded-xl ${error ? 'ring-destructive/50' : ''} ${isEmailLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              className={`rounded-xl pr-10 ${error ? 'ring-destructive/50' : ''}`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              tabIndex={-1}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-          {showStrengthIndicator && (
-            <PasswordStrengthIndicator validation={passwordValidation} show={true} />
+              </>
+            )}
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setError(null); setForgotSuccess(false); }}
+                className="text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        ) : (
+        /* Login / Signup form */
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className={`space-y-4 ${shouldShake ? 'animate-shake' : ''}`}
+        >
+          {verifiedParam && !error && (
+            <Alert className="border-0 bg-green-50 text-green-800 animate-fade-in-up">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Email verified! Sign in below to access your portal.
+              </AlertDescription>
+            </Alert>
           )}
-        </div>
+
+          {error && (
+            <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {error}
+                {showSignUpPrompt && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="ml-1 p-0 h-auto text-destructive underline underline-offset-2"
+                    onClick={() => { setShowSignUpPrompt(false); setError(null); setMode("signup"); }}
+                  >
+                    Back to Sign Up
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Full Name - signup only */}
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Jane Smith"
+                value={fullName}
+                onChange={(e) => !isNameLocked && setFullName(e.target.value)}
+                required
+                disabled={loading}
+                readOnly={isNameLocked}
+                className={`rounded-xl ${isNameLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => !isEmailLocked && setEmail(e.target.value)}
+              required
+              disabled={loading}
+              readOnly={isEmailLocked}
+              className={`rounded-xl ${error ? 'ring-destructive/50' : ''} ${isEmailLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => { setMode("forgot"); setError(null); }}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                className={`rounded-xl pr-10 ${error ? 'ring-destructive/50' : ''}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {showStrengthIndicator && (
+              <PasswordStrengthIndicator validation={passwordValidation} show={true} />
+            )}
+          </div>
 
         <Button
           type="submit"
@@ -373,7 +454,8 @@ export function ClientLoginForm() {
             </p>
           )}
         </div>
-      </form>
+        </form>
+        )}
     </div>
   );
 }
