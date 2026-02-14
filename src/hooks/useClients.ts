@@ -134,9 +134,9 @@ export function useUpdateClientPhase() {
     onMutate: async ({ clientId, newPhase }) => {
       await queryClient.cancelQueries({ queryKey: ["clients-with-details"] });
       const previousClients = queryClient.getQueryData<Client[]>([
-        "clients-with-details",
+        "clients-with-details", { includeDeleted: false },
       ]);
-      queryClient.setQueryData<Client[]>(["clients-with-details"], (old) => {
+      queryClient.setQueryData<Client[]>(["clients-with-details", { includeDeleted: false }], (old) => {
         if (!old) return old;
         return old.map((client) =>
           client.id === clientId
@@ -153,7 +153,7 @@ export function useUpdateClientPhase() {
     onError: (error, _variables, context) => {
       if (context?.previousClients) {
         queryClient.setQueryData(
-          ["clients-with-details"],
+          ["clients-with-details", { includeDeleted: false }],
           context.previousClients
         );
       }
