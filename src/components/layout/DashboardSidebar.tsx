@@ -46,7 +46,8 @@ export function DashboardSidebar({ isMobile = false, onClose, isCollapsed = fals
     queryFn: async () => {
       const { count, error } = await supabase
         .from("clients")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null);
       if (error) throw error;
       return count || 0;
     },
