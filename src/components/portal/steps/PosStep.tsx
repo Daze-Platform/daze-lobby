@@ -199,7 +199,7 @@ export function PosStep({
   isJustCompleted,
   isUnlocking
 }: PosStepProps) {
-  const { clientId } = useClient();
+  const { clientId, client } = useClient();
   const logActivity = useLogActivity(clientId);
   
   const savedProvider = data?.provider as PosProvider | undefined;
@@ -210,6 +210,7 @@ export function PosStep({
   const [pmsName, setPmsName] = useState(savedPmsName || "");
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
   const [isPendingIT, setIsPendingIT] = useState(savedStatus === "pending_it");
   const [isITVerified, setIsITVerified] = useState(savedStatus === "it_verified");
 
@@ -514,6 +515,64 @@ export function PosStep({
                     <code>{instructions?.copyText}</code>
                   </pre>
                 </div>
+
+                {/* Email Template - Toast only */}
+                {selectedProvider === "toast" && (() => {
+                  const clientName = client?.name || "[Property Name]";
+                  const emailText = `Subject: Action Required: Enable Order Injection for ${clientName}
+
+Hi [Rep Name],
+
+We are launching a mobile ordering pilot at ${clientName} using a custom integration built on the Daze Platform.
+
+We have already generated our API credentials, but we need you to manually enable "Order Injection" (Write Access) for our API Client ID: [Insert Your Client ID].
+
+This is a property-specific requirement to allow guests to fire orders directly to our KDS and process room charges. Please confirm once this is toggled on so we can begin live testing.
+
+Best regards,
+
+[Management Name]
+${clientName}`;
+
+                  return (
+                    <div className="space-y-2">
+                      <Label className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                        ✉️ Email Template: Request for Order Injection
+                      </Label>
+                      <div className="relative group">
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(emailText);
+                            setEmailCopied(true);
+                            logActivity.mutate({
+                              action: "pos_email_template_copied",
+                              details: { provider: "toast" },
+                            });
+                            toast.success("Email template copied!");
+                            setTimeout(() => setEmailCopied(false), 2000);
+                          }}
+                          className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-muted-foreground/10 hover:bg-muted-foreground/20 transition-colors opacity-0 group-hover:opacity-100"
+                          aria-label="Copy email template"
+                        >
+                          {emailCopied ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                          )}
+                        </button>
+                        <div className="bg-muted text-muted-foreground text-xs p-4 rounded-xl overflow-x-auto max-h-[280px] overflow-y-auto border space-y-2">
+                          <p className="font-semibold">Subject: Action Required: Enable Order Injection for {clientName}</p>
+                          <p>Hi [Rep Name],</p>
+                          <p>We are launching a mobile ordering pilot at <strong>{clientName}</strong> using a custom integration built on the Daze Platform.</p>
+                          <p>We have already generated our API credentials, but we need you to manually enable <strong>"Order Injection" (Write Access)</strong> for our <strong>API Client ID: [Insert Your Client ID]</strong>.</p>
+                          <p>This is a property-specific requirement to allow guests to fire orders directly to our KDS and process room charges. Please confirm once this is toggled on so we can begin live testing.</p>
+                          <p>Best regards,</p>
+                          <p>[Management Name]<br />{clientName}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* PMS Name Field */}
                 <div className="space-y-2">
