@@ -1,41 +1,59 @@
 
 
-## Make POS Instructions More Colorful and Rich
+## Add Toast POS Credential Input Fields
 
 ### What Changes
 
 **File: `src/components/portal/steps/PosStep.tsx`**
 
-Transform the plain-text steps list (currently a light `bg-muted/50` card with `text-sm text-muted-foreground` paragraphs) into a richer, markdown-inspired dark card with colored elements, matching the screenshot reference.
+Add three input fields (Client ID, Client Secret, Location GUID) that appear **only when Toast is the selected provider**, placed between the instructions card and the email template section.
 
-### Visual Updates
+### Details
 
-**Steps container** (lines 494-500):
-- Change from `bg-muted/50` to a dark card: `bg-zinc-900 dark:bg-zinc-950 text-zinc-100` with `rounded-xl` and `font-mono text-xs`
-- Add a header bar at the top with a "Markdown" label and the existing copy button (moved here)
+1. **New state variables** for the three credential fields:
+   - `clientIdValue` -- initialized from `data?.toast_client_id`
+   - `clientSecretValue` -- initialized from `data?.toast_client_secret`
+   - `locationGuidValue` -- initialized from `data?.toast_location_guid`
 
-**Step content rendering**:
-- Replace plain `<p>` tags with a rich rendering function that parses each step string to apply:
-  - **Bold text**: Wrap text between `**` markers in `<strong className="text-white font-bold">`
-  - **Orange bullet points**: Use `*` markers styled with `text-orange-400`
-  - **Green highlights**: For URLs and email addresses, render in `text-emerald-400`
-  - **Step numbers**: Render numbered headings (e.g., "1. Activate...") in `font-bold text-white text-sm` with extra top margin
-  - **Sub-bullets**: Indented items with colored dash/bullet markers
+2. **New UI section** (inserted after the dark instructions card, around line 572, before the email template):
+   - Only renders when `selectedProvider === "toast"`
+   - Contains a small card/section with three labeled inputs:
+     - **Client ID** -- text input, placeholder "e.g., abc123..."
+     - **Client Secret** -- text input (or password-style), placeholder "e.g., xyz789..."
+     - **Location GUID** -- text input, placeholder "e.g., 12345678-abcd-..."
+   - Each field auto-saves via the existing debounce pattern (800ms), persisting to the task data JSONB alongside the existing `provider`, `status`, and `pms_name` fields
 
-**New helper function** `renderRichStep(step: string)`:
-- Splits the step text and applies inline formatting
-- Detects patterns like URLs (`pos.toasttab.com`), emails (`angelo@dazeapp.com`), and quoted terms to apply accent colors
-- Numbers at the start of lines get bold white treatment
-- Bullet items (`-`, `*`) get orange-colored markers
+3. **Update `onUpdate` calls** to include the three new fields in the data payload when Toast is selected:
+   - `handleSentToIT` and `handleProviderSelect` will pass `toast_client_id`, `toast_client_secret`, `toast_location_guid` alongside existing fields
+   - The `handleBack` function will clear these fields when switching away from Toast
 
-### Result
-- Instructions look like the colorful markdown preview in the screenshot
-- Dark background with syntax-highlighted text (white bold, orange bullets, green links)
-- Copy button in the header bar for easy copying
-- Professional, developer-friendly aesthetic matching the reference image
+4. **Validation gate**: The "Mark as Sent to IT" button will additionally require all three Toast fields to be filled (non-empty) when Toast is the selected provider, in addition to the existing PMS name requirement.
 
-### Technical Details
-- Only the rendering changes -- the underlying data structure (`steps[]`, `copyText`) stays the same
-- The copy button functionality remains identical, just repositioned into the card header
-- Dark styling uses Tailwind classes (`bg-zinc-900`, `text-zinc-100`, etc.) that work in both light and dark mode
-- The rich text parsing is done at render time with a small inline function, no external markdown library needed
+### Visual Layout
+
+```text
++------------------------------------------+
+| [Instructions dark card]                 |
++------------------------------------------+
+
+  Toast API Credentials
+  +--------------------------------------+
+  | Client ID          [_______________] |
+  | Client Secret      [_______________] |
+  | Location GUID      [_______________] |
+  +--------------------------------------+
+
+  Email Template: Request for Order Injection
+  +--------------------------------------+
+  | Subject: Action Required...          |
+  | ...                                  |
+  +--------------------------------------+
+```
+
+### Technical Notes
+
+- The three new values are stored in the same `onboarding_tasks.data` JSONB column as `toast_client_id`, `toast_client_secret`, `toast_location_guid`
+- Auto-save uses the same 800ms debounce ref already in place for PMS name
+- Fields only appear for Toast -- other providers continue with the current flow unchanged
+- The `onUpdate` prop signature does not need to change; the extra keys are passed as part of the existing data object spread
+
