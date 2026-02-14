@@ -1,46 +1,29 @@
 
 
-## Add Order Injection Email Template to Toast POS Instructions
+## Replace Generic POS Instructions with Toast-Specific Instructions
 
-### What Changes
+### Current State
 
-**File: `src/components/portal/steps/PosStep.tsx`**
+The Toast-specific 3-step instructions were already added in the previous update. When a user selects "Toast" as their POS provider, they should see:
 
-1. **Add an `emailTemplate` field** to the Toast provider instructions object containing the Order Injection email text (subject + body). This keeps it alongside the existing `headline`, `steps`, and `copyText`.
+1. Activate Standard API Access (Toast Web Dashboard)
+2. Generate Daze Platform Credentials (Create New Integration)
+3. Link to Daze Lobby (Client ID, Client Secret, Location GUID)
 
-2. **Add `emailCopied` state** (separate from the existing `copied` state) to track the copy status of the email template independently.
+The screenshot you shared shows the **generic fallback** instructions ("Next Steps for Integration" with 4 generic steps). These only appear when a provider **other than Toast** is selected (or no provider-specific instructions exist).
 
-3. **Add a new UI section** in the instructions panel (between the code block and the PMS name field, around line 516). This section renders only when `selectedProvider === "toast"` and displays:
-   - A labeled header: "Email Template: Request for Order Injection"
-   - A styled card showing the email content (subject line + body)
-   - A copy button (top-right corner, matching the existing code block copy pattern) that copies the email text to clipboard
-   - A toast notification on copy: "Email template copied!"
+### What Needs to Happen
 
-4. **The email text** will use the client name from context where available, falling back to `[Property Name]`. Since the component has access to `useClient()`, we can pull the client name to personalize the template for Springhill Suites Orange Beach or any future client.
+If you are seeing the old 4-step generic instructions when Toast is selected, the most likely cause is that the POS provider data for this client is not saved as `"toast"` in the database, so the fallback is being used. We should:
 
-### Email Content (Copyable)
-```
-Subject: Action Required: Enable Order Injection for [Client Name]
+1. **Verify Toast is rendering correctly** -- Navigate to the portal with Toast selected and confirm the new instructions appear.
+2. **If the issue persists**, check the admin-set provider value in the database matches `"toast"` exactly (the `onboarding_tasks` table, `task_key = "pos"`, `data->provider`).
 
-Hi [Rep Name],
+### No Code Changes Needed
 
-We are launching a mobile ordering pilot at [Client Name] using a custom integration built on the Daze Platform.
+The implementation from the previous update already ensures that selecting Toast shows the new 3-step instructions instead of the generic 4-step fallback. The generic fallback remains for all other POS providers (NCR Aloha, Micros, etc.) which is correct behavior.
 
-We have already generated our API credentials, but we need you to manually enable "Order Injection" (Write Access) for our API Client ID: [Insert Your Client ID].
+### Recommended Next Step
 
-This is a property-specific requirement to allow guests to fire orders directly to our KDS and process room charges. Please confirm once this is toggled on so we can begin live testing.
-
-Best regards,
-
-[Management Name]
-[Client Name]
-```
-
-### Technical Details
-
-- The email template section is only rendered when `selectedProvider === "toast"` so it does not appear for other POS providers
-- Uses the same copy icon pattern (Copy/Check toggle) already used for the instructions code block
-- `emailCopied` state resets after 2 seconds, matching existing behavior
-- Client name is pulled from `useClient()` context to dynamically populate the template (e.g., "Springhill Suites Orange Beach")
-- Activity logging fires `pos_email_template_copied` on copy
+Test this by navigating to the portal, selecting Toast as the POS provider, and confirming you see "Toast POS: Custom Integration Setup" with the 3 detailed steps plus the email template below it.
 
