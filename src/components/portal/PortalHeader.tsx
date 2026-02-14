@@ -15,7 +15,9 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SignOut, Clock, ClipboardText, FileText, ArrowLeft, ArrowClockwise, Key } from "@phosphor-icons/react";
+import { SignOut, Clock, ClipboardText, FileText, ArrowLeft, ArrowClockwise, Key, Moon } from "@phosphor-icons/react";
+import { useTheme } from "next-themes";
+import { Switch } from "@/components/ui/switch";
 import { AdminClientSwitcher } from "./AdminClientSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -72,6 +74,8 @@ export function PortalHeader({
 }: PortalHeaderProps) {
   // Show badge count: for preview use activityCount, for real portal use unreadNotificationCount
   const badgeCount = isPreview ? (activityCount > 1 ? activityCount : 0) : unreadNotificationCount;
+
+  const { theme, setTheme } = useTheme();
 
   // Change password state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -237,6 +241,19 @@ export function PortalHeader({
                     <span>Change Password</span>
                   </DropdownMenuItem>
                 )}
+                {!isPreview && (
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Moon size={16} weight="duotone" />
+                      <span>Dark Mode</span>
+                    </div>
+                    <Switch
+                      checked={theme === "dark"}
+                      onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                    />
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
@@ -312,6 +329,19 @@ export function PortalHeader({
                     <span>Change Password</span>
                   </DropdownMenuItem>
                 )}
+                {!isPreview && (
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Moon size={16} weight="duotone" />
+                      <span>Dark Mode</span>
+                    </div>
+                    <Switch
+                      checked={theme === "dark"}
+                      onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                    />
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                   {isPreview ? (
                     <>
