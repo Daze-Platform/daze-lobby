@@ -49,8 +49,8 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
           <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
           <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
         </div>
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-slate-900">Reset your password</h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+        <h1 className="font-display text-lg sm:text-xl font-semibold" style={{ color: '#1e293b' }}>Reset your password</h1>
+        <p className="text-xs sm:text-sm mt-1" style={{ color: '#64748b' }}>
           Enter your email and we'll send you a reset link
         </p>
       </div>
@@ -82,7 +82,7 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1e293b' }}>Email</Label>
             <Input
               id="email"
               type="email"

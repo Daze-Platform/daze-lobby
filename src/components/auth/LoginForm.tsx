@@ -257,7 +257,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
+          <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1e293b' }}>Email</Label>
           <Input
             id="email"
             type="email"
@@ -273,7 +273,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#1e293b' }}>Password</Label>
             <button
               type="button"
               onClick={onForgotPassword}
@@ -298,7 +298,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: '#94a3b8' }}
               tabIndex={-1}
             >
               {showPassword ? (
@@ -355,7 +356,7 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
           Sign in with Google
         </Button>
 
-        <p className="text-center text-sm text-muted-foreground pt-2">
+        <p className="text-center text-sm pt-2" style={{ color: '#64748b' }}>
           Don't have an account?{" "}
           <button
             type="button"

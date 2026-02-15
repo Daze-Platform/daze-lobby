@@ -83,8 +83,8 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
               <CheckCircle className="h-8 w-8" style={{ color: "#0EA5E9" }} />
             </div>
           </div>
-          <h1 className="font-display text-xl font-semibold text-slate-900">Check your email</h1>
-          <p className="text-muted-foreground text-sm mt-2 mb-6">
+          <h1 className="font-display text-xl font-semibold" style={{ color: '#1e293b' }}>Check your email</h1>
+          <p className="text-sm mt-2 mb-6" style={{ color: '#64748b' }}>
             We've sent you a verification link. Please check your email to confirm your account.
           </p>
           <Button 
@@ -128,7 +128,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="fullName" className="text-sm font-medium text-foreground">Full Name</Label>
+          <Label htmlFor="fullName" className="text-sm font-medium" style={{ color: '#1e293b' }}>Full Name</Label>
           <Input
             id="fullName"
             type="text"
@@ -143,7 +143,7 @@ className="rounded-xl"
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
+          <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1e293b' }}>Email</Label>
           <Input
             id="email"
             type="email"
@@ -158,7 +158,7 @@ className="rounded-xl"
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
+          <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#1e293b' }}>Password</Label>
           <div className="relative">
             <Input
               id="password"
@@ -175,7 +175,8 @@ className="rounded-xl"
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: '#94a3b8' }}
               tabIndex={-1}
             >
               {showPassword ? (
@@ -236,7 +237,7 @@ className="rounded-xl"
           Sign up with Google
         </Button>
 
-        <p className="text-center text-sm text-muted-foreground pt-2">
+        <p className="text-center text-sm pt-2" style={{ color: '#64748b' }}>
           Already have an account?{" "}
           <button
             type="button"
