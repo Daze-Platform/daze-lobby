@@ -64,17 +64,17 @@ export function MFAChallengeForm({ factorId, onCancel }: MFAChallengeFormProps) 
       <div className="text-center mb-6">
         <div className="flex flex-row items-center justify-center gap-2 mb-4">
           <img src={dazeLogo} alt="Daze" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+           <span className="font-display text-xl sm:text-2xl font-bold tracking-tight" style={{ color: '#1e293b' }}>
             Daze Lobby
           </span>
         </div>
         <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
           <ShieldCheck className="h-6 w-6 text-primary" />
         </div>
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-slate-900">
+        <h1 className="font-display text-lg sm:text-xl font-semibold" style={{ color: '#1e293b' }}>
           Two-Factor Authentication
         </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+        <p className="text-xs sm:text-sm mt-1" style={{ color: '#64748b' }}>
           Enter the 6-digit code from your authenticator app
         </p>
       </div>
@@ -88,7 +88,7 @@ export function MFAChallengeForm({ factorId, onCancel }: MFAChallengeFormProps) 
 
       <div className="flex flex-col items-center gap-6">
         <div className="space-y-2 w-full flex flex-col items-center">
-          <Label className="text-sm font-medium">Verification Code</Label>
+          <Label className="text-sm font-medium" style={{ color: '#1e293b' }}>Verification Code</Label>
           <InputOTP
             maxLength={6}
             value={code}
@@ -120,7 +120,8 @@ export function MFAChallengeForm({ factorId, onCancel }: MFAChallengeFormProps) 
         <button
           type="button"
           onClick={onCancel}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="text-sm transition-colors"
+          style={{ color: '#64748b' }}
         >
           Cancel & sign out
         </button>

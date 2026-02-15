@@ -206,8 +206,8 @@ export function ClientLoginForm() {
               <CheckCircle className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="font-display text-xl font-semibold text-foreground">Check your email</h1>
-          <p className="text-muted-foreground text-sm mt-2 mb-6">
+          <h1 className="font-display text-xl font-semibold" style={{ color: '#1e293b' }}>Check your email</h1>
+          <p className="text-sm mt-2 mb-6" style={{ color: '#64748b' }}>
             We've sent you a verification link. Please check your email to confirm your account.
           </p>
           <Button
@@ -227,14 +227,14 @@ export function ClientLoginForm() {
       <div className="text-center mb-4 sm:mb-6">
         <div className="flex flex-col items-center justify-center mb-3 sm:mb-4">
           <img src={dazeLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 object-contain mb-2 sm:mb-3" />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight" style={{ color: '#1e293b' }}>
             Partner Portal
           </span>
         </div>
-      <h1 className="font-display text-lg sm:text-xl font-semibold text-foreground">
+      <h1 className="font-display text-lg sm:text-xl font-semibold" style={{ color: '#1e293b' }}>
           {mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your account" : "Sign in to your portal"}
         </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+        <p className="text-xs sm:text-sm mt-1" style={{ color: '#64748b' }}>
           {mode === "forgot" ? "Enter your email and we'll send a reset link" : mode === "signup" ? "Sign up to access your onboarding portal" : "Enter your credentials to continue"}
         </p>
       </div>
@@ -258,7 +258,7 @@ export function ClientLoginForm() {
                   </Alert>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1e293b' }}>Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -268,6 +268,7 @@ export function ClientLoginForm() {
                     required
                     disabled={loading}
                     className="rounded-xl"
+                    style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
                   />
                 </div>
                 <Button
@@ -328,7 +329,7 @@ export function ClientLoginForm() {
           {/* Full Name - signup only */}
           {mode === "signup" && (
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+              <Label htmlFor="fullName" className="text-sm font-medium" style={{ color: '#1e293b' }}>Full Name</Label>
               <Input
                 id="fullName"
                 type="text"
@@ -338,13 +339,14 @@ export function ClientLoginForm() {
                 required
                 disabled={loading}
                 readOnly={isNameLocked}
-                className={`rounded-xl ${isNameLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
+                className={`rounded-xl ${isNameLocked ? 'cursor-not-allowed' : ''}`}
+                style={{ backgroundColor: isNameLocked ? '#f1f5f9' : '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1e293b' }}>Email</Label>
             <Input
               id="email"
               type="email"
@@ -354,18 +356,20 @@ export function ClientLoginForm() {
               required
               disabled={loading}
               readOnly={isEmailLocked}
-              className={`rounded-xl ${error ? 'ring-destructive/50' : ''} ${isEmailLocked ? 'bg-muted/50 cursor-not-allowed' : ''}`}
+              className={`rounded-xl ${error ? 'ring-destructive/50' : ''} ${isEmailLocked ? 'cursor-not-allowed' : ''}`}
+              style={{ backgroundColor: isEmailLocked ? '#f1f5f9' : '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#1e293b' }}>Password</Label>
               {mode === "login" && (
                 <button
                   type="button"
                   onClick={() => { setMode("forgot"); setError(null); }}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  className="text-xs hover:text-primary transition-colors"
+                  style={{ color: '#64748b' }}
                 >
                   Forgot Password?
                 </button>
@@ -381,11 +385,13 @@ export function ClientLoginForm() {
                 required
                 disabled={loading}
                 className={`rounded-xl pr-10 ${error ? 'ring-destructive/50' : ''}`}
+                style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                style={{ color: '#94a3b8' }}
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -431,7 +437,7 @@ export function ClientLoginForm() {
         {/* Mode toggle */}
         <div className="text-center pt-2">
           {mode === "login" ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm" style={{ color: '#64748b' }}>
               Don't have an account?{" "}
               <button
                 type="button"
@@ -442,7 +448,7 @@ export function ClientLoginForm() {
               </button>
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm" style={{ color: '#64748b' }}>
               Already have an account?{" "}
               <button
                 type="button"

@@ -71,10 +71,10 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
       <div className="text-center mb-4 sm:mb-6">
         <div className="flex flex-col items-center justify-center mb-3 sm:mb-4">
           <img src={dazeLogo} alt="Daze" className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 object-contain mb-2 sm:mb-3" />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Daze Lobby</span>
+          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight" style={{ color: '#1e293b' }}>Daze Lobby</span>
         </div>
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-slate-900">Set new password</h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+        <h1 className="font-display text-lg sm:text-xl font-semibold" style={{ color: '#1e293b' }}>Set new password</h1>
+        <p className="text-xs sm:text-sm mt-1" style={{ color: '#64748b' }}>
           Enter your new password below
         </p>
       </div>
@@ -98,7 +98,7 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">New Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#1e293b' }}>New Password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -114,7 +114,8 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                style={{ color: '#94a3b8' }}
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -131,7 +132,7 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+            <Label htmlFor="confirmPassword" className="text-sm font-medium" style={{ color: '#1e293b' }}>Confirm Password</Label>
             <div className="relative">
               <Input
                 id="confirmPassword"
@@ -147,7 +148,8 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                style={{ color: '#94a3b8' }}
                 tabIndex={-1}
               >
                 {showConfirmPassword ? (
