@@ -7,6 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MAX_BASE64_SIZE = 4 * 1024 * 1024; // ~4MB cap for base64 content
+const AI_TIMEOUT_MS = 55_000; // 55-second timeout
+
 const pilotAgreementTool = {
   type: "function" as const,
   function: {
@@ -39,10 +42,7 @@ const pilotAgreementTool = {
             authorized_signer_name: { type: "string" },
             authorized_signer_title: { type: "string" },
             contact_email: { type: "string" },
-            covered_outlets: {
-              type: "array",
-              items: { type: "string" },
-            },
+            covered_outlets: { type: "array", items: { type: "string" } },
             start_date: { type: "string" },
             pilot_term_days: { type: "number" },
             pricing_model: { type: "string" },
@@ -84,22 +84,10 @@ const securityDocTool = {
         extracted_data: {
           type: "object",
           properties: {
-            compliance_areas: {
-              type: "array",
-              items: { type: "string" },
-            },
-            certifications: {
-              type: "array",
-              items: { type: "string" },
-            },
-            expiry_dates: {
-              type: "object",
-              additionalProperties: { type: "string" },
-            },
-            coverage_gaps: {
-              type: "array",
-              items: { type: "string" },
-            },
+            compliance_areas: { type: "array", items: { type: "string" } },
+            certifications: { type: "array", items: { type: "string" } },
+            expiry_dates: { type: "object", additionalProperties: { type: "string" } },
+            coverage_gaps: { type: "array", items: { type: "string" } },
             data_handling_policies: { type: "string" },
             encryption_standards: { type: "string" },
           },
@@ -113,13 +101,17 @@ const securityDocTool = {
 };
 
 serve(async (req) => {
+  console.log("analyze-document: invoked", req.method);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Manual auth check (verify_jwt = false in config)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("analyze-document: missing authorization header");
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -127,6 +119,7 @@ serve(async (req) => {
     }
 
     const { documentId, clientId, documentType } = await req.json();
+    console.log("analyze-document: params", { documentId, clientId, documentType });
 
     if (!documentId || !clientId || !documentType) {
       return new Response(
@@ -140,6 +133,7 @@ serve(async (req) => {
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     if (!lovableApiKey) {
+      console.error("analyze-document: LOVABLE_API_KEY not set");
       return new Response(JSON.stringify({ error: "AI service not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -156,6 +150,7 @@ serve(async (req) => {
       .single();
 
     if (docError || !doc) {
+      console.error("analyze-document: doc lookup failed", docError);
       return new Response(JSON.stringify({ error: "Document not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -168,20 +163,29 @@ serve(async (req) => {
       .download(doc.file_path);
 
     if (downloadError || !fileData) {
+      console.error("analyze-document: download failed", downloadError);
       return new Response(JSON.stringify({ error: "Failed to download document" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Convert to base64
+    // Convert to base64 with size cap
     const arrayBuffer = await fileData.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
+    const cappedArray = uint8Array.length > MAX_BASE64_SIZE
+      ? uint8Array.slice(0, MAX_BASE64_SIZE)
+      : uint8Array;
+
     let binary = "";
-    for (let i = 0; i < uint8Array.length; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
+    for (let i = 0; i < cappedArray.length; i++) {
+      binary += String.fromCharCode(cappedArray[i]);
     }
     const base64Content = btoa(binary);
+
+    if (uint8Array.length > MAX_BASE64_SIZE) {
+      console.warn(`analyze-document: truncated file from ${uint8Array.length} to ${MAX_BASE64_SIZE} bytes`);
+    }
 
     const mimeType = doc.mime_type || "application/pdf";
     const isPdf = mimeType === "application/pdf";
@@ -211,32 +215,54 @@ serve(async (req) => {
         },
       });
     } else {
-      // For .doc/.docx, send as text context
       userContent[0] = {
         type: "text",
         text: `Analyze this ${documentType === "pilot_agreement" ? "Pilot Agreement" : "Security Documentation"} document. The document content is provided as base64-encoded data (${mimeType}). Extract all available fields and assess completeness. Base64 content: ${base64Content.substring(0, 50000)}`,
       };
     }
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5.2",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools: [tool],
-        tool_choice: { type: "function", function: { name: toolName } },
-      }),
-    });
+    // Call AI gateway with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          tools: [tool],
+          tool_choice: { type: "function", function: { name: toolName } },
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      if (fetchErr instanceof DOMException && fetchErr.name === "AbortError") {
+        console.error("analyze-document: AI call timed out");
+        return new Response(
+          JSON.stringify({ error: "AI analysis timed out. Try a smaller document." }),
+          { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      throw fetchErr;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
+      const errorText = await aiResponse.text();
+      console.error("analyze-document: AI gateway error", status, errorText);
+
       if (status === 429) {
         return new Response(
           JSON.stringify({ error: "AI rate limit exceeded. Please try again in a moment." }),
@@ -249,8 +275,6 @@ serve(async (req) => {
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await aiResponse.text();
-      console.error("AI gateway error:", status, errorText);
       return new Response(JSON.stringify({ error: "AI analysis failed" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -261,7 +285,7 @@ serve(async (req) => {
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall?.function?.arguments) {
-      console.error("No tool call in AI response:", JSON.stringify(aiData));
+      console.error("analyze-document: no tool call in response", JSON.stringify(aiData).substring(0, 500));
       return new Response(JSON.stringify({ error: "AI did not return structured analysis" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -288,8 +312,10 @@ serve(async (req) => {
     });
 
     if (insertError) {
-      console.error("Failed to store analysis:", insertError);
+      console.error("analyze-document: failed to store analysis", insertError);
     }
+
+    console.log("analyze-document: success, score =", analysis.completeness_score);
 
     return new Response(
       JSON.stringify({
