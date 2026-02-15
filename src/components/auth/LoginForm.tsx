@@ -266,7 +266,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className={`rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground ${error ? 'ring-destructive/50' : ''}`}
+            className={`rounded-xl ${error ? 'ring-destructive/50' : ''}`}
+            style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
           />
         </div>
         
@@ -291,7 +292,8 @@ export function LoginForm({ onSwitchToSignUp, onForgotPassword }: LoginFormProps
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              className={`rounded-xl pr-10 !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground ${error ? 'ring-destructive/50' : ''}`}
+              className={`rounded-xl pr-10 ${error ? 'ring-destructive/50' : ''}`}
+              style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
             />
             <button
               type="button"

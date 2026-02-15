@@ -92,6 +92,7 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
               required
               disabled={loading}
               className="rounded-xl"
+              style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
             />
           </div>
 
