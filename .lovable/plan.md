@@ -1,29 +1,39 @@
 
 
-## Highlight Credential Terms in Orange in POS Instructions
+## Fix: Invisible Text on Auth Form Inputs
 
-### What Changes
+### Problem
+The auth form inputs (Full Name, Email, Password) show grey backgrounds with barely visible text. The Tailwind `!important` modifiers (`!bg-white`, `!text-foreground`) are not reliably overriding the base Input component's `bg-secondary/50` styling.
 
-**File: `src/components/portal/steps/PosStep.tsx`**
+### Root Cause
+The base `Input` component (`src/components/ui/input.tsx`) applies `bg-secondary/50` and uses CSS custom properties for text color. The `!` prefix in Tailwind classes is meant to add `!important`, but CSS variable resolution and specificity conflicts cause them to fail intermittently.
 
-Update the `renderRichLine` regex and rendering logic to recognize and highlight the specific credential terms -- "Client ID", "Client Secret", and "Location GUID" -- in a readable orange color within the dark instruction card.
+### Solution
+Replace the unreliable `!important` Tailwind classes with inline `style` attributes on all auth form inputs. Inline styles always win in CSS specificity.
 
-### Approach
+### Changes
 
-1. **Expand the regex** (~line 538): Add a new pattern to match the exact phrases `Client ID`, `Client Secret`, and `Location GUID` as additional capture groups.
+**File: `src/components/auth/SignUpForm.tsx`** -- 3 inputs (Full Name, Email, Password)
 
-   Updated regex adds: `|Client ID|Client Secret|Location GUID`
+Replace `className` overrides like:
+```
+className="rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
+```
+With:
+```
+className="rounded-xl"
+style={{ backgroundColor: '#ffffff', color: '#1e293b', borderColor: '#e2e8f0', border: '1px solid #e2e8f0' }}
+```
 
-2. **Add a rendering branch** (~line 546-555): When a matched token is one of these three credential terms, render it with `text-orange-400 font-semibold` styling so it stands out clearly against the dark background and matches the existing orange accent color used for step numbers and bullets.
+**File: `src/components/auth/LoginForm.tsx`** -- 2 inputs (Email, Password)
+
+Same change -- replace `!important` classes with inline `style` for background, text color, and border.
+
+**File: `src/components/auth/ForgotPasswordForm.tsx`** -- Check and fix if it has the same pattern.
+
+**File: `src/components/auth/ResetPasswordForm.tsx`** -- Already provided; check and fix the 2 inputs (New Password, Confirm Password).
 
 ### Result
-
-Step 3's text will render as:
-- "Copy and paste the **Client ID**, **Client Secret**, and **Location GUID** (found under...)" with those three terms in orange, making it immediately clear which fields the client needs to locate and enter.
-
-### Technical Detail
-
-- No data or persistence changes -- purely a visual formatting update
-- The orange color (`text-orange-400`) is consistent with the existing step-number and bullet styling in the instruction card
-- Only exact-match phrases are highlighted, so no risk of false positives elsewhere in the text
-
+- All auth inputs will have a crisp white background with dark text, guaranteed by inline styles
+- No more invisible or hard-to-read input text
+- Consistent appearance across all auth views (login, signup, forgot password, reset password)
