@@ -47,8 +47,8 @@ export function useDocumentAnalysis(documentId: string | undefined) {
         body: params,
       });
 
+      // Supabase SDK may return a non-2xx as an error, or wrap it in data.error
       if (error) {
-        // Check for rate limit / payment errors
         const message = error.message || "";
         if (message.includes("429") || message.includes("rate limit")) {
           throw new Error("AI rate limit exceeded. Please try again in a moment.");
@@ -56,7 +56,12 @@ export function useDocumentAnalysis(documentId: string | undefined) {
         if (message.includes("402") || message.includes("credits")) {
           throw new Error("AI credits exhausted. Please add credits to continue.");
         }
-        throw error;
+        throw new Error(message || "Failed to analyze document");
+      }
+
+      // Handle error returned inside a 200 response body
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       return data as {
