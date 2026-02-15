@@ -137,7 +137,8 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
             onChange={(e) => setFullName(e.target.value)}
             required
             disabled={loading}
-className="rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
+className="rounded-xl"
+            style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
            />
         </div>
         
@@ -151,7 +152,8 @@ className="rounded-xl !bg-white !border !border-border !text-foreground placehol
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="rounded-xl !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
+            className="rounded-xl"
+            style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
           />
         </div>
         
@@ -167,7 +169,8 @@ className="rounded-xl !bg-white !border !border-border !text-foreground placehol
               required
               minLength={8}
               disabled={loading}
-              className="rounded-xl pr-10 !bg-white !border !border-border !text-foreground placeholder:!text-muted-foreground"
+              className="rounded-xl pr-10"
+              style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
             />
             <button
               type="button"

@@ -109,6 +109,7 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
                 required
                 disabled={loading}
                 className="rounded-xl pr-10"
+                style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
               />
               <button
                 type="button"
@@ -141,6 +142,7 @@ export function ResetPasswordForm({ redirectTo = "/" }: ResetPasswordFormProps) 
                 required
                 disabled={loading}
                 className="rounded-xl pr-10"
+                style={{ backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
               />
               <button
                 type="button"
