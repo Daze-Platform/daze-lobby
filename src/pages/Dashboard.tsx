@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Buildings, Warning, DeviceMobile, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { KanbanBoard } from "@/components/kanban";
 import { useClients } from "@/hooks/useClients";
+import { useDevices } from "@/hooks/useDevices";
 
 interface StatCard {
   label: string;
@@ -19,6 +20,7 @@ interface StatCard {
 export default function Dashboard() {
   const { role } = useAuthContext();
   const { data: clients, isLoading } = useClients();
+  const { data: allDevices, isLoading: devicesLoading } = useDevices();
   const navigate = useNavigate();
 
   // Compute stats from client data - focused on onboarding velocity (no ARR)
@@ -34,14 +36,15 @@ export default function Dashboard() {
     const totalClients = clients.length;
     // Incomplete = pending tasks + blockers combined
     const incompleteCount = clients.reduce((sum, c) => sum + c.incompleteCount, 0);
-    const totalDazeDevices = clients.reduce((sum, c) => sum + c.dazeDeviceCount, 0);
+    // Use actual device count from useDevices (includes devices on deleted clients)
+    const totalDevices = allDevices?.length ?? 0;
 
     return [
       { label: "Total Clients", value: totalClients.toString(), icon: Buildings, route: "/clients", borderColor: "border-t-primary" },
       { label: "Incomplete", value: incompleteCount.toString(), icon: Warning, route: "/blockers", borderColor: "border-t-orange-500" },
-      { label: "Devices", value: totalDazeDevices.toString(), icon: DeviceMobile, route: "/devices", borderColor: "border-t-emerald-500" },
+      { label: "Devices", value: totalDevices.toString(), icon: DeviceMobile, route: "/devices", borderColor: "border-t-emerald-500" },
     ];
-  }, [clients]);
+  }, [clients, allDevices]);
 
   return (
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">

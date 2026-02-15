@@ -1,29 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { 
-  X, 
-  Clock, 
-  CheckCircle2, 
-  Upload, 
-  FileSignature, 
-  FileText,
-  Palette, 
-  Building2,
-  AlertTriangle,
-  LockOpen,
-  Activity,
-  Settings,
-  Copy,
-  Send,
-  Bell,
-  UserPlus,
-  UserMinus,
-  UserCog,
-  MessageSquare,
-  Cpu,
-  MapPin,
-  ArrowRightLeft
+  X, Clock, CheckCircle2, Upload, FileSignature, FileText,
+  Palette, Building2, AlertTriangle, LockOpen, Activity, Settings,
+  Copy, Send, Bell, UserPlus, UserMinus, UserCog, MessageSquare,
+  Cpu, MapPin, ArrowRightLeft, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,21 +31,17 @@ export function getActionConfig(action: string): { icon: React.ElementType; colo
     menu_uploaded: { icon: Upload, color: "text-violet-500", bgColor: "bg-violet-500/10" },
     blocker_created: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
     blocker_force_cleared: { icon: LockOpen, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    // POS integration actions
     pos_provider_selected: { icon: Settings, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
     pos_instructions_copied: { icon: Copy, color: "text-accent-orange", bgColor: "bg-accent-orange/10" },
     pos_sent_to_it: { icon: Send, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    // Blocker notification from admin
     blocker_notification: { icon: Bell, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    // Admin document actions
     document_uploaded: { icon: Upload, color: "text-primary", bgColor: "bg-primary/10" },
     document_deleted: { icon: FileText, color: "text-destructive", bgColor: "bg-destructive/10" },
-    // Deletion actions
     client_deleted: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
     client_restored: { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     device_deleted: { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
-    // New action types
     phase_changed: { icon: ArrowRightLeft, color: "text-primary", bgColor: "bg-primary/10" },
+    status_changed: { icon: ArrowRightLeft, color: "text-primary", bgColor: "bg-primary/10" },
     client_created: { icon: Building2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     device_created: { icon: Cpu, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     contact_added: { icon: UserPlus, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
@@ -77,11 +55,31 @@ export function getActionConfig(action: string): { icon: React.ElementType; colo
   return configs[action] || { icon: Activity, color: "text-muted-foreground", bgColor: "bg-muted" };
 }
 
+const PHASE_LABELS: Record<string, string> = {
+  onboarding: "Onboarding",
+  reviewing: "In Review",
+  pilot_live: "Pilot Live",
+  contracted: "Contracted",
+};
+
 // Format the action into a readable sentence
 export function formatAction(log: ActivityLog): { userName: string; actionText: string } {
   const userName = log.profile?.full_name || "Someone";
   const details = log.details as Record<string, unknown> | null;
   
+  // Handle status_changed with specific details
+  if (log.action === "status_changed" || log.action === "phase_changed") {
+    const oldPhase = details?.old_phase as string | undefined;
+    const newPhase = (details?.new_phase as string) || (details?.phase_label as string);
+    const oldLabel = oldPhase ? (PHASE_LABELS[oldPhase] || oldPhase) : null;
+    const newLabel = newPhase ? (PHASE_LABELS[newPhase] || newPhase) : "a new phase";
+    
+    if (oldLabel) {
+      return { userName, actionText: `changed status from ${oldLabel} to ${newLabel}` };
+    }
+    return { userName, actionText: `moved client to ${newLabel}` };
+  }
+
   const actionTexts: Record<string, string> = {
     legal_signed: "signed the Pilot Agreement",
     task_completed: `completed ${(details?.task_name as string) || "a task"}`,
@@ -102,8 +100,6 @@ export function formatAction(log: ActivityLog): { userName: string; actionText: 
     client_deleted: `deleted client "${(details?.client_name as string) || "a client"}"`,
     client_restored: `restored client "${(details?.client_name as string) || "a client"}"`,
     device_deleted: `deleted device ${(details?.serial_number as string) || "a device"}`,
-    // New action types
-    phase_changed: `moved client to ${(details?.phase_label as string) || (details?.new_phase as string) || "a new phase"}`,
     client_created: `created client "${(details?.client_name as string) || "a client"}"`,
     device_created: `added ${(details?.quantity as number) || 1} ${(details?.device_type as string) || "device"}${((details?.quantity as number) || 1) > 1 ? "s" : ""}`,
     contact_added: `added contact "${(details?.contact_name as string) || "a contact"}"`,
@@ -125,6 +121,26 @@ export function formatAction(log: ActivityLog): { userName: string; actionText: 
   };
 }
 
+/**
+ * Format timestamp: show exact time for today/yesterday, relative for older
+ */
+function formatTimestamp(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isToday(date)) {
+    return `Today at ${format(date, "h:mm a")}`;
+  }
+  if (isYesterday(date)) {
+    return `Yesterday at ${format(date, "h:mm a")}`;
+  }
+  // Within past week, show relative
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 7 * 24 * 60 * 60 * 1000) {
+    return formatDistanceToNow(date, { addSuffix: true });
+  }
+  // Older: show full date + time
+  return format(date, "MMM d, yyyy 'at' h:mm a");
+}
+
 function ActivityItem({ log, index }: { log: ActivityLog; index: number }) {
   const config = getActionConfig(log.action);
   const { userName, actionText } = formatAction(log);
@@ -136,8 +152,6 @@ function ActivityItem({ log, index }: { log: ActivityLog; index: number }) {
     .join("")
     .toUpperCase()
     .substring(0, 2);
-
-  const timeAgo = formatDistanceToNow(new Date(log.created_at), { addSuffix: true });
 
   return (
     <motion.div
@@ -179,7 +193,7 @@ function ActivityItem({ log, index }: { log: ActivityLog; index: number }) {
           <span className="text-muted-foreground">{actionText}</span>
         </p>
         <p className="text-2xs text-muted-foreground/70 mt-1">
-          {timeAgo}
+          {formatTimestamp(log.created_at)}
         </p>
       </div>
     </motion.div>
@@ -187,8 +201,14 @@ function ActivityItem({ log, index }: { log: ActivityLog; index: number }) {
 }
 
 export function ActivityFeedPanel({ open, onClose, hotelId }: ActivityFeedPanelProps) {
-  const { data: logs, isLoading } = useActivityLogs(hotelId);
+  const [page, setPage] = useState(0);
+  const { data: logs, isLoading } = useActivityLogs(hotelId, page);
   const prevLogsRef = useRef<ActivityLog[]>([]);
+
+  // Reset page when client changes
+  useEffect(() => {
+    setPage(0);
+  }, [hotelId]);
 
   // Track new items for animation
   useEffect(() => {
@@ -196,6 +216,8 @@ export function ActivityFeedPanel({ open, onClose, hotelId }: ActivityFeedPanelP
       prevLogsRef.current = logs;
     }
   }, [logs]);
+
+  const hasMore = (logs?.length ?? 0) >= 30; // pageSize
 
   return (
     <AnimatePresence>
@@ -219,7 +241,7 @@ export function ActivityFeedPanel({ open, onClose, hotelId }: ActivityFeedPanelP
             transition={{ 
               type: "tween",
               duration: 0.3,
-              ease: [0.32, 0.72, 0, 1] // Premium cubic-bezier
+              ease: [0.32, 0.72, 0, 1]
             }}
             className={cn(
               "fixed right-0 top-0 bottom-0 z-50 w-full md:w-80 md:max-w-[90vw]",
@@ -271,16 +293,54 @@ export function ActivityFeedPanel({ open, onClose, hotelId }: ActivityFeedPanelP
                         <ActivityItem key={log.id} log={log} index={index} />
                       ))}
                     </AnimatePresence>
+
+                    {/* Pagination */}
+                    <div className="flex items-center justify-center gap-2 pt-4">
+                      {page > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPage(p => p - 1)}
+                          className="text-xs"
+                        >
+                          ← Newer
+                        </Button>
+                      )}
+                      {hasMore && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPage(p => p + 1)}
+                          className="text-xs gap-1"
+                        >
+                          Older <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
                       <Activity className="h-6 w-6 text-muted-foreground/50" strokeWidth={1.5} />
                     </div>
-                    <p className="text-sm font-medium text-muted-foreground">No activity yet</p>
-                    <p className="text-2xs text-muted-foreground/70 mt-1">
-                      Actions will appear here as your team works
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {page > 0 ? "No more activity" : "No activity yet"}
                     </p>
+                    {page > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(0)}
+                        className="text-xs mt-2"
+                      >
+                        Back to latest
+                      </Button>
+                    )}
+                    {page === 0 && (
+                      <p className="text-2xs text-muted-foreground/70 mt-1">
+                        Actions will appear here as your team works
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
