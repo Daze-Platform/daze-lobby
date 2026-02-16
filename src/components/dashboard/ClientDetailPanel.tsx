@@ -339,6 +339,11 @@ export function HotelDetailPanel({ hotel, open, onOpenChange }: ClientDetailPane
                 <Badge variant="secondary" className="text-2xs capitalize">
                   {hotel.phase.replace("_", " ")}
                 </Badge>
+                {hotel.is_test && (
+                  <Badge className="bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30 text-2xs font-semibold">
+                    TEST CLIENT
+                  </Badge>
+                )}
                 {hotel.hasBlocker && (
                   <Badge variant="destructive" className="text-2xs">
                     Blocked

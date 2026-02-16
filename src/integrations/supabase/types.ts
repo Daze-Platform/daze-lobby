@@ -164,6 +164,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           id: string
+          is_test: boolean
           legal_entity_name: string | null
           logo_url: string | null
           name: string
@@ -188,6 +189,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           id?: string
+          is_test?: boolean
           legal_entity_name?: string | null
           logo_url?: string | null
           name: string
@@ -212,6 +214,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           id?: string
+          is_test?: boolean
           legal_entity_name?: string | null
           logo_url?: string | null
           name?: string

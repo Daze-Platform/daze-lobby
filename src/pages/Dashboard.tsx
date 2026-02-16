@@ -33,11 +33,14 @@ export default function Dashboard() {
       ];
     }
 
-    const totalClients = clients.length;
-    // Incomplete = pending tasks + blockers combined
-    const incompleteCount = clients.reduce((sum, c) => sum + c.incompleteCount, 0);
-    // Use actual device count from useDevices (includes devices on deleted clients)
-    const totalDevices = allDevices?.length ?? 0;
+    // Exclude test clients from stats
+    const realClients = clients.filter(c => !c.is_test);
+    const totalClients = realClients.length;
+    // Incomplete = pending tasks + blockers combined (real clients only)
+    const incompleteCount = realClients.reduce((sum, c) => sum + c.incompleteCount, 0);
+    // Exclude devices belonging to test clients
+    const testClientIds = new Set(clients.filter(c => c.is_test).map(c => c.id));
+    const totalDevices = allDevices?.filter(d => !testClientIds.has(d.client_id)).length ?? 0;
 
     return [
       { label: "Total Clients", value: totalClients.toString(), icon: Buildings, route: "/clients", borderColor: "border-t-primary" },
