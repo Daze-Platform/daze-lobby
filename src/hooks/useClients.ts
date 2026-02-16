@@ -98,7 +98,7 @@ export function useClients(includeDeleted = false) {
 
         return {
           ...client,
-          hasBlocker: blockerClientIds.has(client.id) || isStale,
+          hasBlocker: blockerClientIds.has(client.id),
           primaryContact: contactsByClient.get(client.id) || null,
           dazeDeviceCount: dazeDevicesByClient.get(client.id) || 0,
           incompleteCount: blockerCount,
