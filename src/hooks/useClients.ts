@@ -88,12 +88,7 @@ export function useClients(includeDeleted = false) {
         notifications?.map((n) => n.client_id) || []
       );
 
-      const now = new Date();
-      const staleThreshold = 48 * 60 * 60 * 1000;
-
       return (clients || []).map((client) => {
-        const lastUpdate = new Date(client.updated_at);
-        const isStale = now.getTime() - lastUpdate.getTime() > staleThreshold;
         const blockerCount = blockersByClient.get(client.id) || 0;
 
         return {

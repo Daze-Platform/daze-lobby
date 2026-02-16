@@ -75,6 +75,7 @@ export default function Clients() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [phaseFilters, setPhaseFilters] = useState<Set<PhaseFilter>>(new Set());
+  const [hideTestClients, setHideTestClients] = useState(false);
   
   const sendNotification = useSendBlockerNotification();
   const deleteClientMutation = useDeleteClient();
@@ -92,6 +93,8 @@ export default function Clients() {
   const filteredClients = useMemo(() => {
     if (!clients) return [];
     return clients.filter((client) => {
+      // Hide test clients filter
+      if (hideTestClients && client.is_test) return false;
       // Search filter
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -106,9 +109,9 @@ export default function Clients() {
       }
       return true;
     });
-  }, [clients, searchQuery, phaseFilters]);
+  }, [clients, searchQuery, phaseFilters, hideTestClients]);
 
-  const activeFilterCount = phaseFilters.size;
+  const activeFilterCount = phaseFilters.size + (hideTestClients ? 1 : 0);
 
   const handleClientClick = (client: Client) => {
     if (showDeleted) return; // Don't open detail panel for deleted clients
@@ -206,6 +209,13 @@ export default function Clients() {
                   </Badge>
                 </DropdownMenuCheckboxItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={hideTestClients}
+                onCheckedChange={(v) => setHideTestClients(!!v)}
+              >
+                Hide test clients
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -279,9 +289,9 @@ export default function Clients() {
                       <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                         <Buildings size={20} weight="duotone" className="text-primary shrink-0" />
                         <span className={cn("truncate", isDeleted && "line-through text-muted-foreground")}>{client.name}</span>
-                        {client.client_slug === "daze-downtown-hotel" && (
-                          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-2xs font-medium px-1.5 py-0">
-                            Test
+                        {client.is_test && (
+                          <Badge className="bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30 text-2xs font-medium px-1.5 py-0">
+                            TEST
                           </Badge>
                         )}
                         {!isDeleted && isContracted && (

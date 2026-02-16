@@ -139,6 +139,11 @@ export const DraggableHotelCard = React.memo(function DraggableHotelCard({
                     {hotel.client_code}
                   </span>
                 )}
+                {hotel.is_test && (
+                  <span className="text-[9px] sm:text-[10px] font-semibold text-orange-600 dark:text-orange-400 bg-orange-500/15 px-1 sm:px-1.5 py-0.5 rounded shrink-0">
+                    TEST
+                  </span>
+                )}
                 <span className="font-semibold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">
                   {hotel.name}
                 </span>
@@ -236,6 +241,11 @@ export function HotelCardOverlay({ hotel }: { hotel: Client }) {
                 {hotel.client_code && (
                   <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
                     {hotel.client_code}
+                  </span>
+                )}
+                {hotel.is_test && (
+                  <span className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded shrink-0">
+                    TEST
                   </span>
                 )}
                 <span className="font-semibold text-sm truncate">{hotel.name}</span>

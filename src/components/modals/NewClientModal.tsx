@@ -51,6 +51,7 @@ import {
   CircleCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const POS_PROVIDERS = [
   { id: "toast", name: "Toast", logo: "/pos-logos/toast.jpg" },
@@ -92,6 +93,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [propertyName, setPropertyName] = useState("");
   const [posProvider, setPosProvider] = useState("");
+  const [isTest, setIsTest] = useState(false);
 
   // Auto-generate slug from property name
   const generatedSlug = propertyName
@@ -163,6 +165,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     setStep(1);
     setPropertyName("");
     setPosProvider("");
+    setIsTest(false);
     setCustomSlug("");
     setSlugTouched(false);
     setSlugStatus("idle");
@@ -200,6 +203,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
           phase: "onboarding",
           notes: posProvider ? `POS Provider: ${posProvider}` : null,
           client_slug: customSlug,
+          is_test: isTest,
         })
         .select("id")
         .single();
@@ -455,6 +459,20 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                   <p className="text-xs text-muted-foreground">
                     This helps us configure the correct integration settings
                   </p>
+                </div>
+
+                {/* Test Client Toggle */}
+                <div className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="isTest" className="text-sm font-medium">Test Client</Label>
+                    <p className="text-xs text-muted-foreground">Mark this as a test client for internal use only</p>
+                  </div>
+                  <Switch
+                    id="isTest"
+                    checked={isTest}
+                    onCheckedChange={setIsTest}
+                    className={cn(isTest && "data-[state=checked]:bg-orange-500")}
+                  />
                 </div>
               </motion.div>
             )}
