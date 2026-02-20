@@ -131,32 +131,125 @@ const PROVIDER_INSTRUCTIONS: Partial<Record<Exclude<PosProvider, null>, {
      - Location GUID (Found under Integrations > Manage Group/Location IDs)`,
   },
   micros_simphony: {
-    headline: "Next Steps for Micros Simphony",
+    headline: "Micros Simphony: Omnivore Integration via Transaction Services",
     steps: [
-      "1. Access Oracle Hospitality Integration Platform (OHIP)",
-      "2. Navigate to Simphony Web Services (SWS) configuration",
-      "3. Create a new external application integration",
-      "4. Generate and export the service credentials",
+      "1. Verify your Simphony version is 2.9+ (v18.x or higher) and that the **Transaction Services license** is active. Your IT team can confirm this in the EMC (Enterprise Management Console).",
+      "2. Create a dedicated **API Employee** in Simphony EMC for Omnivore — note the Employee Record #. Set up a default **Revenue Center** for online orders and record its Record #.",
+      "3. Configure a new **Order Type** for mobile/delivery orders (e.g., \"Pool & Beach Delivery\") and a **Tender Type** for pre-paid/third-party payments — Daze processes payments via Stripe, so no card processing is needed on the POS side.",
+      "4. Ensure all menu items available for online ordering have **Option Bit 48 \"Item is Sharable\"** enabled in EMC. This is required for Omnivore to sync your menu.",
+      "5. Open firewall access for **connect.omnivore.io** (Port 443/HTTPS outbound) from your back-of-house network. The Daze team will install the **Omnivore agent** on your CAPS workstation.",
+      "6. Share the credentials below with your Daze onboarding contact. Once received, we'll install the Omnivore agent, run integration tests, and sync your live menu.",
     ],
-    copyText: `MICROS SIMPHONY INTEGRATION REQUEST
+    copyText: `MICROS SIMPHONY — OMNIVORE INTEGRATION SETUP
+(Via Oracle Transaction Services on CAPS Workstation)
 
-IT Team,
+Daze integrates with Simphony through Omnivore (by Olo), a middleware agent installed on your CAPS workstation that communicates with Simphony Transaction Services.
 
-Please configure Simphony Web Services (SWS) for Daze integration:
+──────────────────────────────────
+STEP 1: VERIFY SIMPHONY REQUIREMENTS
+──────────────────────────────────
+• Simphony version 2.9+ (v18.x or higher)
+• Transaction Services license must be active
+• Test with TSDemoClient to confirm API functionality
 
-Required Configuration:
-• Create External Application in OHIP Portal
-• Enable SWS API access
-• Configure Menu sync endpoints
-• Set up Order posting service account
+──────────────────────────────────
+STEP 2: EMC CONFIGURATION (IT Required)
+──────────────────────────────────
+Create the following in the Enterprise Management Console:
 
-Credentials needed:
-• Organization short name
-• Enterprise/Property IDs
-• SWS Username & Password
-• API Gateway URL
+A) API Employee
+   • Create a dedicated employee record for Omnivore
+   • Record the Employee Record # (e.g., 999)
 
-Submit credentials via secure channel.`,
+B) Revenue Center
+   • Designate a Revenue Center for online/mobile orders
+   • Record the Revenue Center Record #
+
+C) Order Type
+   • Create order type(s) for: Pool/Beach Delivery, In-Room Dining
+   • Record the Order Type ID(s)
+
+D) Tender Type
+   • Configure a "Pre-Paid" or "Third-Party Payment" tender type
+   • Daze handles all payment processing via Stripe
+   • Record the Tender Type ID
+
+──────────────────────────────────
+STEP 3: MENU ITEM CONFIGURATION
+──────────────────────────────────
+• Enable Option Bit 48 "Item is Sharable" on ALL menu items for online ordering
+• Verify pricing is configured correctly (in cents)
+• Ensure modifier groups are properly linked
+
+──────────────────────────────────
+STEP 4: NETWORK / FIREWALL
+──────────────────────────────────
+• Allow outbound HTTPS (Port 443) to connect.omnivore.io
+• CAPS workstation must have stable internet access
+• No inbound firewall changes required
+
+──────────────────────────────────
+STEP 5: CREDENTIALS TO SHARE WITH DAZE
+──────────────────────────────────
+Please provide the following securely:
+
+• Employee Record #: _____
+• Revenue Center Record #: _____
+• Order Type ID(s): _____
+• Tender Type ID: _____
+• CAPS workstation access details (for Omnivore agent install)
+• EMC read-only credentials (for Omnivore setup team)
+
+──────────────────────────────────
+WHAT HAPPENS NEXT
+──────────────────────────────────
+1. Daze team installs Omnivore agent on your CAPS workstation
+2. Agent connects to Simphony via Transaction Services
+3. Menu auto-syncs every 30 minutes
+4. End-to-end order testing (Daze app → Simphony ticket)
+5. Go-live with QR codes at your property
+
+Questions? Contact your Daze onboarding rep or email support@dazeapp.com`,
+  },
+  micros_3700: {
+    headline: "Micros 3700: Omnivore Integration via Transaction Services",
+    steps: [
+      "1. Verify your Micros 3700 system has the **Transaction Services** module enabled. Your IT team or Micros support can confirm this.",
+      "2. Create a dedicated **API Employee** in the Micros 3700 Configurator — note the Employee ID. Set up a default **Revenue Center** for online orders.",
+      "3. Configure a new **Order Type** for mobile/delivery orders and a **Tender Type** for pre-paid/third-party payments — Daze processes payments via Stripe.",
+      "4. Ensure all menu items for online ordering are properly configured with correct pricing and modifier groups.",
+      "5. Open firewall access for **connect.omnivore.io** (Port 443/HTTPS outbound). The Daze team will install the **Omnivore agent** on your CAPS workstation.",
+      "6. Share the credentials below with your Daze onboarding contact. Once received, we'll install the Omnivore agent and run integration tests.",
+    ],
+    copyText: `MICROS 3700 — OMNIVORE INTEGRATION SETUP
+(Via Transaction Services on CAPS Workstation)
+
+Daze integrates with Micros 3700 through Omnivore (by Olo), a middleware agent installed on your CAPS workstation.
+
+──────────────────────────────────
+CONFIGURATION REQUIRED (IT Team)
+──────────────────────────────────
+A) API Employee — Create a dedicated employee for Omnivore, record the Employee ID
+B) Revenue Center — Designate for online/mobile orders, record the ID
+C) Order Type — Create for Pool/Beach Delivery, In-Room Dining
+D) Tender Type — Configure "Pre-Paid" or "Third-Party Payment" (Daze handles payments via Stripe)
+
+──────────────────────────────────
+NETWORK / FIREWALL
+──────────────────────────────────
+• Allow outbound HTTPS (Port 443) to connect.omnivore.io
+• CAPS workstation must have stable internet access
+
+──────────────────────────────────
+CREDENTIALS TO SHARE WITH DAZE
+──────────────────────────────────
+• Employee ID: _____
+• Revenue Center ID: _____
+• Order Type ID(s): _____
+• Tender Type ID: _____
+• CAPS workstation access details (for Omnivore agent install)
+
+Questions? Contact support@dazeapp.com`,
   },
   ncr_aloha: {
     headline: "Next Steps for NCR Aloha",
