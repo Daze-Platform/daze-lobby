@@ -205,6 +205,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               {/* Headline - Solid Black, Bold - Smaller on mobile */}
               <h1 className="font-display text-xl md:text-3xl lg:text-4xl font-bold text-slate-900 text-center mb-3 md:mb-4 tracking-tight">
                 {slide.headline}
+                <style dangerouslySetInnerHTML={{ __html: `.text-slate-900 { text-shadow: 0px 0px 3px rgba(0,0,0,0.2); }` }} /> // Subtle shadow for readability
               </h1>
 
               {/* Subtext - Relaxed gray */}
