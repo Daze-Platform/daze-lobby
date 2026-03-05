@@ -139,7 +139,7 @@ export function getAgreementSections(d: PilotAgreementData): AgreementSection[] 
         },
         { type: "spacer" },
         { type: "label-value", label: "Start Date:", value: startDate },
-        { type: "label-value", label: "Pilot Term:", value: `${termDays} days (recommended: 60-90 days)` },
+        { type: "label-value", label: "Pilot Term:", value: "30 days" },
         { type: "spacer" },
         {
           type: "paragraph",

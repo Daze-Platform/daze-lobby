@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrDivider } from "@/components/ui/or-divider";
 import { Loader2, AlertCircle, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
-import { signIn, signUp } from "@/lib/auth";
+import { signIn, signUp, sendMagicLink } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
@@ -41,10 +41,11 @@ export function ClientLoginForm() {
   const nameParam = searchParams.get("name");
   const verifiedParam = searchParams.get("verified") === "true";
 
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">(
+  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "magiclink">(
     emailParam && !verifiedParam ? "signup" : "login"
   );
   const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState(nameParam || "");
@@ -79,6 +80,25 @@ export function ClientLoginForm() {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await withTimeout(
+        sendMagicLink(email, `${window.location.origin}/post-auth?origin=portal`),
+        15000,
+        "Magic link request timed out. Please try again."
+      );
+      setMagicLinkSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send magic link");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,8 +259,60 @@ export function ClientLoginForm() {
         </p>
       </div>
 
-      {/* Forgot password mode */}
-      {mode === "forgot" ? (
+      {/* Magic link mode */}
+      {mode === "magiclink" ? (
+        <form onSubmit={handleMagicLink} className="space-y-4">
+          {magicLinkSent ? (
+            <Alert className="border-0 bg-green-50 text-green-800 animate-fade-in-up">
+              <Mail className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Check your email for a sign-in link. Click it to access your portal instantly.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              {error && (
+                <Alert variant="destructive" className="border-0 bg-destructive/10 animate-fade-in-up">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#1e293b' }}>Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => !isEmailLocked && setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  readOnly={isEmailLocked}
+                  className={`rounded-xl ${isEmailLocked ? 'cursor-not-allowed' : ''}`}
+                  style={{ backgroundColor: isEmailLocked ? '#f1f5f9' : '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full rounded-xl min-h-[44px] bg-accent text-accent-foreground hover:bg-accent/90"
+                disabled={loading}
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Magic Link
+              </Button>
+            </>
+          )}
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => { setMode("login"); setError(null); setMagicLinkSent(false); }}
+              className="text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </form>
+      ) : mode === "forgot" ? (
         <form onSubmit={handleForgotPassword} className="space-y-4">
           {forgotSuccess ? (
               <Alert className="border-0 bg-green-50 text-green-800 animate-fade-in-up">

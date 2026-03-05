@@ -33,7 +33,7 @@ const TOUR_SLIDES = [
   },
   {
     headline: "Ready for Takeoff?",
-    subtext: "Complete these 3 setup tasks to activate your 90-day pilot.",
+    subtext: "Complete these 3 setup tasks to activate your 30-day pilot.",
     icon: Rocket,
     isFinal: true,
   },

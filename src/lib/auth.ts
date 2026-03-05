@@ -36,6 +36,16 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
+export async function sendMagicLink(email: string, redirectTo?: string) {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: redirectTo || `${window.location.origin}/post-auth?origin=portal`,
+    },
+  });
+  if (error) throw error;
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;

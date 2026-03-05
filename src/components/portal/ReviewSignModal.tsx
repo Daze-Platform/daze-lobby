@@ -169,7 +169,7 @@ During the Pilot Term, Daze shall provide the following capabilities:
 The pilot shall commence on the "Start Date" specified below and continue for the "Pilot Term" specified below, unless terminated earlier in accordance with Section 9.
 
 Start Date: ${startDate}
-Pilot Term: ${termDays} days (recommended: 60-90 days)
+Pilot Term: 30 days
 
 The Pilot Term may be extended by mutual written agreement of both parties.
 
@@ -460,7 +460,7 @@ export function ReviewSignModal({
 
   // Section C: Pilot Term
   const [startDate, setStartDate] = useState<Date | undefined>();
-  const [pilotTermDays, setPilotTermDays] = useState("90");
+  const [pilotTermDays] = useState("30");
 
   // Section D: Pricing
   const [pricingModel, setPricingModel] = useState<"daze_rev_share" | "client_rev_share">("daze_rev_share");
@@ -508,7 +508,7 @@ export function ReviewSignModal({
       if (d.start_date) {
         try { setStartDate(new Date(d.start_date)); } catch { setStartDate(undefined); }
       }
-      setPilotTermDays(d.pilot_term_days != null ? String(d.pilot_term_days) : "90");
+      // pilot_term_days is locked to 30
 
       // pricing is hardcoded — skip pre-fill
 
@@ -531,7 +531,7 @@ export function ReviewSignModal({
     covered_outlets: [outlet1, outlet2, outlet3, outlet4].filter(o => o.trim()),
     hardware_option: hardwareOption,
     start_date: startDate?.toISOString(),
-    pilot_term_days: pilotTermDays ? parseInt(pilotTermDays, 10) : undefined,
+    pilot_term_days: 30,
     pricing_model: pricingModel,
     pricing_amount: pricingAmount,
     pos_system: posSystem,
@@ -733,7 +733,7 @@ export function ReviewSignModal({
                         </div>
                         <div className="space-y-1">
                           <Label className="text-[10px] sm:text-xs text-muted-foreground">Pilot Term (days)</Label>
-                          <Input type="number" min="1" max="90" placeholder="90" value={pilotTermDays} onChange={e => { const val = e.target.value; if (val === "") { setPilotTermDays(""); return; } const num = parseInt(val, 10); if (!isNaN(num)) setPilotTermDays(String(Math.min(num, 90))); }} className="h-8 sm:h-9 text-xs sm:text-sm" />
+                          <Input type="number" value="30" readOnly disabled className="h-8 sm:h-9 text-xs sm:text-sm bg-muted cursor-not-allowed" />
                         </div>
                       </div>
                     </FormSection>

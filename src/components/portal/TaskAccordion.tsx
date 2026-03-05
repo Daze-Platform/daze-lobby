@@ -113,13 +113,18 @@ export function TaskAccordion({
     }, 1000);
   }, []);
 
-  const handleBrandSave = async (data: { properties: PropertyBrand[] }) => {
-    // Strip File objects (non-serializable) before saving to DB
-    const cleanProperties = data.properties.map(p => ({
+  const cleanPropertiesForSave = (properties: PropertyBrand[]) =>
+    properties.map(p => ({
       ...p,
-      logos: {},  // File objects can't be serialized; URLs are stored separately via uploadLogoMutation
+      logos: {},  // File objects can't be serialized; URLs are stored separately via uploadFileMutation
     }));
-    onTaskUpdate("brand", { properties: cleanProperties }, true);
+
+  const handleBrandSave = async (data: { properties: PropertyBrand[] }) => {
+    onTaskUpdate("brand", { properties: cleanPropertiesForSave(data.properties) }, true);
+  };
+
+  const handleBrandDraftSave = (data: { properties: PropertyBrand[] }) => {
+    onTaskUpdate("brand", { properties: cleanPropertiesForSave(data.properties) }, false);
   };
 
   const handleLogoUpload = async (propertyId: string, file: File, variant: string) => {
@@ -225,6 +230,7 @@ export function TaskAccordion({
           isLocked={isTaskLocked("brand")}
           data={getTaskData("brand")?.data}
           onSave={handleBrandSave}
+          onDraftSave={handleBrandDraftSave}
           onLogoUpload={handleLogoUpload}
           onLogoRemove={handleLogoRemove}
           onDocumentUpload={handleBrandDocumentUpload}
