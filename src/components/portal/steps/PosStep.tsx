@@ -491,7 +491,7 @@ export function PosStep({
       <AccordionTrigger className="hover:no-underline py-2.5 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
           <StepBadge
-            step="D"
+            step="C"
             status={badgeStatus}
             isJustCompleted={isJustCompleted}
           />
