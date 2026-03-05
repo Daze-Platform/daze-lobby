@@ -620,37 +620,49 @@ export type Database = {
       }
       venues: {
         Row: {
+          additional_logo_file_name: string | null
           additional_logo_url: string | null
           client_id: string
           color_palette: Json | null
           created_at: string
           id: string
+          logo_file_name: string | null
           logo_url: string | null
           menu_pdf_url: string | null
           name: string
           updated_at: string
+          venue_layout_file_name: string | null
+          venue_layout_url: string | null
         }
         Insert: {
+          additional_logo_file_name?: string | null
           additional_logo_url?: string | null
           client_id: string
           color_palette?: Json | null
           created_at?: string
           id?: string
+          logo_file_name?: string | null
           logo_url?: string | null
           menu_pdf_url?: string | null
           name: string
           updated_at?: string
+          venue_layout_file_name?: string | null
+          venue_layout_url?: string | null
         }
         Update: {
+          additional_logo_file_name?: string | null
           additional_logo_url?: string | null
           client_id?: string
           color_palette?: Json | null
           created_at?: string
           id?: string
+          logo_file_name?: string | null
           logo_url?: string | null
           menu_pdf_url?: string | null
           name?: string
           updated_at?: string
+          venue_layout_file_name?: string | null
+          venue_layout_url?: string | null
         }
         Relationships: [
           {

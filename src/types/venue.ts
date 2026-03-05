@@ -64,8 +64,11 @@ export interface DbVenue {
   name: string;
   menu_pdf_url: string | null;
   logo_url: string | null;
+  logo_file_name: string | null;
   additional_logo_url: string | null;
+  additional_logo_file_name: string | null;
   venue_layout_url: string | null;
+  venue_layout_file_name: string | null;
   color_palette: string[] | null;
   created_at: string;
   updated_at: string;

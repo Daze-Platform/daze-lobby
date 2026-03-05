@@ -630,15 +630,15 @@ export function useClientPortal() {
         .from("onboarding-assets")
         .getPublicUrl(filePath);
 
-      // Update venue with logo URL
+      // Update venue with logo URL and original filename
       const { error: updateError } = await supabase
         .from("venues")
-        .update({ logo_url: urlData?.publicUrl })
+        .update({ logo_url: urlData?.publicUrl, logo_file_name: file.name })
         .eq("id", venueId);
 
       if (updateError) throw updateError;
 
-      return { path: filePath, url: urlData?.publicUrl, venueId };
+      return { path: filePath, url: urlData?.publicUrl, venueId, fileName: file.name };
     },
     onMutate: async ({ venueId }) => {
       await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
@@ -648,14 +648,14 @@ export function useClientPortal() {
     onSuccess: (data, variables) => {
       // Optimistically patch the venue in cache immediately
       queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
-        old?.map(v => v.id === data.venueId ? { ...v, logo_url: data.url ?? null } : v) ?? []
+        old?.map(v => v.id === data.venueId ? { ...v, logo_url: data.url ?? null, logo_file_name: data.fileName ?? null } : v) ?? []
       );
-      
+
       logActivity.mutate({
         action: "venue_logo_uploaded",
         details: { venue_name: variables.venueName },
       });
-      
+
       toast.success("Venue logo uploaded!");
     },
     onError: (error, _vars, context) => {
@@ -698,12 +698,12 @@ export function useClientPortal() {
 
       const { error: updateError } = await supabase
         .from("venues")
-        .update({ additional_logo_url: urlData?.publicUrl })
+        .update({ additional_logo_url: urlData?.publicUrl, additional_logo_file_name: file.name })
         .eq("id", venueId);
 
       if (updateError) throw updateError;
 
-      return { path: filePath, url: urlData?.publicUrl, venueId };
+      return { path: filePath, url: urlData?.publicUrl, venueId, fileName: file.name };
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
@@ -712,14 +712,14 @@ export function useClientPortal() {
     },
     onSuccess: (data, variables) => {
       queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
-        old?.map(v => v.id === data.venueId ? { ...v, additional_logo_url: data.url ?? null } : v) ?? []
+        old?.map(v => v.id === data.venueId ? { ...v, additional_logo_url: data.url ?? null, additional_logo_file_name: data.fileName ?? null } : v) ?? []
       );
-      
+
       logActivity.mutate({
         action: "venue_additional_logo_uploaded",
         details: { venue_name: variables.venueName },
       });
-      
+
       toast.success("Additional logo uploaded!");
     },
     onError: (error, _vars, context) => {
@@ -762,12 +762,12 @@ export function useClientPortal() {
 
       const { error: updateError } = await supabase
         .from("venues")
-        .update({ venue_layout_url: urlData?.publicUrl })
+        .update({ venue_layout_url: urlData?.publicUrl, venue_layout_file_name: file.name })
         .eq("id", venueId);
 
       if (updateError) throw updateError;
 
-      return { path: filePath, url: urlData?.publicUrl, venueId };
+      return { path: filePath, url: urlData?.publicUrl, venueId, fileName: file.name };
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["venues", clientId] });
@@ -776,7 +776,7 @@ export function useClientPortal() {
     },
     onSuccess: (data, variables) => {
       queryClient.setQueryData<DbVenue[]>(["venues", clientId], (old) =>
-        old?.map(v => v.id === data.venueId ? { ...v, venue_layout_url: data.url ?? null } : v) ?? []
+        old?.map(v => v.id === data.venueId ? { ...v, venue_layout_url: data.url ?? null, venue_layout_file_name: data.fileName ?? null } : v) ?? []
       );
 
       logActivity.mutate({
@@ -1107,11 +1107,11 @@ export function useClientPortal() {
       name: v.name,
       menuPdfUrl: v.menu_pdf_url || undefined,
       logoUrl: v.logo_url || undefined,
-      logoFileName: v.logo_url ? decodeURIComponent(v.logo_url.split('/').pop() || '') : undefined,
+      logoFileName: v.logo_file_name || (v.logo_url ? decodeURIComponent(v.logo_url.split('/').pop() || '') : undefined),
       additionalLogoUrl: v.additional_logo_url || undefined,
-      additionalLogoFileName: v.additional_logo_url ? decodeURIComponent(v.additional_logo_url.split('/').pop() || '') : undefined,
+      additionalLogoFileName: v.additional_logo_file_name || (v.additional_logo_url ? decodeURIComponent(v.additional_logo_url.split('/').pop() || '') : undefined),
       venueLayoutUrl: v.venue_layout_url || undefined,
-      venueLayoutFileName: v.venue_layout_url ? decodeURIComponent(v.venue_layout_url.split('/').pop() || '') : undefined,
+      venueLayoutFileName: v.venue_layout_file_name || (v.venue_layout_url ? decodeURIComponent(v.venue_layout_url.split('/').pop() || '') : undefined),
       menus: menusMap.get(v.id) || [],
       colorPalette: (v.color_palette as string[] | null) || [],
     })),
