@@ -687,9 +687,9 @@ export function ReviewSignModal({
                     </FormSection>
 
                     {/* Section B: Pilot Scope */}
-                    <FormSection title="B — Pilot Scope" icon={Store}>
+                    <FormSection title="B — §2. Pilot Scope" icon={Store}>
                       <div className="space-y-2.5">
-                        <Label className="text-[10px] sm:text-xs text-muted-foreground">Covered Outlets (at least 1 required) <span className="text-destructive">*</span></Label>
+                        <Label className="text-[10px] sm:text-xs text-muted-foreground">2.1 Covered Outlets (at least 1 required) <span className="text-destructive">*</span></Label>
                         {[
                           { val: outlet1, set: setOutlet1, placeholder: "[F&B Outlet] & [Service area]" },
                           { val: outlet2, set: setOutlet2, placeholder: "[F&B Outlet] & [Service area]" },
@@ -699,7 +699,7 @@ export function ReviewSignModal({
                           <Input key={i} placeholder={o.placeholder} value={o.val} onChange={e => o.set(e.target.value)} className="h-8 sm:h-9 text-xs sm:text-sm" />
                         ))}
                         <div className="pt-2 space-y-2">
-                          <Label className="text-[10px] sm:text-xs text-muted-foreground">Hardware Selection</Label>
+                          <Label className="text-[10px] sm:text-xs text-muted-foreground">2.3 Hardware Selection</Label>
                           <RadioGroup value={hardwareOption} onValueChange={v => setHardwareOption(v as "none" | "daze_provided")} className="gap-2">
                             <div className="flex items-center gap-2">
                               <RadioGroupItem value="none" id="hw-none" />
@@ -715,7 +715,7 @@ export function ReviewSignModal({
                     </FormSection>
 
                     {/* Section C: Pilot Term */}
-                    <FormSection title="C — Pilot Term" icon={Clock}>
+                    <FormSection title="C — §3. Pilot Term" icon={Clock}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div className="space-y-1">
                           <Label className="text-[10px] sm:text-xs text-muted-foreground">Start Date <span className="text-destructive">*</span></Label>
@@ -739,7 +739,7 @@ export function ReviewSignModal({
                     </FormSection>
 
                     {/* Section D: Pricing */}
-                    <FormSection title="D — Pricing" icon={DollarSign}>
+                    <FormSection title="D — §5. Pilot Fees" icon={DollarSign}>
                       <RadioGroup
                         value={pricingModel}
                         onValueChange={(val) => setPricingModel(val as "daze_rev_share" | "client_rev_share")}
@@ -751,7 +751,7 @@ export function ReviewSignModal({
                         )}>
                           <RadioGroupItem value="daze_rev_share" className="mt-0.5" />
                           <div>
-                            <p className="text-xs font-medium">Daze Revenue Share</p>
+                            <p className="text-xs font-medium">5.3 Daze Revenue Share</p>
                             <p className="text-[10px] text-muted-foreground">Daze retains a % of gross transaction value</p>
                           </div>
                         </label>
@@ -761,7 +761,7 @@ export function ReviewSignModal({
                         )}>
                           <RadioGroupItem value="client_rev_share" className="mt-0.5" />
                           <div>
-                            <p className="text-xs font-medium">Client Revenue Share</p>
+                            <p className="text-xs font-medium">5.4 Client Revenue Share</p>
                             <p className="text-[10px] text-muted-foreground">Client pays Daze a % of gross food & beverage sales</p>
                           </div>
                         </label>
@@ -786,7 +786,7 @@ export function ReviewSignModal({
                     </FormSection>
 
                     {/* Section E: POS Integration */}
-                    <FormSection title="E — POS Integration" icon={Cpu}>
+                    <FormSection title="E — §13.2 POS Integration" icon={Cpu}>
                       <div className="grid gap-2.5">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div className="space-y-1">
