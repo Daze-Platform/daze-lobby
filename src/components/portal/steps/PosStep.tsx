@@ -746,7 +746,7 @@ export function PosStep({
                 {/* Email Template */}
                 {(() => {
                   const clientName = client?.name || "[Property Name]";
-                  const emailText = (instructions?.copyText || "").replace(/\[Property Name\]/g, clientName);
+                  const emailText = `Subject: Action Required: Enable Order Injection for ${clientName}\n\nHi [Rep Name],\n\nWe are launching a mobile ordering pilot at ${clientName} using a custom integration built on the Daze Platform.\n\nWe have already generated our API credentials, but we need you to manually enable "Order Injection" (Write Access) for our API Client ID: [Insert Your Client ID].\n\nThis is a property-specific requirement to allow guests to fire orders directly to our KDS and process room charges. Please confirm once this is toggled on so we can begin live testing.\n\nBest regards,\n\n[Management Name]\n${clientName}`;
 
                   return (
                     <div className="space-y-2">
