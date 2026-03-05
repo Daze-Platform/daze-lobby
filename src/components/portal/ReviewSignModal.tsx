@@ -364,18 +364,33 @@ const HighlightedText = memo(({ text, entity }: { text: string; entity: PilotAgr
     entity.authorized_signer_name?.trim(),
     entity.authorized_signer_title?.trim(),
     entity.contact_email?.trim(),
+    // Pilot scope — outlets
+    ...(entity.covered_outlets || []).map(o => o.trim()).filter(Boolean),
+    // Pilot term
+    entity.start_date ? format(new Date(entity.start_date), "MMMM d, yyyy") : null,
+    entity.pilot_term_days != null ? String(entity.pilot_term_days) : null,
+    // Pricing
+    entity.pricing_amount?.trim(),
+    // POS
+    entity.pos_system?.trim(),
+    entity.pos_version?.trim(),
+    entity.pos_api_key?.trim(),
+    entity.pos_contact?.trim(),
   ].filter(Boolean) as string[];
 
   if (values.length === 0) return <>{text}</>;
 
-  const escapedValues = values.map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  // Sort by length descending so longer matches take priority (e.g. full address before city)
+  const sorted = [...values].sort((a, b) => b.length - a.length);
+  const escapedValues = sorted.map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const regex = new RegExp(`(${escapedValues.join('|')})`, 'g');
   const parts = text.split(regex);
+  const valueSet = new Set(values);
 
   return (
     <>
       {parts.map((part, i) => {
-        if (values.includes(part)) {
+        if (valueSet.has(part)) {
           return <span key={i} className="text-primary font-semibold">{part}</span>;
         }
         return <span key={i}>{part}</span>;
