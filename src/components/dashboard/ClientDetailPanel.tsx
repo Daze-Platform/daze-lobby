@@ -14,9 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Users, 
-  Cpu, 
+import {
+  Users,
+  Cpu,
   Activity,
   FileText,
   Mail,
@@ -27,6 +27,9 @@ import {
   Plus,
   Pencil,
   Loader2,
+  Link2,
+  Copy,
+  Check,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DocumentUploadSection } from "./DocumentUploadSection";
@@ -52,48 +55,131 @@ type ClientContact = Tables<"client_contacts">;
 // Helper components
 function ContactCard({ contact, onEdit }: { contact: ClientContact; onEdit: () => void }) {
   const initials = contact.name.split(" ").map(n => n[0]).join("").toUpperCase();
-  
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+  const [magicLink, setMagicLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleGenerateMagicLink = async () => {
+    if (!contact.email) {
+      toast.error("No email address for this contact");
+      return;
+    }
+    setMagicLinkLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-magic-link", {
+        body: {
+          email: contact.email,
+          redirectTo: "https://onboarding.dazeapp.com",
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setMagicLink(data.magic_link);
+      toast.success(`Magic link generated for ${contact.name}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Failed to generate magic link: " + message);
+    } finally {
+      setMagicLinkLoading(false);
+    }
+  };
+
+  const handleCopyMagicLink = async () => {
+    if (!magicLink) return;
+    try {
+      await navigator.clipboard.writeText(magicLink);
+      setLinkCopied(true);
+      toast.success("Magic link copied to clipboard");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group">
-      <Avatar className="h-10 w-10 ring-2 ring-background">
-        <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm truncate">{contact.name}</span>
-          {contact.is_primary && (
-            <Badge variant="default" className="text-2xs px-1.5 py-0">
-              Primary
-            </Badge>
-          )}
-          <button
-            onClick={onEdit}
-            className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-muted"
-            aria-label={`Edit ${contact.name}`}
-          >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-        {contact.role && (
-          <p className="text-xs text-muted-foreground mt-0.5">{contact.role}</p>
-        )}
-        <div className="flex flex-col gap-1 mt-2">
-          {contact.email && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Mail className="h-3 w-3" />
-              <span className="truncate">{contact.email}</span>
+    <div className="space-y-2">
+      <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group">
+        <Avatar className="h-10 w-10 ring-2 ring-background">
+          <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm truncate">{contact.name}</span>
+            {contact.is_primary && (
+              <Badge variant="default" className="text-2xs px-1.5 py-0">
+                Primary
+              </Badge>
+            )}
+            <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {contact.email && (
+                <button
+                  onClick={handleGenerateMagicLink}
+                  disabled={magicLinkLoading}
+                  className="p-1 rounded-md hover:bg-muted"
+                  aria-label={`Generate login link for ${contact.name}`}
+                  title="Generate magic login link"
+                >
+                  {magicLinkLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin" />
+                  ) : (
+                    <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </button>
+              )}
+              <button
+                onClick={onEdit}
+                className="p-1 rounded-md hover:bg-muted"
+                aria-label={`Edit ${contact.name}`}
+              >
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
             </div>
+          </div>
+          {contact.role && (
+            <p className="text-xs text-muted-foreground mt-0.5">{contact.role}</p>
           )}
-          {contact.phone && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Phone className="h-3 w-3" />
-              <span>{contact.phone}</span>
-            </div>
-          )}
+          <div className="flex flex-col gap-1 mt-2">
+            {contact.email && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Mail className="h-3 w-3" />
+                <span className="truncate">{contact.email}</span>
+              </div>
+            )}
+            {contact.phone && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                <span>{contact.phone}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      {magicLink && (
+        <div className="ml-13 p-2.5 rounded-md border border-primary/20 bg-primary/5 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <Link2 className="h-3 w-3 text-primary" />
+            <span className="text-xs font-medium text-primary">Login Link (7-day expiry)</span>
+          </div>
+          <p className="text-xs font-mono text-muted-foreground break-all leading-relaxed">
+            {magicLink}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs gap-1.5 h-7"
+            onClick={handleCopyMagicLink}
+          >
+            {linkCopied ? (
+              <Check className="h-3 w-3 text-emerald-500" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+            {linkCopied ? "Copied!" : "Copy Login Link"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
