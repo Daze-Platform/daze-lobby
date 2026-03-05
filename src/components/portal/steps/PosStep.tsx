@@ -299,9 +299,9 @@ export function PosStep({
   const savedPmsName = data?.pms_name as string | undefined;
   const [selectedProvider, setSelectedProvider] = useState<PosProvider>(savedProvider || null);
   const [pmsName, setPmsName] = useState(savedPmsName || "");
-  const [toastClientId, setToastClientId] = useState("");
-  const [toastClientSecret, setToastClientSecret] = useState("");
-  const [toastLocationGuid, setToastLocationGuid] = useState("");
+  const [toastClientId, setToastClientId] = useState((data?.toast_client_id as string) || "");
+  const [toastClientSecret, setToastClientSecret] = useState((data?.toast_client_secret as string) || "");
+  const [toastLocationGuid, setToastLocationGuid] = useState((data?.toast_location_guid as string) || "");
   const [showInstructions, setShowInstructions] = useState(!!savedProvider);
   const [copied, setCopied] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
