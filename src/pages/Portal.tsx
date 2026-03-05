@@ -167,8 +167,8 @@ export default function Portal() {
     updateTask({ taskKey, data, markCompleted });
   };
 
-  const handleFileUpload = (taskKey: string, file: File, fieldName: string) => {
-    uploadFile({ taskKey, file, fieldName });
+  const handleFileUpload = async (taskKey: string, file: File, fieldName: string) => {
+    await uploadFile({ taskKey, file, fieldName });
   };
 
   const handleAddVenue = useCallback(async (): Promise<Venue | undefined> => {
