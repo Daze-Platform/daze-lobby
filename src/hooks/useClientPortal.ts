@@ -379,12 +379,12 @@ export function useClientPortal() {
 
   // Update task (for non-legal tasks)
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ 
-      taskKey, 
+    mutationFn: async ({
+      taskKey,
       data,
       markCompleted = false,
-    }: { 
-      taskKey: string; 
+    }: {
+      taskKey: string;
       data: Record<string, unknown>;
       markCompleted?: boolean;
     }) => {
@@ -401,9 +401,31 @@ export function useClientPortal() {
 
       if (error) throw error;
     },
+    onMutate: async (variables) => {
+      if (!variables.markCompleted) return;
+      // Optimistic update: immediately mark task completed in cache for instant progress ring update
+      await queryClient.cancelQueries({ queryKey: ["onboarding-tasks", clientId] });
+      const previousTasks = queryClient.getQueryData<OnboardingTask[]>(["onboarding-tasks", clientId]);
+
+      if (previousTasks) {
+        const optimisticTasks = previousTasks.map(task =>
+          task.task_key === variables.taskKey
+            ? {
+                ...task,
+                is_completed: true,
+                completed_at: new Date().toISOString(),
+                data: { ...task.data, ...variables.data },
+              }
+            : task
+        );
+        queryClient.setQueryData(["onboarding-tasks", clientId], optimisticTasks);
+      }
+
+      return { previousTasks };
+    },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
-      
+
       if (variables.markCompleted) {
         // Log activity only on explicit completion
         logActivity.mutate({
@@ -412,11 +434,15 @@ export function useClientPortal() {
             task_key: variables.taskKey,
           },
         });
-        
+
         toast.success("Task updated successfully!");
       }
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["onboarding-tasks", clientId], context.previousTasks);
+      }
       toast.error("Failed to update task: " + error.message);
     },
   });
@@ -933,13 +959,13 @@ export function useClientPortal() {
   const completeVenueStepMutation = useMutation({
     mutationFn: async () => {
       if (!clientId) throw new Error("No client found");
-      
+
       // Get current venue count
       const { data: venueCount } = await supabase
         .from("venues")
         .select("id", { count: "exact", head: true })
         .eq("client_id", clientId);
-      
+
       const { error } = await supabase
         .from("onboarding_tasks")
         .update({
@@ -949,20 +975,40 @@ export function useClientPortal() {
         } as never)
         .eq("client_id", clientId)
         .eq("task_key", "venue");
-      
+
       if (error) throw error;
+    },
+    onMutate: async () => {
+      // Optimistic update: immediately mark venue task completed for instant progress ring update
+      await queryClient.cancelQueries({ queryKey: ["onboarding-tasks", clientId] });
+      const previousTasks = queryClient.getQueryData<OnboardingTask[]>(["onboarding-tasks", clientId]);
+
+      if (previousTasks) {
+        const optimisticTasks = previousTasks.map(task =>
+          task.task_key === "venue"
+            ? { ...task, is_completed: true, completed_at: new Date().toISOString() }
+            : task
+        );
+        queryClient.setQueryData(["onboarding-tasks", clientId], optimisticTasks);
+      }
+
+      return { previousTasks };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-tasks"] });
-      
+
       logActivity.mutate({
         action: "venue_step_completed",
         details: {},
       });
-      
+
       toast.success("Venue step completed!");
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["onboarding-tasks", clientId], context.previousTasks);
+      }
       toast.error("Failed to complete step: " + error.message);
     },
   });
