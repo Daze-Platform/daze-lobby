@@ -17,7 +17,7 @@ interface TaskAccordionProps {
   tasks: OnboardingTask[];
   onLegalSign: (signatureDataUrl: string, data: PilotAgreementData) => void;
   onTaskUpdate: (taskKey: string, data: Record<string, unknown>, markCompleted?: boolean) => void;
-  onFileUpload: (taskKey: string, file: File, fieldName: string) => void;
+  onFileUpload: (taskKey: string, file: File, fieldName: string) => Promise<void>;
   onSaveLegalDraft?: (data: Record<string, unknown>) => Promise<void>;
   onRemoveTaskKeys?: (args: { taskKey: string; mergeData: Record<string, unknown>; removeKeys: string[] }) => Promise<void>;
   // Venue CRUD handlers (passed to VenueProvider)
@@ -28,6 +28,7 @@ interface TaskAccordionProps {
   onUploadMenu: (venueId: string, venueName: string, file: File) => Promise<void>;
   onUploadVenueLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
   onUploadVenueAdditionalLogo: (venueId: string, venueName: string, file: File) => Promise<void>;
+  onUploadVenueLayout: (venueId: string, venueName: string, file: File) => Promise<void>;
   onCompleteVenueStep: () => Promise<void>;
   onDeleteVenueMenu: (menuId: string) => Promise<void>;
   isAddingVenue?: boolean;
@@ -52,6 +53,7 @@ export function TaskAccordion({
   onUploadMenu,
   onUploadVenueLogo,
   onUploadVenueAdditionalLogo,
+  onUploadVenueLayout,
   onCompleteVenueStep,
   onDeleteVenueMenu,
   isAddingVenue,
@@ -120,13 +122,13 @@ export function TaskAccordion({
     onTaskUpdate("brand", { properties: cleanProperties }, true);
   };
 
-  const handleLogoUpload = (propertyId: string, file: File, variant: string) => {
-    onFileUpload("brand", file, `logo_${propertyId}_${variant}`);
+  const handleLogoUpload = async (propertyId: string, file: File, variant: string) => {
+    await onFileUpload("brand", file, `logo_${propertyId}_${variant}`);
   };
 
-  const handleBrandDocumentUpload = (propertyId: string, file: File, slotIndex: number) => {
+  const handleBrandDocumentUpload = async (propertyId: string, file: File, slotIndex: number) => {
     const fieldName = slotIndex === 0 ? `palette_document_${propertyId}` : `palette_document_${propertyId}_${slotIndex}`;
-    onFileUpload("brand", file, fieldName);
+    await onFileUpload("brand", file, fieldName);
   };
 
   const handleLogoRemove = async (propertyId: string, variant: string) => {
@@ -204,6 +206,7 @@ export function TaskAccordion({
       onUploadMenu={onUploadMenu}
       onUploadLogo={onUploadVenueLogo}
       onUploadAdditionalLogo={onUploadVenueAdditionalLogo}
+      onUploadVenueLayout={onUploadVenueLayout}
       onCompleteStep={onCompleteVenueStep}
       onDeleteMenu={onDeleteVenueMenu}
       isAddingVenue={isAddingVenue}

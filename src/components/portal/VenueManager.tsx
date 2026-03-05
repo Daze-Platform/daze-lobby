@@ -33,9 +33,11 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     removeMenu,
     removeLogo,
     removeAdditionalLogo,
+    removeVenueLayout,
     uploadMenu,
     uploadLogo,
     uploadAdditionalLogo,
+    uploadVenueLayout,
     completeStep,
     isAddingVenue,
     isUpdatingVenue,
@@ -43,6 +45,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     uploadingMenuIds,
     uploadingLogoIds,
     uploadingAdditionalLogoIds,
+    uploadingVenueLayoutIds,
   } = useVenueContext();
 
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
@@ -98,6 +101,10 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
     await uploadAdditionalLogo(venueId, venueName, file);
   };
 
+  const handleVenueLayoutUpload = async (venueId: string, venueName: string, file: File) => {
+    await uploadVenueLayout(venueId, venueName, file);
+  };
+
   const handleCompleteStep = async () => {
     await completeStep();
     onStepComplete?.();
@@ -137,9 +144,11 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   onMenuUpload={(file) => handleMenuUpload(venue.id, venue.name, file)}
                   onLogoUpload={(file) => handleLogoUpload(venue.id, venue.name, file)}
                   onAdditionalLogoUpload={(file) => handleAdditionalLogoUpload(venue.id, venue.name, file)}
+                  onVenueLayoutUpload={(file) => handleVenueLayoutUpload(venue.id, venue.name, file)}
                   onMenuRemove={(menuId) => removeMenu(menuId)}
                   onLogoRemove={() => removeLogo(venue.id)}
                   onAdditionalLogoRemove={() => removeAdditionalLogo(venue.id)}
+                  onVenueLayoutRemove={() => removeVenueLayout(venue.id)}
                   onColorPaletteChange={(colors) => debouncedColorPaletteUpdate(venue.id, colors)}
                   onRemove={() => {
                     const venueName = venue.name || "Venue";
@@ -151,6 +160,7 @@ export function VenueManager({ onStepComplete }: VenueManagerProps) {
                   isUploading={uploadingMenuIds.has(venue.id)}
                   isUploadingLogo={uploadingLogoIds.has(venue.id)}
                   isUploadingAdditionalLogo={uploadingAdditionalLogoIds.has(venue.id)}
+                  isUploadingVenueLayout={uploadingVenueLayoutIds.has(venue.id)}
                   autoFocus={venue.id === newlyAddedId}
                 />
               </motion.div>
