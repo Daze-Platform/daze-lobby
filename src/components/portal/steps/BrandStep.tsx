@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   AccordionContent, 
   AccordionItem, 
@@ -18,6 +18,7 @@ interface BrandStepProps {
   isActive?: boolean;
   data?: Record<string, unknown>;
   onSave: (data: { properties: PropertyBrand[] }) => void;
+  onDraftSave?: (data: { properties: PropertyBrand[] }) => void;
   onLogoUpload: (propertyId: string, file: File, variant: string) => void;
   onLogoRemove?: (propertyId: string, variant: string) => void;
   onDocumentUpload?: (propertyId: string, file: File, slotIndex: number) => void;
@@ -33,7 +34,8 @@ export function BrandStep({
   isLocked,
   isActive = false,
   data, 
-  onSave, 
+  onSave,
+  onDraftSave,
   onLogoUpload,
   onLogoRemove,
   onDocumentUpload,
@@ -74,10 +76,25 @@ export function BrandStep({
     return (taskData[`${getDocumentKey(propertyId, slotIndex)}_filename`] as string) || null;
   };
 
-  // Helper to extract logo filenames from task data
-  const getLogoFilenames = (taskData?: Record<string, unknown>): Record<string, string> => {
+  // Helper to extract logo filenames for a specific property from task data
+  const getLogoFilenamesForProperty = (propertyId: string, taskData?: Record<string, unknown>): Record<string, string> => {
     if (!taskData) return {};
-    return (taskData.logoFilenames as Record<string, string>) || {};
+    const result: Record<string, string> = {};
+    const propertyPrefix = `logo_${propertyId}_`;
+    for (const [key, value] of Object.entries(taskData)) {
+      if (key.startsWith(propertyPrefix) && key.endsWith("_filename") && typeof value === "string") {
+        // Extract variant from "logo_{propertyId}_{variant}_filename"
+        const withoutPrefix = key.substring(propertyPrefix.length);
+        const variant = withoutPrefix.replace(/_filename$/, "");
+        if (variant) result[variant] = value;
+      }
+    }
+    // Fallback: legacy logoFilenames flat map
+    const legacy = (taskData.logoFilenames as Record<string, string>) || {};
+    for (const [key, value] of Object.entries(legacy)) {
+      if (!result[key]) result[key] = value;
+    }
+    return result;
   };
 
   // Helper to extract logo URLs for a property from task data
@@ -86,9 +103,10 @@ export function BrandStep({
     const result: Record<string, string> = {};
 
     // Primary: look at top-level keys like "logo_{propertyId}_{variant}" (stored by uploadFileMutation)
+    // Skip "_filename" keys which contain the original filename, not a file path
     const propertyPrefix = `logo_${propertyId}_`;
     for (const [key, value] of Object.entries(taskData)) {
-      if (key.startsWith(propertyPrefix) && typeof value === "string") {
+      if (key.startsWith(propertyPrefix) && typeof value === "string" && !key.endsWith("_filename")) {
         const variant = key.substring(propertyPrefix.length);
         result[variant] = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/onboarding-assets/${value}`;
       }
@@ -116,7 +134,7 @@ export function BrandStep({
       // Hydrate with palette document URLs and logo URLs from task data
       return savedProperties.map(prop => {
         const extractedLogoUrls = getLogoUrls(prop.id, data);
-        const extractedLogoFilenames = getLogoFilenames(data);
+        const extractedLogoFilenames = getLogoFilenamesForProperty(prop.id, data);
         const docUrls = [0, 1, 2].map(i => getPaletteDocumentUrl(prop.id, i, data));
         const docFilenames = [0, 1, 2].map(i => getPaletteDocumentFilename(prop.id, i, data));
         return {
@@ -166,7 +184,7 @@ export function BrandStep({
       // Hydrate with palette document URLs and logo URLs from task data
       setProperties(savedProperties.map(prop => {
         const extractedLogoUrls = getLogoUrls(prop.id, data);
-        const extractedLogoFilenames = getLogoFilenames(data);
+        const extractedLogoFilenames = getLogoFilenamesForProperty(prop.id, data);
         const docUrls = [0, 1, 2].map(i => getPaletteDocumentUrl(prop.id, i, data));
         const docFilenames = [0, 1, 2].map(i => getPaletteDocumentFilename(prop.id, i, data));
         return {
@@ -182,8 +200,30 @@ export function BrandStep({
     }
   }, [data?.properties, data]);
 
+  // Debounced auto-save: persist property changes as draft (without marking complete)
+  const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const saveDraft = useCallback((propertiesToSave: PropertyBrand[]) => {
+    if (!onDraftSave || isCompleted) return;
+    if (draftSaveTimeoutRef.current) {
+      clearTimeout(draftSaveTimeoutRef.current);
+    }
+    draftSaveTimeoutRef.current = setTimeout(() => {
+      onDraftSave({ properties: propertiesToSave });
+    }, 1500);
+  }, [onDraftSave, isCompleted]);
+
+  useEffect(() => {
+    return () => {
+      if (draftSaveTimeoutRef.current) {
+        clearTimeout(draftSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handlePropertiesChange = (updated: PropertyBrand[]) => {
     setProperties(updated);
+    saveDraft(updated);
   };
 
   const handleLogoUpload = (propertyId: string, file: File, variant: string) => {
@@ -266,7 +306,7 @@ export function BrandStep({
             onClick={handleSave}
             onSuccess={onStepComplete}
             className="w-full min-h-[44px]"
-            idleText={hasAtLeastOneProperty ? "Save Brand Settings" : "Add a property first"}
+            idleText={hasAtLeastOneProperty ? "Complete Brand Setup" : "Add a property first"}
             disabled={!canSave}
           />
         </div>
