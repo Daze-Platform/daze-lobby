@@ -139,6 +139,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
           .from("clients")
           .select("id")
           .eq("client_slug", customSlug)
+          .is("deleted_at", null)
           .maybeSingle();
         setSlugStatus(data ? "taken" : "available");
       } catch {
