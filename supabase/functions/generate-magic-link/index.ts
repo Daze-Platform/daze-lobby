@@ -65,27 +65,92 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate magic link via admin API (bypasses email sending)
+    const linkRedirect = redirectTo || "https://onboarding.dazeapp.com";
+
+    // Try generating a magic link (works for existing users)
     const { data, error } = await adminClient.auth.admin.generateLink({
       type: "magiclink",
       email,
-      options: {
-        redirectTo: redirectTo || "https://onboarding.dazeapp.com",
-      },
+      options: { redirectTo: linkRedirect },
     });
 
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
+    if (!error && data?.properties?.action_link) {
+      return new Response(
+        JSON.stringify({ magic_link: data.properties.action_link, email }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // If user doesn't exist, create them first then generate the link
+    console.log(
+      `Magic link failed for ${email}: ${error?.message}. Attempting to create user first.`
+    );
+
+    const { data: newUser, error: createError } =
+      await adminClient.auth.admin.createUser({
+        email,
+        email_confirm: true,
+      });
+
+    if (createError) {
+      // If user already exists (race condition), retry the magic link
+      if (
+        createError.message.includes("already been registered") ||
+        createError.message.includes("already exists")
+      ) {
+        const { data: retryData, error: retryError } =
+          await adminClient.auth.admin.generateLink({
+            type: "magiclink",
+            email,
+            options: { redirectTo: linkRedirect },
+          });
+        if (retryError) {
+          return new Response(
+            JSON.stringify({ error: retryError.message }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            magic_link: retryData.properties.action_link,
+            email,
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      return new Response(JSON.stringify({ error: createError.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // User created — now generate the magic link
+    const { data: linkData, error: linkError } =
+      await adminClient.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: { redirectTo: linkRedirect },
+      });
+
+    if (linkError) {
+      return new Response(JSON.stringify({ error: linkError.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     return new Response(
-      JSON.stringify({
-        magic_link: data.properties.action_link,
-        email,
-      }),
+      JSON.stringify({ magic_link: linkData.properties.action_link, email }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -94,7 +159,9 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Error generating magic link:", err);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({
+        error: err instanceof Error ? err.message : "Internal server error",
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

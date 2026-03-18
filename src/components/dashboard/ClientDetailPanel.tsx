@@ -72,7 +72,17 @@ function ContactCard({ contact, onEdit }: { contact: ClientContact; onEdit: () =
           redirectTo: "https://onboarding.dazeapp.com",
         },
       });
-      if (error) throw error;
+      // Extract detailed error from response context if available
+      if (error) {
+        let detail = error.message;
+        try {
+          if ("context" in error && (error as any).context?.json) {
+            const body = await (error as any).context.json();
+            if (body?.error) detail = body.error;
+          }
+        } catch { /* ignore parse failure */ }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       setMagicLink(data.magic_link);
       toast.success(`Magic link generated for ${contact.name}`);
