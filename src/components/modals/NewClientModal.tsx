@@ -139,6 +139,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
           .from("clients")
           .select("id")
           .eq("client_slug", customSlug)
+          .is("deleted_at", null)
           .maybeSingle();
         setSlugStatus(data ? "taken" : "available");
       } catch {
@@ -273,7 +274,28 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     onError: (error: any) => {
       console.error("Failed to create client:", error);
       if (error?.code === "23505") {
-        toast.error("This portal URL is already in use. Please choose a different one.");
+        // Auto-suggest a suffixed slug so the user can retry quickly
+        const suggest = async () => {
+          let suffix = 2;
+          let candidate = `${customSlug}-${suffix}`;
+          // eslint-disable-next-line no-constant-condition
+          while (true) {
+            const { data } = await supabase
+              .from("clients")
+              .select("id")
+              .eq("client_slug", candidate)
+              .is("deleted_at", null)
+              .maybeSingle();
+            if (!data) break;
+            suffix++;
+            candidate = `${customSlug}-${suffix}`;
+            if (suffix > 20) break; // safety limit
+          }
+          setCustomSlug(candidate);
+          setSlugTouched(true);
+        };
+        suggest();
+        toast.error("This portal URL is already in use. We've suggested an alternative — review and try again.");
         setSlugStatus("taken");
       } else {
         toast.error("Failed to create client. Please try again.");
