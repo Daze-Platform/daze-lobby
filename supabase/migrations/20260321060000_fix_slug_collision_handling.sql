@@ -1,20 +1,19 @@
 -- Fix "slug already taken" error when creating new clients.
 --
--- Root cause:
+-- Root causes:
 -- 1. The UNIQUE constraint on client_slug covers ALL rows, including
 --    soft-deleted clients, so reusing a slug from a deleted client fails.
 -- 2. The set_client_slug() trigger had no collision handling — two
 --    clients with the same name would cause a unique-violation error.
 --
 -- This migration:
--- a) Replaces the full UNIQUE constraint with a partial unique index
---    scoped to active (non-deleted) clients only.
--- b) Rewrites set_client_slug() to detect collisions and auto-append
---    a numeric suffix (-2, -3, …) when needed.
--- c) Nullifies slugs on already-soft-deleted clients so they no longer
---    block new slug usage.
+-- a) Drops any existing full UNIQUE constraint/index on client_slug.
+-- b) Drops any redundant partial indexes from prior fix attempts.
+-- c) Creates a single partial unique index scoped to active clients.
+-- d) Rewrites set_client_slug() with collision-aware suffix logic.
+-- e) Renames slugs on soft-deleted clients so they free up the namespace.
 
--- 1. Drop the existing full UNIQUE constraint on client_slug
+-- 1. Drop the existing full UNIQUE constraint on client_slug (if it exists)
 DO $$
 DECLARE
   _con text;
@@ -35,37 +34,41 @@ BEGIN
 END;
 $$;
 
--- Also drop any auto-created unique index that may linger
+-- 2. Drop any lingering unique indexes on client_slug (from prior attempts)
+DROP INDEX IF EXISTS public.idx_clients_slug_active;
+DROP INDEX IF EXISTS public.clients_client_slug_active_unique;
+
+-- Also drop any auto-created unique index from the original UNIQUE constraint
 DO $$
 DECLARE
   _idx text;
 BEGIN
-  SELECT i.relname INTO _idx
-    FROM pg_index ix
-    JOIN pg_class i ON i.oid = ix.indexrelid
-    JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = ANY(ix.indkey)
-   WHERE ix.indrelid = 'public.clients'::regclass
-     AND ix.indisunique
-     AND a.attname = 'client_slug'
-   LIMIT 1;
-  IF _idx IS NOT NULL THEN
+  FOR _idx IN
+    SELECT i.relname
+      FROM pg_index ix
+      JOIN pg_class i ON i.oid = ix.indexrelid
+      JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = ANY(ix.indkey)
+     WHERE ix.indrelid = 'public.clients'::regclass
+       AND ix.indisunique
+       AND a.attname = 'client_slug'
+  LOOP
     EXECUTE format('DROP INDEX IF EXISTS public.%I', _idx);
-  END IF;
+  END LOOP;
 END;
 $$;
 
--- 2. Create a PARTIAL unique index — only active (non-deleted) clients
+-- 3. Create ONE partial unique index — only active (non-deleted) clients
 CREATE UNIQUE INDEX idx_clients_slug_active
   ON public.clients (client_slug)
   WHERE deleted_at IS NULL;
 
--- 3. Replace the trigger function with collision-aware version
+-- 4. Replace the trigger function with collision-aware version
 CREATE OR REPLACE FUNCTION public.set_client_slug()
 RETURNS TRIGGER AS $$
 DECLARE
   base_slug text;
   candidate text;
-  suffix int := 0;
+  suffix int := 1;
 BEGIN
   -- Only auto-generate if no slug was provided
   IF NEW.client_slug IS NULL OR NEW.client_slug = '' THEN
@@ -76,13 +79,13 @@ BEGIN
 
   candidate := base_slug;
 
-  -- Loop until we find a slug not taken by an active client
+  -- Loop until we find a slug not taken by any active (non-deleted) client
   LOOP
     IF NOT EXISTS (
       SELECT 1 FROM public.clients
        WHERE client_slug = candidate
          AND deleted_at IS NULL
-         AND (TG_OP = 'INSERT' OR id != NEW.id)
+         AND (TG_OP = 'INSERT' OR id IS DISTINCT FROM NEW.id)
     ) THEN
       NEW.client_slug := candidate;
       RETURN NEW;
@@ -93,7 +96,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SET search_path = public;
 
--- 4. Nullify slugs on already-soft-deleted clients so they stop blocking
+-- 5. Rename slugs on soft-deleted clients so they stop blocking active slugs
 UPDATE public.clients
-   SET client_slug = NULL
- WHERE deleted_at IS NOT NULL;
+   SET client_slug = client_slug || '-deleted-' || EXTRACT(EPOCH FROM deleted_at)::int
+ WHERE deleted_at IS NOT NULL
+   AND client_slug IS NOT NULL
+   AND client_slug NOT LIKE '%-deleted-%';
