@@ -31,35 +31,41 @@ interface VenueCardProps {
   onMenuUpload: (file: File) => void;
   onLogoUpload: (file: File) => void;
   onAdditionalLogoUpload: (file: File) => void;
+  onVenueLayoutUpload?: (file: File) => void;
   onRemove: () => void;
   onMenuRemove?: (menuId: string) => void;
   onLogoRemove?: () => void;
   onAdditionalLogoRemove?: () => void;
+  onVenueLayoutRemove?: () => void;
   onColorPaletteChange?: (colors: string[]) => void;
   isSaving?: boolean;
   isDeleting?: boolean;
   isUploading?: boolean;
   isUploadingLogo?: boolean;
   isUploadingAdditionalLogo?: boolean;
+  isUploadingVenueLayout?: boolean;
   autoFocus?: boolean;
 }
 
-export function VenueCard({ 
-  venue, 
-  onNameChange, 
+export function VenueCard({
+  venue,
+  onNameChange,
   onMenuUpload,
   onLogoUpload,
-  onAdditionalLogoUpload, 
+  onAdditionalLogoUpload,
+  onVenueLayoutUpload,
   onRemove,
   onMenuRemove,
   onLogoRemove,
   onAdditionalLogoRemove,
+  onVenueLayoutRemove,
   onColorPaletteChange,
   isSaving,
   isDeleting,
   isUploading,
   isUploadingLogo,
   isUploadingAdditionalLogo,
+  isUploadingVenueLayout,
   autoFocus,
 }: VenueCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -125,6 +131,21 @@ export function VenueCard({
     onAdditionalLogoUpload(file);
   };
 
+  const handleVenueLayoutFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSizeMB = 10;
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      toast.error(`File too large. Maximum size is ${maxSizeMB}MB`);
+      e.target.value = '';
+      return;
+    }
+
+    onVenueLayoutUpload?.(file);
+    e.target.value = '';
+  };
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setLocalName(newName);
@@ -138,6 +159,7 @@ export function VenueCard({
 
   const hasLogo = venue.logoFile || venue.logoUrl;
   const hasAdditionalLogo = !!venue.additionalLogoUrl;
+  const hasVenueLayout = !!venue.venueLayoutUrl;
   const hasMenus = venue.menus.length > 0;
 
   return (
@@ -417,6 +439,71 @@ export function VenueCard({
               accept=".pdf,application/pdf"
               className="sr-only"
               onChange={handleMenuFileChange}
+            />
+          </label>
+        </div>
+
+        {/* Venue Layout / Floor Plan Upload */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground flex items-center gap-2">
+            <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Venue Layout / Floor Plan
+          </Label>
+
+          <label
+            className={cn(
+              "flex items-center gap-3 p-3 border-2 border-dashed rounded-lg cursor-pointer transition-all",
+              hasVenueLayout
+                ? "border-primary bg-primary/5"
+                : "border-muted-foreground/30 hover:border-primary hover:bg-muted/50"
+            )}
+          >
+            {isUploadingVenueLayout ? (
+              <div className="flex items-center gap-2 w-full justify-center py-2">
+                <Loader2 className="w-5 h-5 text-primary animate-spin" strokeWidth={1.5} />
+                <span className="text-sm text-muted-foreground">Uploading...</span>
+              </div>
+            ) : hasVenueLayout ? (
+              <>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <FileText className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-foreground flex items-center gap-1">
+                    <Check className="w-4 h-4 text-primary" strokeWidth={2} />
+                    Layout uploaded
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px] block">
+                    {venue.venueLayoutFileName || "Click to replace"}
+                  </span>
+                </div>
+                {onVenueLayoutRemove && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onVenueLayoutRemove(); }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Upload className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-muted-foreground">Upload venue layout or floor plan</span>
+                  <span className="text-xs text-muted-foreground block">PDF, PNG, JPG, SVG (max 10MB)</span>
+                </div>
+              </div>
+            )}
+            <Input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.svg,application/pdf,image/png,image/jpeg,image/svg+xml"
+              className="sr-only"
+              onChange={handleVenueLayoutFileChange}
             />
           </label>
         </div>

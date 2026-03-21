@@ -37,6 +37,8 @@ export interface Venue {
   logoFileName?: string;
   additionalLogoUrl?: string;
   additionalLogoFileName?: string;
+  venueLayoutUrl?: string;
+  venueLayoutFileName?: string;
   menus: VenueMenu[];
   colorPalette: string[];
 }
@@ -49,6 +51,7 @@ export interface VenueUpdate {
   menuPdfUrl?: string | null;
   logoUrl?: string | null;
   additionalLogoUrl?: string | null;
+  venueLayoutUrl?: string | null;
   colorPalette?: string[];
 }
 
@@ -62,6 +65,7 @@ export interface DbVenue {
   menu_pdf_url: string | null;
   logo_url: string | null;
   additional_logo_url: string | null;
+  venue_layout_url: string | null;
   color_palette: string[] | null;
   created_at: string;
   updated_at: string;

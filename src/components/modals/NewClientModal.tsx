@@ -17,6 +17,28 @@ const SLUG_MIN = 3;
 const SLUG_MAX = 60;
 
 type SlugStatus = "idle" | "checking" | "available" | "taken" | "reserved" | "invalid";
+
+/** Given a base slug, find the next available suffixed slug (e.g. base-2, base-3). */
+async function findAvailableSlug(baseSlug: string): Promise<string | null> {
+  try {
+    // Fetch all active client slugs that start with this base
+    const { data } = await supabase
+      .from("clients")
+      .select("client_slug")
+      .is("deleted_at", null)
+      .like("client_slug", `${baseSlug}%`);
+
+    const taken = new Set(data?.map((r) => r.client_slug) ?? []);
+    // Try suffixes starting from 2
+    for (let i = 2; i <= 100; i++) {
+      const candidate = `${baseSlug}-${i}`;
+      if (!taken.has(candidate)) return candidate;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 import {
   Dialog,
   DialogContent,
@@ -105,6 +127,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
   const [customSlug, setCustomSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [suggestedSlug, setSuggestedSlug] = useState<string | null>(null);
   const slugCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-sync slug from property name until manually edited
@@ -133,14 +156,23 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     }
 
     setSlugStatus("checking");
+    setSuggestedSlug(null);
     slugCheckTimer.current = setTimeout(async () => {
       try {
         const { data } = await supabase
           .from("clients")
           .select("id")
           .eq("client_slug", customSlug)
+          .is("deleted_at", null)
           .maybeSingle();
-        setSlugStatus(data ? "taken" : "available");
+        if (data) {
+          setSlugStatus("taken");
+          // Auto-find next available suffixed slug
+          const suggestion = await findAvailableSlug(customSlug);
+          if (suggestion) setSuggestedSlug(suggestion);
+        } else {
+          setSlugStatus("available");
+        }
       } catch {
         // On error, allow submission — DB constraint is the safety net
         setSlugStatus("available");
@@ -169,6 +201,7 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
     setCustomSlug("");
     setSlugTouched(false);
     setSlugStatus("idle");
+    setSuggestedSlug(null);
     setContacts([]);
     setCustomRoleInput("");
   };
@@ -270,11 +303,13 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
       handleClose();
       navigate(`/clients?selected=${clientId}`);
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       console.error("Failed to create client:", error);
       if (error?.code === "23505") {
-        toast.error("This portal URL is already in use. Please choose a different one.");
+        toast.error("This portal URL is already in use. Try the suggested alternative.");
         setSlugStatus("taken");
+        const suggestion = await findAvailableSlug(customSlug);
+        if (suggestion) setSuggestedSlug(suggestion);
       } else {
         toast.error("Failed to create client. Please try again.");
       }
@@ -659,9 +694,24 @@ export function NewClientModal({ open, onOpenChange }: NewClientModalProps) {
                     </p>
                   )}
                   {slugStatus === "taken" && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <CircleAlert className="w-3 h-3" /> Already taken — choose a different slug
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <CircleAlert className="w-3 h-3" /> Already taken
+                      </p>
+                      {suggestedSlug && (
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline font-medium"
+                          onClick={() => {
+                            setCustomSlug(suggestedSlug);
+                            setSlugTouched(true);
+                            setSuggestedSlug(null);
+                          }}
+                        >
+                          Use <span className="font-mono">{suggestedSlug}</span> instead?
+                        </button>
+                      )}
+                    </div>
                   )}
                   {slugStatus === "reserved" && (
                     <p className="text-xs text-destructive flex items-center gap-1">
